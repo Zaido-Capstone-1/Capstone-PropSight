@@ -1,0 +1,240 @@
+.form-error {
+    color: var(--danger);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  .input-error {
+    border-color: var(--danger) !important;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text, #1e293b);
+  }
+
+  .form-group input {
+    padding: 9px 12px;
+    border: 1.5px solid var(--border, #e2e8f0);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .form-group input:focus {
+    border-color: var(--primary, #3b82f6);
+  }
+
+  .alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 18px;
+    font-size: 14px;
+  }
+
+  .alert-danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+  }
+
+  /* Map picker */
+  .map-section-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text, #1e293b);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .map-section-label svg {
+    width: 15px;
+    height: 15px;
+    stroke: var(--primary, #3b82f6);
+    fill: none;
+    stroke-width: 2;
+  }
+
+  .map-search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .map-search-input {
+    flex: 1;
+    padding: 9px 13px;
+    border: 1.5px solid var(--border, #e2e8f0);
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color .2s;
+    font-family: inherit;
+  }
+
+  .map-search-input:focus {
+    border-color: var(--primary, #3b82f6);
+  }
+
+  .map-search-btn {
+    padding: 9px 16px;
+    background: var(--primary, #3b82f6);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .2s;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .map-search-btn:hover {
+    filter: brightness(1.1);
+  }
+
+  .map-search-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: #fff;
+    fill: none;
+    stroke-width: 2.5;
+  }
+
+  /*
+   * FIX: .main and .content in style.css both have overflow:hidden,
+   * which clips Leaflet's absolutely-positioned tile layers.
+   * We break out of that clip chain by giving the map-section its own
+   * stacking context and explicitly allowing overflow.
+   */
+  .map-section {
+    margin-top: 24px;
+    position: relative;
+    z-index: 10;
+    /* override any inherited overflow:hidden from .card/.content/.main */
+    overflow: visible !important;
+  }
+
+  #propertyMap {
+    width: 100%;
+    height: 340px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border, #e2e8f0);
+    /* Must be relative so Leaflet's internal absolute children are contained */
+    position: relative;
+    z-index: 10;
+    /* Do NOT set overflow:hidden here — that clips tiles too */
+    background: #f0f0f0;
+  }
+
+  /* Prevent Leaflet tile images from inheriting a max-width from global CSS resets */
+  #propertyMap img {
+    max-width: none !important;
+    max-height: none !important;
+  }
+
+  .map-hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted, #64748b);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .map-hint svg {
+    width: 12px;
+    height: 12px;
+    stroke: var(--text-muted, #64748b);
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+  }
+
+  .map-coords-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .map-coord-box {
+    flex: 1;
+    background: #f8fafc;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .map-coord-box strong {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #94a3b8;
+    margin-bottom: 2px;
+  }
+
+  .map-coord-val {
+    font-weight: 600;
+    color: var(--text, #1e293b);
+    font-size: 13px;
+  }
+
+  .map-autofill-notice {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #1d4ed8;
+    display: none;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .map-autofill-notice svg {
+    width: 13px;
+    height: 13px;
+    stroke: #1d4ed8;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+  }
+
+  .map-autofill-notice.visible {
+    display: flex;
+  }
+
+  .leaflet-control-attribution {
+    display: none !important;
+  }
+
+  @keyframes mapspin {
+    to {
+      transform: rotate(360deg);
+    }
+  }

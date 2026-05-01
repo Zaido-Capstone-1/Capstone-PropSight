@@ -1,0 +1,15 @@
+{
+    "name": "propsight/project",
+    "description": "My PropSight project",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Propsight\\Project\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "require": {
+        "phpmailer/phpmailer": "^7.0",
+        "vlucas/phpdotenv": "^5.6"
+    }
+}

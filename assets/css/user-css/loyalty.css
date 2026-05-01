@@ -1,0 +1,55 @@
+/* ── LOYALTY PAGE ── */
+.loyalty-hero-card { background:linear-gradient(140deg,var(--navy-900) 0%,var(--navy-700) 60%,#1a4a6e 100%); border-radius:var(--r-xl); padding:36px; margin-bottom:1.5rem; position:relative; overflow:hidden; color:var(--white); box-shadow:var(--sh-md); }
+.loyalty-hero-card::before { content:''; position:absolute; top:-60px;right:-60px; width:240px;height:240px; border-radius:50%; background:rgba(232,200,130,.1); }
+.loyalty-hero-card::after { content:''; position:absolute; bottom:-40px;left:30%; width:180px;height:180px; border-radius:50%; background:rgba(192,105,74,.08); }
+.lhc-inner { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:2rem; position:relative;z-index:1; }
+.lhc-points-label { font-size:.68rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:rgba(219,234,254,.6); margin-bottom:6px; }
+.lhc-points-num { font-family:var(--font-display); font-size:3.2rem; font-weight:700; color:var(--sand); line-height:1; }
+.lhc-points-sub { font-size:.78rem; color:rgba(219,234,254,.55); margin-top:6px; }
+.lhc-tier-badge { background:rgba(232,200,130,.15); border:1px solid rgba(232,200,130,.35); border-radius:var(--r-lg); padding:18px 24px; text-align:center; min-width:130px; }
+.lhc-tier-name { font-family:var(--font-display); font-size:1.4rem; font-weight:700; color:var(--sand); }
+.lhc-tier-sub { font-size:.68rem; color:rgba(219,234,254,.55); margin-top:3px; letter-spacing:.05em; text-transform:uppercase; }
+.progress-bar-wrap { margin-top:22px; position:relative;z-index:1; }
+.progress-label { display:flex; justify-content:space-between; font-size:.7rem; color:rgba(219,234,254,.6); margin-bottom:8px; }
+.progress-track { height:6px; background:rgba(255,255,255,.12); border-radius:var(--r-pill); overflow:hidden; }
+.progress-fill { height:100%; border-radius:var(--r-pill); background:linear-gradient(90deg,var(--sand-dk),var(--sand)); transition:width 1s cubic-bezier(.25,.46,.45,.94); }
+
+.tiers-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.tier-card { text-align:center; padding:18px 12px; border-radius:var(--r-lg); border:1px solid var(--border-lt); background:var(--white); transition:all .2s; position:relative; overflow:hidden; }
+.tier-card::before { content:''; position:absolute; top:-20px;right:-20px; width:70px;height:70px; border-radius:50%; background:var(--navy-50); }
+.tier-card:hover { border-color:var(--navy-200); box-shadow:var(--sh-sm); }
+.active-tier { border-color:var(--sand-dk); background:linear-gradient(160deg,var(--sand-lt),var(--white)); }
+.tier-icon { font-size:1.8rem; margin-bottom:8px; position:relative;z-index:1; }
+.tier-name { font-family:var(--font-display); font-size:.95rem; font-weight:700; color:var(--ink); position:relative;z-index:1; }
+.tier-range { font-size:.66rem; color:var(--ink-faint); margin-top:4px; position:relative;z-index:1; }
+.tier-current-badge { margin-top:8px; font-size:.6rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--sand-dk); background:rgba(201,168,76,.15); border:1px solid rgba(201,168,76,.3); border-radius:var(--r-pill); padding:2px 9px; display:inline-block; position:relative;z-index:1; }
+
+.rewards-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.reward-card { border:1px solid var(--border-lt); border-radius:var(--r-lg); padding:18px; background:var(--white); transition:all .2s; position:relative; overflow:hidden; }
+.reward-card::before { content:''; position:absolute; top:-15px;right:-15px; width:60px;height:60px; border-radius:50%; background:var(--navy-50); }
+.reward-card:hover { border-color:var(--navy-200); box-shadow:var(--sh-sm); transform:translateY(-2px); }
+.reward-icon { font-size:1.8rem; margin-bottom:10px; position:relative;z-index:1; }
+.reward-name { font-weight:700; font-size:.88rem; color:var(--ink); margin-bottom:5px; position:relative;z-index:1; }
+.reward-desc { font-size:.74rem; color:var(--ink-soft); line-height:1.55; margin-bottom:14px; position:relative;z-index:1; }
+.reward-foot { display:flex; align-items:center; justify-content:space-between; position:relative;z-index:1; }
+.reward-cost { font-family:var(--font-display); font-size:1rem; font-weight:700; color:var(--navy-700); }
+.reward-cost span { font-size:.68rem; font-family:var(--font-body); color:var(--ink-faint); font-weight:400; }
+.btn-redeem { font-family:var(--font-body); font-size:.72rem; font-weight:600; letter-spacing:.04em; padding:7px 14px; border-radius:var(--r-pill); border:none; cursor:pointer; background:var(--navy-800); color:var(--sand); transition:all .2s; }
+.btn-redeem:hover:not([disabled]) { background:var(--navy-900); transform:translateY(-1px); }
+.btn-redeem[disabled] { background:var(--border-lt); color:var(--ink-faint); cursor:not-allowed; }
+
+.history-item { display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid var(--border-lt); }
+.history-item:last-child{border-bottom:none}
+.h-dot { width:34px;height:34px; border-radius:50%; display:flex;align-items:center;justify-content:center; flex-shrink:0; }
+.h-dot.earn { background:var(--sage-lt); } .h-dot.earn svg { stroke:var(--sage); }
+.h-dot.redeem { background:rgba(192,105,74,.1); } .h-dot.redeem svg { stroke:var(--terra); }
+.h-dot.bonus { background:var(--sand-lt); } .h-dot.bonus svg { stroke:var(--sand-dk); }
+.h-dot svg { width:16px;height:16px; fill:none; stroke-width:2; }
+.h-desc { flex:1; }
+.h-desc-main { font-size:.84rem; color:var(--ink); font-weight:500; }
+.h-desc-date { font-size:.7rem; color:var(--ink-faint); margin-top:2px; }
+.h-pts { font-family:var(--font-display); font-size:1rem; font-weight:700; flex-shrink:0; }
+.h-pts.earn{color:var(--sage)} .h-pts.redeem{color:var(--terra)} .h-pts.bonus{color:var(--sand-dk)}
+
+@media(max-width:900px){.rewards-grid{grid-template-columns:1fr 1fr}.tiers-strip{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.rewards-grid{grid-template-columns:1fr}}

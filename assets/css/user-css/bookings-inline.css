@@ -1,0 +1,130 @@
+tags so html2canvas can render
+        const styleEl = document.createElement('style');
+        doc.querySelectorAll('style').forEach(s => { styleEl.textContent += s.textContent; });
+
+        // Create an off-screen container, attach card + styles, append to body
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:700px;background:#f1f5f9;padding:0;z-index:-1;';
+        wrapper.appendChild(styleEl);
+        wrapper.appendChild(card);
+        document.body.appendChild(wrapper);
+
+        // Wait for layout
+        await new Promise(r => setTimeout(r, 300));
+
+        const canvas = await html2canvas(card, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            width: 700,
+            windowWidth: 700,
+        });
+
+        document.body.removeChild(wrapper);
+
+        const { jsPDF } = window.jspdf;
+        const imgW = 210; // A4 mm
+        const imgH = (canvas.height * imgW) / canvas.width;
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: imgH <= 297 ? 'a4' : [imgW, imgH],
+        });
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgW, imgH);
+        const ref = 'BK-' + String(bookingId).padStart(6, '0');
+        pdf.save('Receipt-' + ref + '.pdf');
+
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = svgDoc + ' Downloaded!';
+            setTimeout(() => { btn.innerHTML = svgDoc + ' Receipt'; }, 3000);
+        }
+
+    } catch (err) {
+        console.error('PDF error:', err);
+        if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+        showToast('Could not generate PDF. Please try again.', 'error');
+    }
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    // Mark all cards as matching initially
+    getAllCards().forEach(c => c.dataset._filterMatch = '1');
+    renderPagination();
+});
+</script>
+
+<style>
+/* Receipt button */
+.bc-btn-receipt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-body);
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: var(--r-pill);
+    border: 1.5px solid var(--navy-200);
+    background: linear-gradient(135deg, var(--navy-50), #fff);
+    color: var(--navy-600);
+    cursor: pointer;
+    transition: all .2s;
+    box-shadow: 0 1px 4px rgba(30,64,175,.08);
+}
+.bc-btn-receipt:hover:not(:disabled) {
+    background: var(--navy-700);
+    color: #fff;
+    border-color: var(--navy-700);
+    box-shadow: 0 4px 12px rgba(30,64,175,.25);
+    transform: translateY(-1px);
+}
+.bc-btn-receipt:disabled { opacity: .6; cursor: default; }
+
+/* Pagination */
+.pg-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 18px 0 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.pg-btn {
+    font-family: var(--font-body);
+    font-size: .74rem;
+    font-weight: 600;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: var(--r-pill);
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all .18s;
+    box-shadow: var(--sh-xs);
+}
+.pg-btn:hover:not(:disabled):not(.active) {
+    background: var(--navy-50);
+    border-color: var(--navy-300);
+    color: var(--navy-700);
+}
+.pg-btn.active {
+    background: var(--navy-800);
+    border-color: var(--navy-800);
+    color: var(--sand);
+    box-shadow: 0 3px 10px rgba(30,64,175,.22);
+}
+.pg-btn:disabled { opacity: .35; cursor: default; }
+.pg-info {
+    font-size: .68rem;
+    color: var(--ink-faint);
+    margin-left: 8px;
+    letter-spacing: .03em;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

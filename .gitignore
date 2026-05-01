@@ -1,0 +1,43 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Composer dependencies
+/vendor/
+
+# Composer lock
+# composer.lock
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Cache / temp files
+*.cache
+*.tmp
+*.bak
+
+# XAMPP / local server junk
+/php_errors.log
+
+# Build files
+dist/
+build/
+
+# Uploaded files
+uploads/
+storage/
+
+# PHPUnit (if added later)
+.phpunit.result.cache

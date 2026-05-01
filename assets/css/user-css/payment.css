@@ -1,0 +1,42 @@
+/* ── PAYMENT PAGE ── */
+.card-visual { border-radius:var(--r-xl); padding:26px 28px; color:var(--white); position:relative; overflow:hidden; min-height:160px; display:flex; flex-direction:column; justify-content:space-between; margin-bottom:14px; box-shadow:var(--sh-md); transition:transform .2s,box-shadow .2s; }
+.card-visual:hover { transform:translateY(-3px); box-shadow:var(--sh-lg); }
+.card-visual::before { content:''; position:absolute; top:-40px;right:-40px; width:200px;height:200px; border-radius:50%; background:rgba(255,255,255,.08); }
+.card-visual::after { content:''; position:absolute; bottom:-30px;left:-30px; width:150px;height:150px; border-radius:50%; background:rgba(255,255,255,.05); }
+.cv-top { display:flex; align-items:flex-start; justify-content:space-between; position:relative;z-index:1; }
+.cv-provider { font-size:1rem; font-weight:700; letter-spacing:.06em; color:rgba(255,255,255,.85); }
+.cv-default-badge { font-size:.6rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:3px 9px; border-radius:var(--r-pill); background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); color:rgba(255,255,255,.9); }
+.cv-number { font-family:monospace; font-size:1.05rem; letter-spacing:.12em; color:rgba(255,255,255,.8); position:relative;z-index:1; margin-top:auto; padding-top:20px; }
+.cv-footer { display:flex; justify-content:space-between; align-items:flex-end; position:relative;z-index:1; }
+.cv-holder { font-size:.72rem; color:rgba(255,255,255,.65); letter-spacing:.06em; text-transform:uppercase; }
+.cv-expiry { font-size:.8rem; color:rgba(255,255,255,.75); }
+.cv-actions { display:flex; gap:8px; margin-top:10px; }
+.cv-action-btn { font-family:var(--font-body); font-size:.7rem; font-weight:600; padding:6px 14px; border-radius:var(--r-pill); cursor:pointer; transition:all .2s; border:none; letter-spacing:.03em; }
+
+/* E-wallets grid */
+.ewallet-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+.ewallet-item { border:1.5px solid var(--border); border-radius:var(--r-lg); padding:16px; display:flex; align-items:center; gap:14px; cursor:pointer; transition:all .2s; background:var(--white); }
+.ewallet-item:hover { border-color:var(--navy-300); box-shadow:var(--sh-xs); }
+.ewallet-item.linked { border-color:var(--sage); background:var(--sage-lt); }
+.ewallet-logo { width:40px;height:40px; border-radius:var(--r-md); background:var(--border-lt); display:flex;align-items:center;justify-content:center; overflow:hidden; flex-shrink:0; }
+.ewallet-logo img { width:100%;height:100%; object-fit:contain; }
+.ewallet-name { font-weight:700; font-size:.88rem; color:var(--ink); }
+.ewallet-status { font-size:.7rem; margin-top:2px; }
+.ewallet-status.linked { color:var(--sage); }
+.ewallet-status.unlinked { color:var(--ink-faint); }
+.ewallet-btn { margin-left:auto; flex-shrink:0; font-family:var(--font-body); font-size:.7rem; font-weight:600; padding:6px 14px; border-radius:var(--r-pill); border:1.5px solid; cursor:pointer; transition:all .2s; }
+.ewallet-btn.link { background:var(--white); border-color:var(--navy-300); color:var(--navy-600); }
+.ewallet-btn.link:hover { background:var(--navy-50); }
+.ewallet-btn.unlink { background:rgba(192,105,74,.08); border-color:rgba(192,105,74,.3); color:var(--terra); }
+.ewallet-btn.unlink:hover { background:var(--terra); color:var(--white); border-color:var(--terra); }
+
+/* Billing table */
+.billing-table { width:100%; border-collapse:collapse; font-size:.82rem; }
+.billing-table th { text-align:left; font-size:.64rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint); padding:8px 12px; border-bottom:2px solid var(--border-lt); }
+.billing-table td { padding:14px 12px; border-bottom:1px solid var(--border-lt); color:var(--ink-mid); vertical-align:middle; }
+.billing-table tr:hover td { background:var(--navy-50); }
+.billing-table tr:last-child td { border-bottom:none; }
+.bt-amount { font-family:var(--font-display); font-size:.95rem; font-weight:700; color:var(--navy-700); }
+.bt-method { display:inline-flex; align-items:center; gap:5px; font-size:.72rem; background:var(--border-lt); padding:3px 9px; border-radius:var(--r-pill); }
+
+@media(max-width:700px){.ewallet-grid{grid-template-columns:1fr}}

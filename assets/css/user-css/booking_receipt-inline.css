@@ -1,0 +1,159 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    padding: 32px 16px;
+    font-size: 13.5px;
+  }
+
+  /* Hide action bar when rendered inside an iframe (used for PDF capture) */
+  /* The parent page's downloadReceipt() handles the save dialog */
+
+  /* Action bar */
+  .action-bar {
+    max-width: 700px;
+    margin: 0 auto 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 22px;
+    border-radius: 50px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: .02em;
+    text-decoration: none;
+  }
+  .action-btn.primary {
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(37,99,235,.35);
+  }
+  .action-btn.primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .action-btn.secondary {
+    background: #fff;
+    color: #475569;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+  .action-btn.secondary:hover { background: #f8fafc; border-color: #94a3b8; }
+  .action-btn:disabled { opacity: .6; cursor: default; transform: none !important; }
+
+  /* Status pill in action bar */
+  .dl-status {
+    font-size: 12px;
+    color: #64748b;
+    display: none;
+    align-items: center;
+    gap: 6px;
+  }
+  .dl-status.visible { display: flex; }
+  .dl-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid #cbd5e1;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Receipt card */
+  .receipt {
+    max-width: 700px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 28px rgba(0,0,0,.1);
+    overflow: hidden;
+  }
+
+  .receipt-header {
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
+    padding: 28px 36px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .receipt-header .logo { font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
+  .receipt-header .logo span { opacity: .6; font-weight: 400; }
+  .receipt-header .ref { text-align: right; }
+  .receipt-header .ref .label { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; opacity: .7; }
+  .receipt-header .ref .value { font-size: 22px; font-weight: 700; margin-top: 2px; }
+
+  .status-banner {
+    padding: 10px 36px;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    background: <?= $statusColor ?>1a;
+    color: <?= $statusColor ?>;
+    border-bottom: 1px solid <?= $statusColor ?>33;
+  }
+
+  .receipt-body { padding: 28px 36px; }
+
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: #94a3b8;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+    margin-bottom: 24px;
+  }
+  .info-item .label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+  .info-item .value { font-weight: 600; color: #1e293b; }
+
+  .items-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  .items-table th {
+    background: #f8fafc; padding: 9px 12px;
+    text-align: left; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em; color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+  .items-table td { padding: 10px 12px; border: 1px solid #e2e8f0; color: #374151; }
+  .items-table .total-row td { background: #f0fdf4; font-weight: 700; font-size: 15px; color: #16a34a; }
+
+  .divider { border: none; border-top: 1px solid #f1f5f9; margin: 20px 0; }
+
+  .receipt-footer {
+    padding: 16px 36px 24px;
+    text-align: center;
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.8;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; margin: 0; }
+    .receipt { box-shadow: none; border-radius: 0; max-width: 100%; }
+    .action-bar { display: none; }
+    @page { size: A4 portrait; margin: 8mm 10mm; }
+    .receipt-header, .status-banner, .receipt-body, .info-grid, .items-table, .receipt-footer {
+      page-break-inside: avoid; break-inside: avoid;
+    }
+    .receipt-header { padding: 14px 24px; }
+    .receipt-body   { padding: 12px 24px; }
+    body            { font-size: 12px; }
+  }

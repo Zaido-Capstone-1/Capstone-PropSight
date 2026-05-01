@@ -1,0 +1,66 @@
+#guestMap .leaflet-control-attribution { display:none; }
+
+/* Add to booking_reports-inline.css */
+.leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15) !important;
+}
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    font-size: 18px !important;
+    font-weight: 300 !important;
+    color: #1e293b !important;
+    background: #fff !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.leaflet-control-zoom-in:hover,
+.leaflet-control-zoom-out:hover {
+    background: #f1f5f9 !important;
+    color: #2563c4 !important;
+}
+.leaflet-top.leaflet-left {
+    top: 10px !important;
+    left: 10px !important;
+    z-index: 999 !important;
+}
+
+.leaflet-container {
+    z-index: 1 !important;
+}
+.leaflet-control-container {
+    z-index: 999 !important;
+}
+.leaflet-top,
+.leaflet-bottom {
+    z-index: 999 !important;
+}
+.leaflet-control-zoom {
+    margin-top: 10px !important;
+    margin-left: 10px !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+    width: 30px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+    font-size: 16px !important;
+    color: #1e293b !important;
+    background: #fff !important;
+    border: none !important;
+    display: block !important;
+}
+.leaflet-control-zoom-in:hover,
+.leaflet-control-zoom-out:hover {
+    background: #f1f5f9 !important;
+    color: #2563c4 !important;
+}
