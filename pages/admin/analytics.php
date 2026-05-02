@@ -281,16 +281,16 @@ $sourceTotal = array_sum($sourceData) ?: 1;
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-window.__PS_ANALYTICS__ = {
-  revByPropLabels:    <?= json_encode($revByPropLabels) ?>,
-  revByPropData:      <?= json_encode($revByPropData) ?>,
-  activeMonthLabels:  <?= json_encode($activeMonthLabels) ?>,
-  activeMonthBookings:<?= json_encode($activeMonthBookings) ?>,
-  srcLabels:          <?= json_encode($sourceLabels) ?>,
-  srcData:            <?= json_encode($sourceData) ?>,
-  monthLabels:        <?= json_encode($monthLabels) ?>,
-  revActual:          <?= json_encode(array_values($revActual)) ?>
-};
+  window.__PS_ANALYTICS__ = {
+    revByPropLabels: <?= json_encode($revByPropLabels) ?>,
+    revByPropData: <?= json_encode($revByPropData) ?>,
+    activeMonthLabels: <?= json_encode($activeMonthLabels) ?>,
+    activeMonthBookings: <?= json_encode($activeMonthBookings) ?>,
+    srcLabels: <?= json_encode($sourceLabels) ?>,
+    srcData: <?= json_encode($sourceData) ?>,
+    monthLabels: <?= json_encode($monthLabels) ?>,
+    revActual: <?= json_encode(array_values($revActual)) ?>
+  };
 </script>
 <script src="../../assets/js/admin/analytics.js"></script>
 

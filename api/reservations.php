@@ -126,10 +126,8 @@ if ($method === 'GET') {
     exit;
 }
 
-// ────────────────────────────────────────────────
-//  POST — create or update booking
-// ────────────────────────────────────────────────
 if ($method === 'POST') {
+    require_csrf_token();
     $action = $_POST['action'] ?? '';
 
     // ── UPDATE STATUS ──────────────────────────

@@ -63,6 +63,13 @@ function badge_class(string $status): string
     default => 'warning',
   };
 }
+
+$inv_per_page = 10;
+$inv_total_records = count($invoices);
+$inv_total_pages = ceil($inv_total_records / $inv_per_page);
+$inv_page = isset($_GET['inv_page']) ? max(1, min((int) $_GET['inv_page'], max(1, $inv_total_pages))) : 1;
+$inv_offset = ($inv_page - 1) * $inv_per_page;
+$inv_invoices = array_slice($invoices, $inv_offset, $inv_per_page);
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/invoice_billings.css">
@@ -150,11 +157,7 @@ function badge_class(string $status): string
       <span class="inv-card-title">Invoice List</span>
       <div class="inv-filters">
         <div class="inv-search">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input type="text" id="searchFilter" placeholder="Search tenant or invoice…" autocomplete="off">
+          <input type="text" id="searchFilter" placeholder="Search tenant or invoice" autocomplete="off">
         </div>
         <select class="inv-select" id="statusFilter">
           <option value="">All Status</option>
@@ -182,13 +185,14 @@ function badge_class(string $status): string
           </tr>
         </thead>
         <tbody id="invoiceTableBody">
-          <?php if (empty($invoices)): ?>
+          <?php if (empty($inv_invoices)): ?>
             <tr id="noDataRow">
-              <td colspan="9" style="text-align:center;padding:48px;color:#aab;">No invoices yet. Create your first one!
+              <td colspan="9" style="text-align:center;padding:48px;color:#aab;">
+                <?= empty($invoices) ? 'No invoices yet. Create your first one!' : 'No invoices on this page.' ?>
               </td>
             </tr>
           <?php else: ?>
-            <?php foreach ($invoices as $inv):
+            <?php foreach ($inv_invoices as $inv):
               $unit = !empty($inv['unit']) ? $inv['unit'] : '—';
               $bc = badge_class($inv['status']);
               ?>
@@ -227,6 +231,33 @@ function badge_class(string $status): string
           <?php endif; ?>
         </tbody>
       </table>
+      <?php if ($inv_total_pages > 1): ?>
+        <div
+          style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);">
+          <div style="font-size:13px;color:var(--text-soft);">
+            Showing <?= $inv_offset + 1 ?> - <?= min($inv_offset + $inv_per_page, $inv_total_records) ?> of
+            <?= $inv_total_records ?>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <?php if ($inv_page > 1): ?>
+              <a href="?inv_page=<?= $inv_page - 1 ?>"
+                style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;color:var(--text);">‹
+                Prev</a>
+            <?php endif; ?>
+
+            <?php for ($i = 1; $i <= $inv_total_pages; $i++): ?>
+              <a href="?inv_page=<?= $i ?>"
+                style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;background:<?= $i === $inv_page ? 'var(--primary)' : 'transparent' ?>;color:<?= $i === $inv_page ? 'white' : 'var(--text)' ?>;"><?= $i ?></a>
+            <?php endfor; ?>
+
+            <?php if ($inv_page < $inv_total_pages): ?>
+              <a href="?inv_page=<?= $inv_page + 1 ?>"
+                style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;color:var(--text);">Next
+                ›</a>
+            <?php endif; ?>
+          </div>
+        </div>
+      <?php endif; ?>
 
       <div class="inv-empty" id="emptyState">
         <svg width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -473,7 +504,7 @@ function badge_class(string $status): string
       Delete Invoice
     </button>
   </div>
-  
+
   <script>
     window.PS_CSRF_TOKEN = <?= json_encode($_SESSION['csrf_token'] ?? '') ?>;
   </script>

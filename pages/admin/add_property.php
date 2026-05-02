@@ -68,7 +68,7 @@ function errClass($key)
   <div class="cards-area">
 
     <?php if ($success): ?>
-      
+
     <?php endif; ?>
 
     <?php if (isset($errors['db'])): ?>
@@ -82,8 +82,7 @@ function errClass($key)
 
       <form method="POST" action="../../api/admin/add_property.php" novalidate>
 
-        <input type="hidden" name="csrf_token"
-          value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">
 
         <div class="form-grid">
           <div class="form-group">
@@ -199,17 +198,18 @@ function errClass($key)
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-window.__PS_ADD_PROPERTY__ = {
-  oldLat: parseFloat('<?= old('latitude') ?>') || null,
-  oldLng: parseFloat('<?= old('longitude') ?>') || null,
-  success: <?= json_encode($success) ?>
-};
+  window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
+  window.__PS_ADD_PROPERTY__ = {
+    oldLat: parseFloat('<?= old('latitude') ?>') || null,
+    oldLng: parseFloat('<?= old('longitude') ?>') || null,
+    success: <?= json_encode($success) ?>
+  };
 
-document.addEventListener('DOMContentLoaded', function() {
-  if (window.__PS_ADD_PROPERTY__.success) {
-    showToast('Property has been successfully added.', 'success', 'Property Saved');
-  }
-});
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.__PS_ADD_PROPERTY__.success) {
+      showToast('Property has been successfully added.', 'success', 'Property Saved');
+    }
+  });
 </script>
 <script src="../../assets/js/admin/add_property.js"></script>
 

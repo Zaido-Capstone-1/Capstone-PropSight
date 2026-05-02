@@ -457,7 +457,7 @@ $active_page = 'dashboard';
       </div>
     </div>
   </div>
-
+  
   
 
   <?php include '../../includes/right_panel.php'; ?>
@@ -479,7 +479,5 @@ window.__PS_DASHBOARD__ = {
   <?php if (isset($_GET['error']) && $_GET['error'] === 'unauthorized'): ?>
     
   <?php endif; ?>
-
-  
 
   <?php include '../../includes/layout_close_noclose.php'; ?>

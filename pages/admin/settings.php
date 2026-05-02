@@ -106,7 +106,7 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
                         <?php endif; ?>
                     </div>
                 </div>
-                <form id="profileForm" onsubmit="saveProfile(event)">
+                <form id="profileForm">
                     <div class="form-grid">
                         <div class="form-group"><label>First Name</label><input id="adm_fn" type="text"
                                 value="<?php echo htmlspecialchars($adminRow['first_name']); ?>" /></div>
@@ -121,13 +121,13 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
                                 value="<?php echo htmlspecialchars($adminRow['address'] ?? ''); ?>" /></div>
                     </div>
                     <div class="form-actions" style="margin-top:16px;"><button type="submit"
-                            class="btn btn-primary">Save Changes</button></div>
+                            class="btn btn-primary" onclick="saveProfile(event)">Save Changes</button></div>
                 </form>
             </div>
 
             <div class="card">
                 <div class="card-header"><span class="card-title">Security</span></div>
-                <form id="securityForm" onsubmit="changePassword(event)">
+                <form id="securityForm">
                     <div class="form-grid" style="grid-template-columns:1fr;">
                         <div class="form-group"><label>Current Password</label><input id="cur_pw" type="password"
                                 placeholder="••••••••" /></div>
@@ -137,7 +137,7 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
                                 placeholder="••••••••" /></div>
                     </div>
                     <div class="form-actions" style="margin-top:16px;"><button type="submit"
-                            class="btn btn-primary">Update Password</button></div>
+                            class="btn btn-primary" onclick="changePassword(event)">Update Password</button></div>
                 </form>
                 <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
                     <div style="font-size:14px;font-weight:700;margin-bottom:12px;">Two-Factor Authentication</div>
@@ -209,7 +209,9 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
 
     </div>
 </div>
-
-<!-- -->
+<script>
+    window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
+</script>
+<script src="../../assets/js/responsive.js"></script>
 <script src="../../assets/js/admin/settings.js"></script>
 <?php include '../../includes/layout_close.php'; ?>

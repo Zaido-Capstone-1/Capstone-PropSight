@@ -1,3 +1,5 @@
+const _psChannel = new BroadcastChannel('propsight_data')
+
 new Chart(document.getElementById('collectionChart'), {
     type: 'bar',
     data: {
@@ -76,6 +78,16 @@ function openModal(mode, data = null) {
         dropdown.removeAttribute('required');
         editDisplay.style.display = 'flex';
 
+        let hiddenBooking = document.getElementById('hiddenBookingId');
+        if (!hiddenBooking) {
+            hiddenBooking = document.createElement('input');
+            hiddenBooking.type = 'hidden';
+            hiddenBooking.name = 'booking_id';
+            hiddenBooking.id = 'hiddenBookingId';
+            document.getElementById('paymentForm').appendChild(hiddenBooking);
+        }
+        hiddenBooking.value = data.booking_id;
+
         // Populate name + photo
         const name = data.full_name || '—';
         const initial = name.charAt(0).toUpperCase();
@@ -142,6 +154,7 @@ document.getElementById('paymentForm').addEventListener('submit', function (e) {
             btn.innerText = "Save Payment";
 
             if (data.success) {
+                _psChannel.postMessage({ type: 'payment_saved' });
                 showToast(data.message || 'Saved successfully', 'success');
                 closeModal();
                 setTimeout(() => refreshPaymentsTable(), 600);
@@ -209,16 +222,16 @@ function deletePayment() {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: `form_action=delete&payment_id=${id}`
+        body: `form_action=delete&payment_id=${id}&csrf_token=${encodeURIComponent(window.PS_CSRF_TOKEN)}`
     })
         .then(res => res.json())
         .then(data => {
 
             if (data.success) {
+                _psChannel.postMessage({ type: 'payment_deleted' });
                 showToast(data.message || 'Deleted successfully', 'success');
                 closeDeleteModal();
                 setTimeout(() => refreshPaymentsTable(), 600);
-
             } else {
                 showToast(data.message || 'Delete failed', 'error');
             }

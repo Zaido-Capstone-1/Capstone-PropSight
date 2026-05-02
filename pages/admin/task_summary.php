@@ -69,6 +69,7 @@ function taskBadge(string $status): array
   };
 }
 ?>
+<link rel="stylesheet" href="../../assets/css/admin-css/task_summary.css">
 
 <div class="page-header">
   <div class="top-header">
@@ -77,48 +78,43 @@ function taskBadge(string $status): array
   </div>
 </div>
 
-<div class="page-inner">
+<div class="page-inner" style="overflow-x:hidden;max-width:100%;box-sizing:border-box;">
   <div class="cards-area">
+
     <div class="stat-row">
       <div class="stat-card sc-blue">
         <div class="stat-card-left">
           <div class="stat-label">Total Tasks</div>
-          <div class="stat-value"><span id="rt-task-total"><?= (int)$stats['total'] ?></span></div>
+          <div class="stat-value"><span id="rt-task-total"><?= (int) $stats['total'] ?></span></div>
         </div>
       </div>
       <div class="stat-card sc-red">
         <div class="stat-card-left">
           <div class="stat-label">Urgent</div>
-          <div class="stat-value"><span id="rt-task-open"><?= (int)$stats['open_cnt'] ?></span></div>
+          <div class="stat-value"><span id="rt-task-open"><?= (int) $stats['open_cnt'] ?></span></div>
         </div>
       </div>
       <div class="stat-card sc-gold">
         <div class="stat-card-left">
           <div class="stat-label">In Progress</div>
-          <div class="stat-value"><span id="rt-task-progress"><?= (int)$stats['in_progress_cnt'] ?></span></div>
+          <div class="stat-value"><span id="rt-task-progress"><?= (int) $stats['in_progress_cnt'] ?></span></div>
         </div>
       </div>
       <div class="stat-card sc-green">
         <div class="stat-card-left">
           <div class="stat-label">Done</div>
-          <div class="stat-value"><span id="rt-task-done"><?= (int)$stats['done_cnt'] ?></span></div>
+          <div class="stat-value"><span id="rt-task-done"><?= (int) $stats['done_cnt'] ?></span></div>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-header" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:nowrap;overflow-x:auto;">
+      <div class="task-card-header">
         <span class="card-title">Maintenance Requests</span>
-        <form method="get" style="display:flex;gap:10px;align-items:center;flex-wrap:nowrap;justify-content:flex-end;width:100%;max-width:140px;min-width:0;">
-          <div style="flex:1 1 240px;min-width:220px;">
-            <input
-              type="text"
-              name="search"
-              value="<?= htmlspecialchars($search) ?>"
-              placeholder="Search task or property..."
-              style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:10px;">
-          </div>
-          <select name="status" onchange="this.form.submit()" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:10px;min-width:140px;">
+        <form method="get" class="task-filter-form">
+          <input type="text" name="search" class="task-search-input" value="<?= htmlspecialchars($search) ?>"
+            placeholder="Search task or property...">
+          <select name="status" class="task-status-select" onchange="this.form.submit()">
             <option value="all" <?= $statusFilter === 'all' ? 'selected' : '' ?>>All</option>
             <option value="open" <?= $statusFilter === 'open' ? 'selected' : '' ?>>Urgent</option>
             <option value="in_progress" <?= $statusFilter === 'in_progress' ? 'selected' : '' ?>>Progress</option>
@@ -129,38 +125,36 @@ function taskBadge(string $status): array
         </form>
       </div>
 
-      <div style="overflow:auto;">
-        <table style="width:100%;border-collapse:separate;border-spacing:0 8px;">
+      <div class="task-table-wrap">
+        <table class="task-table">
           <thead>
-            <tr style="text-align:left;color:#64748b;font-size:12px;">
-              <th style="padding:8px 12px;">Task</th>
-              <th style="padding:8px 12px;">Property</th>
-              <th style="padding:8px 12px;">Priority</th>
-              <th style="padding:8px 12px;">Status</th>
-              <th style="padding:8px 12px;">Requested</th>
+            <tr>
+              <th>Task</th>
+              <th>Property</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Requested</th>
             </tr>
           </thead>
           <tbody id="rt-task-table">
             <?php if (empty($tasks)): ?>
               <tr>
-                <td colspan="5" style="padding:20px 12px;color:#94a3b8;text-align:center;">No tasks found.</td>
+                <td colspan="5" style="padding:20px 12px;color:#94a3b8;text-align:center;font-weight:100;">No tasks found.</td>
               </tr>
             <?php else: ?>
               <?php foreach ($tasks as $task):
-                $badge = taskBadge((string)($task['request_status'] ?? 'pending'));
+                $badge = taskBadge((string) ($task['request_status'] ?? 'pending'));
                 ?>
-                <tr style="background:#f8fafc;">
-                  <td style="padding:12px;border-radius:10px 0 0 10px;font-weight:600;">
-                    <?= htmlspecialchars((string)($task['issue_description'] ?: 'Maintenance Task')) ?>
-                  </td>
-                  <td style="padding:12px;"><?= htmlspecialchars((string)($task['property_name'] ?: '—')) ?></td>
-                  <td style="padding:12px;"><?= htmlspecialchars(ucfirst((string)($task['priority'] ?: 'Normal'))) ?></td>
-                  <td style="padding:12px;">
-                    <span style="padding:5px 10px;border-radius:999px;font-size:12px;font-weight:700;background:<?= $badge['bg'] ?>;color:<?= $badge['color'] ?>;">
+                <tr>
+                  <td><?= htmlspecialchars((string) ($task['issue_description'] ?: 'Maintenance Task')) ?></td>
+                  <td><?= htmlspecialchars((string) ($task['property_name'] ?: '—')) ?></td>
+                  <td><?= htmlspecialchars(ucfirst((string) ($task['priority'] ?: 'Normal'))) ?></td>
+                  <td>
+                    <span class="task-badge" style="background:<?= $badge['bg'] ?>;color:<?= $badge['color'] ?>;">
                       <?= htmlspecialchars($badge['label']) ?>
                     </span>
                   </td>
-                  <td style="padding:12px;border-radius:0 10px 10px 0;">
+                  <td>
                     <?= !empty($task['request_date']) ? htmlspecialchars(date('M j, Y g:i A', strtotime($task['request_date']))) : '—' ?>
                   </td>
                 </tr>

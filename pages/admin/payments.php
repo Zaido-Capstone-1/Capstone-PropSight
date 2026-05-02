@@ -147,6 +147,18 @@ $booking_options_sql = "
     ORDER BY full_name
 ";
 $booking_options = mqi_fetch($conn, $booking_options_sql);
+
+$pay_per_page = 10;
+$pay_total_records = count($records);
+$pay_total_pages = ceil($pay_total_records / $pay_per_page);
+$pay_page = isset($_GET['pay_page']) ? max(1, min((int) $_GET['pay_page'], max(1, $pay_total_pages))) : 1;
+$pay_offset = ($pay_page - 1) * $pay_per_page;
+$pay_records = array_slice($records, $pay_offset, $pay_per_page);
+
+// Build URL for pagination links
+$pay_url_params = $_GET;
+unset($pay_url_params['pay_page']);
+$pay_base_url = '?' . http_build_query($pay_url_params) . (empty($pay_url_params) ? '' : '&');
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/payments.css">
@@ -246,42 +258,21 @@ endif; ?>
         </div>
 
         <div class="card">
-            <div class="card-header" style="flex-wrap:wrap;gap:10px;">
-                <span class="card-title">Payment Records
-                    <span class="record-count"><?= count($records) ?></span>
-                </span>
-                <form method="GET" id="filterForm"
-                    style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto;">
-                    <input type="text" name="q" value="<?= htmlspecialchars($search) ?>"
-                        placeholder="Search tenant / unit…"
-                        style="padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;width:160px;min-width:0;flex:1 1 140px;">
-                    <select name="status" onchange="this.form.submit()"
-                        style="padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--white);flex:1 1 110px;min-width:0;">
-                        <option value="all" <?= $filter_status === 'all' ? 'selected' : '' ?>>All Status</option>
-                        <option value="paid" <?= $filter_status === 'paid' ? 'selected' : '' ?>>Paid</option>
-                        <option value="pending" <?= $filter_status === 'pending' ? 'selected' : '' ?>>Pending</option>
-                        <option value="late" <?= $filter_status === 'late' ? 'selected' : '' ?>>Overdue</option>
-                    </select>
-                    <input type="month" name="month" value="<?= htmlspecialchars($filter_month) ?>"
-                        onchange="this.form.submit()"
-                        style="padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;flex:1 1 130px;min-width:0;">
-                    <!-- <button type="submit" class="btn btn-primary"
-                        style="padding:7px 14px;font-size:13px;white-space:nowrap;">Filter</button>
-                    <?php if ($search || $filter_status !== 'all'): ?>
-                        <a href="?month=<?= $filter_month ?>" class="btn btn-outline"
-                            style="padding:7px 14px;font-size:13px;">Clear</a>
-                    <?php endif; ?> -->
-                </form>
+            <div class="card-header">
+                <span class="card-title">Payment Records</span>
+                <div style="font-size:13px;color:var(--text-soft);">
+                    <?= $pay_total_records ?> total payment(s)
+                </div>
             </div>
 
             <div class="table-wrap">
                 <table>
                     <thead>
                         <tr>
-                            <th>Ref #</th>
-                            <th>Tenant</th>
+                            <th>ID</th>
+                            <th>Tenant / User</th>
                             <th>Unit</th>
-                            <th>Payment Date</th>
+                            <th>Date</th>
                             <th>Amount</th>
                             <th>Method</th>
                             <th>Status</th>
@@ -290,45 +281,38 @@ endif; ?>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (empty($records)): ?>
+                        <?php if (empty($pay_records)): ?>
                             <tr>
-                                <td colspan="9" style="text-align:center;padding:40px;color:var(--text-soft);">No payment
-                                    records found.</td>
+                                <td colspan="9" style="text-align:center;padding:40px;color:var(--text-soft);">
+                                    <?= empty($records) ? 'No payment records found.' : 'No records on this page.' ?>
+                                </td>
                             </tr>
                         <?php else: ?>
-                            <?php foreach ($records as $p):
-                                $badge = match ($p['payment_status']) {
-                                    'paid' => 'success',
-                                    'pending' => 'pending',
-                                    'late' => 'danger',
-                                    default => 'pending'
-                                };
-                                $label = match ($p['payment_status']) {
-                                    'paid' => 'Paid',
-                                    'pending' => 'Pending',
-                                    'late' => 'Overdue',
-                                    default => ucfirst($p['payment_status'])
-                                };
-                                $initial = strtoupper(substr($p['full_name'] ?? '?', 0, 1));
-                                $photoPath = !empty($p['profile_photo']) ? '../../' . htmlspecialchars($p['profile_photo']) : '';
+                            <?php foreach ($pay_records as $p):
+                                $badge = $p['payment_status'] === 'paid' ? 'success' : ($p['payment_status'] === 'late' ? 'danger' : 'pending');
+                                $label = $p['payment_status'] === 'paid' ? 'Paid' : ($p['payment_status'] === 'late' ? 'Overdue' : 'Pending');
+                                $display_name = $p['full_name'] ?? $p['tenant_name'] ?? '—';
+                                $initial = strtoupper(substr($display_name, 0, 1));
+                                $pay_date = $p['payment_date'] ? date('M d, Y', strtotime($p['payment_date'])) : '—';
+                                $payment_num = '#PAY-' . str_pad($p['payment_id'], 3, '0', STR_PAD_LEFT);
                                 ?>
-                                <tr>
-                                    <td><strong>#PAY-<?= str_pad($p['payment_id'], 3, '0', STR_PAD_LEFT) ?></strong></td>
+                                <tr data-payment-id="<?= (int) $p['payment_id'] ?>">
+                                    <td><strong><?= $payment_num ?></strong></td>
                                     <td>
                                         <div style="display:flex;align-items:center;gap:8px;">
-                                            <?php if ($photoPath): ?>
-                                                <img src="<?= $photoPath ?>" alt="<?= $initial ?>"
+                                            <?php if (!empty($p['profile_photo'])): ?>
+                                                <img src="../../<?= htmlspecialchars($p['profile_photo']) ?>" alt="<?= $initial ?>"
                                                     style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;"
                                                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                                 <div class="avatar" style="display:none;"><?= $initial ?></div>
                                             <?php else: ?>
                                                 <div class="avatar"><?= $initial ?></div>
                                             <?php endif; ?>
-                                            <?= htmlspecialchars($p['full_name'] ?? '—') ?>
+                                            <span><?= htmlspecialchars($display_name) ?></span>
                                         </div>
                                     </td>
                                     <td><?= htmlspecialchars($p['unit_number'] ?? '—') ?></td>
-                                    <td><?= $p['payment_date'] ? date('M j, Y', strtotime($p['payment_date'])) : '—' ?></td>
+                                    <td><?= $pay_date ?></td>
                                     <td style="font-weight:700;">
                                         <?= $p['amount_paid'] ? fmt_peso((float) $p['amount_paid']) : '—' ?>
                                     </td>
@@ -365,6 +349,34 @@ endif; ?>
                         <?php endif; ?>
                     </tbody>
                 </table>
+
+                <?php if ($pay_total_pages > 1): ?>
+                    <div
+                        style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);">
+                        <div style="font-size:13px;color:var(--text-soft);">
+                            Showing <?= $pay_offset + 1 ?> - <?= min($pay_offset + $pay_per_page, $pay_total_records) ?> of
+                            <?= $pay_total_records ?>
+                        </div>
+                        <div style="display:flex;gap:4px;">
+                            <?php if ($pay_page > 1): ?>
+                                <a href="<?= $pay_base_url ?>pay_page=<?= $pay_page - 1 ?>"
+                                    style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;color:var(--text);">‹
+                                    Prev</a>
+                            <?php endif; ?>
+
+                            <?php for ($i = 1; $i <= $pay_total_pages; $i++): ?>
+                                <a href="<?= $pay_base_url ?>pay_page=<?= $i ?>"
+                                    style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;background:<?= $i === $pay_page ? 'var(--primary)' : 'transparent' ?>;color:<?= $i === $pay_page ? 'white' : 'var(--text)' ?>;"><?= $i ?></a>
+                            <?php endfor; ?>
+
+                            <?php if ($pay_page < $pay_total_pages): ?>
+                                <a href="<?= $pay_base_url ?>pay_page=<?= $pay_page + 1 ?>"
+                                    style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;color:var(--text);">Next
+                                    ›</a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -377,6 +389,8 @@ endif; ?>
             <button class="modal-close" onclick="closeModal()">×</button>
         </div>
         <form id="paymentForm" method="POST" action="../../api/payments.php">
+            <input type="hidden" name="csrf_token"
+                value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">
             <input type="hidden" name="form_action" id="formAction" value="add">
             <input type="hidden" name="payment_id" id="formPaymentId" value="">
             <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
@@ -388,7 +402,7 @@ endif; ?>
                         <!-- Shown only in Record Payment (add) mode -->
                         <select name="booking_id" id="formBookingId" required
                             style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--white);">
-                            <option value="">— Select tenant —</option>
+                            <option value="">Select tenant</option>
                             <?php foreach ($booking_options as $b): ?>
                                 <option value="<?= (int) $b['booking_id'] ?>">
                                     <?= htmlspecialchars($b['full_name']) ?> — <?= htmlspecialchars($b['unit_number']) ?>
@@ -427,7 +441,7 @@ endif; ?>
                         <label>Payment Method</label>
                         <select name="payment_method" id="formPaymentMethod"
                             style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--white);">
-                            <option value="">— Select —</option>
+                            <option value="">Select</option>
                             <option>Cash</option>
                             <option>GCash</option>
                             <option>Maya</option>
@@ -490,6 +504,7 @@ endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
+    window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
     window.__PS_PAYMENTS__ = window.__PS_DATA__ || {};
     window.__PS_PAYMENTS__.trendLabels = <?= json_encode($trend_labels) ?>;
     window.__PS_PAYMENTS__.trendCollected = <?= json_encode($trend_collected) ?>;

@@ -8,7 +8,7 @@
     justify-content: flex-start;
     flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 22px;
+    margin-bottom: 4px;
 }
 
 .amenity-toolbar .tb-left {
@@ -196,11 +196,12 @@
     position: relative;
     cursor: default;
     width: auto;
-    white-space: nowrap;   /* 👈 keeps name on one line */
+    white-space: nowrap;
 }
+
 .amenity-card:hover {
     background: var(--bg, #f8fafc);
-    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
 }
 
 .am-icon-wrap {
@@ -330,7 +331,6 @@
     border: 1px solid var(--border);
     border-radius: 16px;
 }
-/* ── Mobile responsive fixes ── */
 @media (max-width: 768px) {
     .amenity-toolbar {
         flex-direction: column;
@@ -340,22 +340,46 @@
 
     .amenity-toolbar .tb-right {
         width: 100%;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center;
+        gap: 6px;
     }
 
-    .am-search-wrap {
-        width: 100%;
+    /* Override the hardcoded 220px min-width */
+    .amenity-toolbar .am-search-wrap {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        width: auto !important;
     }
 
-    .am-search-wrap input {
+    .amenity-toolbar .am-search-wrap input {
         width: 100% !important;
+        min-width: 0 !important;
         box-sizing: border-box;
     }
 
-    .am-input {
-        width: 100% !important;
+    .amenity-toolbar .tb-right select.am-input {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        width: auto !important;
         box-sizing: border-box;
+        font-size: 12px;
+        padding: 7px 4px;
+    }
+}
+
+@media (max-width: 360px) {
+    .amenity-toolbar .tb-right {
+        flex-wrap: wrap !important;
+    }
+
+    .amenity-toolbar .am-search-wrap {
+        flex: 1 1 100% !important;
+    }
+
+    .amenity-toolbar .tb-right select.am-input {
+        flex: 1 1 calc(50% - 3px) !important;
     }
 }

@@ -18,21 +18,22 @@ if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], $allowed_roles)) {
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-// ────────────────────────────────────────────────
-//  HELPER: safe query with prepared statements
-// ────────────────────────────────────────────────
 function db_query($conn, string $sql, array $params = []): array
 {
     $st = $conn->prepare($sql);
-    if (!$st) return [];
+    if (!$st)
+        return [];
 
     if (!empty($params)) {
-        $types  = '';
+        $types = '';
         $values = [];
         foreach ($params as $p) {
-            if (is_int($p))   $types .= 'i';
-            elseif (is_float($p)) $types .= 'd';
-            else              $types .= 's';
+            if (is_int($p))
+                $types .= 'i';
+            elseif (is_float($p))
+                $types .= 'd';
+            else
+                $types .= 's';
             $values[] = $p;
         }
         $st->bind_param($types, ...$values);
@@ -40,7 +41,7 @@ function db_query($conn, string $sql, array $params = []): array
 
     $st->execute();
     $result = $st->get_result();
-    $rows   = [];
+    $rows = [];
     while ($row = $result->fetch_assoc()) {
         $rows[] = $row;
     }
@@ -51,15 +52,19 @@ function db_query($conn, string $sql, array $params = []): array
 function db_execute($conn, string $sql, array $params = []): bool
 {
     $st = $conn->prepare($sql);
-    if (!$st) return false;
+    if (!$st)
+        return false;
 
     if (!empty($params)) {
-        $types  = '';
+        $types = '';
         $values = [];
         foreach ($params as $p) {
-            if (is_int($p))       $types .= 'i';
-            elseif (is_float($p)) $types .= 'd';
-            else                  $types .= 's';
+            if (is_int($p))
+                $types .= 'i';
+            elseif (is_float($p))
+                $types .= 'd';
+            else
+                $types .= 's';
             $values[] = $p;
         }
         $st->bind_param($types, ...$values);
@@ -70,23 +75,18 @@ function db_execute($conn, string $sql, array $params = []): bool
     return $ok;
 }
 
-// ────────────────────────────────────────────────
-//  GET — list expenses
-// ────────────────────────────────────────────────
 if ($method === 'GET') {
-    $month    = $_GET['month']    ?? date('Y-m');
-    $search   = trim($_GET['q']   ?? '');
+    $month = $_GET['month'] ?? date('Y-m');
+    $search = trim($_GET['q'] ?? '');
     $category = trim($_GET['category'] ?? '');
 
-    // Parse month safely
     $parts = explode('-', $month);
-    $year  = (int)($parts[0] ?? date('Y'));
-    $mon   = (int)($parts[1] ?? date('n'));
+    $year = (int) ($parts[0] ?? date('Y'));
+    $mon = (int) ($parts[1] ?? date('n'));
 
     $date_from = sprintf('%04d-%02d-01', $year, $mon);
-    $date_to   = date('Y-m-t', strtotime($date_from));
+    $date_to = date('Y-m-t', strtotime($date_from));
 
-    // ── Stats for selected month ──────────────────
     $stats_sql = "
         SELECT
             COALESCE(SUM(e.amount), 0) AS total,
@@ -101,29 +101,28 @@ if ($method === 'GET') {
     ";
     $stats_row = db_query($conn, $stats_sql, [$date_from, $date_to])[0] ?? [];
     $stats = [
-        'total'       => (float)($stats_row['total']       ?? 0),
-        'maintenance' => (float)($stats_row['maintenance'] ?? 0),
-        'utilities'   => (float)($stats_row['utilities']   ?? 0),
-        'salaries'    => (float)($stats_row['salaries']    ?? 0),
-        'admin'       => (float)($stats_row['admin']       ?? 0),
-        'insurance'   => (float)($stats_row['insurance']   ?? 0),
-        'count'       => (int)($stats_row['count']         ?? 0),
+        'total' => (float) ($stats_row['total'] ?? 0),
+        'maintenance' => (float) ($stats_row['maintenance'] ?? 0),
+        'utilities' => (float) ($stats_row['utilities'] ?? 0),
+        'salaries' => (float) ($stats_row['salaries'] ?? 0),
+        'admin' => (float) ($stats_row['admin'] ?? 0),
+        'insurance' => (float) ($stats_row['insurance'] ?? 0),
+        'count' => (int) ($stats_row['count'] ?? 0),
     ];
 
     // ── 6-month trend ─────────────────────────────
     $trends = [];
     for ($i = 5; $i >= 0; $i--) {
-        $ts   = strtotime("-$i months", strtotime($date_from));
-        $mf   = date('Y-m-01', $ts);
-        $mt   = date('Y-m-t',  $ts);
-        $row  = db_query($conn, "SELECT COALESCE(SUM(amount),0) AS t FROM expenses WHERE expense_date BETWEEN ? AND ?", [$mf, $mt])[0] ?? ['t' => 0];
+        $ts = strtotime("-$i months", strtotime($date_from));
+        $mf = date('Y-m-01', $ts);
+        $mt = date('Y-m-t', $ts);
+        $row = db_query($conn, "SELECT COALESCE(SUM(amount),0) AS t FROM expenses WHERE expense_date BETWEEN ? AND ?", [$mf, $mt])[0] ?? ['t' => 0];
         $trends[] = [
-            'label'  => date('M', $ts),
-            'amount' => (float)$row['t'],
+            'label' => date('M', $ts),
+            'amount' => (float) $row['t'],
         ];
     }
 
-    // ── Category breakdown ────────────────────────
     $cat_rows = db_query(
         $conn,
         "SELECT expense_category, COALESCE(SUM(amount),0) AS total
@@ -135,11 +134,11 @@ if ($method === 'GET') {
     );
     $categories = array_map(fn($r) => [
         'category' => $r['expense_category'],
-        'total'    => (float)$r['total'],
+        'total' => (float) $r['total'],
     ], $cat_rows);
 
     // ── Expense records (with filters) ───────────
-    $sql    = "
+    $sql = "
         SELECT
             e.expense_id,
             e.expense_category,
@@ -158,15 +157,15 @@ if ($method === 'GET') {
     $params = [$date_from, $date_to];
 
     if ($search !== '') {
-        $sql     .= " AND (e.description LIKE ? OR p.property_name LIKE ? OR e.expense_category LIKE ?)";
-        $like     = "%$search%";
+        $sql .= " AND (e.description LIKE ? OR p.property_name LIKE ? OR e.expense_category LIKE ?)";
+        $like = "%$search%";
         $params[] = $like;
         $params[] = $like;
         $params[] = $like;
     }
 
     if ($category !== '') {
-        $sql     .= " AND e.expense_category = ?";
+        $sql .= " AND e.expense_category = ?";
         $params[] = $category;
     }
 
@@ -175,28 +174,29 @@ if ($method === 'GET') {
     $expenses = db_query($conn, $sql, $params);
 
     echo json_encode([
-        'success'    => true,
-        'expenses'   => $expenses,
-        'stats'      => $stats,
-        'trends'     => $trends,
+        'success' => true,
+        'expenses' => $expenses,
+        'stats' => $stats,
+        'trends' => $trends,
         'categories' => $categories,
-        'count'      => count($expenses),
+        'count' => count($expenses),
     ]);
     exit;
 }
 
 if ($method === 'POST') {
+    require_csrf_token();
     $action = trim($_POST['action'] ?? '');
 
     //CREATE
     if ($action === 'create') {
-        $property_id = (int)($_POST['property_id'] ?? 0) ?: null;
-        $unit_id     = (int)($_POST['unit_id']     ?? 0) ?: null;
-        $category    = trim($_POST['expense_category'] ?? '');
-        $description = trim($_POST['description']      ?? '');
-        $amount      = (float)($_POST['amount']        ?? 0);
-        $date        = trim($_POST['expense_date']     ?? date('Y-m-d'));
-        $recorded_by = (int)$_SESSION['user_id'];
+        $property_id = (int) ($_POST['property_id'] ?? 0) ?: null;
+        $unit_id = (int) ($_POST['unit_id'] ?? 0) ?: null;
+        $category = trim($_POST['expense_category'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $amount = (float) ($_POST['amount'] ?? 0);
+        $date = trim($_POST['expense_date'] ?? date('Y-m-d'));
+        $recorded_by = (int) $_SESSION['user_id'];
 
         if (!$category || !$description || $amount <= 0) {
             echo json_encode(['success' => false, 'message' => 'Category, description, and a positive amount are required.']);
@@ -235,13 +235,13 @@ if ($method === 'POST') {
 
     //UPDATE
     if ($action === 'update') {
-        $expense_id  = (int)($_POST['expense_id'] ?? 0);
-        $property_id = (int)($_POST['property_id'] ?? 0) ?: null;
-        $unit_id     = (int)($_POST['unit_id']     ?? 0) ?: null;
-        $category    = trim($_POST['expense_category'] ?? '');
-        $description = trim($_POST['description']      ?? '');
-        $amount      = (float)($_POST['amount']        ?? 0);
-        $date        = trim($_POST['expense_date']     ?? '');
+        $expense_id = (int) ($_POST['expense_id'] ?? 0);
+        $property_id = (int) ($_POST['property_id'] ?? 0) ?: null;
+        $unit_id = (int) ($_POST['unit_id'] ?? 0) ?: null;
+        $category = trim($_POST['expense_category'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $amount = (float) ($_POST['amount'] ?? 0);
+        $date = trim($_POST['expense_date'] ?? '');
 
         if (!$expense_id) {
             echo json_encode(['success' => false, 'message' => 'Invalid expense ID.']);
@@ -265,6 +265,12 @@ if ($method === 'POST') {
         );
 
         if ($ok) {
+            // Sync the linked transaction row
+            db_execute(
+                $conn,
+                "UPDATE transactions SET description = ?, category = ?, amount = ?, transaction_date = ?, property_id = ? WHERE reference_no LIKE ?",
+                [$description, $category, $amount, $date, $property_id, 'EXP-' . $expense_id . '-%']
+            );
             echo json_encode(['success' => true, 'message' => 'Expense updated.']);
         } else {
             echo json_encode(['success' => false, 'message' => $conn->error]);
@@ -274,12 +280,15 @@ if ($method === 'POST') {
 
     //DELETE
     if ($action === 'delete') {
-        $expense_id = (int)($_POST['expense_id'] ?? 0);
+        $expense_id = (int) ($_POST['expense_id'] ?? 0);
 
         if (!$expense_id) {
             echo json_encode(['success' => false, 'message' => 'Invalid expense ID.']);
             exit;
         }
+
+        // Delete linked transaction first
+        db_execute($conn, "DELETE FROM transactions WHERE reference_no LIKE ?", ["EXP-" . $expense_id . "-%"]);
 
         $ok = db_execute($conn, "DELETE FROM expenses WHERE expense_id = ?", [$expense_id]);
 

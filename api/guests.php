@@ -1,9 +1,4 @@
 <?php
-/**
- * API: /api/guests.php
- * GET  — list all guests with booking stats
- * POST — blacklist / unblacklist / deactivate
- */
 header('Content-Type: application/json');
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/db.php';
@@ -54,6 +49,7 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
+    require_csrf_token();
     $action = $_POST['action'] ?? '';
     $uid    = (int)($_POST['user_id'] ?? 0);
 

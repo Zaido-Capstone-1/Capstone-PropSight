@@ -266,9 +266,8 @@
 
 .inv-stat-label {
     font-size: 12px;
-    font-weight: 600;
     color: var(--inv-text-soft);
-    text-transform: uppercase;
+    text-transform: capitalize;
     letter-spacing: .5px;
     margin-bottom: 4px;
 }
@@ -338,11 +337,13 @@
 .inv-card-top {
     display: flex;
     align-items: center;
-    justify-content: space-between; /* keeps title left, search+filters right */
+    justify-content: space-between;
+    /* keeps title left, search+filters right */
     padding: 18px 22px;
     border-bottom: none;
     gap: 12px;
-    flex-wrap: nowrap; /* prevent wrapping */
+    flex-wrap: nowrap;
+    /* prevent wrapping */
 }
 
 .inv-card-title {
@@ -355,34 +356,26 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-wrap: nowrap; /* prevent wrapping inside filters */
+    flex-wrap: nowrap;
+    /* prevent wrapping inside filters */
 }
 
 .inv-search {
-    position: relative;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    margin-right: 10px; /* optional spacing from filters */
-}
-
-.inv-search svg {
-    position: absolute;
-    left: 10px;
-    color: #aab;
-    pointer-events: none;
-    width: 15px;
-    height: 15px;
 }
 
 .inv-search input {
-    padding: 7px 12px 7px 32px;
+    padding: 7px 12px;
     border: 1px solid var(--inv-border);
     border-radius: 7px;
     font-size: 13px;
     outline: none;
     width: 210px;
     background: var(--inv-bg-soft);
+    color: var(--inv-text);
     transition: border-color .2s, background .2s;
+    box-sizing: border-box;
 }
 
 .inv-search input:focus {
@@ -1050,6 +1043,7 @@
     color: var(--inv-text-soft);
     margin: 0;
 }
+
 /* ── Mobile responsive ── */
 @media (max-width: 768px) {
     .inv-stat-grid {
@@ -1086,25 +1080,26 @@
 
     .inv-filters {
         width: 100%;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        display: flex;
+        flex-direction: row;
         gap: 8px;
     }
 
     .inv-search {
-        grid-column: 1 / 2;
-        margin-right: 0;
-        width: 100%;
+        flex: 1;
+        min-width: 0;
     }
 
     .inv-search input {
-        width: 100%;
+        width: 100% !important;
         box-sizing: border-box;
+        padding: 7px 12px !important;
     }
 
     .inv-select {
-        grid-column: 2 / 3;
-        width: 100%;
+        flex: 0 0 110px;
+        width: 110px !important;
         min-width: 0;
+        font-size: 12px;
     }
 }

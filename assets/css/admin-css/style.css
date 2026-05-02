@@ -1816,10 +1816,13 @@ textarea {
     padding: 0 16px;
     padding-top: 68px;
     overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 100vh;
   }
 
   body {
     overflow-x: hidden;
+    overflow-y: auto;
   }
 }
 

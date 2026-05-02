@@ -20,45 +20,33 @@ if (!isset($_FILES['profile_photo']) || $_FILES['profile_photo']['error'] !== UP
     exit;
 }
 
-$allowed = [
-    'image/jpeg' => 'jpg',
-    'image/png'  => 'png',
-    'image/webp' => 'webp',
+require_once '../../includes/secure_upload.php';
+
+// Get user ID from session
+$userId = (int)$_SESSION['user_id'];
+
+// Configure upload for profile photos
+$uploadConfig = [
+    'allowedMimeTypes' => [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+    ],
+    'maxFileSize' => 2 * 1024 * 1024, // 2MB
+    'uploadDir' => 'uploads/profile_photos/',
+    'createUniqueNames' => true,
 ];
 
-$tmpPath = $_FILES['profile_photo']['tmp_name'];
-$mime = mime_content_type($tmpPath);
+$secureUpload = new SecureFileUpload($uploadConfig);
+$result = $secureUpload->processUpload($_FILES['profile_photo'], 'user_' . $userId . '_');
 
-if (!isset($allowed[$mime])) {
-    $_SESSION['toast_error'] = 'Only JPG, PNG, and WEBP files are allowed.';
+if (!$result['success']) {
+    $_SESSION['toast_error'] = $result['error'];
     header('Location: ../../pages/user/profile.php');
     exit;
 }
 
-$maxSize = 2 * 1024 * 1024;
-if ((int)$_FILES['profile_photo']['size'] > $maxSize) {
-    $_SESSION['toast_error'] = 'Profile photo must be 2MB or less.';
-    header('Location: ../../pages/user/profile.php');
-    exit;
-}
-
-$userId = (int)$_SESSION['user_id'];
-$ext = $allowed[$mime];
-$fileName = 'user_' . $userId . '_' . time() . '.' . $ext;
-
-$uploadDirFs = __DIR__ . '/../../uploads/profile_photos';
-if (!is_dir($uploadDirFs)) {
-    mkdir($uploadDirFs, 0775, true);
-}
-
-$destFs = $uploadDirFs . '/' . $fileName;
-$destDb = 'uploads/profile_photos/' . $fileName;
-
-if (!move_uploaded_file($tmpPath, $destFs)) {
-    $_SESSION['toast_error'] = 'Failed to upload profile photo. Try again.';
-    header('Location: ../../pages/user/profile.php');
-    exit;
-}
+$destDb = $result['relative_path'];
 
 $stmt = $conn->prepare('UPDATE users SET profile_photo = ? WHERE user_id = ?');
 $stmt->bind_param('si', $destDb, $userId);

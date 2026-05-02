@@ -36,6 +36,7 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
+    require_csrf_token();
     $action = $_POST['action'] ?? '';
 
     // ── Update profile ────────────────────────────────────

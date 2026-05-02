@@ -95,7 +95,6 @@ if ($_sb_initials === '') $_sb_initials = 'A';
         </svg>
       </div>
       <span class="nav-label">Analytics</span>
-      <span class="nav-badge">3</span>
     </a>
 
     <div class="nav-divider"></div>
@@ -140,7 +139,7 @@ if ($_sb_initials === '') $_sb_initials = 'A';
         </svg>
       </div>
       <span class="nav-label">Bookings</span>
-      <span class="nav-badge" data-rt="bookings">12</span>
+      <span class="nav-badge" data-rt="bookings" style="display:none;">0</span>
       <span class="nav-arrow">
         <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <polyline points="9 18 15 12 9 6" />
@@ -255,7 +254,7 @@ if ($_sb_initials === '') $_sb_initials = 'A';
         </svg>
       </div>
       <span class="nav-label">Messages</span>
-      <span class="nav-badge" data-rt="messages">5</span>
+      <span class="nav-badge" data-rt="messages" style="display:none;">0</span>
     </a>
 
     <a href="settings.php" class="nav-item<?= nav_active('settings') ?>">

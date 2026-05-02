@@ -23,16 +23,16 @@
     'use strict';
 
     /* ── Config ─────────────────────────────────────── */
-    const INTERVAL   = window.PS_RT_INTERVAL || 8000;   // ms between polls
-    const API_BASE   = window.PS_RT_API     || '../../api/realtime.php';
-    const PAGE       = window.PS_RT_PAGE    || 'dashboard';
-    const ROLE       = window.PS_RT_ROLE    || 'user';
+    const INTERVAL = window.PS_RT_INTERVAL || 8000;   // ms between polls
+    const API_BASE = window.PS_RT_API || '../../api/realtime.php';
+    const PAGE = window.PS_RT_PAGE || 'dashboard';
+    const ROLE = window.PS_RT_ROLE || 'user';
 
     /* ── State ──────────────────────────────────────── */
-    let lastTs       = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    let pollTimer    = null;
-    let failCount    = 0;
-    let paused       = false;
+    let lastTs = '2000-01-01 00:00:00';
+    let pollTimer = null;
+    let failCount = 0;
+    let paused = false;
 
     /* ── Helpers ────────────────────────────────────── */
     function emit(name, detail) {
@@ -45,9 +45,9 @@
 
     function statusLabel(s) {
         const map = {
-            pending:   { text: 'Pending',   cls: 'badge-pending'   },
+            pending: { text: 'Pending', cls: 'badge-pending' },
             confirmed: { text: 'Confirmed', cls: 'badge-confirmed' },
-            active:    { text: 'Active',    cls: 'badge-active'    },
+            active: { text: 'Active', cls: 'badge-active' },
             completed: { text: 'Completed', cls: 'badge-completed' },
             cancelled: { text: 'Cancelled', cls: 'badge-cancelled' },
         };
@@ -64,7 +64,7 @@
     })();
     function _persistSeenNotifs() {
         try { localStorage.setItem('ps_seen_notifs', JSON.stringify([..._seenNotifs].slice(-200))); }
-        catch (e) {}
+        catch (e) { }
     }
 
     // Admin booking IDs — seeded from the DOM after page load so existing
@@ -83,7 +83,7 @@
     })();
     function _persistSeenMsgIds() {
         try { sessionStorage.setItem('ps_seen_msg_ids', JSON.stringify([..._seenMsgIds].slice(-500))); }
-        catch (e) {}
+        catch (e) { }
     }
 
     /* ── Core poll ──────────────────────────────────── */
@@ -100,40 +100,40 @@
                 lastTs = data.ts || lastTs;
 
                 /* ── Admin events ────────────────── */
-                if (data.booking_stats)   emit('booking_stats',   data.booking_stats);
-                if (data.unit_stats)      emit('unit_stats',      data.unit_stats);
+                if (data.booking_stats) emit('booking_stats', data.booking_stats);
+                if (data.unit_stats) emit('unit_stats', data.unit_stats);
                 if (data.new_bookings && data.new_bookings.length)
-                                          emit('new_bookings',    data.new_bookings);
+                    emit('new_bookings', data.new_bookings);
                 if (typeof data.unread_messages === 'number')
-                                          emit('unread_messages', data.unread_messages);
+                    emit('unread_messages', data.unread_messages);
                 if (data.new_messages && data.new_messages.length)
-                                          emit('new_messages',    data.new_messages);
+                    emit('new_messages', data.new_messages);
                 if (data.checkin_updates && data.checkin_updates.length)
-                                          emit('checkin_updates', data.checkin_updates);
+                    emit('checkin_updates', data.checkin_updates);
                 if (data.recent_activity && data.recent_activity.length)
-                                          emit('recent_activity', data.recent_activity);
+                    emit('recent_activity', data.recent_activity);
                 if (typeof data.total_revenue === 'number')
-                                          emit('total_revenue',   data.total_revenue);
+                    emit('total_revenue', data.total_revenue);
                 if (data.dashboard_metrics) emit('dashboard_metrics', data.dashboard_metrics);
-                if (data.financial_series)  emit('financial_series', data.financial_series);
-                if (data.top_properties)    emit('top_properties', data.top_properties);
-                if (data.task_summary)      emit('task_summary', data.task_summary);
+                if (data.financial_series) emit('financial_series', data.financial_series);
+                if (data.top_properties) emit('top_properties', data.top_properties);
+                if (data.task_summary) emit('task_summary', data.task_summary);
                 if (data.right_panel_activity) emit('right_panel_activity', data.right_panel_activity);
 
                 /* ── User events ─────────────────── */
                 if (data.booking_updates && data.booking_updates.length)
-                                          emit('booking_updates', data.booking_updates);
-                if (data.booking_stats)   emit('booking_stats',   data.booking_stats);
-                if (data.notifications)   emit('notifications',   {
+                    emit('booking_updates', data.booking_updates);
+                if (data.booking_stats) emit('booking_stats', data.booking_stats);
+                if (data.notifications) emit('notifications', {
                     items: data.notifications,
                     count: data.unread_notif_count || 0,
                 });
-                if (data.profile_sync)    emit('profile_sync',    data.profile_sync);
-                if (data.user_metrics)    emit('user_metrics',    data.user_metrics);
+                if (data.profile_sync) emit('profile_sync', data.profile_sync);
+                if (data.user_metrics) emit('user_metrics', data.user_metrics);
                 if (data.unit_ratings && data.unit_ratings.length)
-                                         emit('unit_ratings',    data.unit_ratings);
+                    emit('unit_ratings', data.unit_ratings);
                 if (Object.prototype.hasOwnProperty.call(data, 'manage_stay_booking'))
-                                         emit('manage_stay_booking', data.manage_stay_booking);
+                    emit('manage_stay_booking', data.manage_stay_booking);
             })
             .catch(() => {
                 failCount++;
@@ -152,7 +152,7 @@
         if (document.hidden) {
             paused = true;
         } else {
-            paused    = false;
+            paused = false;
             failCount = 0;
             reschedule(INTERVAL);
             poll(); // immediate catch-up poll
@@ -163,11 +163,22 @@
     document.addEventListener('DOMContentLoaded', () => {
         poll();                          // first call immediately
         pollTimer = setInterval(poll, INTERVAL);
+
+        fetch(`${API_BASE}?since=2000-01-01 00:00:00&page=${PAGE}&role=${ROLE}&_=${Date.now()}`, { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) return;
+                if (data.booking_stats) emit('booking_stats', data.booking_stats);
+                if (typeof data.unread_messages === 'number') emit('unread_messages', data.unread_messages);
+                if (data.booking_updates && data.booking_updates.length) emit('booking_updates', data.booking_updates);
+                if (data.user_metrics) emit('user_metrics', data.user_metrics);
+            })
+            .catch(() => { });
     });
 
     /* ── Public API ─────────────────────────────────── */
     window.PSRealtime = {
-        pause:  () => { paused = true;  clearInterval(pollTimer); },
+        pause: () => { paused = true; clearInterval(pollTimer); },
         resume: () => { paused = false; reschedule(INTERVAL); poll(); },
         poll,
         fmtCurrency,
@@ -186,18 +197,30 @@
         const s = e.detail;
         const pending = parseInt(s.pending) || 0;
 
-        // Update "Bookings" badge in sidebar
+        // Update "Bookings" badge in admin sidebar
         document.querySelectorAll('.nav-badge[data-rt="bookings"]').forEach(el => {
             el.textContent = pending;
-            el.style.display = pending > 0 ? '' : 'none';
+            el.style.display = pending > 0 ? 'inline-flex' : 'none';
+        });
+
+        // Hide/show chevron based on badge visibility
+        document.querySelectorAll('[data-bookings-chevron]').forEach(chevron => {
+            chevron.style.display = pending > 0 ? 'none' : 'inline-flex';
         });
     });
 
     window.addEventListener('ps:unread_messages', e => {
         const count = e.detail || 0;
+
+        // Update "Messages" badge in admin sidebar
         document.querySelectorAll('.nav-badge[data-rt="messages"]').forEach(el => {
             el.textContent = count;
-            el.style.display = count > 0 ? '' : 'none';
+            el.style.display = count > 0 ? 'inline-flex' : 'none';
+        });
+
+        // Hide/show chevron based on badge visibility
+        document.querySelectorAll('[data-msg-chevron]').forEach(chevron => {
+            chevron.style.display = count > 0 ? 'none' : 'inline-flex';
         });
     });
 
@@ -232,7 +255,7 @@
         // If dropdown is open, inject new items live
         const drop = document.getElementById('notifDropdown');
         if (drop && drop.style.display === 'block') {
-            const list  = document.getElementById('rt-notif-list');
+            const list = document.getElementById('rt-notif-list');
             const empty = document.getElementById('notifEmptyState');
             if (list && items.length) {
                 if (empty) empty.style.display = 'none';
@@ -373,42 +396,37 @@
     window.addEventListener('ps:booking_updates', e => {
         const updates = e.detail;
         updates.forEach(b => {
-            const id    = String(b.booking_id);
-            const lbl   = statusLabel(b.status);
+            const id = String(b.booking_id);
+            const lbl = statusLabel(b.status);
 
-            // Update status badge on booking card
             const badge = document.querySelector(`[data-booking-id="${id}"] .booking-status-badge`);
             if (badge) {
                 badge.textContent = lbl.text;
-                badge.className   = 'booking-status-badge ' + lbl.cls;
+                badge.className = 'booking-status-badge ' + lbl.cls;
                 badge.setAttribute('data-status', b.status);
             }
 
-            // Update data-status on the card (for tab filter)
             const card = document.querySelector(`[data-booking-id="${id}"]`);
             if (card) card.dataset.status = b.status;
 
-            // Show toast if status changed from what we knew
             const prev = _knownStatuses.get(id);
             if (prev && prev !== b.status && typeof showToast === 'function') {
                 showToast(
-                    `Booking #BK-${id.padStart(4,'0')} is now ${lbl.text}.`,
+                    `Booking #BK-${id.padStart(4, '0')} is now ${lbl.text}.`,
                     b.status === 'cancelled' ? 'warning' : 'success'
                 );
             }
             _knownStatuses.set(id, b.status);
 
-            // Hide action buttons that no longer apply
             const actionsWrap = document.querySelector(`[data-booking-id="${id}"] .booking-actions`);
             if (actionsWrap) {
                 const cancelBtn = actionsWrap.querySelector('[data-action="cancel"]');
-                if (cancelBtn && ['cancelled','completed','active'].includes(b.status)) {
+                if (cancelBtn && ['cancelled', 'completed', 'active'].includes(b.status)) {
                     cancelBtn.style.display = 'none';
                 }
             }
         });
 
-        // Update stat pill counts if they exist
         _updateUserStatPills(e);
     });
 
@@ -428,8 +446,8 @@
         if (!s || typeof s !== 'object') return;
 
         const map = {
-            'upcoming':  s.upcoming  || 0,
-            'active':    s.active_cnt|| 0,
+            'upcoming': s.upcoming || 0,
+            'active': s.active_cnt || 0,
             'completed': s.completed || 0,
             'cancelled': s.cancelled || 0,
         };
@@ -475,11 +493,11 @@
 
     /** Patch a row's status badge and action buttons in-place */
     function _updateAdminRow(b) {
-        const id  = String(b.booking_id);
+        const id = String(b.booking_id);
         const row = document.querySelector(`tr[data-booking-id="${id}"]`);
         if (!row) return;
 
-        const lbl  = statusLabel(b.status);
+        const lbl = statusLabel(b.status);
         const prev = row.dataset.status;
 
         if (prev === b.status) return; // no change
@@ -489,7 +507,7 @@
         const badgeCell = row.querySelector('.status-badge, .badge, [data-rt-badge]');
         if (badgeCell) {
             badgeCell.textContent = lbl.text;
-            badgeCell.className   = badgeCell.className.replace(/badge-\w+/g, '') + ' ' + lbl.cls;
+            badgeCell.className = badgeCell.className.replace(/badge-\w+/g, '') + ' ' + lbl.cls;
         }
 
         // Flash the row
@@ -498,7 +516,7 @@
         setTimeout(() => { row.style.background = ''; }, 1800);
 
         if (typeof showToast === 'function' && prev) {
-            showToast(`Booking #BK-${id.padStart(4,'0')} updated to ${lbl.text}.`, 'info');
+            showToast(`Booking #BK-${id.padStart(4, '0')} updated to ${lbl.text}.`, 'info');
         }
     }
 
@@ -507,22 +525,22 @@
      * ──────────────────────────────────────────────────── */
     window.addEventListener('ps:booking_stats', e => {
         const s = e.detail;
-        _setInnerText('[data-rt-kpi="total_bookings"]',  s.total    || 0);
-        _setInnerText('[data-rt-kpi="pending_bookings"]', s.pending  || 0);
-        _setInnerText('[data-rt-kpi="confirmed_bookings"]', (parseInt(s.confirmed)||0));
+        _setInnerText('[data-rt-kpi="total_bookings"]', s.total || 0);
+        _setInnerText('[data-rt-kpi="pending_bookings"]', s.pending || 0);
+        _setInnerText('[data-rt-kpi="confirmed_bookings"]', (parseInt(s.confirmed) || 0));
         _setInnerText('[data-rt-kpi="completed_bookings"]', s.completed || 0);
         _setInnerText('[data-rt-kpi="cancelled_bookings"]', s.cancelled || 0);
     });
 
     window.addEventListener('ps:unit_stats', e => {
         const u = e.detail;
-        const total    = parseInt(u.total)       || 1;
-        const occupied = parseInt(u.occupied)    || 0;
-        const rate     = Math.round((occupied / total) * 100);
-        _setInnerText('[data-rt-kpi="occupancy_rate"]',   rate + '%');
-        _setInnerText('[data-rt-kpi="occupied_units"]',   occupied);
-        _setInnerText('[data-rt-kpi="vacant_units"]',     u.vacant      || 0);
-        _setInnerText('[data-rt-kpi="maintenance_units"]',u.maintenance || 0);
+        const total = parseInt(u.total) || 1;
+        const occupied = parseInt(u.occupied) || 0;
+        const rate = Math.round((occupied / total) * 100);
+        _setInnerText('[data-rt-kpi="occupancy_rate"]', rate + '%');
+        _setInnerText('[data-rt-kpi="occupied_units"]', occupied);
+        _setInnerText('[data-rt-kpi="vacant_units"]', u.vacant || 0);
+        _setInnerText('[data-rt-kpi="maintenance_units"]', u.maintenance || 0);
 
         // Update donut chart if chart.js instance stored
         const inst = window._psOccupancyChart;
@@ -543,16 +561,19 @@
      * ──────────────────────────────────────────────────── */
     window.addEventListener('ps:recent_activity', e => {
         const items = e.detail;
-        const feed  = document.getElementById('rt-activity-feed');
+        const feed = document.getElementById('rt-activity-feed');
         if (!feed) return;
+
+        const placeholder = feed.querySelector('.dashboard-empty');
+        if (placeholder) placeholder.remove();
 
         items.forEach(b => {
             const key = `act-${b.booking_id}-${b.status}`;
             if (feed.querySelector(`[data-act-key="${key}"]`)) return;
 
-            const lbl  = statusLabel(b.status);
-            const div  = document.createElement('div');
-            div.className   = 'rt-activity-item';
+            const lbl = statusLabel(b.status);
+            const div = document.createElement('div');
+            div.className = 'rt-activity-item';
             div.dataset.actKey = key;
             div.innerHTML = `
                 <div class="rt-act-dot" style="background:${_statusColor(b.status)}"></div>
@@ -602,7 +623,7 @@
     window.addEventListener('ps:checkin_updates', e => {
         const updates = e.detail;
         updates.forEach(b => {
-            const id  = String(b.booking_id);
+            const id = String(b.booking_id);
             const row = document.querySelector(`tr[data-booking-id="${id}"], [data-booking-id="${id}"]`);
             if (!row) return;
 
@@ -610,7 +631,7 @@
             const badge = row.querySelector('.badge, .status-badge, [data-rt-badge]');
             if (badge) {
                 badge.textContent = lbl.text;
-                badge.className   = badge.className.replace(/badge-\w+/g, '') + ' ' + lbl.cls;
+                badge.className = badge.className.replace(/badge-\w+/g, '') + ' ' + lbl.cls;
             }
             row.style.transition = 'background 0.5s';
             row.style.background = 'var(--blue-50, #eff6ff)';
@@ -739,7 +760,7 @@
                     .then(r => r.json())
                     .then(data => {
                         if (!data.success) return;
-                        const list  = document.getElementById('rt-notif-list');
+                        const list = document.getElementById('rt-notif-list');
                         const empty = document.getElementById('notifEmptyState');
                         const items = data.notifications || [];
 
@@ -767,7 +788,7 @@
                                 fd.append('id', n.id);
                                 if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
                                 fetch('../../api/user/notifications.php', { method: 'POST', body: fd })
-                                    .catch(() => {});
+                                    .catch(() => { });
                                 div.style.opacity = '0.6';
                                 // Decrement badge by 1 if it was unread
                                 if (n.is_read != 1) {
@@ -790,7 +811,7 @@
                             el.style.display = data.unread_count > 0 ? 'flex' : 'none';
                         });
                     })
-                    .catch(() => {});
+                    .catch(() => { });
             }
         });
 
@@ -818,10 +839,10 @@
                         el.style.display = 'none';
                     });
                     // Also clear localStorage seen set so new notifs will show toasts
-                    try { localStorage.removeItem('ps_seen_notifs'); } catch(e) {}
+                    try { localStorage.removeItem('ps_seen_notifs'); } catch (e) { }
                     _seenNotifs.clear();
                 })
-                .catch(() => {});
+                .catch(() => { });
         });
 
         // Close when clicking outside
@@ -833,8 +854,8 @@
     function _escHtml(str) {
         if (!str) return '';
         return String(str)
-            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     function _setInnerText(selector, value) {
@@ -844,25 +865,29 @@
     }
 
     function _statusColor(s) {
-        const c = { pending:'#f59e0b', confirmed:'#2563c4', active:'#16a34a',
-                    completed:'#6b7280', cancelled:'#dc2626' };
+        const c = {
+            pending: '#f59e0b', confirmed: '#2563c4', active: '#16a34a',
+            completed: '#6b7280', cancelled: '#dc2626'
+        };
         return c[s] || '#94a3b8';
     }
 
     function _relativeTime(ts) {
         if (!ts) return '';
         const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
-        if (diff < 60)   return 'just now';
+        if (diff < 60) return 'just now';
         if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-        if (diff < 86400)return Math.floor(diff / 3600) + 'h ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
         return Math.floor(diff / 86400) + 'd ago';
     }
 
     /* ── Expose helpers globally ────────────────────── */
     window.PS = window.PS || {};
-    window.PS.escHtml      = _escHtml;
+    window.PS.escHtml = _escHtml;
     window.PS.relativeTime = _relativeTime;
-    window.PS.statusLabel  = statusLabel;
-    window.PS.fmtCurrency  = fmtCurrency;
+    window.PS.statusLabel = statusLabel;
+    window.PS.fmtCurrency = fmtCurrency;
+
 
 })();
+

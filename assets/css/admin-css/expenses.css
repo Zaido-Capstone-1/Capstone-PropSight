@@ -1,3 +1,4 @@
+/* ── MODAL ── */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -90,6 +91,7 @@
     margin-top: 6px;
 }
 
+/* ── TABLE ACTIONS ── */
 .tbl-actions {
     display: flex;
     gap: 6px;
@@ -122,6 +124,7 @@
     color: #dc2626;
 }
 
+/* ── TOAST ── */
 .toast {
     position: fixed;
     top: 24px;
@@ -152,12 +155,14 @@
     background: #ef4444;
 }
 
+/* ── MONTH NAV ── */
 .month-nav {
     display: flex;
     align-items: center;
     background: var(--surface, #fff);
     border: 1.5px solid var(--border, #e5e7eb);
     border-radius: 10px;
+    flex-shrink: 0;
 }
 
 .month-nav button {
@@ -188,11 +193,13 @@
 .month-nav span {
     font-weight: 700;
     font-size: 14px;
-    min-width: 100px;
+    min-width: 90px;
     text-align: center;
     color: var(--text, #111);
+    white-space: nowrap;
 }
 
+/* ── BUTTONS ── */
 .btn-outline {
     background: transparent;
     border: 1.5px solid var(--border, #e5e7eb);
@@ -206,25 +213,29 @@
     align-items: center;
     gap: 6px;
     transition: background .15s;
+    white-space: nowrap;
 }
 
 .btn-outline:hover {
     background: var(--hover, #f1f5f9);
 }
 
+/* ── STAT BADGES ── */
 .stat-value {
     display: flex;
     align-items: baseline;
-    gap: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .stat-percentage {
     font-size: 13px;
     font-weight: 700;
     background: var(--hover, #f1f5f9);
-    padding: 4px 8px;
+    padding: 3px 7px;
     border-radius: 6px;
     color: var(--text-soft, #666);
+    white-space: nowrap;
 }
 
 .stat-percentage.positive {
@@ -249,29 +260,33 @@
     color: #94a3b8;
 }
 
+/* ── CARD HEADER + FILTERS ── */
 .card-header-with-filters {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
-    padding: 0;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .header-left {
     font-size: 16px;
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .header-right {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .filter-bar {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .filter-bar input,
@@ -284,7 +299,7 @@
     color: var(--text, #111);
     outline: none;
     transition: border-color .2s;
-    width: 200px;
+    width: 180px;
 }
 
 .filter-bar select {
@@ -296,6 +311,7 @@
     border-color: var(--primary, #2563c4);
 }
 
+/* ── TABLE EMPTY / FOOTER ── */
 .table-empty {
     display: flex;
     flex-direction: column;
@@ -324,6 +340,7 @@
     color: var(--text-soft, #666);
 }
 
+/* ── BADGE ── */
 .badge {
     display: inline-block;
     font-weight: 700;
@@ -334,47 +351,130 @@
     letter-spacing: 0.5px;
 }
 
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+
+/* Tablet */
+@media (max-width: 900px) {
+    .filter-bar input {
+        width: 150px;
+    }
+
+    .filter-bar select {
+        width: 120px;
+    }
+}
+
+/* ≤768px — main mobile breakpoint */
 @media (max-width: 768px) {
+
+    /* Page header: stack buttons */
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .page-header>div:last-child {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+    }
+
+    .page-header .btn-outline,
+    .page-header .btn,
+    .page-header .btn-primary {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .cards-area .stat-row {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    /* Charts: stack vertically */
+    .two-col {
+        flex-direction: column;
+    }
+
+    /* Card filter header: full-width stack */
     .card-header-with-filters {
         flex-direction: column;
-        gap: 15px;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .header-left {
+        font-size: 15px;
     }
 
     .header-right {
         width: 100%;
         flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .month-nav {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .month-nav span {
+        flex: 1;
     }
 
     .filter-bar {
         width: 100%;
-        flex-direction: column;
+        flex-direction: row;
+        /* ← was column, change to row */
+        gap: 8px;
     }
 
     .filter-bar input,
     .filter-bar select {
-        width: 100%;
+        width: 0;
+        /* ← remove fixed width */
+        flex: 1;
+        /* ← let them share the row equally */
+        min-width: 0;
     }
-}
-/* ── Mobile: expenses table scrollable + filter fix ── */
-@media (max-width: 768px) {
+
+    /* Scrollable table */
     #tableContainer {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
 
     #expensesTable {
-        min-width: 600px;
+        min-width: 580px;
     }
 
-    .cards-area {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+    /* Modal: full-screen on small screens */
+    .modal {
+        padding: 22px 18px;
+        margin: 12px;
+        max-width: calc(100% - 24px);
+        max-height: calc(100vh - 24px);
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
     }
 }
 
+/* ≤480px — small phones */
 @media (max-width: 480px) {
-    .cards-area {
-        grid-template-columns: 1fr;
+
+    .stat-value {
+        font-size: 20px;
+    }
+
+    .month-nav span {
+        min-width: 70px;
+        font-size: 13px;
     }
 }

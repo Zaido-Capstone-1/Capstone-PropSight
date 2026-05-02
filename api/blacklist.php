@@ -63,6 +63,7 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
+    require_csrf_token();
     $action = trim($_POST['action'] ?? '');
     $uid = (int) ($_POST['user_id'] ?? 0);
 

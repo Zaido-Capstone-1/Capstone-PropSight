@@ -13,13 +13,13 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
     $status = $_GET['status'] ?? 'all';
-    $month  = $_GET['month']  ?? date('Y-m');
+    $month = $_GET['month'] ?? date('Y-m');
     $search = trim($_GET['q'] ?? '');
 
     [$y, $m] = explode('-', $month . '-01');
-    $y = (int)$y; $m = (int)$m;
+    $y = (int) $y;
+    $m = (int) $m;
 
-    // Stats for selected month
     $stats = mysqli_fetch_assoc(mysqli_query($conn, "
         SELECT
             COALESCE(SUM(CASE WHEN payment_status='paid'    THEN amount_paid END),0) AS collected,
@@ -64,7 +64,8 @@ if ($method === 'GET') {
 
     $res = mysqli_query($conn, $sql);
     $records = [];
-    while ($row = mysqli_fetch_assoc($res)) $records[] = $row;
+    while ($row = mysqli_fetch_assoc($res))
+        $records[] = $row;
 
     // 6-month trend
     $trend = [];
@@ -77,33 +78,36 @@ if ($method === 'GET') {
         WHERE payment_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH),'%Y-%m-01')
         GROUP BY yr, mn, mo ORDER BY yr, mn
     ");
-    while ($row = mysqli_fetch_assoc($tRes)) $trend[] = $row;
+    while ($row = mysqli_fetch_assoc($tRes))
+        $trend[] = $row;
 
     echo json_encode([
         'success' => true,
         'records' => $records,
-        'stats'   => $stats,
-        'trend'   => $trend,
-        'count'   => count($records),
+        'stats' => $stats,
+        'trend' => $trend,
+        'count' => count($records),
     ]);
     exit;
 }
 
 if ($method === 'POST') {
-   $action = $_POST['form_action'] ?? '';
+    require_csrf_token();
+    $action = $_POST['form_action'] ?? '';
 
     // ── ADD ──────────────────────────────────────
     if ($action === 'add') {
-        $booking_id = (int)($_POST['booking_id'] ?? 0);
-        $date       = trim($_POST['payment_date'] ?? '');
-        $amount     = (float)($_POST['amount_paid'] ?? 0);
+        $booking_id = (int) ($_POST['booking_id'] ?? 0);
+        $date = trim($_POST['payment_date'] ?? '');
+        $amount = (float) ($_POST['amount_paid'] ?? 0);
         $method_pay = mysqli_real_escape_string($conn, trim($_POST['payment_method'] ?? ''));
-        $pstatus    = mysqli_real_escape_string($conn, trim($_POST['payment_status'] ?? 'paid'));
-        $notes      = mysqli_real_escape_string($conn, trim($_POST['notes'] ?? ''));
-        $dateEsc    = mysqli_real_escape_string($conn, $date);
+        $pstatus = mysqli_real_escape_string($conn, trim($_POST['payment_status'] ?? 'paid'));
+        $notes = mysqli_real_escape_string($conn, trim($_POST['notes'] ?? ''));
+        $dateEsc = mysqli_real_escape_string($conn, $date);
 
         if (!$booking_id || !$date || $amount <= 0) {
-            echo json_encode(['success'=>false,'message'=>'Booking, date, and amount are required.']); exit;
+            echo json_encode(['success' => false, 'message' => 'Booking, date, and amount are required.']);
+            exit;
         }
 
         $sql = "INSERT INTO payments (booking_id,payment_date,amount_paid,payment_method,payment_status,notes)
@@ -115,25 +119,26 @@ if ($method === 'POST') {
             $ref = 'PMT-' . $newId;
             mysqli_query($conn, "INSERT INTO transactions (reference_no,description,category,type,amount,transaction_date,booking_id)
                 VALUES ('$ref','Payment #$newId for Booking #$booking_id','Room Revenue','Income',$amount,'$dateEsc',$booking_id)");
-            echo json_encode(['success'=>true,'message'=>'Payment recorded.','payment_id'=>$newId]);
+            echo json_encode(['success' => true, 'message' => 'Payment recorded.', 'payment_id' => $newId]);
         } else {
-            echo json_encode(['success'=>false,'message'=>mysqli_error($conn)]);
+            echo json_encode(['success' => false, 'message' => mysqli_error($conn)]);
         }
         exit;
     }
 
     // ── EDIT ─────────────────────────────────────
     if ($action === 'edit') {
-        $pid        = (int)($_POST['payment_id'] ?? 0);
-        $booking_id = (int)($_POST['booking_id'] ?? 0);
-        $date       = mysqli_real_escape_string($conn, trim($_POST['payment_date'] ?? ''));
-        $amount     = (float)($_POST['amount_paid'] ?? 0);
+        $pid = (int) ($_POST['payment_id'] ?? 0);
+        $booking_id = (int) ($_POST['booking_id'] ?? 0);
+        $date = mysqli_real_escape_string($conn, trim($_POST['payment_date'] ?? ''));
+        $amount = (float) ($_POST['amount_paid'] ?? 0);
         $method_pay = mysqli_real_escape_string($conn, trim($_POST['payment_method'] ?? ''));
-        $pstatus    = mysqli_real_escape_string($conn, trim($_POST['payment_status'] ?? 'paid'));
-        $notes      = mysqli_real_escape_string($conn, trim($_POST['notes'] ?? ''));
+        $pstatus = mysqli_real_escape_string($conn, trim($_POST['payment_status'] ?? 'paid'));
+        $notes = mysqli_real_escape_string($conn, trim($_POST['notes'] ?? ''));
 
         if (!$pid || !$booking_id || !$date || $amount <= 0) {
-            echo json_encode(['success'=>false,'message'=>'All fields required.']); exit;
+            echo json_encode(['success' => false, 'message' => 'All fields required.']);
+            exit;
         }
 
         $sql = "UPDATE payments SET booking_id=$booking_id, payment_date='$date',
@@ -142,21 +147,24 @@ if ($method === 'POST') {
                 WHERE payment_id=$pid";
 
         if (mysqli_query($conn, $sql)) {
-            echo json_encode(['success'=>true,'message'=>'Payment updated.']);
+            echo json_encode(['success' => true, 'message' => 'Payment updated.']);
         } else {
-            echo json_encode(['success'=>false,'message'=>mysqli_error($conn)]);
+            echo json_encode(['success' => false, 'message' => mysqli_error($conn)]);
         }
         exit;
     }
 
     // ── DELETE ────────────────────────────────────
     if ($action === 'delete') {
-        $pid = (int)($_POST['payment_id'] ?? 0);
-        if (!$pid) { echo json_encode(['success'=>false,'message'=>'Invalid ID.']); exit; }
+        $pid = (int) ($_POST['payment_id'] ?? 0);
+        if (!$pid) {
+            echo json_encode(['success' => false, 'message' => 'Invalid ID.']);
+            exit;
+        }
         if (mysqli_query($conn, "DELETE FROM payments WHERE payment_id=$pid")) {
-            echo json_encode(['success'=>true,'message'=>'Payment deleted.']);
+            echo json_encode(['success' => true, 'message' => 'Payment deleted.']);
         } else {
-            echo json_encode(['success'=>false,'message'=>mysqli_error($conn)]);
+            echo json_encode(['success' => false, 'message' => mysqli_error($conn)]);
         }
         exit;
     }

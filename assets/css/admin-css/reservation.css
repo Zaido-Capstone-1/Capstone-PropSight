@@ -8,7 +8,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 15px;
 }
 
 .res-stat {
@@ -20,7 +20,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.06);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .07), 0 4px 16px rgba(0, 0, 0, .06);
     transition: box-shadow .2s;
 }
 
@@ -29,11 +29,9 @@
 }
 
 .res-stat-label {
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 10px;
     color: #6b7a90;
-    text-transform: uppercase;
-    letter-spacing: .5px;
+    text-transform: capitalize;
     margin-bottom: 4px;
 }
 
@@ -256,8 +254,15 @@
 }
 
 @keyframes badgePop {
-    from { opacity: 0; transform: scale(.7); }
-    to   { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(.7);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 /* ── TABLE ───────────────────────────────────────── */
@@ -567,6 +572,7 @@
     stroke: currentColor;
     fill: none;
 }
+
 /* ── Mobile responsive fixes ── */
 @media (max-width: 900px) {
     .res-stats {
@@ -586,7 +592,7 @@
     }
 
     .res-stat-value {
-        font-size: 1.6rem;
+        font-size: 1.3rem;
     }
 }
 
@@ -596,7 +602,6 @@
     }
 }
 
-/* ── Filter responsive fix ── */
 @media (max-width: 640px) {
     .res-card-header {
         flex-direction: column;
@@ -608,11 +613,15 @@
 
     .res-controls {
         width: 100%;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        /* ← was wrap */
+        gap: 6px;
     }
 
     .res-search {
-        flex: 1 1 100%;
+        flex: 1 1 auto;
+        /* ← was 1 1 100% (was taking full row) */
+        min-width: 0;
     }
 
     .res-search input {
@@ -622,7 +631,167 @@
     }
 
     .res-select {
-        flex: 1 1 auto;
+        flex: 0 0 120px;
+        /* ← fixed width, doesn't stretch or shrink */
         min-width: 0;
+    }
+}
+
+/* Confirmation Modal */
+.confirm-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.confirm-modal-overlay.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.confirm-modal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 440px;
+    width: 90%;
+    animation: slideUp 0.3s ease;
+    overflow: hidden;
+}
+
+.confirm-modal-header {
+    padding: 24px 24px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.confirm-modal-icon {
+    width: 24px;
+    height: 24px;
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
+.confirm-modal-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.confirm-modal-body {
+    padding: 20px 24px;
+}
+
+.confirm-modal-body p {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.confirm-modal-footer {
+    padding: 16px 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+}
+
+.confirm-modal-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    outline: none;
+}
+
+.confirm-btn-cancel {
+    background: white;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.confirm-btn-cancel:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.confirm-btn-confirm {
+    background: #2563eb;
+    color: white;
+}
+
+.confirm-btn-confirm:hover {
+    background: #1d4ed8;
+}
+
+.confirm-btn-confirm.danger {
+    background: #dc2626;
+}
+
+.confirm-btn-confirm.danger:hover {
+    background: #b91c1c;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+    .confirm-modal {
+        max-width: calc(100% - 32px);
+        margin: 16px;
+    }
+
+    .confirm-modal-header {
+        padding: 20px 20px 12px;
+    }
+
+    .confirm-modal-body {
+        padding: 16px 20px;
+    }
+
+    .confirm-modal-footer {
+        padding: 12px 20px;
+        flex-direction: column-reverse;
+    }
+
+    .confirm-modal-btn {
+        width: 100%;
+        padding: 12px;
     }
 }

@@ -1,8 +1,4 @@
 <?php
-/**
- * API: /api/checkin.php
- * POST — process check-in or check-out for a booking
- */
 header('Content-Type: application/json');
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/db.php';
@@ -13,6 +9,7 @@ if ($_SESSION['role'] !== 'admin') {
     echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
     exit;
 }
+require_csrf_token();
 
 $bookingId = (int)($_POST['booking_id'] ?? 0);
 $action    = trim($_POST['action'] ?? '');

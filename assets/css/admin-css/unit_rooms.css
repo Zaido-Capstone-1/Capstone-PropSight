@@ -15,21 +15,24 @@
 }
 
 .unit-listing-card .photo-wrap {
-  position: relative;
-  height: 240px;           /* 👈 increase until you're happy */
-  background: #f8fafc;
-  overflow: hidden;
-  flex-shrink: 0;
+    position: relative;
+    height: 240px;
+    /* 👈 increase until you're happy */
+    background: #f8fafc;
+    overflow: hidden;
+    flex-shrink: 0;
 }
 
 
 .unit-listing-card .photo-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;       /* 👈 back to cover */
-  object-position: center; /* 👈 add this — centers the crop */
-  display: block;
-  transition: transform .4s ease;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* 👈 back to cover */
+    object-position: center;
+    /* 👈 add this — centers the crop */
+    display: block;
+    transition: transform .4s ease;
 }
 
 .unit-listing-card:hover .photo-wrap img {
@@ -78,9 +81,11 @@
 }
 
 .status-pill {
-  font-size: 11px; font-weight: 700;
-  padding: 4px 10px; border-radius: 20px;
-  letter-spacing: .3px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: .3px;
 }
 
 .status-pill.occupied {
@@ -305,4 +310,52 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .toolbar-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .toolbar-card .tc-right {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    /* Search full width on top */
+    .toolbar-card .tc-right > div {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .toolbar-card .tc-right > div input.tc-input {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    /* Two selects side by side below */
+    .toolbar-card .tc-right select.tc-select {
+        flex: 1 1 calc(50% - 3px) !important;
+        width: auto !important;
+        min-width: 0;
+        box-sizing: border-box;
+        font-size: 13px;
+        padding: 7px 8px;
+    }
+}
+
+@media (max-width: 360px) {
+    .toolbar-card .tc-right {
+        flex-wrap: wrap;
+    }
+
+    .toolbar-card .tc-right>div {
+        flex: 1 1 100%;
+    }
+
+    .toolbar-card .tc-right select.tc-select {
+        flex: 1 1 calc(50% - 3px) !important;
+    }
 }

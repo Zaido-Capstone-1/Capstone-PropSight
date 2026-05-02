@@ -1,8 +1,4 @@
 <?php
-/**
- * API: /api/extend_stay.php
- * POST — extend a guest's checkout date
- */
 header('Content-Type: application/json');
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/db.php';
@@ -12,6 +8,7 @@ if ($_SESSION['role'] !== 'admin') {
     echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
     exit;
 }
+require_csrf_token();
 
 $bookingId  = (int)($_POST['booking_id'] ?? 0);
 $newCheckout = trim($_POST['new_checkout'] ?? '');

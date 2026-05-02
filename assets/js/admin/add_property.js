@@ -1,8 +1,6 @@
 (function () {
     const DEFAULT_LAT = 11.9674, DEFAULT_LNG = 121.9248, DEFAULT_ZOOM = 13;
 
-    // Initialize map WITHOUT setView yet — that must wait until the container
-    // has real pixel dimensions, otherwise Leaflet measures 0x0 and skips tiles.
     const map = L.map('propertyMap', { scrollWheelZoom: true });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -11,14 +9,10 @@
     }).addTo(map);
 
     function initMapView() {
-      // Force Leaflet to re-read the container dimensions
       map.invalidateSize({ animate: false });
       map.setView([DEFAULT_LAT, DEFAULT_LNG], DEFAULT_ZOOM);
     }
 
-    // Strategy: wait for the browser to finish its first paint of the layout,
-    // then call invalidateSize. The double-rAF ensures we're past the reflow.
-    // A ResizeObserver backs this up in case the card animates in.
     function scheduleInit() {
       requestAnimationFrame(function () {
         requestAnimationFrame(function () {
@@ -33,8 +27,6 @@
       scheduleInit();
     }
 
-    // Belt-and-suspenders: if a ResizeObserver is available, watch the container
-    // and re-invalidate whenever it gets a real size (handles CSS transitions, etc.)
     if (typeof ResizeObserver !== 'undefined') {
       let initialized = false;
       const ro = new ResizeObserver(function (entries) {

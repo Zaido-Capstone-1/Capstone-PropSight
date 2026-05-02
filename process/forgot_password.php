@@ -127,52 +127,21 @@ if ($userRow) {
     $scriptDir = dirname(dirname($_SERVER['SCRIPT_NAME'] ?? '/'));
     $resetLink = rtrim($protocol . '://' . $host . $scriptDir, '/') . '/reset_password.php?token=' . urlencode($token);
 
-    // Send email (rest of email sending code remains the same)
+    require_once '../includes/email_service.php';
+
     try {
-      // Validate mail configuration exists
-      if (empty(MAIL_HOST) || empty(MAIL_PORT) || empty(MAIL_USERNAME) || empty(MAIL_PASSWORD)) {
-        throw new Exception('Mail service is not configured. Please contact support.');
+      // Validate email configuration first
+      $configIssues = $emailService->validateConfiguration();
+      if (!empty($configIssues)) {
+        throw new Exception('Email service configuration issues: ' . implode(', ', $configIssues));
       }
-
-      $mail = new PHPMailer(true);
-      $mail->CharSet = 'UTF-8';
-      $mail->isSMTP();
-      $mail->Host = MAIL_HOST;
-      $mail->Port = (int) MAIL_PORT;
-      $mail->SMTPAuth = true;
-      $mail->Username = MAIL_USERNAME;
-      $mail->Password = MAIL_PASSWORD;
-
-      // Enable debugging for development (remove in production)
-      // $mail->SMTPDebug = 2;
-
-      // Respect MAIL_ENCRYPTION from .env (tls = STARTTLS, ssl = SMTPS)
-      $encryptionSetting = strtolower(trim(MAIL_ENCRYPTION));
-      if ($encryptionSetting === 'ssl') {
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-      } else {
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // default: tls / port 587
-      }
-
-      $mail->SMTPOptions = [
-        'ssl' => [
-          'verify_peer' => false,
-          'verify_peer_name' => false,
-          'allow_self_signed' => true,
-        ],
-      ];
-
-      $mail->setFrom(MAIL_FROM_EMAIL, MAIL_FROM_NAME);
-      $mail->addAddress($email, $firstName);
-      $mail->isHTML(true);
-      $mail->Subject = 'Reset Your Password — ' . MAIL_FROM_NAME;
 
       $year = date('Y');
       $expMinutes = RESET_EXPIRY_MINUTES;
       $linkSafe = htmlspecialchars($resetLink, ENT_QUOTES, 'UTF-8');
       $siteName = htmlspecialchars(MAIL_FROM_NAME, ENT_QUOTES, 'UTF-8');
 
-      $mail->Body = <<<HTML
+      $htmlBody = <<<HTML
 <div style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
     <tr><td align="center">
@@ -231,25 +200,31 @@ if ($userRow) {
   </table>
 </div>
 HTML;
-      $mail->AltBody = "Hi $firstName,\n\nReset your password by visiting:\n$resetLink\n\nThis link expires in $expMinutes minutes.\n\nIf you did not request this, ignore this email.";
-      $mail->send();
 
-      error_log("Password reset email sent successfully to user ID $userId ($email)");
-      json_out(true, "Reset link sent! Check your email (and spam folder) for instructions.");
+      $textBody = "Hi $firstName,\n\nReset your password by visiting:\n$resetLink\n\nThis link expires in $expMinutes minutes.\n\nIf you did not request this, ignore this email.";
+
+      $emailSent = $emailService->sendEmail($email, 'Reset Your Password — ' . MAIL_FROM_NAME, $htmlBody, $textBody);
+
+      if ($emailSent) {
+        error_log("Password reset email sent successfully to user ID $userId ($email)");
+        json_out(true, "Reset link sent! Check your email (and spam folder) for instructions.");
+      } else {
+        throw new Exception('Email service failed to send message');
+      }
+
     } catch (Exception $e) {
       $errorMsg = $e->getMessage();
-      $phpMailerError = $mail->ErrorInfo ?? '';
-      error_log("Password reset mail failed for user ID $userId ($email): " . $errorMsg . " | PHPMailer: " . $phpMailerError);
+      error_log("Password reset mail failed for user ID $userId ($email): " . $errorMsg);
 
       // Provide specific error messages based on the issue
-      if (strpos($errorMsg, 'configured') !== false || strpos($errorMsg, 'SMTP') !== false) {
-        json_out(false, 'Email service is not available. Please contact support.');
-      } elseif (strpos($errorMsg, 'authentication') !== false || strpos($phpMailerError, 'authentication') !== false) {
+      if (strpos($errorMsg, 'configuration') !== false) {
+        json_out(false, 'Email service is not properly configured. Please contact support.');
+      } elseif (strpos($errorMsg, 'authentication') !== false) {
         json_out(false, 'Email service authentication failed. Please contact support.');
-      } elseif (strpos($errorMsg, 'timeout') !== false) {
-        json_out(false, 'Email service timeout. Please try again in a few moments.');
+      } elseif (strpos($errorMsg, 'timeout') !== false || strpos($errorMsg, 'connection') !== false) {
+        json_out(false, 'Email service is temporarily unavailable. Please try again in a few moments.');
       } else {
-        json_out(false, 'Could not send reset email. Please try again later.');
+        json_out(false, 'Could not send reset email. Please try again later or contact support.');
       }
     }
   } else {

@@ -264,7 +264,7 @@ function fmtDate($d)
                             <?php foreach ($bookings as $b):
                                 $unitLabel = !empty($b['unit_name'])
                                     ? $b['unit_name']
-                                    : (($b['property_name'] ?? '') . ' — Unit ' . ($b['unit_number'] ?? ''));
+                                    : (($b['property_name'] ?? '') . ' — ' . ($b['unit_number'] ?? ''));
                                 ?>
                                 <tr data-id="<?= $b['booking_id'] ?>">
                                     <td><span
@@ -349,30 +349,49 @@ function fmtDate($d)
             </div>
         </div>
 
+        <div id="confirmModal" class="confirm-modal-overlay">
+            <div class="confirm-modal">
+                <div class="confirm-modal-header">
+                    <h3 class="confirm-modal-title" id="confirmModalTitle">Confirm Action</h3>
+                </div>
+                <div class="confirm-modal-body">
+                    <p id="confirmModalMessage">Are you sure you want to proceed?</p>
+                </div>
+                <div class="confirm-modal-footer">
+                    <button class="confirm-modal-btn confirm-btn-cancel" id="confirmModalCancel">Cancel</button>
+                    <button class="confirm-modal-btn confirm-btn-confirm" id="confirmModalConfirm">Confirm</button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-
 <script>
     window.__PS_RESERVATIONS__ = {
         currentStatus: '<?= $statusFilter ?>',
         currentSearch: '<?= addslashes($search) ?>',
         allRows: <?= json_encode(array_map(function ($b) {
+            $unitLabel = !empty($b['unit_name'])
+                ? $b['unit_name']
+                : trim(($b['property_name'] ?? '') . ' — Unit ' . ($b['unit_number'] ?? ''));
+
             return [
-                'booking_id' => $b['booking_id'],
-                'ref_code' => $b['ref_code'],
-                'guest_name' => $b['guest_name'],
-                'unit_name' => $b['unit_name'],
-                'check_in' => $b['check_in'],
-                'check_out' => $b['check_out'],
-                'nights' => $b['nights'],
-                'status' => $b['status'],
-                'total_price' => $b['total_price'],
-                'source' => $b['source']
+                'booking_id' => (int) ($b['booking_id'] ?? 0),
+                'user_name' => (string) ($b['user_name'] ?? ''),
+                'user_email' => (string) ($b['user_email'] ?? ''),
+                'unit_name' => (string) $unitLabel,
+                'unit_number' => (string) ($b['unit_number'] ?? ''),
+                'property_name' => (string) ($b['property_name'] ?? ''),
+                'checkin_date' => (string) ($b['checkin_date'] ?? ''),
+                'checkout_date' => (string) ($b['checkout_date'] ?? ''),
+                'nights' => (int) ($b['nights'] ?? 0),
+                'total_amount' => (float) ($b['total_amount'] ?? 0),
+                'status' => (string) ($b['status'] ?? 'pending'),
             ];
         }, $bookings), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
     };
 </script>
-<script>window.PS_RT_PAGE = 'reservations';</script>
-<script src="../../assets/js/admin/reservations.js"></script>
+<script src="../../assets/js/toast.js"></script>
 
+<script>window.PS_RT_PAGE = 'reservations';</script>
+<!-- <script src="../../assets/js/admin/reservations.js"></script> -->
 <?php include '../../includes/layout_close.php'; ?>

@@ -238,3 +238,23 @@
       transform: rotate(360deg);
     }
   }
+
+  @media (max-width: 480px) {
+    .map-search-row {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .map-search-input {
+        flex: 1 1 100%;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .map-search-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 9px 10px;
+        font-size: 12px;
+    }
+}

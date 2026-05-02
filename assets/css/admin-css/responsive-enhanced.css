@@ -30,7 +30,7 @@
 
   .stat-row .stat-card {
     flex: 1 1 calc(50% - 8px);
-    min-width: 200px;
+    min-width: 100px;
   }
 
   /* Make tables scrollable */

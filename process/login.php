@@ -5,7 +5,11 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/session_params.php';
 session_start();
 require_once '../includes/db.php';
+require_once '../includes/rate_limiter.php';
 require_once '../vendor/autoload.php';
+
+// Apply rate limiting to login attempts (more restrictive)
+applyRateLimit($conn, 'login', 10, 900); // 10 attempts per 15 minutes
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -18,7 +22,7 @@ const OTP_EXPIRY_MINUTES = 5;
 
 const DEFAULT_SMTP_HOST = 'smtp.gmail.com';
 const DEFAULT_SMTP_PORT = 587;
-const DEFAULT_MAIL_NAME = 'Filipino Homes';
+const DEFAULT_MAIL_NAME = 'Boracay Accommodation';
 
 //Functions
 function json_error(string $message): never
@@ -38,36 +42,13 @@ function generate_otp(): string
     return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 }
 
-// function smtp_config(): array
-// {
-//     $host = getenv('PS_SMTP_HOST') ?: DEFAULT_SMTP_HOST;
-//     $port = (int)(getenv('PS_SMTP_PORT') ?: DEFAULT_SMTP_PORT);
-//     $username = trim((string)(getenv('PS_SMTP_USERNAME') ?: ''));
-//     $password = trim((string)(getenv('PS_SMTP_PASSWORD') ?: ''));
-//     $mailFrom = trim((string)(getenv('PS_MAIL_FROM') ?: ''));
-//     $mailName = getenv('PS_MAIL_NAME') ?: DEFAULT_MAIL_NAME;
-
-//     if ($username === '' || $password === '' || $mailFrom === '') {
-//         json_error('SMTP is not configured. Please contact support.');
-//     }
-
-//     return [
-//         'host' => $host,
-//         'port' => $port,
-//         'username' => $username,
-//         'password' => $password,
-//         'mail_from' => $mailFrom,
-//         'mail_name' => $mailName,
-//     ];
-// }
-
 function smtp_config(): array
 {
     return [
-        'host'      => MAIL_HOST,
-        'port'      => MAIL_PORT,
-        'username'  => MAIL_USERNAME,
-        'password'  => MAIL_PASSWORD,
+        'host' => MAIL_HOST,
+        'port' => MAIL_PORT,
+        'username' => MAIL_USERNAME,
+        'password' => MAIL_PASSWORD,
         'mail_from' => MAIL_FROM_EMAIL,
         'mail_name' => MAIL_FROM_NAME,
     ];
@@ -140,7 +121,7 @@ function build_otp_email(string $otp): string
                         <tr>
                             <td style="background:#f9fafb;padding:18px;text-align:center;">
                                 <p style="margin:0;font-size:11.5px;color:#9ca3af;">
-                                    © ' . $year . ' Filipino Homes. All rights reserved.
+                                    © ' . $year . ' Boracay Accommodation. All rights reserved.
                                 </p>
                                 <p style="margin:6px 0 0 0;font-size:11px;color:#c0c4cc;">
                                     This is an automated message, please do not reply.

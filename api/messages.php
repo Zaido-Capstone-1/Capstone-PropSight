@@ -128,6 +128,7 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
+    require_csrf_token();
     $action = $_POST['action'] ?? 'send';
 
     if ($action === 'mark_all_read') {

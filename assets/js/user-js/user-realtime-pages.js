@@ -26,8 +26,8 @@
     function _esc(str) {
         if (!str) return '';
         return String(str)
-            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
     function _setText(sel, val) {
         document.querySelectorAll(sel).forEach(el => { el.textContent = val; });
@@ -42,26 +42,26 @@
     }
     function _stBadge(status) {
         const m = {
-            pending:   { text: 'Pending',   cls: 'badge-pending'  },
-            confirmed: { text: 'Confirmed', cls: 'badge-confirmed'},
-            active:    { text: 'Active',    cls: 'badge-active'   },
-            completed: { text: 'Completed', cls: 'badge-completed'},
-            cancelled: { text: 'Cancelled', cls: 'badge-cancelled'},
+            pending: { text: 'Pending', cls: 'badge-pending' },
+            confirmed: { text: 'Confirmed', cls: 'badge-confirmed' },
+            active: { text: 'Active', cls: 'badge-active' },
+            completed: { text: 'Completed', cls: 'badge-completed' },
+            cancelled: { text: 'Cancelled', cls: 'badge-cancelled' },
         };
         return m[status] || { text: status, cls: '' };
     }
     // Status → css class used by .mm-status and .bb-status
     const _mmStMap = {
-        pending:   'mm-st-pending',
+        pending: 'mm-st-pending',
         confirmed: 'mm-st-confirmed',
-        active:    'mm-st-active',
+        active: 'mm-st-active',
         completed: 'mm-st-done',
         cancelled: 'mm-st-cancelled',
     };
     const _bbStMap = {
-        pending:   'st-pending',
+        pending: 'st-pending',
         confirmed: 'st-active',
-        active:    'st-active',
+        active: 'st-active',
         completed: 'st-done',
         cancelled: 'st-cancelled',
     };
@@ -72,7 +72,7 @@
     window.addEventListener('ps:booking_updates', function (e) {
         const updates = e.detail || [];
         updates.forEach(function (b) {
-            const id  = String(b.booking_id);
+            const id = String(b.booking_id);
             const lbl = _stBadge(b.status);
 
             // Update every element that carries data-booking-id
@@ -126,7 +126,7 @@
 
                 // Update dates if changed
                 if (b.checkin_date || b.checkout_date) {
-                    var ci = b.checkin_date  || banner.dataset.checkin;
+                    var ci = b.checkin_date || banner.dataset.checkin;
                     var co = b.checkout_date || banner.dataset.checkout;
                     if (ci) banner.dataset.checkin = ci;
                     if (co) banner.dataset.checkout = co;
@@ -140,25 +140,32 @@
                 // Collapse banner when booking ends
                 if (['cancelled', 'completed'].includes(b.status)) {
                     banner.style.transition = 'opacity 0.5s, max-height 0.7s ease, margin 0.7s, padding 0.7s';
-                    banner.style.overflow   = 'hidden';
-                    banner.style.opacity    = '0';
+                    banner.style.overflow = 'hidden';
+                    banner.style.opacity = '0';
                     setTimeout(function () {
-                        banner.style.maxHeight     = '0';
-                        banner.style.marginTop     = '0';
-                        banner.style.marginBottom  = '0';
-                        banner.style.paddingTop    = '0';
+                        banner.style.maxHeight = '0';
+                        banner.style.marginTop = '0';
+                        banner.style.marginBottom = '0';
+                        banner.style.paddingTop = '0';
                         banner.style.paddingBottom = '0';
                     }, 520);
                     setTimeout(function () { banner.style.display = 'none'; }, 1300);
+
+                    if (typeof showToast === 'function') {
+                        showToast(
+                            'Your booking has been ' + b.status + ' by the property manager.',
+                            b.status === 'cancelled' ? 'warning' : 'info'
+                        );
+                    }
                 }
             }
 
             /* ── Manage Stay Modal (if open for this booking) ──── */
-            var modal   = document.getElementById('manageModal');
-            var isOpen  = modal && modal.classList.contains('open');
+            var modal = document.getElementById('manageModal');
+            var isOpen = modal && modal.classList.contains('open');
             // currentBookingId is declared in script.js
             var matchId = typeof window.currentBookingId !== 'undefined' &&
-                          String(window.currentBookingId) === id;
+                String(window.currentBookingId) === id;
 
             if (modal && isOpen && matchId) {
 
@@ -197,9 +204,9 @@
 
                 // Progress bar update
                 if (b.checkin_date && b.checkout_date) {
-                    var inD   = new Date(b.checkin_date  + 'T12:00:00');
-                    var outD  = new Date(b.checkout_date + 'T12:00:00');
-                    var now   = new Date();
+                    var inD = new Date(b.checkin_date + 'T12:00:00');
+                    var outD = new Date(b.checkout_date + 'T12:00:00');
+                    var now = new Date();
                     var total = outD - inD;
                     var elapsed = now - inD;
                     var pct = Math.max(0, Math.min(100, Math.round((elapsed / total) * 100)));
@@ -237,20 +244,16 @@
 
             /* ── Update Room Card Availability ──────────────────── */
             if (b.unit_id) {
-                var roomCard = document.querySelector('[data-unit-id="' + String(b.unit_id) + '"]');
+                // Use .room-card to avoid matching the booking banner which also has data-unit-id
+                var roomCard = document.querySelector('.room-card[data-unit-id="' + String(b.unit_id) + '"]');
                 if (roomCard) {
-                    // When booking is cancelled or completed, mark unit as vacant
                     if (['cancelled', 'completed'].includes(b.status)) {
                         roomCard.dataset.status = 'vacant';
-                        
-                        // Update availability badge
                         var availBadge = roomCard.querySelector('[data-avail-status]');
                         if (availBadge) {
                             availBadge.className = 'room-avail avail-yes';
                             availBadge.textContent = 'AVAILABLE';
                         }
-
-                        // Update buttons
                         var bookBtn = roomCard.querySelector('[data-book-btn]');
                         if (bookBtn) {
                             bookBtn.disabled = false;
@@ -260,29 +263,21 @@
                                 if (typeof openBookingModal !== 'function') return;
                                 try {
                                     openBookingModal(JSON.parse(roomCard.dataset.roomPayload || '{}'));
-                                } catch (err) {}
+                                } catch (err) { }
                             };
                         }
-
-                    }
-                    // When booking is confirmed/active, mark unit as occupied
-                    else if (['confirmed', 'active', 'pending'].includes(b.status)) {
+                    } else if (['confirmed', 'active', 'pending'].includes(b.status)) {
                         roomCard.dataset.status = 'occupied';
-                        
-                        // Update availability badge
                         var availBadge = roomCard.querySelector('[data-avail-status]');
                         if (availBadge) {
                             availBadge.className = 'room-avail avail-no';
                             availBadge.textContent = 'BOOKED';
                         }
-
-                        // Update buttons
                         var bookBtn = roomCard.querySelector('[data-book-btn]');
                         if (bookBtn) {
                             bookBtn.disabled = true;
                             bookBtn.textContent = 'Unavailable';
                         }
-
                     }
                 }
             }
@@ -294,7 +289,7 @@
      * ═══════════════════════════════════════════════════════ */
     window.addEventListener('ps:booking_updates', function (e) {
         var updates = e.detail || [];
-        
+
         updates.forEach(function (b) {
             // Update booking count when new booking is created
             if (b.status === 'pending' || b.status === 'confirmed') {
@@ -347,7 +342,7 @@
         }
 
         var points = parseInt(m.loyalty_points, 10);
-        var tier   = String(m.loyalty_tier || '').trim();
+        var tier = String(m.loyalty_tier || '').trim();
 
         if (!isNaN(points)) {
             var fmtPts = points.toLocaleString('en-PH');
@@ -382,10 +377,10 @@
 
             // Sub-label — recalculate pts to next tier
             var tierDefs = [
-                { name: 'Silver',   min: 0    },
-                { name: 'Gold',     min: 500  },
+                { name: 'Silver', min: 0 },
+                { name: 'Gold', min: 500 },
                 { name: 'Platinum', min: 2000 },
-                { name: 'Diamond',  min: 5000 },
+                { name: 'Diamond', min: 5000 },
             ];
             var curIdx = 0;
             tierDefs.forEach(function (t, i) {
@@ -401,7 +396,7 @@
 
             // Progress bar (bar id="loyaltyProgressBar" if present)
             if (nextTd) {
-                var tierBase  = tierDefs[curIdx].min;
+                var tierBase = tierDefs[curIdx].min;
                 var tierTotal = nextTd.min;
                 var pct = Math.max(0, Math.min(100, Math.round(
                     ((points - tierBase) / (tierTotal - tierBase)) * 100
@@ -462,7 +457,7 @@
             var key = 'reply_' + msg.message_id;
             if (_seenReplyIds.has(key)) return;
             _seenReplyIds.add(key);
-            try { sessionStorage.setItem('ps_seen_reply_ids', JSON.stringify([..._seenReplyIds].slice(-200))); } catch (e) {}
+            try { sessionStorage.setItem('ps_seen_reply_ids', JSON.stringify([..._seenReplyIds].slice(-200))); } catch (e) { }
 
             // Toast notification
             if (typeof showToast === 'function') {
@@ -470,7 +465,7 @@
             }
 
             // Live-inject reply into open ticket modal if currently viewing that ticket
-            var modalBody  = document.getElementById('ticketModalBody');
+            var modalBody = document.getElementById('ticketModalBody');
             var activeTkId = modalBody && modalBody.dataset.ticketId;
             if (modalBody && String(activeTkId) === String(msg.ticket_id)) {
                 var div = document.createElement('div');
@@ -517,11 +512,11 @@
     window.addEventListener('ps:booking_stats', function (e) {
         var s = e.detail || {};
         var map = {
-            upcoming:  parseInt(s.upcoming,   10) || 0,
-            active:    parseInt(s.active_cnt, 10) || 0,
-            completed: parseInt(s.completed,  10) || 0,
-            cancelled: parseInt(s.cancelled,  10) || 0,
-            total:     parseInt(s.total,      10) || 0,
+            upcoming: parseInt(s.upcoming, 10) || 0,
+            active: parseInt(s.active_cnt, 10) || 0,
+            completed: parseInt(s.completed, 10) || 0,
+            cancelled: parseInt(s.cancelled, 10) || 0,
+            total: parseInt(s.total, 10) || 0,
         };
         // data-rt-stat="upcoming|active|completed|cancelled"
         Object.keys(map).forEach(function (k) {
@@ -543,13 +538,13 @@
     window.addEventListener('ps:profile_sync', function (e) {
         var p = e.detail || {};
         var first = String(p.first_name || '').trim();
-        var last  = String(p.last_name  || '').trim();
-        var full  = (first + ' ' + last).trim() || 'Guest';
+        var last = String(p.last_name || '').trim();
+        var full = (first + ' ' + last).trim() || 'Guest';
 
         // Profile page heading
         _setText('#profileFullName, [data-rt-profile="full_name"]', full);
         _setText('[data-rt-profile="first_name"]', first);
-        _setText('[data-rt-profile="last_name"]',  last);
+        _setText('[data-rt-profile="last_name"]', last);
         _setText('[data-rt-profile="email"]', String(p.email || ''));
 
         // Verification badge on profile page
@@ -584,21 +579,47 @@
      *      snapshot (or null when there's no active booking).
      * ═══════════════════════════════════════════════════════ */
     window.addEventListener('ps:manage_stay_booking', function (e) {
-        var bk     = e.detail;            // null = no active booking
+        var bk = e.detail;            // null = no active booking
         var banner = document.getElementById('rt-active-booking-wrap');
         if (!banner) return;              // not on dashboard
 
         // ── No active booking → collapse banner ────────────
         if (!bk) {
             if (banner.style.display === 'none') return;  // already hidden
+
+            // Reset the room card before collapsing
+            var unitId = banner.dataset.unitId;
+            if (unitId) {
+                var roomCard = document.querySelector('.room-card[data-unit-id="' + unitId + '"]');
+                if (roomCard) {
+                    roomCard.dataset.status = 'vacant';
+                    var availBadge = roomCard.querySelector('[data-avail-status]');
+                    if (availBadge) {
+                        availBadge.className = 'room-avail avail-yes';
+                        availBadge.textContent = 'AVAILABLE';
+                    }
+                    var bookBtn = roomCard.querySelector('[data-book-btn]');
+                    if (bookBtn) {
+                        bookBtn.disabled = false;
+                        bookBtn.textContent = 'Book Now';
+                        bookBtn.onclick = function (ev) {
+                            if (ev) ev.stopPropagation();
+                            if (typeof openBookingModal !== 'function') return;
+                            try { openBookingModal(JSON.parse(roomCard.dataset.roomPayload || '{}')); } catch (err) { }
+                        };
+                    }
+                }
+            }
+            window.hasActiveBooking = false;
+
             banner.style.transition = 'opacity 0.5s, max-height 0.7s ease, margin 0.7s, padding 0.7s';
-            banner.style.overflow   = 'hidden';
-            banner.style.opacity    = '0';
+            banner.style.overflow = 'hidden';
+            banner.style.opacity = '0';
             setTimeout(function () {
-                banner.style.maxHeight     = '0';
-                banner.style.marginTop     = '0';
-                banner.style.marginBottom  = '0';
-                banner.style.paddingTop    = '0';
+                banner.style.maxHeight = '0';
+                banner.style.marginTop = '0';
+                banner.style.marginBottom = '0';
+                banner.style.paddingTop = '0';
                 banner.style.paddingBottom = '0';
             }, 520);
             setTimeout(function () { banner.style.display = 'none'; }, 1300);
@@ -612,13 +633,13 @@
 
         // Restore banner visibility if it was previously collapsed
         if (banner.style.display === 'none' || parseFloat(banner.style.opacity) === 0) {
-            banner.style.display      = '';
-            banner.style.opacity      = '';
-            banner.style.maxHeight    = '';
-            banner.style.overflow     = '';
-            banner.style.marginTop    = '';
+            banner.style.display = '';
+            banner.style.opacity = '';
+            banner.style.maxHeight = '';
+            banner.style.overflow = '';
+            banner.style.marginTop = '';
             banner.style.marginBottom = '';
-            banner.style.paddingTop   = '';
+            banner.style.paddingTop = '';
             banner.style.paddingBottom = '';
         }
 
@@ -660,20 +681,20 @@
             var imgSrc = bk.image_path
                 ? '../../' + String(bk.image_path).replace(/^\/+/, '') : '';
             var modalPayload = {
-                booking_id:    bk.booking_id,
-                unit_name:     bk.unit_name || bk.unit_number || 'Unit',
+                booking_id: bk.booking_id,
+                unit_name: bk.unit_name || bk.unit_number || 'Unit',
                 property_name: bk.property_name || '',
-                address:       bk.address || '',
-                latitude:      parseFloat(bk.latitude  || 0),
-                longitude:     parseFloat(bk.longitude || 0),
-                checkin:       _fmtDate(bk.checkin_date),
-                checkout:      _fmtDate(bk.checkout_date),
-                nights:        nights,
-                status:        _stBadge(bk.status).text,
-                total_amount:  'PHP ' + Number(bk.total_amount || 0)
-                                    .toLocaleString('en-PH', { minimumFractionDigits: 0 }),
-                guests:        parseInt(bk.guests || 2, 10),
-                image:         imgSrc,
+                address: bk.address || '',
+                latitude: parseFloat(bk.latitude || 0),
+                longitude: parseFloat(bk.longitude || 0),
+                checkin: _fmtDate(bk.checkin_date),
+                checkout: _fmtDate(bk.checkout_date),
+                nights: nights,
+                status: _stBadge(bk.status).text,
+                total_amount: 'PHP ' + Number(bk.total_amount || 0)
+                    .toLocaleString('en-PH', { minimumFractionDigits: 0 }),
+                guests: parseInt(bk.guests || 2, 10),
+                image: imgSrc,
             };
             manageBtn.setAttribute('onclick',
                 'openManageModal(' + JSON.stringify(modalPayload)
@@ -682,7 +703,7 @@
         }
 
         // If the manage modal is already open for this booking, refresh it too
-        var modal  = document.getElementById('manageModal');
+        var modal = document.getElementById('manageModal');
         var isOpen = modal && modal.classList.contains('open');
         if (isOpen &&
             typeof window.currentBookingId !== 'undefined' &&

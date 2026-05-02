@@ -1391,10 +1391,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
     <script src="../../assets/js/realtime.js"></script>
     <script src="../../assets/js/user-js/user-realtime-pages.js"></script>
 
-    <!-- ══ LEAFLET MAP ══ -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WPcM=" crossorigin=""></script>
-
 </body>
 
 </html>

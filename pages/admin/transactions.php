@@ -102,13 +102,6 @@ function formatPeso(int $n): string
         <div class="page-header-sub">Full ledger of all financial transactions</div>
     </div>
     <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary" onclick="openAddTxn()">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Add Transaction
-        </button>
         <button class="btn btn-secondary" id="exportCsvBtn">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -127,7 +120,7 @@ function formatPeso(int $n): string
             <div class="stat-card">
                 <div>
                     <div class="stat-label">Total Income</div>
-                    <div class="stat-value"><?= formatPeso($totalIncomeYear) ?></div>
+                    <div class="stat-value" data-rt-txn="income"><?= formatPeso($totalIncomeYear) ?></div>
                     <div class="stat-sub">This year</div>
                 </div>
                 <div class="stat-icon-wrap green">
@@ -140,7 +133,7 @@ function formatPeso(int $n): string
             <div class="stat-card">
                 <div>
                     <div class="stat-label">Total Expenses</div>
-                    <div class="stat-value"><?= formatPeso($totalExpenseYear) ?></div>
+                    <div class="stat-value" data-rt-txn="expense"><?= formatPeso($totalExpenseYear) ?></div>
                     <div class="stat-sub">This year</div>
                 </div>
                 <div class="stat-icon-wrap red">
@@ -153,7 +146,7 @@ function formatPeso(int $n): string
             <div class="stat-card">
                 <div>
                     <div class="stat-label">Net Profit</div>
-                    <div class="stat-value" style="color:var(--<?= $netProfitYear >= 0 ? 'success' : 'danger' ?>);">
+                    <div class="stat-value" data-rt-txn="net" style="color:var(--<?= $netProfitYear >= 0 ? 'success' : 'danger' ?>);">
                         <?= ($netProfitYear < 0 ? '−' : '') . formatPeso($netProfitYear) ?>
                     </div>
                     <div class="stat-sub">This year</div>
@@ -168,7 +161,7 @@ function formatPeso(int $n): string
             <div class="stat-card">
                 <div>
                     <div class="stat-label">Transactions</div>
-                    <div class="stat-value"><?= $totalCountYear ?></div>
+                    <div class="stat-value" data-rt-txn="count"><?= $totalCountYear ?></div>
                     <div class="stat-sub">This year</div>
                 </div>
                 <div class="stat-icon-wrap gold">
@@ -266,81 +259,6 @@ function formatPeso(int $n): string
     </div>
 </div>
 
-<div id="addTxnModal"
-    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;">
-    <div
-        style="background:#fff;border-radius:12px;padding:28px;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h3 style="margin:0;font-size:16px;">Add Transaction</h3>
-            <button onclick="closeAddTxn()"
-                style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;">&times;</button>
-        </div>
-        <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-            <div class="form-group" style="grid-column:span 2">
-                <label>Type</label>
-                <select id="txn_type"
-                    style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);">
-                    <option value="Income">Income</option>
-                    <option value="Expense">Expense</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Date</label>
-                <input type="date" id="txn_date"
-                    style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);"
-                    value="<?php echo date('Y-m-d'); ?>">
-            </div>
-            <div class="form-group">
-                <label>Amount (₱)</label>
-                <input type="number" id="txn_amount" placeholder="0.00" min="0.01" step="0.01"
-                    style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);">
-            </div>
-            <div class="form-group" style="grid-column:span 2">
-                <label>Description</label>
-                <input type="text" id="txn_desc" placeholder="Brief description"
-                    style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);">
-            </div>
-            <div class="form-group">
-                <label>Category</label>
-                <input type="text" id="txn_cat" list="cat_list" placeholder="Room Revenue, Utilities..."
-                    style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);">
-                <datalist id="cat_list">
-                    <option>Room Revenue</option>
-                    <option>Utilities</option>
-                    <option>Maintenance</option>
-                    <option>Salaries</option>
-                    <option>Supplies</option>
-                    <option>Marketing</option>
-                    <option>Other</option>
-                </datalist>
-            </div>
-            <div class="form-group">
-                <label>Property</label>
-                <select id="txn_prop"
-                    style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);">
-                    <option value="">— All Properties —</option>
-                    <?php
-                    $pRes = mysqli_query($conn, "SELECT property_id, property_name FROM properties ORDER BY property_name");
-                    while ($p = mysqli_fetch_assoc($pRes))
-                        echo "<option value='{$p['property_id']}'>" . htmlspecialchars($p['property_name']) . "</option>";
-                    ?>
-                </select>
-            </div>
-            <div class="form-group" style="grid-column:span 2">
-                <label>Reference No (optional)</label>
-                <input type="text" id="txn_ref" placeholder="Auto-generated if blank"
-                    style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);">
-            </div>
-        </div>
-        <div id="txnError"
-            style="display:none;color:#ef4444;font-size:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:9px;margin-top:12px;">
-        </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
-            <button class="btn btn-secondary" onclick="closeAddTxn()">Cancel</button>
-            <button class="btn btn-primary" id="saveTxnBtn" onclick="saveTransaction()">Save Transaction</button>
-        </div>
-    </div>
-</div>
 <script src="../../assets/js/admin/transactions.js"></script>
 
 <?php include '../../includes/layout_close.php'; ?>

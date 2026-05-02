@@ -424,7 +424,8 @@ function openPaymentModal(payload) {
 }
 
 function closePaymentModal() {
-    document.getElementById('paymentModal').classList.remove('open');
+    const modal = document.getElementById('paymentModal');
+    if (modal) modal.classList.remove('open');  // ← add null check
     pendingBookingPayload = null;
     document.body.style.overflow = '';
 }
@@ -585,11 +586,11 @@ function _onBookingSuccess(data) {
     closePaymentModal();
 }
 
-function _onBookingCancelled(bookingId) {
+function _onBookingCancelled(bookingId, overrideUnitId) {
     if (!bookingId) return;
     const id = String(bookingId);
     const banner = document.getElementById('rt-active-booking-wrap');
-    const unitId = banner ? banner.dataset.unitId : null;
+    const unitId = overrideUnitId || (banner ? banner.dataset.unitId : null);
 
     if (banner && String(banner.dataset.bookingId) === id) {
         banner.style.transition = 'opacity 0.5s, max-height 0.7s ease';
@@ -605,6 +606,31 @@ function _onBookingCancelled(bookingId) {
         if (badge) { badge.textContent = 'Cancelled'; badge.className = 'history-status st-cancelled'; badge.dataset.rawStatus = 'cancelled'; }
     }
 
+    // ── Reset the room card ──────────────────────────────────
+    if (unitId) {
+        const roomCard = document.querySelector(`.room-card[data-unit-id="${unitId}"]`);
+        if (roomCard) {
+            roomCard.dataset.status = 'vacant';
+            const availBadge = roomCard.querySelector('[data-avail-status]');
+            if (availBadge) {
+                availBadge.textContent = 'AVAILABLE';
+                availBadge.classList.remove('avail-no');
+                availBadge.classList.add('avail-yes');
+            }
+            const bookBtn = roomCard.querySelector('[data-book-btn]');
+            if (bookBtn) {
+                bookBtn.textContent = 'Book Now';
+                bookBtn.disabled = false;
+                bookBtn.removeAttribute('aria-disabled');
+                bookBtn.onclick = function (ev) {
+                    if (ev) ev.stopPropagation();
+                    try { openBookingModal(JSON.parse(roomCard.dataset.roomPayload || '{}')); } catch (err) { }
+                };
+            }
+        }
+    }
+    // ────────────────────────────────────────────────────────
+
     document.querySelectorAll('[data-rt-stat="upcoming"], [data-rt-user="upcoming"]').forEach(el => {
         el.textContent = Math.max(0, (parseInt(el.textContent) || 1) - 1);
     });
@@ -612,28 +638,14 @@ function _onBookingCancelled(bookingId) {
         el.textContent = (parseInt(el.textContent) || 0) + 1;
     });
 
-    if (unitId) {
-        const roomCard = document.querySelector(`.room-card[data-unit-id="${unitId}"]`);
-        if (roomCard) {
-            const availBadge = roomCard.querySelector('.room-avail');
-            if (availBadge) { availBadge.textContent = 'AVAILABLE'; availBadge.classList.remove('avail-no'); availBadge.classList.add('avail-yes'); }
-            const unavailBtn = roomCard.querySelector('[data-book-btn], .btn-unavailable, [data-unavailable]');
-            if (unavailBtn) {
-                unavailBtn.textContent = 'Book Now';
-                unavailBtn.classList.remove('btn-unavailable');
-                unavailBtn.classList.add('btn-book');
-                unavailBtn.disabled = false;
-                unavailBtn.onclick = function (ev) {
-                    if (ev) ev.stopPropagation();
-                    try { openBookingModal(JSON.parse(roomCard.dataset.roomPayload || '{}')); } catch (err) { }
-                };
-            }
-        }
-    }
-
     window.hasActiveBooking = false;
-    closeManageModal();
+
+    // Safe close — modal may not exist on all pages
+    if (typeof closeManageModal === 'function') {
+        try { closeManageModal(); } catch (e) { }
+    }
 }
+window._onBookingCancelled = _onBookingCancelled;
 
 // ── FILTERS ────────────────────────────────────────────────
 let currentRoomCategory = 'all';

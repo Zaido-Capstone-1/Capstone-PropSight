@@ -271,4 +271,4 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
     tasks: <?= json_encode($schedule, JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_APOS) ?> || []
   };
 </script>
-<script src="../assets/js/right-panel.js"></script>
+<script src="../../assets/js/right-panel.js"></script>

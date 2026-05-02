@@ -95,6 +95,69 @@ function filterUnitOptions(propertyId = '') {
 let trendChart = null;
 let donutChart = null;
 
+let expCurrentPage = 1;
+const expRowsPerPage = 10;
+let allExpensesData = [];
+
+function paginateExpenses(expenses) {
+    allExpensesData = expenses;
+    const totalPages = Math.ceil(expenses.length / expRowsPerPage);
+    const startIdx = (expCurrentPage - 1) * expRowsPerPage;
+    const endIdx = startIdx + expRowsPerPage;
+    const paginatedExpenses = expenses.slice(startIdx, endIdx);
+    
+    renderTable(paginatedExpenses)
+    updateExpensePagination(expenses.length, totalPages);
+}
+
+function updateExpensePagination(total, totalPages) {
+    let paginationDiv = document.getElementById('expPagination');
+    const tableContainer = document.getElementById('tableContainer');
+    
+    if (totalPages <= 1) {
+        if (paginationDiv) paginationDiv.remove();
+        return;
+    }
+    
+    if (!paginationDiv) {
+        paginationDiv = document.createElement('div');
+        paginationDiv.id = 'expPagination';
+        paginationDiv.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);margin-top:0;';
+        tableContainer.appendChild(paginationDiv);
+    }
+    
+    const startIdx = (expCurrentPage - 1) * expRowsPerPage + 1;
+    const endIdx = Math.min(expCurrentPage * expRowsPerPage, total);
+    
+    let html = `
+        <div style="font-size:13px;color:var(--text-soft);">
+            Showing ${startIdx} - ${endIdx} of ${total}
+        </div>
+        <div style="display:flex;gap:4px;">
+    `;
+    
+    if (expCurrentPage > 1) {
+        html += `<button onclick="changeExpPage(${expCurrentPage - 1})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:transparent;color:var(--text);cursor:pointer;">‹ Prev</button>`;
+    }
+    
+    for (let i = 1; i <= totalPages; i++) {
+        const isActive = i === expCurrentPage;
+        html += `<button onclick="changeExpPage(${i})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:${isActive ? 'var(--primary)' : 'transparent'};color:${isActive ? 'white' : 'var(--text)'};cursor:pointer;">${i}</button>`;
+    }
+    
+    if (expCurrentPage < totalPages) {
+        html += `<button onclick="changeExpPage(${expCurrentPage + 1})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:transparent;color:var(--text);cursor:pointer;">Next ›</button>`;
+    }
+    
+    html += '</div>';
+    paginationDiv.innerHTML = html;
+}
+
+window.changeExpPage = function(page) {
+    expCurrentPage = page;
+    paginateExpenses(allExpensesData);
+};
+
 // ─────────────────────────────────────────────────────────
 //  UTILITIES
 // ─────────────────────────────────────────────────────────
@@ -170,7 +233,7 @@ function renderTable(expenses) {
                     ${esc(e.expense_category)}
                 </span>
             </td>
-            <td style="font-weight:700;color:var(--danger);">₱ ${fmt(e.amount)}</td>
+            <td style="font-weight:700;color:var(--danger);">₱ ${fmt(e.amount, 0)}</td>
             <td>
                 <div class="tbl-actions">
                     <button class="btn-icon btn-edit" data-action="edit" data-id="${e.expense_id}">
@@ -198,7 +261,7 @@ function renderTable(expenses) {
     });
 
     DOM.recordCount.textContent = expenses.length;
-    DOM.footerTotal.textContent = fmt(total);
+    DOM.footerTotal.textContent = fmt(total, 0);
 
     // Store expense data on rows for edit lookup
     _expenseCache = expenses;
@@ -339,7 +402,7 @@ async function loadExpenses() {
             return;
         }
 
-        renderTable(data.expenses || []);
+        paginateExpenses(data.expenses || []);
         renderStats(data.stats || {});
         renderCharts(data.trends || [], data.categories || []);
         renderLegend(data.categories || []);
@@ -420,6 +483,8 @@ async function saveExpense() {
 
         if (json.success) {
             showToast(expense_id ? 'Expense updated!' : 'Expense logged!');
+            _psChannel.postMessage({ type: 'transaction_saved' });
+            sessionStorage.setItem('txn_needs_refresh', '1');        // ✅
             ExpenseModal.close();
             await loadExpenses();
         } else {
@@ -450,6 +515,8 @@ async function deleteExpense(expense_id) {
 
         if (json.success) {
             showToast('Expense deleted.');
+            _psChannel.postMessage({ type: 'transaction_deleted' }); // for other tabs
+            sessionStorage.setItem('txn_needs_refresh', '1');
             const row = document.querySelector(`tr[data-id="${expense_id}"]`);
             if (row) {
                 row.style.transition = 'opacity .3s';
@@ -546,3 +613,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial data load
     loadExpenses();
 });
+// ─────────────────────────────────────────────────────────
+//  BROADCAST CHANNEL — real-time sync with transactions page
+// ─────────────────────────────────────────────────────────
+const _psChannel = new BroadcastChannel('propsight_data');
+_psChannel.onmessage = (e) => {
+    if (['payment_saved', 'payment_deleted', 'transaction_saved', 'transaction_deleted'].includes(e.data?.type)) {
+        loadExpenses();
+    }
+};

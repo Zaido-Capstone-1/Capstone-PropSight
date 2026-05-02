@@ -1,8 +1,4 @@
 <?php
-/**
- * api/admin/update_profile_photo.php
- * Handles upload and removal of the admin user's profile photo.
- */
 declare(strict_types=1);
 require_once __DIR__ . '/../../includes/session_params.php';
 session_start();

@@ -148,13 +148,13 @@ function am_svg(string $key): string
         <span class="tb-count" id="am-count"></span>
       </div>
       <div class="tb-right">
-        <div class="am-search-wrap">
+        <!-- <div class="am-search-wrap">
           <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.35-4.35" />
           </svg>
           <input id="am-search" type="text" placeholder="Search amenities..." class="am-input">
-        </div>
+        </div> -->
         <select id="am-filter-status" class="am-input">
           <option value="">All Statuses</option>
           <option value="available">Available</option>
@@ -185,13 +185,13 @@ function am_svg(string $key): string
         <?php foreach ($grouped as $pid => $group):
           $propName = $group['property_name'];
           $items = $group['items'];
-          $propIcons = ['🏠', '🏢', '🏬', '🏗️', '🏡', '🌆'];
-          $propIcon = $propIcons[abs(crc32($propName)) % count($propIcons)];
+          // $propIcons = ['🏠', '🏢', '🏬', '🏗️', '🏡', '🌆'];
+          // $propIcon = $propIcons[abs(crc32($propName)) % count($propIcons)];
           ?>
           <div class="prop-section" data-property-id="<?= $pid ?>">
             <div class="prop-section-header">
               <div class="prop-section-title">
-                <div class="prop-icon" style="font-size:17px;"><?= $propIcon ?></div>
+                
                 <div>
                   <div class="prop-name"><?= htmlspecialchars($propName) ?></div>
                   <div class="prop-count"><?= count($items) ?> amenit<?= count($items) !== 1 ? 'ies' : 'y' ?></div>

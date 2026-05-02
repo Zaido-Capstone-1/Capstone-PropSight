@@ -4,6 +4,11 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+    display: none;
 }
 
 :root {
@@ -71,7 +76,7 @@ body {
     font-family: 'Jost', sans-serif;
     background: var(--blue-50);
     color: var(--text-dark);
-    overflow-x: hidden;
+    overflow: auto;
 }
 
 img {
@@ -113,7 +118,7 @@ header.scrolled {
     font-weight: 700;
     color: var(--text-dark);
     letter-spacing: 0.01em;
-}   
+}
 
 .logo-icon {
     width: 55px;
@@ -137,7 +142,7 @@ header.scrolled {
 .logo-icon svg {
     width: 20px;
     height: 20px;
-    
+
 }
 
 nav {
@@ -319,20 +324,25 @@ nav a:hover::after {
 
 .field-name-row {
     display: flex;
-    gap: 16px; /* space between fields */
-    flex-wrap: wrap; /* allows wrapping on small screens */
+    gap: 16px;
+    /* space between fields */
+    flex-wrap: wrap;
+    /* allows wrapping on small screens */
 }
 
 .modal-field {
-    flex: 1; /* each field takes equal space */
+    flex: 1;
+    /* each field takes equal space */
     display: flex;
-    flex-direction: column; /* label on top of input */
+    flex-direction: column;
+    /* label on top of input */
 }
 
 .field-phone-row {
     display: flex;
     gap: 12px;
-    flex-wrap: wrap; /* stacks on small screens */
+    flex-wrap: wrap;
+    /* stacks on small screens */
 }
 
 .field-phone-row .modal-field {
@@ -544,7 +554,8 @@ nav a:hover::after {
 
 .mobile-nav .btn-login-header {
     display: block;
-    width: calc(100% - 32px); /* full width minus padding */
+    width: calc(100% - 32px);
+    /* full width minus padding */
     margin: 10px 16px;
     padding: 12px;
     background-color: var(--blue-500);
@@ -925,7 +936,8 @@ nav a:hover::after {
 .about-img-main img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* fills container while keeping aspect ratio */
+    object-fit: cover;
+    /* fills container while keeping aspect ratio */
     display: block;
 }
 
@@ -950,7 +962,8 @@ nav a:hover::after {
 .about-img-accent img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* fill the container while maintaining aspect ratio */
+    object-fit: cover;
+    /* fill the container while maintaining aspect ratio */
     display: block;
 }
 
@@ -1132,7 +1145,7 @@ nav a:hover::after {
 .room-card-img-bg img {
     width: 100%;
     height: 100%;
-    object-fit: cover; 
+    object-fit: cover;
     display: block;
 }
 
@@ -1286,9 +1299,11 @@ nav a:hover::after {
     justify-content: center;
     padding: 20px;
 }
+
 .room-preview-overlay.open {
     display: flex;
 }
+
 .room-preview-box {
     width: 100%;
     max-width: 760px;
@@ -1298,6 +1313,7 @@ nav a:hover::after {
     box-shadow: var(--shadow-lg);
     position: relative;
 }
+
 .room-preview-close {
     position: absolute;
     top: 14px;
@@ -1311,41 +1327,49 @@ nav a:hover::after {
     font-size: 1.3rem;
     cursor: pointer;
 }
+
 .room-preview-media {
     height: 300px;
     background: var(--blue-100);
 }
+
 .room-preview-media img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
+
 .room-preview-body {
     padding: 22px 24px 24px;
 }
+
 .room-preview-body h3 {
     font-family: 'Playfair Display', serif;
     font-size: 1.5rem;
     color: var(--text-dark);
     margin-bottom: 6px;
 }
+
 .room-preview-type,
 .room-preview-location {
     font-size: 0.82rem;
     color: var(--text-soft);
 }
+
 .room-preview-desc {
     margin-top: 12px;
     font-size: 0.92rem;
     color: var(--text-mid);
     line-height: 1.7;
 }
+
 .room-preview-amenities {
     margin-top: 14px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
 }
+
 .room-preview-chip {
     font-size: 0.72rem;
     padding: 5px 10px;
@@ -1354,11 +1378,13 @@ nav a:hover::after {
     border: 1px solid var(--blue-100);
     color: var(--text-soft);
 }
+
 .room-preview-footer {
     margin-top: 16px;
     border-top: 1px solid var(--blue-100);
     padding-top: 14px;
 }
+
 .room-preview-price {
     font-family: 'Playfair Display', serif;
     font-size: 1.2rem;
@@ -1463,8 +1489,8 @@ nav a:hover::after {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: #fff;
     display: flex;
     align-items: center;
@@ -1475,7 +1501,7 @@ nav a:hover::after {
 }
 
 .testi-swiper-btn:hover {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .testi-swiper-btn svg {
@@ -1496,7 +1522,7 @@ nav a:hover::after {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.25);
+    background: rgba(255, 255, 255, 0.25);
     cursor: pointer;
     transition: background 0.3s, width 0.3s;
 }
@@ -2079,6 +2105,7 @@ footer {
         padding: 8px 16px;
         letter-spacing: 0.04em;
     }
+
     .hero {
         grid-template-columns: 1fr 1fr;
         min-height: auto;
@@ -2109,6 +2136,7 @@ footer {
     .btn-book-header {
         display: none;
     }
+
     .hero {
         grid-template-columns: 1fr;
         min-height: auto;

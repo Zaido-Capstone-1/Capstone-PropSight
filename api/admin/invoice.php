@@ -1,5 +1,4 @@
 <?php
-
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
@@ -12,6 +11,7 @@ if (($_SESSION['role'] ?? '') !== 'admin') {
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized.']);
     exit;
 }
+require_csrf_token();
 
 include '../../includes/db.php';
 require_once __DIR__ . '/../../config.php';

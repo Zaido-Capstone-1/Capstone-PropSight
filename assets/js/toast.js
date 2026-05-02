@@ -120,7 +120,7 @@
                 #ps-toast-container {
                     top: 12px;
                     right: 12px;
-                    width: auto;
+                    min-width: auto;
                 }
             }
         `;
@@ -166,7 +166,7 @@
         toast.className = `ps-toast ps-toast--${type}`;
 
         toast.innerHTML = `
-            ${ICONS[type]}
+            
             <div class="ps-toast__body">
                 <div class="ps-toast__msg">${message}</div>
             </div>

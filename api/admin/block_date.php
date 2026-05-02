@@ -9,20 +9,22 @@ if ($_SESSION['role'] !== 'admin') {
     exit;
 }
 
-// GET: list blocked dates for current/specified month
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $month = $_GET['month'] ?? date('Y-m');
     [$y, $m] = array_pad(explode('-', $month), 2, date('m'));
-    $y = (int)$y; $m = (int)$m;
+    $y = (int) $y;
+    $m = (int) $m;
     $res = mysqli_query($conn, "SELECT blocked_date AS date, reason FROM blocked_dates WHERE YEAR(blocked_date)=$y AND MONTH(blocked_date)=$m ORDER BY blocked_date");
     $dates = [];
-    while ($r = mysqli_fetch_assoc($res)) $dates[] = $r;
+    while ($r = mysqli_fetch_assoc($res))
+        $dates[] = $r;
     echo json_encode(['success' => true, 'blocked_dates' => $dates]);
     exit;
 }
 
+require_csrf_token();
 $action = $_POST['action'] ?? '';
-$date   = $_POST['date']   ?? '';
+$date = $_POST['date'] ?? '';
 $reason = trim($_POST['reason'] ?? '');
 
 if (!$date || !strtotime($date)) {
@@ -30,7 +32,7 @@ if (!$date || !strtotime($date)) {
     exit;
 }
 
-$dateEsc   = mysqli_real_escape_string($conn, $date);
+$dateEsc = mysqli_real_escape_string($conn, $date);
 $reasonEsc = mysqli_real_escape_string($conn, $reason);
 
 if ($action === 'block') {

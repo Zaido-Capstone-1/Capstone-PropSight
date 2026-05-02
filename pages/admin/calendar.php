@@ -153,7 +153,10 @@ $selected_bookings = $bookings_by_day[$selected_day] ?? [];
 <link rel="stylesheet" href="../../assets/css/admin-css/calendar.css">
 
 <div class="page-header">
-    <div class="page-header-sub">Manage property availability and track reservations by date</div>
+    <div class="top-header">
+        <h2>Calendar / Availability</h2>
+        <div class="page-header-sub">Manage property availability and track reservations by date</div>
+    </div>
     <div style="display:flex;gap:8px;">
         <button class="btn btn-secondary" onclick="exportMonthReport()">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

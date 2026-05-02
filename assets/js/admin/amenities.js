@@ -59,33 +59,16 @@ async function refreshStats() {
 
 // ── Filters ───────────────────────────────────────────────────────────────────
 function applyFilters() {
-    var search = document.getElementById('am-search').value.toLowerCase().trim();
     var status = document.getElementById('am-filter-status').value;
     var property = document.getElementById('am-filter-property').value;
     var cards = document.querySelectorAll('.amenity-card');
     var sections = document.querySelectorAll('.prop-section');
     var visible = 0;
 
-    cards.forEach(function (card) {
-        var ok = (!search || (card.dataset.search || '').includes(search))
-            && (!status || card.dataset.status === status)
-            && (!property || String(card.dataset.propertyId) === String(property));
-        card.style.display = ok ? '' : 'none';
-        if (ok) visible++;
-    });
-
-    sections.forEach(function (sec) {
-        var secPid = String(sec.dataset.propertyId);
-        var propOk = !property || secPid === String(property);
-        var hasCards = Array.from(sec.querySelectorAll('.amenity-card')).some(function (c) { return c.style.display !== 'none'; });
-        sec.style.display = (propOk && (hasCards || (!search && !status))) ? '' : 'none';
-    });
-
     var countEl = document.getElementById('am-count');
     if (countEl) countEl.textContent = 'Showing ' + visible + ' amenit' + (visible !== 1 ? 'ies' : 'y');
 }
 
-document.getElementById('am-search').addEventListener('input', applyFilters);
 document.getElementById('am-filter-status').addEventListener('change', applyFilters);
 document.getElementById('am-filter-property').addEventListener('change', applyFilters);
 applyFilters();
@@ -282,7 +265,6 @@ function insertCard(am, pid) {
     card.dataset.id = String(am.amenity_id);
     card.dataset.status = am.status;
     card.dataset.propertyId = String(pid);
-    card.dataset.search = am.name.toLowerCase();
     card.style.cssText = 'opacity:0;transform:scale(.97);transition:box-shadow .2s,transform .15s,opacity .22s;';
     card.innerHTML = cardHTML(am);
 
@@ -302,7 +284,6 @@ function updateCard(amenityId, name, status, icon) {
     var card = document.querySelector('.amenity-card[data-id="' + amenityId + '"]');
     if (!card) return;
     card.dataset.status = status;
-    card.dataset.search = name.toLowerCase();
     var wrap = card.querySelector('.am-icon-wrap');
     wrap.className = 'am-icon-wrap ' + status;
     wrap.innerHTML = getIconSvg(icon);
