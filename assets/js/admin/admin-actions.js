@@ -80,8 +80,7 @@
         align-items: center;
         }
       .ps-toast {
-        background: var(--text-dark, #1a202c);
-        color: #fff; border-radius: 10px;
+        border-radius: 10px;
         padding: 12px 18px; font-size: 13.5px;
         box-shadow: 0 6px 24px rgba(0,0,0,.18);
         opacity: 0; transform: translateY(10px);

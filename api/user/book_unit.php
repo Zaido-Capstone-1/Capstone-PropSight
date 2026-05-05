@@ -96,13 +96,14 @@ if (!$unit) {
     exit;
 }
 if ($unit['status'] !== 'vacant') {
-    $stillBusy = mysqli_fetch_assoc(mysqli_query($conn,
+    $stillBusy = mysqli_fetch_assoc(mysqli_query(
+        $conn,
         "SELECT COUNT(*) AS c FROM bookings
          WHERE unit_id = $unitId
            AND status IN ('pending','confirmed','active')
            AND checkout_date >= CURDATE()"
     ));
-    if ((int)($stillBusy['c'] ?? 0) > 0) {
+    if ((int) ($stillBusy['c'] ?? 0) > 0) {
         $reason = 'This unit is not available for booking.';
         if ($unit['status'] === 'maintenance')
             $reason = 'This unit is currently under maintenance.';
@@ -135,8 +136,8 @@ if ($guests > 10) {
 
 $totalAmount = $nights * (float) $unit['rent_amount'];
 
-$email = trim((string)($_SESSION['email'] ?? ''));
-$fullName = trim((string)($_SESSION['name'] ?? ''));
+$email = trim((string) ($_SESSION['email'] ?? ''));
+$fullName = trim((string) ($_SESSION['name'] ?? ''));
 
 $tenantStmt = $conn->prepare('SELECT tenant_id FROM tenants WHERE email = ? LIMIT 1');
 $tenantStmt->bind_param('s', $email);
@@ -192,18 +193,20 @@ try {
         : (($unit['property_name'] ?? '') . ' — Unit ' . ($unit['unit_number'] ?? $unitId));
 
     // ── Notify all admins of new booking ──────────────────
-    $bkRef     = 'BK-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
+    $bkRef = 'BK-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
     $notifTitle = "New booking: $bkRef";
-    $notifBody  =
+    $notifBody =
         "$fullName booked $unitDisplay · " .
         $dtIn->format('M j') . '–' . $dtOut->format('M j, Y') .
         " ($nights nights)";
-    $notifLink  = 'pages/admin/reservations.php';
+    $notifLink = 'pages/admin/reservations.php';
 
-    $admins = mysqli_query($conn,
-        "SELECT user_id FROM users WHERE role='admin' LIMIT 20");
+    $admins = mysqli_query(
+        $conn,
+        "SELECT user_id FROM users WHERE role='admin' LIMIT 20"
+    );
     while ($adm = mysqli_fetch_assoc($admins)) {
-        $adminId = (int)$adm['user_id'];
+        $adminId = (int) $adm['user_id'];
         $adminNotifStmt = $conn->prepare(
             "INSERT INTO notifications (user_id, type, title, body, link)
              VALUES (?, 'booking', ?, ?, ?)"
@@ -215,7 +218,7 @@ try {
 
     // ── Notify the booking user of their pending booking ──
     $userNotifTitle = "Booking submitted: $bkRef";
-    $userNotifBody  =
+    $userNotifBody =
         "Your booking for $unitDisplay (" . $dtIn->format('M j') . '–' . $dtOut->format('M j, Y') .
         ") is pending admin confirmation.";
     $userNotifLink = 'pages/user/bookings.php';
@@ -228,18 +231,18 @@ try {
     $userNotifStmt->close();
 
     $successResponse = json_encode([
-        'success'      => true,
-        'booking_id'   => $bookingId,
-        'unit_id'      => $unitId,
-        'unit_name'    => $unitDisplay,
-        'property_name'=> (string)($unit['property_name'] ?? ''),
-        'checkin'      => $dtIn->format('M j, Y'),
-        'checkout'     => $dtOut->format('M j, Y'),
-        'nights'       => $nights,
-        'guests'       => $guests,
+        'success' => true,
+        'booking_id' => $bookingId,
+        'unit_id' => $unitId,
+        'unit_name' => $unitDisplay,
+        'property_name' => (string) ($unit['property_name'] ?? ''),
+        'checkin' => $dtIn->format('M j, Y'),
+        'checkout' => $dtOut->format('M j, Y'),
+        'nights' => $nights,
+        'guests' => $guests,
         'total_amount' => '₱' . number_format($totalAmount, 2),
-        'status'       => 'pending',
-        'message'      => 'Booking submitted successfully!',
+        'status' => 'pending',
+        'message' => 'Booking submitted successfully!',
     ]);
 
     ob_clean();
@@ -247,5 +250,7 @@ try {
 
 } catch (Exception $e) {
     mysqli_rollback($conn);
+    error_log('[book_unit.php] Booking failed for user_id=' . $userId . ' unit_id=' . $unitId . ': ' . $e->getMessage());
+    ob_clean();
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }

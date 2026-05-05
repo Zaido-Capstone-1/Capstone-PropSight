@@ -564,9 +564,6 @@
         const feed = document.getElementById('rt-activity-feed');
         if (!feed) return;
 
-        const placeholder = feed.querySelector('.dashboard-empty');
-        if (placeholder) placeholder.remove();
-
         items.forEach(b => {
             const key = `act-${b.booking_id}-${b.status}`;
             if (feed.querySelector(`[data-act-key="${key}"]`)) return;

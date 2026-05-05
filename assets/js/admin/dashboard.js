@@ -110,17 +110,22 @@ window._psOccupancyChart = new Chart(document.getElementById('occupancyDonut'), 
     datasets: [{
       data: [window.__PS_DASHBOARD__.occupiedUnits, window.__PS_DASHBOARD__.vacantUnits, window.__PS_DASHBOARD__.maintenanceUnits],
       backgroundColor: ['#2563c4', '#dbeafe', '#E74C3C'],
-      borderWidth: 0,
-      hoverOffset: 6
+      borderWidth: 0
     }]
   },
   options: {
     responsive: true,
     maintainAspectRatio: false,
     cutout: '72%',
+    hover: {
+      mode: null
+    },
     plugins: {
       legend: {
         display: false
+      },
+      tooltip: {
+        enabled: true
       }
     }
   }

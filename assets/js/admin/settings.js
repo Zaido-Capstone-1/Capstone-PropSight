@@ -1,59 +1,106 @@
-
 function uploadAdminPhoto(input) {
     if (!input.files || !input.files[0]) return;
+
     const file = input.files[0];
-    if (!file.type.startsWith('image/')) { showToast('Please select an image file.', 'error'); return; }
-    if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB.', 'error'); return; }
     const fd = new FormData();
-    fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
-    fd.append('action', 'upload_photo');
     fd.append('photo', file);
-    fetch('../../api/admin/update_profile_photo.php', { method: 'POST', body: fd })
-        .then(r => r.json()).then(d => {
-            if (d.success && d.photo_url) {
+    fd.append('action', 'upload_photo');
+    fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
+
+    fetch('../../api/admin/update_profile_photo.php', {
+        method: 'POST',
+        body: fd
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.photo_url) {
+                // Update the image
                 const img = document.getElementById('settingsAvatarImg');
-                const initEl = document.getElementById('settingsAvatarInitials');
-                img.src = '../../' + d.photo_url;
-                img.style.display = '';
-                if (initEl) initEl.style.display = 'none';
-                // Show remove btn if not present
-                if (!document.getElementById('removePhotoBtn')) {
-                    const btn = document.createElement('button');
-                    btn.id = 'removePhotoBtn';
-                    btn.className = 'btn';
-                    btn.type = 'button';
-                    btn.style.cssText = 'margin-top:8px;margin-left:6px;padding:5px 12px;font-size:12px;color:var(--danger,#dc2626);border-color:var(--danger,#dc2626);';
-                    btn.textContent = 'Remove';
-                    btn.onclick = removeAdminPhoto;
-                    document.querySelector('[onclick="document.getElementById(\'adminPhotoInput\').click();"]')
-                        ?.parentElement?.appendChild(btn);
+                if (img) {
+                    img.src = '../../' + data.photo_url;
+                    img.style.display = 'block';
                 }
-                showToast('Profile photo updated.', 'success');
+
+                // Hide initials
+                const initialsSpan = document.getElementById('settingsAvatarInitials');
+                if (initialsSpan) initialsSpan.style.display = 'none';
+
+                // Remove gradient background
+                const avatarWrap = document.getElementById('settingsAvatarWrap');
+                if (avatarWrap) {
+                    avatarWrap.style.background = '';
+                }
+
+                // Add "Remove" button if it doesn't exist
+                if (!document.getElementById('removePhotoBtn')) {
+                    const changeBtn = document.querySelector('button.btn-secondary');
+                    if (changeBtn && changeBtn.parentNode) {
+                        const removeBtn = document.createElement('button');
+                        removeBtn.id = 'removePhotoBtn';
+                        removeBtn.className = 'btn';
+                        removeBtn.type = 'button';
+                        removeBtn.style.cssText = 'margin-top:8px;margin-left:6px;padding:5px 12px;font-size:12px;color:var(--danger,#dc2626);border-color:var(--danger,#dc2626);';
+                        removeBtn.textContent = 'Remove';
+                        removeBtn.onclick = removeAdminPhoto;
+                        changeBtn.parentNode.insertBefore(removeBtn, changeBtn.nextSibling);
+                    }
+                }
+
+                showToast('Profile photo updated successfully', 'success');
             } else {
-                showToast(d.message || 'Upload failed.', 'error');
+                showToast(data.message || 'Failed to upload photo', 'error');
             }
-        }).catch(() => showToast('Upload failed.', 'error'));
-    input.value = '';
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('An error occurred', 'error');
+        });
 }
 
 function removeAdminPhoto() {
-    if (!confirm('Remove your profile photo?')) return;
+    if (!confirm('Are you sure you want to remove your profile photo?')) return;
+
     const fd = new FormData();
-    fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
     fd.append('action', 'remove_photo');
-    fetch('../../api/admin/update_profile_photo.php', { method: 'POST', body: fd })
-        .then(r => r.json()).then(d => {
-            if (d.success) {
+    fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
+
+    fetch('../../api/admin/update_profile_photo.php', {
+        method: 'POST',
+        body: fd
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Hide the image
                 const img = document.getElementById('settingsAvatarImg');
-                const initEl = document.getElementById('settingsAvatarInitials');
-                if (img) img.style.display = 'none';
-                if (initEl) initEl.style.display = 'flex';
-                document.getElementById('removePhotoBtn')?.remove();
-                showToast('Profile photo removed.', 'success');
+                if (img) {
+                    img.style.display = 'none';
+                    img.src = '';
+                }
+
+                // Show the initials
+                const initialsSpan = document.getElementById('settingsAvatarInitials');
+                if (initialsSpan) initialsSpan.style.display = 'flex';
+
+                // Add gradient background back
+                const avatarWrap = document.getElementById('settingsAvatarWrap');
+                if (avatarWrap) {
+                    avatarWrap.style.background = 'linear-gradient(135deg,var(--blue-300),var(--blue-700))';
+                }
+
+                // Remove the "Remove" button
+                const removeBtn = document.getElementById('removePhotoBtn');
+                if (removeBtn) removeBtn.remove();
+
+                showToast('Profile photo removed successfully', 'success');
             } else {
-                showToast(d.message || 'Failed to remove photo.', 'error');
+                showToast(data.message || 'Failed to remove photo', 'error');
             }
-        }).catch(() => showToast('Failed to remove photo.', 'error'));
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('An error occurred', 'error');
+        });
 }
 
 function saveProfile(e) {

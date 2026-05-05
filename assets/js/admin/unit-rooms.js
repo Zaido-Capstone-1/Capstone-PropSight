@@ -112,7 +112,7 @@ function renderAmenityPicker(container, amenities) {
     water: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6 9 4 13 4 16a8 8 0 0 0 16 0c0-3-2-7-8-14z"/></svg>',
     wifi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>',
     parking: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>',
-    rooftop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+    rooftop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',
     gym: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v16M18 4v16M6 12h12M3 8h3M18 8h3M3 16h3M18 16h3"/></svg>',
     pool: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20c2 0 4-2 6-2s4 2 6 2 4-2 6-2"/><path d="M2 16c2 0 4-2 6-2s4 2 6 2 4-2 6-2"/><circle cx="12" cy="7" r="3"/><path d="M12 10v4"/></svg>',
     elevator: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 9l3-3 3 3M9 15l3 3 3-3"/></svg>',
@@ -356,7 +356,7 @@ async function openViewModal(unit) {
     const wrap = document.getElementById('vm-amenities-wrap');
     if (!wrap) return;
 
-    const ICON_MAP = { water: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6 9 4 13 4 16a8 8 0 0 0 16 0c0-3-2-7-8-14z"/></svg>', wifi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>', parking: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>', rooftop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>', gym: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v16M18 4v16M6 12h12M3 8h3M18 8h3M3 16h3M18 16h3"/></svg>', pool: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20c2 0 4-2 6-2s4 2 6 2 4-2 6-2"/><path d="M2 16c2 0 4-2 6-2s4 2 6 2 4-2 6-2"/><circle cx="12" cy="7" r="3"/><path d="M12 10v4"/></svg>', elevator: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 9l3-3 3 3M9 15l3 3 3-3"/></svg>', security: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', cctv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>', garden: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22V12"/><path d="M5 12c0-4 3-7 7-7s7 3 7 7"/><path d="M5 17c0-3 3-5 7-5s7 2 7 5"/></svg>', laundry: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M8 6h.01M11 6h.01M14 6h.01"/></svg>', balcony: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M3 12h18M3 12V8l9-4 9 4v4M7 12v8M12 12v8M17 12v8"/></svg>', aircon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="8" rx="2"/><path d="M7 18l-2 2M12 18v4M17 18l2 2M6 10h.01M10 10h.01"/></svg>', ac: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="8" rx="2"/><path d="M7 18l-2 2M12 18v4M17 18l2 2M6 10h.01M10 10h.01"/></svg>', generator: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>', storage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 0-4 0v2M12 12v4M10 14h4"/></svg>', concierge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20a6 6 0 0 0-12 0"/><circle cx="12" cy="10" r="4"/><path d="M2 20h20"/></svg>', playground: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 8l14 8M5 16l14-8"/></svg>', basketball: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93c4.08 4.08 4.08 10.74 0 14.82M19.07 4.93c-4.08 4.08-4.08 10.74 0 14.82M2 12h20"/></svg>', tennis: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M6.3 6.3c3.9 3.9 3.9 9.5 0 13.4M17.7 6.3c-3.9 3.9-3.9 9.5 0 13.4"/></svg>', spa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C9 7 4 9 4 14a8 8 0 0 0 16 0c0-5-5-7-8-12z"/></svg>', lounge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 9V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2"/><path d="M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0z"/><path d="M4 18v2M20 18v2"/></svg>', kitchen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v4M8 11v9M16 3v9M16 16v2"/><circle cx="16" cy="14" r="2"/><path d="M4 3h3M4 7h3"/></svg>', pet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="4" r="2"/><circle cx="17" cy="4" r="2"/><circle cx="4" cy="12" r="2"/><circle cx="20" cy="12" r="2"/><path d="M12 18c-3 0-6-2-6-5 0-2 2-3 3-5h6c1 2 3 3 3 5 0 3-3 5-6 5z"/></svg>', bicycle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="15" r="4"/><circle cx="6" cy="15" r="4"/><path d="M6 15l4-8h4l2 4H6M14 7h2"/></svg>', solar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>', trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>', mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>' };
+    const ICON_MAP = { water: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6 9 4 13 4 16a8 8 0 0 0 16 0c0-3-2-7-8-14z"/></svg>', wifi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>', parking: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>', rooftop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>', gym: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v16M18 4v16M6 12h12M3 8h3M18 8h3M3 16h3M18 16h3"/></svg>', pool: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20c2 0 4-2 6-2s4 2 6 2 4-2 6-2"/><path d="M2 16c2 0 4-2 6-2s4 2 6 2 4-2 6-2"/><circle cx="12" cy="7" r="3"/><path d="M12 10v4"/></svg>', elevator: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 9l3-3 3 3M9 15l3 3 3-3"/></svg>', security: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', cctv: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>', garden: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22V12"/><path d="M5 12c0-4 3-7 7-7s7 3 7 7"/><path d="M5 17c0-3 3-5 7-5s7 2 7 5"/></svg>', laundry: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M8 6h.01M11 6h.01M14 6h.01"/></svg>', balcony: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20h18M3 12h18M3 12V8l9-4 9 4v4M7 12v8M12 12v8M17 12v8"/></svg>', aircon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="8" rx="2"/><path d="M7 18l-2 2M12 18v4M17 18l2 2M6 10h.01M10 10h.01"/></svg>', ac: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="8" rx="2"/><path d="M7 18l-2 2M12 18v4M17 18l2 2M6 10h.01M10 10h.01"/></svg>', generator: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>', storage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 0-4 0v2M12 12v4M10 14h4"/></svg>', concierge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20a6 6 0 0 0-12 0"/><circle cx="12" cy="10" r="4"/><path d="M2 20h20"/></svg>', playground: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 8l14 8M5 16l14-8"/></svg>', basketball: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93c4.08 4.08 4.08 10.74 0 14.82M19.07 4.93c-4.08 4.08-4.08 10.74 0 14.82M2 12h20"/></svg>', tennis: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M6.3 6.3c3.9 3.9 3.9 9.5 0 13.4M17.7 6.3c-3.9 3.9-3.9 9.5 0 13.4"/></svg>', spa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C9 7 4 9 4 14a8 8 0 0 0 16 0c0-5-5-7-8-12z"/></svg>', lounge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 9V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2"/><path d="M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0z"/><path d="M4 18v2M20 18v2"/></svg>', kitchen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v4M8 11v9M16 3v9M16 16v2"/><circle cx="16" cy="14" r="2"/><path d="M4 3h3M4 7h3"/></svg>', pet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="4" r="2"/><circle cx="17" cy="4" r="2"/><circle cx="4" cy="12" r="2"/><circle cx="20" cy="12" r="2"/><path d="M12 18c-3 0-6-2-6-5 0-2 2-3 3-5h6c1 2 3 3 3 5 0 3-3 5-6 5z"/></svg>', bicycle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="15" r="4"/><circle cx="6" cy="15" r="4"/><path d="M6 15l4-8h4l2 4H6M14 7h2"/></svg>', ev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h11l5 5v5h-2"/><circle cx="7" cy="19" r="2"/><circle cx="17" cy="19" r="2"/><path d="M9 11V7M12 11V9"/></svg>', solar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>', trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>', mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>' };
 
     if (!amenities.length) {
       wrap.innerHTML = '<div style="grid-column:1/-1;font-size:13px;color:var(--text-soft);font-style:italic;padding:4px 0;">No amenities assigned.</div>';
@@ -607,9 +607,44 @@ document.getElementById('open-add-unit-modal').addEventListener('click', () => {
         <div id="m-amenities-wrap"></div>
       </div>
 
+      <!-- ── Unit Photos ── -->
       <div class="form-group full">
         <label>Unit Photos</label>
-        <input type="file" id="m-images" accept="image/*" multiple style="padding:6px 0;font-size:13px;">
+        <div id="m-dropzone" style="
+          border: 2px dashed #cbd5e1;
+          border-radius: 12px;
+          padding: 32px 20px;
+          text-align: center;
+          cursor: pointer;
+          transition: border-color .2s, background .2s;
+          background: #f8fafc;
+          position: relative;
+        ">
+          <input type="file" id="m-images" accept="image/*" multiple style="
+            position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;
+          ">
+          <div id="m-dropzone-inner" style="pointer-events:none;">
+            <div style="
+              width:48px;height:48px;border-radius:12px;
+              background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 100%);
+              display:flex;align-items:center;justify-content:center;
+              margin:0 auto 12px;
+            ">
+              <svg fill="none" stroke="var(--primary,#6366f1)" stroke-width="1.75" viewBox="0 0 24 24" style="width:22px;height:22px;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:4px;">
+              Drop photos here or <span style="color:var(--primary,#6366f1);">browse files</span>
+            </div>
+            <div style="font-size:11.5px;color:#94a3b8;">
+              PNG, JPG, WEBP supported &nbsp;·&nbsp; Up to 10 photos
+            </div>
+          </div>
+        </div>
+        <div id="m-file-count" style="display:none;font-size:12px;color:var(--text-soft);margin-top:8px;text-align:right;"></div>
         <div id="m-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
       </div>
 
@@ -676,26 +711,73 @@ document.getElementById('open-add-unit-modal').addEventListener('click', () => {
         });
       });
 
-      // ── Image preview ──────────────────────────────────────────────────────
-      bd.querySelector('#m-images').addEventListener('change', function () {
+      // ── Dropzone & Image Preview ───────────────────────────────────────────
+
+      const dropzone = bd.querySelector('#m-dropzone');
+      const fileCountEl = bd.querySelector('#m-file-count');
+
+      function updateFileCount() {
+        if (files.length > 0) {
+          fileCountEl.style.display = 'block';
+          fileCountEl.textContent = `${files.length} / 10 photo${files.length !== 1 ? 's' : ''} selected`;
+          fileCountEl.style.color = files.length >= 10 ? '#ef4444' : 'var(--text-soft)';
+        } else {
+          fileCountEl.style.display = 'none';
+        }
+      }
+
+      function addFiles(newFiles) {
         const preview = bd.querySelector('#m-preview');
-        [...this.files].forEach(file => {
+        newFiles.forEach(file => {
+          if (files.length >= 10) return;
           files.push(file);
           const url = URL.createObjectURL(file);
           const wrap = document.createElement('div');
           wrap.style.cssText = 'position:relative;';
           const img = Object.assign(document.createElement('img'), { src: url });
-          img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:9px;border:1px solid var(--border);display:block;';
+          img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:9px;border:1px solid var(--border);display:block;transition:opacity .2s;';
           const rm = document.createElement('button');
-          rm.textContent = '×';
-          rm.style.cssText = 'position:absolute;top:-5px;right:-5px;width:19px;height:19px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;';
+          rm.innerHTML = `<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="width:9px;height:9px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+          rm.style.cssText = 'position:absolute;top:-5px;right:-5px;width:20px;height:20px;border-radius:50%;background:#ef4444;color:#fff;border:none;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.2);';
           rm.onclick = () => {
-            files.splice([...preview.children].indexOf(wrap), 1);
+            const idx = [...preview.children].indexOf(wrap);
+            if (idx > -1) files.splice(idx, 1);
             wrap.remove();
+            updateFileCount();
           };
           wrap.append(img, rm);
           preview.appendChild(wrap);
         });
+        updateFileCount();
+      }
+
+      // Drag over
+      dropzone.addEventListener('dragover', e => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--primary,#6366f1)';
+        dropzone.style.background = '#eef2ff';
+      });
+
+      // Drag leave
+      dropzone.addEventListener('dragleave', e => {
+        if (!dropzone.contains(e.relatedTarget)) {
+          dropzone.style.borderColor = '#cbd5e1';
+          dropzone.style.background = '#f8fafc';
+        }
+      });
+
+      // Drop
+      dropzone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#cbd5e1';
+        dropzone.style.background = '#f8fafc';
+        const dropped = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+        addFiles(dropped);
+      });
+
+      // File input change
+      bd.querySelector('#m-images').addEventListener('change', function () {
+        addFiles([...this.files]);
         this.value = '';
       });
 

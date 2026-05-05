@@ -74,7 +74,9 @@ body {
   font-size: 15px;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -448,7 +450,8 @@ body {
   padding: 0 26px;
   min-width: 0;
   max-width: 100%;
-  width: 0; /* forces flex child to shrink properly */
+  width: 0;
+  /* forces flex child to shrink properly */
 }
 
 .topbar {
@@ -2011,19 +2014,31 @@ textarea {
     height: 17px;
   }
 }
+
 /* ══ PropSight Real-Time UI ══════════════════════════════ */
 
 /* ── Sidebar badge live pulse when > 0 ─────────────────── */
 .nav-badge[data-rt] {
   transition: background 0.4s, transform 0.3s;
 }
+
 .nav-badge[data-rt].rt-pulse {
   animation: rt-badge-pop 0.4s ease;
 }
+
 @keyframes rt-badge-pop {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.35); background: #ef4444; }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.35);
+    background: #ef4444;
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* ── Real-time activity feed ────────────────────────────── */
@@ -2035,23 +2050,41 @@ textarea {
   border-bottom: 1px solid var(--blue-50, #eff6ff);
   animation: rt-slide-in 0.35s ease;
 }
-.rt-activity-item:last-child { border-bottom: none; }
-@keyframes rt-slide-in {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
+
+.rt-activity-item:last-child {
+  border-bottom: none;
 }
+
+@keyframes rt-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .rt-act-dot {
-  width: 8px; height: 8px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
+
 .rt-act-body {
   flex: 1;
   font-size: 0.82rem;
   color: var(--text-dark, #1e293b);
   line-height: 1.4;
 }
-.rt-act-name { font-weight: 600; }
+
+.rt-act-name {
+  font-weight: 600;
+}
+
 .rt-act-badge {
   display: inline-block;
   padding: 1px 7px;
@@ -2059,6 +2092,7 @@ textarea {
   font-size: 0.72rem;
   font-weight: 600;
 }
+
 .rt-act-time {
   font-size: 0.72rem;
   color: var(--text-soft, #64748b);
@@ -2072,13 +2106,63 @@ textarea {
 }
 
 /* ── Badge colours shared across pages ──────────────────── */
-.badge-pending   { background: #fef3c7; color: #92400e; }
-.badge-confirmed { background: #dbeafe; color: #1e40af; }
-.badge-active    { background: #dcfce7; color: #166534; }
-.badge-completed { background: #f1f5f9; color: #475569; }
-.badge-cancelled { background: #fee2e2; color: #991b1b; }
+.badge-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-confirmed {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-completed {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.badge-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
 
 /* ── FIX: Hide menu-toggle when sidebar is open ── */
 body:has(.sidebar.open) .menu-toggle {
   display: none !important;
+}
+
+.welcome-avatar {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: none;
+}
+
+.welcome-avatar-initials {
+  background: linear-gradient(135deg, var(--blue-300), var(--blue-700));
+  color: white;
+  font-weight: 600;
+  font-size: 25px;
+}
+
+/* Hide initials background when image is present */
+.welcome-avatar:not(.welcome-avatar-initials) {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
 }

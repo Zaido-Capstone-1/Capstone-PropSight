@@ -359,3 +359,6 @@
         flex: 1 1 calc(50% - 3px) !important;
     }
 }
+
+*::-webkit-scrollbar { display: none; }
+* { -ms-overflow-style: none; scrollbar-width: none; }

@@ -1,10 +1,4 @@
 <?php
-/**
- * sidebar.php — Shared sidebar navigation
- * Requires $active_page to be set in the including file.
- * e.g. $active_page = 'dashboard';  or  $active_page = 'properties_list';
- */
-
 function nav_active(string $key): string
 {
   global $active_page;
@@ -29,11 +23,11 @@ function group_sub_open(array $keys): string
 }
 
 // ── Profile photo / initials helper ──────────────────────────────────────────
-$_sb_photo_raw = trim((string)($_SESSION['profile_photo'] ?? ''));
+$_sb_photo_raw = trim((string) ($_SESSION['profile_photo'] ?? ''));
 if ($_sb_photo_raw === '' && isset($_SESSION['user_id']) && !empty($conn)) {
-  $_sb_uid = (int)$_SESSION['user_id'];
+  $_sb_uid = (int) $_SESSION['user_id'];
   $_sb_r = mysqli_fetch_assoc(mysqli_query($conn, "SELECT profile_photo FROM users WHERE user_id=$_sb_uid LIMIT 1"));
-  $_sb_photo_raw = trim((string)($_sb_r['profile_photo'] ?? ''));
+  $_sb_photo_raw = trim((string) ($_sb_r['profile_photo'] ?? ''));
   if ($_sb_photo_raw !== '') {
     $_SESSION['profile_photo'] = $_sb_photo_raw;
   }
@@ -44,14 +38,47 @@ if ($_sb_photo_raw !== '') {
   $_sb_photo_url = '../../' . ltrim($_sb_photo_raw, '/');
 }
 // Compute initials from session name
-$_sb_name  = trim((string)($_SESSION['name'] ?? 'Admin'));
+$_sb_name = trim((string) ($_SESSION['name'] ?? 'Admin'));
 $_sb_parts = array_filter(explode(' ', $_sb_name));
 $_sb_initials = '';
 foreach (array_slice($_sb_parts, 0, 2) as $p) {
   $_sb_initials .= strtoupper(mb_substr($p, 0, 1));
 }
-if ($_sb_initials === '') $_sb_initials = 'A';
+if ($_sb_initials === '')
+  $_sb_initials = 'A';
 ?>
+<style>
+  .sidebar-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: none;
+  }
+
+  .sidebar-avatar-initials {
+    background:linear-gradient(135deg,var(--blue-300),var(--blue-700));
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  /* Hide initials background when image is present */
+  .sidebar-avatar:not(.sidebar-avatar-initials) {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+  }
+</style>
 
 <div class="overlay" id="overlay"></div>
 
@@ -63,7 +90,8 @@ if ($_sb_initials === '') $_sb_initials = 'A';
 
   <div class="sidebar-top">
     <div class="sidebar-logo">
-      <img src="../../assets/images/final logo.png" alt="PropSight Logo" style="width:50px; height:50px; object-fit:contain;" />
+      <img src="../../assets/images/final logo.png" alt="PropSight Logo"
+        style="width:50px; height:50px; object-fit:contain;" />
     </div>
     <div>
       <div class="brand-name">PropSight</div>
@@ -285,7 +313,7 @@ if ($_sb_initials === '') $_sb_initials = 'A';
       <div class="sidebar-avatar<?= $_sb_photo_url ? '' : ' sidebar-avatar-initials' ?>">
         <?php if ($_sb_photo_url): ?>
           <img src="<?= htmlspecialchars($_sb_photo_url) ?>" alt="Profile"
-               onerror="this.style.display='none';this.parentElement.classList.remove('sidebar-avatar');this.parentElement.classList.add('sidebar-avatar','sidebar-avatar-initials');this.parentElement.textContent='<?= htmlspecialchars($_sb_initials, ENT_QUOTES) ?>';">
+            style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
         <?php else: ?>
           <?= htmlspecialchars($_sb_initials) ?>
         <?php endif; ?>

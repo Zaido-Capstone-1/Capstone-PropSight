@@ -223,7 +223,7 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
         </table>
 
         <div id="emptyState" class="table-empty" style="display:none;">
-          <div class="table-empty-icon">📅</div>
+          <!-- <div class="table-empty-icon">📅</div> -->
           <div class="table-empty-text">No expenses found.</div>
         </div>
       </div>

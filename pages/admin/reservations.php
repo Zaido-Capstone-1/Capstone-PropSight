@@ -1,19 +1,6 @@
 <?php
 include '../../includes/session.php';
 
-if ($_SESSION['role'] !== 'admin') {
-    echo '<!DOCTYPE html>
-<html>
-<head><meta http-equiv="refresh" content="2;url=javascript:history.back()"></head>
-<body>
-<script src="../../assets/js/toast.js"></script>
-
-  <script src="../../assets/js/responsive.js"></script>
-<script src="../../assets/js/admin/reservations-inline.js"></script>
-</body>
-</html>';
-    exit;
-}
 
 $page_title = 'Reservations';
 $active_page = 'reservations';
@@ -391,7 +378,7 @@ function fmtDate($d)
     };
 </script>
 <script src="../../assets/js/toast.js"></script>
-
 <script>window.PS_RT_PAGE = 'reservations';</script>
-<!-- <script src="../../assets/js/admin/reservations.js"></script> -->
+<script src="../../assets/js/admin/reservations.js"></script>
+
 <?php include '../../includes/layout_close.php'; ?>

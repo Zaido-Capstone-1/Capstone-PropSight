@@ -311,7 +311,7 @@ document.getElementById('ticketViewModal')?.addEventListener('click', (e) => {
 });
 
 // ── Real-time: new admin reply to open ticket ─────────────────────────────
-window.addEventListener('ps:new_messages', function(e) {
+window.addEventListener('ps:new_messages', function (e) {
     const msgs = Array.isArray(e.detail) ? e.detail : [];
     if (!msgs.length) return;
 
@@ -369,3 +369,75 @@ window.addEventListener('ps:new_messages', function(e) {
         }
     });
 });
+
+function selectMaintenanceType(btn) {
+    btn.closest('.ticket-types').querySelectorAll('.ticket-type').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+}
+function submitMaintenance() {
+    const subject = document.getElementById('maint_subject')?.value.trim();
+    const message = document.getElementById('maint_message')?.value.trim();
+    const priority = document.getElementById('maint_priority')?.value;
+    const errBox = document.getElementById('maintenanceError');
+    const issueType = document.querySelector('#maintenanceFormCard .ticket-type.selected')?.textContent?.trim() ?? 'Other';
+
+    errBox.style.display = 'none';
+
+    if (!subject) { errBox.textContent = 'Issue summary is required.'; errBox.style.display = 'block'; return; }
+    if (!message || message.length < 10) { errBox.textContent = 'Please write a more detailed description (at least 10 characters).'; errBox.style.display = 'block'; return; }
+
+    const btn = document.getElementById('sendMaintBtn');
+    const startedAt = Date.now();
+    const minLoadingMs = 1000;
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    if (typeof showToast === 'function') showToast('Submitting your maintenance request...', 'info');
+
+    const waitForMinLoading = () => {
+        const elapsed = Date.now() - startedAt;
+        const remaining = Math.max(0, minLoadingMs - elapsed);
+        return new Promise(resolve => setTimeout(resolve, remaining));
+    };
+
+    fetch('../../api/submit_maintenance.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ issue_type: issueType, subject, message, priority })
+    })
+        .then(r => r.json())
+        .then(async (data) => {
+            await waitForMinLoading();
+            if (!data.success) {
+                errBox.textContent = data.message || 'Failed to submit. Please try again.';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            const formCard = document.getElementById('maintenanceFormCard');
+            formCard.innerHTML = `
+            <div style="text-align:center;padding:32px 20px;">
+                <div style="width:64px;height:64px;border-radius:50%;background:rgba(34,197,94,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
+                    <svg viewBox="0 0 24 24" style="width:30px;height:30px;stroke:#16a34a;fill:none;stroke-width:2.5;"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--text-dark);margin-bottom:8px;">Request Submitted!</div>
+                <p style="font-size:0.85rem;color:var(--text-soft);line-height:1.7;margin-bottom:6px;">
+                    Your maintenance request has been received. Our team will attend to it promptly.
+                </p>
+                <p style="font-size:0.78rem;color:var(--text-soft);margin-bottom:24px;">
+                    Issue: <strong>${escHtml(issueType)}</strong> · Priority: <strong>${escHtml(priority)}</strong>
+                </p>
+                <button class="btn-secondary" onclick="location.reload()">Submit Another Request</button>
+            </div>`;
+
+            if (typeof showToast === 'function') showToast('Maintenance request submitted! We\'ll get on it soon.', 'success');
+        })
+        .catch(async () => {
+            await waitForMinLoading();
+            errBox.textContent = 'Network error. Please try again.';
+            errBox.style.display = 'block';
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg> Submit Request`;
+        });
+}

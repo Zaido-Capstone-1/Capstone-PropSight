@@ -1,3 +1,77 @@
+
+let currentPage = 1;
+const rowsPerPage = 10;
+
+function paginateTable() {
+    const allRows = Array.from(document.querySelectorAll('#tableBody tr'));
+    const visibleRows = allRows.filter(row => row.style.display !== 'none' && !row.classList.contains('paginated-hidden'));
+
+    const totalPages = Math.ceil(visibleRows.length / rowsPerPage);
+    const startIdx = (currentPage - 1) * rowsPerPage;
+    const endIdx = startIdx + rowsPerPage;
+
+    // Hide all rows first
+    visibleRows.forEach((row, idx) => {
+        if (idx >= startIdx && idx < endIdx) {
+            row.style.display = '';
+            row.classList.remove('paginated-hidden');
+        } else {
+            row.classList.add('paginated-hidden');
+            row.style.display = 'none';
+        }
+    });
+
+    // Update or create pagination controls
+    updatePaginationControls(visibleRows.length, totalPages);
+}
+
+function updatePaginationControls(totalVisible, totalPages) {
+    let paginationDiv = document.getElementById('txnPagination');
+
+    if (totalPages <= 1) {
+        if (paginationDiv) paginationDiv.remove();
+        return;
+    }
+
+    if (!paginationDiv) {
+        paginationDiv = document.createElement('div');
+        paginationDiv.id = 'txnPagination';
+        paginationDiv.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);';
+        document.querySelector('.table-wrap').appendChild(paginationDiv);
+    }
+
+    const startIdx = (currentPage - 1) * rowsPerPage + 1;
+    const endIdx = Math.min(currentPage * rowsPerPage, totalVisible);
+
+    let html = `
+        <div style="font-size:13px;color:var(--text-soft);">
+            Showing ${startIdx} - ${endIdx} of ${totalVisible}
+        </div>
+        <div style="display:flex;gap:4px;">
+    `;
+
+    if (currentPage > 1) {
+        html += `<button onclick="changePage(${currentPage - 1})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:transparent;color:var(--text);cursor:pointer;">‹ Prev</button>`;
+    }
+
+    for (let i = 1; i <= totalPages; i++) {
+        const isActive = i === currentPage;
+        html += `<button onclick="changePage(${i})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:${isActive ? 'var(--primary)' : 'transparent'};color:${isActive ? 'white' : 'var(--text)'};cursor:pointer;">${i}</button>`;
+    }
+
+    if (currentPage < totalPages) {
+        html += `<button onclick="changePage(${currentPage + 1})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:transparent;color:var(--text);cursor:pointer;">Next ›</button>`;
+    }
+
+    html += '</div>';
+    paginationDiv.innerHTML = html;
+}
+
+window.changePage = function (page) {
+    currentPage = page;
+    paginateTable();
+};
+
 if (sessionStorage.getItem('txn_needs_refresh') === '1') {
     sessionStorage.removeItem('txn_needs_refresh');
     // Small delay to let the page fully render first
@@ -139,77 +213,4 @@ const _psChannel = new BroadcastChannel('propsight_data');
 _psChannel.onmessage = (e) => {
     const valid = ['payment_saved', 'payment_deleted', 'transaction_saved', 'transaction_deleted'];
     if (valid.includes(e.data?.type)) refreshTransactionsTable();
-};
-
-let currentPage = 1;
-const rowsPerPage = 10;
-
-function paginateTable() {
-    const allRows = Array.from(document.querySelectorAll('#tableBody tr'));
-    const visibleRows = allRows.filter(row => row.style.display !== 'none' && !row.classList.contains('paginated-hidden'));
-
-    const totalPages = Math.ceil(visibleRows.length / rowsPerPage);
-    const startIdx = (currentPage - 1) * rowsPerPage;
-    const endIdx = startIdx + rowsPerPage;
-
-    // Hide all rows first
-    visibleRows.forEach((row, idx) => {
-        if (idx >= startIdx && idx < endIdx) {
-            row.style.display = '';
-            row.classList.remove('paginated-hidden');
-        } else {
-            row.classList.add('paginated-hidden');
-            row.style.display = 'none';
-        }
-    });
-
-    // Update or create pagination controls
-    updatePaginationControls(visibleRows.length, totalPages);
-}
-
-function updatePaginationControls(totalVisible, totalPages) {
-    let paginationDiv = document.getElementById('txnPagination');
-
-    if (totalPages <= 1) {
-        if (paginationDiv) paginationDiv.remove();
-        return;
-    }
-
-    if (!paginationDiv) {
-        paginationDiv = document.createElement('div');
-        paginationDiv.id = 'txnPagination';
-        paginationDiv.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);';
-        document.querySelector('.table-wrap').appendChild(paginationDiv);
-    }
-
-    const startIdx = (currentPage - 1) * rowsPerPage + 1;
-    const endIdx = Math.min(currentPage * rowsPerPage, totalVisible);
-
-    let html = `
-        <div style="font-size:13px;color:var(--text-soft);">
-            Showing ${startIdx} - ${endIdx} of ${totalVisible}
-        </div>
-        <div style="display:flex;gap:4px;">
-    `;
-
-    if (currentPage > 1) {
-        html += `<button onclick="changePage(${currentPage - 1})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:transparent;color:var(--text);cursor:pointer;">‹ Prev</button>`;
-    }
-
-    for (let i = 1; i <= totalPages; i++) {
-        const isActive = i === currentPage;
-        html += `<button onclick="changePage(${i})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:${isActive ? 'var(--primary)' : 'transparent'};color:${isActive ? 'white' : 'var(--text)'};cursor:pointer;">${i}</button>`;
-    }
-
-    if (currentPage < totalPages) {
-        html += `<button onclick="changePage(${currentPage + 1})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:transparent;color:var(--text);cursor:pointer;">Next ›</button>`;
-    }
-
-    html += '</div>';
-    paginationDiv.innerHTML = html;
-}
-
-window.changePage = function (page) {
-    currentPage = page;
-    paginateTable();
 };

@@ -1,29 +1,54 @@
 function processAction(bookingId, type) {
     const isCi = type === 'checkin';
     const label = isCi ? 'Check In' : 'Check Out';
-    const color = isCi ? '#16a34a' : '#b45309';
     const rowId = (isCi ? 'ci' : 'co') + '-row-' + bookingId;
     const btnId = (isCi ? 'ci' : 'co') + '-btn-' + bookingId;
 
-    if (!confirm(`Mark booking #BK-${String(bookingId).padStart(4, '0')} as ${label.toLowerCase()}?`)) return;
+    // populate modal
+    document.getElementById('cicoModalTitle').textContent = label + ' Guest';
+    document.getElementById('cicoModalBody').textContent =
+        `Mark booking #BK-${String(bookingId).padStart(4, '0')} as ${label.toLowerCase()}?`;
+    const confirmBtn = document.getElementById('cicoModalConfirm');
+    confirmBtn.textContent = 'Yes, ' + label;
+    confirmBtn.className = 'cico-modal-btn cico-btn-confirm ' + (isCi ? 'cico-green' : 'cico-amber');
 
-    showToast('Processing…', 'info');
-    fetch('../../api/checkin.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ booking_id: bookingId, action: type })
-    })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                showToast(data.message || 'Done!', 'success');
-                setTimeout(() => refreshCheckinTable(), 600);
-            } else {
-                showToast(data.message, 'error', 'Failed');
-            }
+    // wire confirm click
+    confirmBtn.onclick = function () {
+        closeCicoModal();
+        fetch('../../api/checkin.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                booking_id: bookingId,
+                action: type,
+                csrf_token: window.__PS_CHECKIN__?.csrfToken ?? '',
+            })
         })
-        .catch(() => showToast('Server unreachable.', 'error'));
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message || 'Done!', 'success');
+                    setTimeout(() => refreshCheckinTable(), 600);
+                } else {
+                    showToast(data.message, 'error', 'Failed');
+                }
+            })
+            .catch(() => showToast('Server unreachable.', 'error'));
+    };
+
+    document.getElementById('cicoModal').style.display = 'flex';
 }
+
+function closeCicoModal() {
+    document.getElementById('cicoModal').style.display = 'none';
+}
+
+// close on backdrop click
+document.getElementById('cicoModal').addEventListener('click', function (e) {
+    if (e.target === this) closeCicoModal();
+});
+
+window.closeCicoModal = closeCicoModal;
 
 const selectedDate = window.__PS_CHECKIN__.selectedDate;
 const ciDays = window.__PS_CHECKIN__.ciDays;
@@ -175,11 +200,10 @@ function closeExtendModal() {
 function submitExtend() {
     const newDate = document.getElementById('extendNewDate').value;
     if (!newDate) { showToast('Please pick a new check-out date.', 'error'); return; }
-    showToast('Saving extension…', 'info');
     fetch('../../api/extend_stay.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ booking_id: _extendBookingId, new_checkout: newDate })
+        body: new URLSearchParams({ booking_id: _extendBookingId, new_checkout: newDate, csrf_token: window.__PS_CHECKIN__?.csrfToken ?? '' })
     })
         .then(r => r.json())
         .then(data => {

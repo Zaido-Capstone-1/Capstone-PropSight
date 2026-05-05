@@ -400,6 +400,9 @@
     background: #b45309;
 }
 
+.cico-green  { background: #16a34a; }
+.cico-amber  { background: #b45309; }
+
 @media (max-width: 768px) {
     .date-nav {
         flex-wrap: wrap;

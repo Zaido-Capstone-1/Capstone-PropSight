@@ -11,16 +11,18 @@ if ($_SESSION['role'] !== 'admin') {
 }
 require_csrf_token();
 
-$bookingId = (int)($_POST['booking_id'] ?? 0);
-$action    = trim($_POST['action'] ?? '');
+$bookingId = (int) ($_POST['booking_id'] ?? 0);
+$action = trim($_POST['action'] ?? '');
 
 if (!$bookingId || !in_array($action, ['checkin', 'checkout'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid request.']);
     exit;
 }
 
-$booking = mysqli_fetch_assoc(mysqli_query($conn,
-    "SELECT * FROM bookings WHERE booking_id=$bookingId LIMIT 1"));
+$booking = mysqli_fetch_assoc(mysqli_query(
+    $conn,
+    "SELECT * FROM bookings WHERE booking_id=$bookingId LIMIT 1"
+));
 
 if (!$booking) {
     echo json_encode(['success' => false, 'message' => 'Booking not found.']);
@@ -33,12 +35,14 @@ try {
         if ($booking['checkin_status'] === 'done') {
             throw new Exception('Guest has already checked in.');
         }
-        if (!mysqli_query($conn, "UPDATE bookings SET
+        if (
+            !mysqli_query($conn, "UPDATE bookings SET
             checkin_status='done', checkin_actual=NOW(), status='active'
-            WHERE booking_id=$bookingId"))
+            WHERE booking_id=$bookingId")
+        )
             throw new Exception(mysqli_error($conn));
 
-        if (!syncUnitAvailabilityFromBookings($conn, (int)$booking['unit_id']))
+        if (!syncUnitAvailabilityFromBookings($conn, (int) $booking['unit_id']))
             throw new Exception('Failed to sync unit availability.');
 
         $msg = 'Guest checked in successfully.';
@@ -46,30 +50,40 @@ try {
         if ($booking['checkout_status'] === 'done') {
             throw new Exception('Guest has already checked out.');
         }
-        if (!mysqli_query($conn, "UPDATE bookings SET
+        if ($booking['checkin_status'] !== 'done') {
+            throw new Exception('Guest must be checked in before checking out.');
+        }
+        
+        if (
+            !mysqli_query($conn, "UPDATE bookings SET
             checkout_status='done', checkout_actual=NOW(), status='completed'
-            WHERE booking_id=$bookingId"))
+            WHERE booking_id=$bookingId")
+        )
             throw new Exception(mysqli_error($conn));
 
-        if (!syncUnitAvailabilityFromBookings($conn, (int)$booking['unit_id']))
+        if (!syncUnitAvailabilityFromBookings($conn, (int) $booking['unit_id']))
             throw new Exception('Failed to sync unit availability.');
 
         // Record income transaction on checkout
-        $amt = (float)$booking['total_amount'];
+        $amt = (float) $booking['total_amount'];
         if ($amt > 0) {
             // Mark payment as paid
             mysqli_query($conn, "UPDATE payments SET payment_status='paid', payment_date=CURDATE()
                 WHERE booking_id=$bookingId AND payment_status != 'paid'");
 
             $ref = 'TXN-BK-' . $bookingId;
-            $txnExists = mysqli_fetch_assoc(mysqli_query($conn,
-                "SELECT id FROM transactions WHERE reference_no='$ref' LIMIT 1"));
+            $txnExists = mysqli_fetch_assoc(mysqli_query(
+                $conn,
+                "SELECT id FROM transactions WHERE reference_no='$ref' LIMIT 1"
+            ));
             if (!$txnExists) {
-                $propRow = mysqli_fetch_assoc(mysqli_query($conn,
+                $propRow = mysqli_fetch_assoc(mysqli_query(
+                    $conn,
                     "SELECT u.property_id FROM units u
                      JOIN bookings b ON b.unit_id = u.unit_id
-                     WHERE b.booking_id=$bookingId LIMIT 1"));
-                $propId = (int)($propRow['property_id'] ?? 0);
+                     WHERE b.booking_id=$bookingId LIMIT 1"
+                ));
+                $propId = (int) ($propRow['property_id'] ?? 0);
                 $propIdSql = $propId > 0 ? $propId : 'NULL';
                 mysqli_query($conn, "INSERT INTO transactions
                     (reference_no, description, category, type, amount, transaction_date, booking_id, property_id)
@@ -78,10 +92,10 @@ try {
         }
 
         // Award loyalty points (1 point per PHP 10 spent)
-        $userId = (int)$booking['user_id'];
-        $amt    = (float)$booking['total_amount'];
-        $pts    = max(1, (int)floor($amt / 10));
-        $desc   = mysqli_real_escape_string($conn, "Booking #$bookingId stay completed");
+        $userId = (int) $booking['user_id'];
+        $amt = (float) $booking['total_amount'];
+        $pts = max(1, (int) floor($amt / 10));
+        $desc = mysqli_real_escape_string($conn, "Booking #$bookingId stay completed");
         mysqli_query($conn, "INSERT INTO loyalty_points (user_id, points, type, description, booking_id)
             VALUES ($userId, $pts, 'earn', '$desc', $bookingId)");
 

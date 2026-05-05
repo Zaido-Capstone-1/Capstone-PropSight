@@ -47,6 +47,14 @@ if (isset($conn) && $conn) {
         $landingReviews[] = $rr;
     }
 }
+
+$allUnits = $units ?? [];
+$perPage = 1;
+$totalUnits = count($allUnits);
+$totalPages = ceil($totalUnits / $perPage);
+$currentPage = max(1, min((int)($_GET['page'] ?? 1), $totalPages));
+$offset = ($currentPage - 1) * $perPage;
+$pagedUnits = array_slice($allUnits, $offset, $perPage);
 ?>
 
 <!DOCTYPE html>
@@ -503,11 +511,11 @@ if (isset($conn) && $conn) {
                     style="color:var(--gold)">Say</em></h2>
         </div>
 
+        <?php if (empty($landingReviews)): ?>
+            <div class="testi-empty reveal" style="position:relative;z-index:1;max-width:1100px;margin:0 auto;">
+                Guest reviews will appear here once our first visitors share their stay experience.
+            </div>
         <div class="testi-grid">
-            <?php if (empty($landingReviews)): ?>
-                <div class="testi-empty reveal">
-                    Guest reviews will appear here once our first visitors share their stay experience.
-                </div>
             <?php else: ?>
                 <?php foreach ($landingReviews as $ri => $rv):
                     $fullName = trim(($rv['first_name'] ?? '') . ' ' . ($rv['last_name'] ?? ''));

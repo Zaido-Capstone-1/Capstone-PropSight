@@ -390,6 +390,29 @@ function coStatusLabel($row, $selectedDate)
     </div>
 </div>
 
+<div id="cicoModal"
+    style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);align-items:center;justify-content:center;">
+    <div
+        style="background:#fff;border-radius:12px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden;margin:16px;">
+        <div
+            style="padding:18px 22px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-weight:700;font-size:16px;color:#111827;" id="cicoModalTitle">Confirm Action</div>
+            <button onclick="closeCicoModal()"
+                style="background:none;border:none;font-size:20px;cursor:pointer;color:#9ca3af;line-height:1;">×</button>
+        </div>
+        <div style="padding:20px 22px;">
+            <p id="cicoModalBody" style="margin:0;font-size:14px;color:#374151;line-height:1.6;"></p>
+        </div>
+        <div
+            style="padding:14px 22px 18px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid #f3f4f6;">
+            <button onclick="closeCicoModal()"
+                style="padding:9px 18px;border-radius:7px;border:1.5px solid #e5e7eb;background:#fff;font-size:14px;font-weight:600;color:#6b7280;cursor:pointer;">Cancel</button>
+            <button id="cicoModalConfirm"
+                style="padding:9px 20px;border-radius:7px;border:none;color:#fff;font-size:14px;font-weight:600;cursor:pointer;"></button>
+        </div>
+    </div>
+</div>
+
 <!-- Extend Stay Modal -->
 <div id="extendModal"
     style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);align-items:center;justify-content:center;">
@@ -441,7 +464,8 @@ function coStatusLabel($row, $selectedDate)
         todayStr: '<?= date('Y-m-d') ?>',
         calYear: <?= $cal_year ?>,
         calMonth: <?= (int) $cal_month ?>,
-        calKey: '<?= "$cal_year-$cal_month" ?>'
+        calKey: '<?= "$cal_year-$cal_month" ?>',
+        csrfToken: '<?= htmlspecialchars($_SESSION['csrf_token']) ?>'
     };
 </script>
 <script>window.PS_RT_PAGE = 'checkin';</script>

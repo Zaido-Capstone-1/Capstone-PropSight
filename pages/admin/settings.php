@@ -61,24 +61,19 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
                     $adminPhotoUrl = $adminPhotoRaw !== '' ? '../../' . ltrim($adminPhotoRaw, '/') : '';
                     ?>
                     <div id="settingsAvatarWrap"
-                        style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--blue-300),var(--blue-700));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:white;flex-shrink:0;overflow:hidden;position:relative;cursor:pointer;"
+                        style="width:64px;height:64px;border-radius:50%;<?= $adminPhotoUrl ? '' : 'background:linear-gradient(135deg,var(--blue-300),var(--blue-700));' ?>display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:white;flex-shrink:0;overflow:hidden;position:relative;cursor:pointer;"
                         onclick="document.getElementById('adminPhotoInput').click();" title="Click to change photo">
                         <?php if ($adminPhotoUrl): ?>
                             <img id="settingsAvatarImg" src="<?= htmlspecialchars($adminPhotoUrl) ?>" alt="Profile photo"
-                                style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
-                                onerror="this.style.display='none';document.getElementById('settingsAvatarInitials').style.display='flex';">
-                            <span id="settingsAvatarInitials"
-                                style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:white;">
-                                <?= htmlspecialchars($initials) ?>
-                            </span>
+                                style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
                         <?php else: ?>
                             <img id="settingsAvatarImg" src="" alt=""
                                 style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;">
-                            <span id="settingsAvatarInitials"
-                                style="display:flex;position:absolute;inset:0;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:white;">
-                                <?= htmlspecialchars($initials) ?>
-                            </span>
                         <?php endif; ?>
+                        <span id="settingsAvatarInitials"
+                            style="<?= $adminPhotoUrl ? 'display:none;' : 'display:flex;' ?>position:absolute;inset:0;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:white;">
+                            <?= htmlspecialchars($initials) ?>
+                        </span>
                         <div style="position:absolute;inset:0;background:rgba(0,0,0,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;"
                             onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0'">
                             <svg fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"

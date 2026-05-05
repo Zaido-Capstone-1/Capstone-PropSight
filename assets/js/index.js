@@ -503,7 +503,7 @@ async function verifyOtp(attempts = 0, expiresInSeconds = 300) {
 
             if (data.status === 'success') {
                 otpDeadlineMs = 0;
-                showToast(data.message, 'success');
+                // showToast(data.message, 'success');
                 setTimeout(() => {
                     window.location.href = data.role === 'admin'
                         ? 'pages/admin/index.php'
@@ -766,6 +766,7 @@ registerForm.addEventListener('submit', async function (e) {
         }
     }
 });
+
 /* ── Mobile Review Swiper ─────────────────────── */
 (function () {
     const wrap = document.getElementById('testiSwiper');

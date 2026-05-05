@@ -45,12 +45,6 @@ if ($token === '') {
 
         <div class="card-header">
             <a href="index.php" class="card-logo">
-                <div class="logo-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
-                        <path d="M9 21V12h6v9" />
-                    </svg>
-                </div>
                 <span class="logo-name">PropSight</span>
             </a>
 

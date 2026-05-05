@@ -182,12 +182,14 @@ async function updateStatus(bookingId, newStatus, btn) {
 
     const orig = btn ? btn.innerHTML : '';
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
-    if (typeof showToast === 'function') showToast('Updating…', 'info');
+    // if (typeof showToast === 'function') showToast('Updating…', 'info');
 
     fetch('../../api/reservations.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ action: 'update_status', booking_id: bookingId, status: newStatus }),
+        body: new URLSearchParams({ action: 'update_status', booking_id: bookingId, status: newStatus,
+            csrf_token: document.querySelector('meta[name="csrf-token"]')?.content ?? ''
+         }),
     })
         .then(r => r.json())
         .then(data => {

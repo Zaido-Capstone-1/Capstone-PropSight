@@ -26,7 +26,7 @@ $active_page = 'dashboard';
   <link rel="stylesheet" href="../../assets/css/admin-css/responsive-enhanced.css" />
   <link rel="icon" type="image/png" href="../../assets/images/final logo.png" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="../../assets/css/admin-css/index-inline.css">
+  <link rel="stylesheet" href="../../assets/css/admin-css/index-inline.css">
 </head>
 
 <body>
@@ -162,7 +162,7 @@ $active_page = 'dashboard';
   $taskOpenCount = 0;
   $taskInProgressCount = 0;
   foreach ($tasks as $t) {
-    $taskStatus = strtolower(trim((string)($t['status'] ?? '')));
+    $taskStatus = strtolower(trim((string) ($t['status'] ?? '')));
     if ($taskStatus === 'open')
       $taskOpenCount++;
     if ($taskStatus === 'in_progress')
@@ -202,9 +202,9 @@ $active_page = 'dashboard';
     ORDER BY y DESC"
   );
   while ($yrRes && ($r = mysqli_fetch_assoc($yrRes))) {
-    $years[] = (int)$r['y'];
+    $years[] = (int) $r['y'];
   }
-  $currentYear = (int)date('Y');
+  $currentYear = (int) date('Y');
   if (!in_array($currentYear, $years, true)) {
     array_unshift($years, $currentYear);
   }
@@ -213,11 +213,10 @@ $active_page = 'dashboard';
   <div class="main">
     <div class="content" style="margin-top:5px;">
       <div class="welcome-inline">
-        <div class="welcome-avatar-img<?= $_sb_photo_url ? '' : ' welcome-avatar-initials' ?>">
+        <div class="welcome-avatar<?= $_sb_photo_url ? '' : ' welcome-avatar-initials' ?>">
           <?php if ($_sb_photo_url): ?>
             <img src="<?= htmlspecialchars($_sb_photo_url) ?>" alt="Profile"
-                 style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;"
-                 onerror="this.style.display='none';this.parentElement.classList.add('welcome-avatar-initials');this.parentElement.textContent='<?= htmlspecialchars($_sb_initials, ENT_QUOTES) ?>';">
+              style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
           <?php else: ?>
             <?= htmlspecialchars($_sb_initials) ?>
           <?php endif; ?>
@@ -238,11 +237,14 @@ $active_page = 'dashboard';
             <div class="stat-card sc-green">
               <div class="stat-card-left">
                 <div class="stat-label">Total Revenue (YTD)</div>
-                <div class="stat-value"><span data-rt-kpi="total_revenue">₱ <?= number_format($totalRevenue / 1000, 0) ?>K</span></div>
+                <div class="stat-value"><span data-rt-kpi="total_revenue">₱
+                    <?= number_format($totalRevenue / 1000, 0) ?>K</span></div>
                 <span data-rt-kpi="revenue_growth" class="stat-trend <?= $revGrowth >= 0 ? 'up' : 'down' ?>">
                   <?= $revGrowth >= 0 ? '↑' : '↓' ?> <?= abs($revGrowth) ?>%
                 </span>
-                <div class="stat-sub">vs <span data-rt-kpi="last_year_revenue">₱<?= number_format($lastYearRevenue / 1000, 0) ?>K</span> last year</div>
+                <div class="stat-sub">vs <span
+                    data-rt-kpi="last_year_revenue">₱<?= number_format($lastYearRevenue / 1000, 0) ?>K</span> last year
+                </div>
               </div>
               <div class="stat-icon-wrap green">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -256,7 +258,9 @@ $active_page = 'dashboard';
               <div class="stat-card-left">
                 <div class="stat-label">Avg. Occupancy</div>
                 <div class="stat-value"><span data-rt-kpi="occupancy_rate"><?= $occupancyRate ?>%</span></div>
-                <div class="stat-sub"><span data-rt-kpi="occupied_units"><?= $occupiedUnits ?></span> of <?= $totalUnits ?> units occupied</div>
+                <div class="stat-sub"><span data-rt-kpi="occupied_units"><?= $occupiedUnits ?></span> of
+                  <?= $totalUnits ?> units occupied
+                </div>
               </div>
               <div class="stat-icon-wrap blue">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -268,11 +272,13 @@ $active_page = 'dashboard';
             <div class="stat-card sc-gold">
               <div class="stat-card-left">
                 <div class="stat-label">Total Bookings</div>
-                <div class="stat-value"><span data-rt-kpi="total_bookings"><?= number_format($totalBookings) ?></span></div>
+                <div class="stat-value"><span data-rt-kpi="total_bookings"><?= number_format($totalBookings) ?></span>
+                </div>
                 <span data-rt-kpi="booking_growth" class="stat-trend <?= $bookingGrowth >= 0 ? 'up' : 'down' ?>">
                   <?= $bookingGrowth >= 0 ? '↑' : '↓' ?> <?= abs($bookingGrowth) ?>%
                 </span>
-                <div class="stat-sub">This year · <span data-rt-kpi="pending_bookings"><?= $pendingBookings ?></span> pending</div>
+                <div class="stat-sub">This year · <span data-rt-kpi="pending_bookings"><?= $pendingBookings ?></span>
+                  pending</div>
               </div>
               <div class="stat-icon-wrap gold">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -288,7 +294,8 @@ $active_page = 'dashboard';
               <div class="stat-card-left">
                 <div class="stat-label">Cancellation Rate</div>
                 <div class="stat-value"><span data-rt-kpi="cancel_rate"><?= $cancelRate ?>%</span></div>
-                <div class="stat-sub"><span data-rt-kpi="cancelled_this_month"><?= $cancelledThisMonth ?></span> cancelled this month</div>
+                <div class="stat-sub"><span data-rt-kpi="cancelled_this_month"><?= $cancelledThisMonth ?></span>
+                  cancelled this month</div>
               </div>
               <div class="stat-icon-wrap red">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -340,13 +347,15 @@ $active_page = 'dashboard';
                     <div class="legend-dot" style="background:var(--blue-100);"></div>
                     <span class="legend-label">Vacant</span>
                     <span class="legend-val" data-rt-kpi="vacant_units"><?= $vacantUnits ?></span>
-                    <span class="legend-pct" data-rt-kpi="vacant_pct">(<?= $totalUnits > 0 ? round($vacantUnits / $totalUnits * 100) : 0 ?>%)</span>
+                    <span class="legend-pct"
+                      data-rt-kpi="vacant_pct">(<?= $totalUnits > 0 ? round($vacantUnits / $totalUnits * 100) : 0 ?>%)</span>
                   </div>
                   <div class="legend-item">
                     <div class="legend-dot" style="background:var(--danger);"></div>
                     <span class="legend-label">Maintenance</span>
                     <span class="legend-val" data-rt-kpi="maintenance_units"><?= $maintenanceUnits ?></span>
-                    <span class="legend-pct" data-rt-kpi="maintenance_pct">(<?= $totalUnits > 0 ? round($maintenanceUnits / $totalUnits * 100) : 0 ?>%)</span>
+                    <span class="legend-pct"
+                      data-rt-kpi="maintenance_pct">(<?= $totalUnits > 0 ? round($maintenanceUnits / $totalUnits * 100) : 0 ?>%)</span>
                   </div>
                 </div>
               </div>
@@ -369,10 +378,12 @@ $active_page = 'dashboard';
                   <?php foreach ($properties as $prop):
                     $propOcc = $prop['total_units'] > 0 ? round($prop['occupied'] / $prop['total_units'] * 100) : 0;
                     $barColor = $propOcc >= 80 ? 'var(--success)' : ($propOcc >= 50 ? 'var(--gold)' : 'var(--blue-400)');
-                  ?>
+                    ?>
                     <div class="prop-item">
-                      <div class="prop-thumb" style="background:var(--blue-50);color:var(--blue-400);display:flex;align-items:center;justify-content:center;">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <div class="prop-thumb"
+                        style="background:var(--blue-50);color:var(--blue-400);display:flex;align-items:center;justify-content:center;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                          stroke-linecap="round" stroke-linejoin="round">
                           <rect x="3" y="3" width="7" height="7" rx="1" />
                           <rect x="14" y="3" width="7" height="7" rx="1" />
                           <rect x="14" y="14" width="7" height="7" rx="1" />
@@ -388,7 +399,7 @@ $active_page = 'dashboard';
                       </div>
                       <div class="prop-score">
                         <div class="prop-score-main"><?= $propOcc ?>%</div>
-                        <div class="prop-score-sub"><?= (int)$prop['occupied'] ?>/<?= (int)$prop['total_units'] ?></div>
+                        <div class="prop-score-sub"><?= (int) $prop['occupied'] ?>/<?= (int) $prop['total_units'] ?></div>
                       </div>
                     </div>
                   <?php endforeach; ?>
@@ -400,7 +411,8 @@ $active_page = 'dashboard';
               <div class="task-header">
                 <div class="card-head-main">
                   <span class="card-title">Task Summary</span>
-                  <span class="card-head-meta"><?= $taskOpenCount ?> urgent · <?= $taskInProgressCount ?> in progress</span>
+                  <span class="card-head-meta"><?= $taskOpenCount ?> urgent · <?= $taskInProgressCount ?> in
+                    progress</span>
                 </div>
               </div>
               <div class="task-list" id="rt-task-list">
@@ -411,9 +423,9 @@ $active_page = 'dashboard';
                     $st = $task['status'] ?? 'pending';
                     $style = $taskStatusMap[$st] ?? $taskStatusMap['pending'];
                     $dot = $taskDotColor[$st] ?? 'var(--gold)';
-                    $priorityKey = strtolower(trim((string)($task['priority'] ?? 'medium')));
+                    $priorityKey = strtolower(trim((string) ($task['priority'] ?? 'medium')));
                     $priorityStyle = $taskPriorityMap[$priorityKey] ?? $taskPriorityMap['medium'];
-                  ?>
+                    ?>
                     <div class="task-item">
                       <div class="task-dot" style="background:<?= $dot ?>;"></div>
                       <div class="task-info">
@@ -446,9 +458,6 @@ $active_page = 'dashboard';
                 </div>
               </div>
               <div id="rt-activity-feed" class="rt-activity-feed" style="min-height:60px;">
-                <div class="dashboard-empty">
-                  Waiting for new activity…
-                </div>
               </div>
             </div>
           </div>
@@ -457,27 +466,25 @@ $active_page = 'dashboard';
       </div>
     </div>
   </div>
-  
-  
 
   <?php include '../../includes/right_panel.php'; ?>
 
   <script>
-window.__PS_DASHBOARD__ = {
-  currentYear:     <?= (int)$currentYear ?>,
-  chartLabels:     <?= json_encode($chartLabels) ?>,
-  revData:         <?= json_encode($revData) ?>,
-  expData:         <?= json_encode($expData) ?>,
-  occupiedUnits:   <?= $occupiedUnits ?>,
-  vacantUnits:     <?= $vacantUnits ?>,
-  maintenanceUnits:<?= $maintenanceUnits ?>
-};
-</script>
-<script>window.PS_RT_PAGE = 'dashboard';</script>
-<script src="../../assets/js/admin/dashboard.js"></script>
+    window.__PS_DASHBOARD__ = {
+      currentYear: <?= (int) $currentYear ?>,
+      chartLabels: <?= json_encode($chartLabels) ?>,
+      revData: <?= json_encode($revData) ?>,
+      expData: <?= json_encode($expData) ?>,
+      occupiedUnits: <?= $occupiedUnits ?>,
+      vacantUnits: <?= $vacantUnits ?>,
+      maintenanceUnits: <?= $maintenanceUnits ?>
+    };
+  </script>
+  <script>window.PS_RT_PAGE = 'dashboard';</script>
+  <script src="../../assets/js/admin/dashboard.js"></script>
 
   <?php if (isset($_GET['error']) && $_GET['error'] === 'unauthorized'): ?>
-    
+
   <?php endif; ?>
 
   <?php include '../../includes/layout_close_noclose.php'; ?>
