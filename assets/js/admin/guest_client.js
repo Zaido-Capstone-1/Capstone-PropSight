@@ -4,13 +4,13 @@
 
     let allRows = [];
     let activeFilter = 'all';
-    let searchQuery  = '';
+    let searchQuery = '';
 
-    const pills       = document.querySelectorAll('#filterPills .filter-pill-sm');
+    const pills = document.querySelectorAll('#filterPills .filter-pill-sm');
     const searchInput = document.getElementById('guestSearch');
-    const countEl     = document.getElementById('visibleCount');
-    const noResults   = document.getElementById('noResults');
-    const tbody       = document.getElementById('guestTableBody');
+    const countEl = document.getElementById('visibleCount');
+    const noResults = document.getElementById('noResults');
+    const tbody = document.getElementById('guestTableBody');
 
     function seedRows() {
         allRows = Array.from(tbody.querySelectorAll('tr[data-user-id]'));
@@ -46,34 +46,40 @@
     seedRows();
 
     function guestStatus(g) {
-        if (parseInt(g.is_blacklisted)) return ['Blacklisted', 'danger',  'blacklisted'];
-        if (parseInt(g.is_active))      return ['Active',      'success', 'active'];
-        if (parseInt(g.total_stays) > 0) return ['Guest',      'info',    'inactive'];
+        if (parseInt(g.is_blacklisted)) return ['Blacklisted', 'danger', 'blacklisted'];
+        if (parseInt(g.is_active)) return ['Active', 'success', 'active'];
+        if (parseInt(g.total_stays) > 0) return ['Guest', 'info', 'inactive'];
         return ['New', 'pending', 'inactive'];
     }
 
     function esc(s) {
         if (!s) return '';
-        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     function buildRow(g) {
         const [statusLabel, statusCls, filterStatus] = guestStatus(g);
-        const fullName   = esc((g.first_name + ' ' + g.last_name).trim());
-        const initials   = (g.first_name || '').charAt(0).toUpperCase();
-        const searchIdx  = [g.first_name, g.last_name, g.email, g.phone || ''].join(' ').toLowerCase();
+        const fullName = esc((g.first_name + ' ' + g.last_name).trim());
+        const initials = ((g.first_name || '').charAt(0) + (g.last_name || '').charAt(0)).toUpperCase();
+        const photo = g.profile_photo || '';
+        const searchIdx = [g.first_name, g.last_name, g.email, g.phone || ''].join(' ').toLowerCase();
         const memberSince = new Date(g.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        const actionBtn  = parseInt(g.is_blacklisted)
+        const actionBtn = parseInt(g.is_blacklisted)
             ? `<button class="tbl-btn" onclick="toggleBlacklist(${g.user_id}, '${fullName}', 0)">Unblock</button>`
             : `<button class="tbl-btn danger" onclick="toggleBlacklist(${g.user_id}, '${fullName}', 1)">Block</button>`;
 
         const tr = document.createElement('tr');
-        tr.dataset.userId  = g.user_id;
-        tr.dataset.status  = filterStatus;
-        tr.dataset.search  = searchIdx;
+        tr.dataset.userId = g.user_id;
+        tr.dataset.status = filterStatus;
+        tr.dataset.search = searchIdx;
         tr.innerHTML = `
           <td><div style="display:flex;align-items:center;gap:9px;">
-              <div class="guest-avatar">${initials}</div>
+              ${photo
+                ? `<img src="../../${esc(photo)}" class="guest-avatar-img"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+       <div class="guest-avatar" style="display:none;">${initials}</div>`
+                : `<div class="guest-avatar">${initials}</div>`
+            }
               <strong>${fullName}</strong>
           </div></td>
           <td style="font-size:.82rem;">${esc(g.email)}</td>
@@ -100,12 +106,12 @@
                 updateGuestStats(data.stats);
                 seedRows();
                 applyFilters();
-            }).catch(() => {});
+            }).catch(() => { });
     }
 
     function patchGuestRow(g) {
         const existing = tbody.querySelector(`tr[data-user-id="${g.user_id}"]`);
-        const newRow   = buildRow(g);
+        const newRow = buildRow(g);
         if (existing) {
             existing.style.transition = 'background 0.4s';
             existing.style.background = '#fefce8';
@@ -127,9 +133,9 @@
     function updateGuestStats(stats) {
         if (!stats) return;
         const map = {
-            'guest-stat-total':       stats.total,
-            'guest-stat-active':      stats.active,
-            'guest-stat-new-month':   stats.new_month,
+            'guest-stat-total': stats.total,
+            'guest-stat-active': stats.active,
+            'guest-stat-new-month': stats.new_month,
             'guest-stat-blacklisted': stats.blacklisted,
         };
         Object.entries(map).forEach(([id, val]) => {
@@ -160,7 +166,81 @@
     };
 
     // Real-time event listeners
-    window.addEventListener('ps:new_guests',  e => { if (Array.isArray(e.detail)) e.detail.forEach(g => patchGuestRow(g)); });
+    window.addEventListener('ps:new_guests', e => { if (Array.isArray(e.detail)) e.detail.forEach(g => patchGuestRow(g)); });
     window.addEventListener('ps:guest_stats', e => updateGuestStats(e.detail));
 
+    /* ─── Block / Unblock Modal ─────────────────────────────────────────────── */
+    let _blockUserId = null;
+    let _blockAction = null;
+
+    const blockModal = document.getElementById('blockModal');
+    const blockModalTitle = document.getElementById('blockModalTitle');
+    const blockModalDesc = document.getElementById('blockModalDesc');
+    const blockReasonWrap = document.getElementById('blockReasonWrap');
+    const blockReasonInput = document.getElementById('blockReasonInput');
+    const blockConfirmBtn = document.getElementById('blockModalConfirmBtn');
+    const blockCancelBtn = document.getElementById('blockModalCancelBtn');
+
+    function openBlockModal(userId, name, blacklist) {
+        _blockUserId = userId;
+        _blockAction = blacklist;
+        blockModalTitle.textContent = blacklist ? 'Block Guest' : 'Unblock Guest';
+        blockModalDesc.innerHTML = blacklist
+            ? `Are you sure you want to block <strong>${esc(name)}</strong>? They will lose access to their account.`
+            : `Are you sure you want to unblock <strong>${esc(name)}</strong>? Their account will be reactivated.`;
+        blockReasonWrap.style.display = blacklist ? 'block' : 'none';
+        blockReasonInput.value = '';
+        blockConfirmBtn.textContent = blacklist ? 'Block' : 'Unblock';
+        blockConfirmBtn.classList.toggle('danger', !!blacklist);
+        blockModal.classList.add('active');
+    }
+
+    function closeBlockModal() {
+        blockModal.classList.remove('active');
+        blockReasonInput.value = '';
+        _blockUserId = null;
+        _blockAction = null;
+    }
+
+    blockCancelBtn.addEventListener('click', closeBlockModal);
+    blockModal.addEventListener('click', e => { if (e.target === blockModal) closeBlockModal(); });
+
+    blockConfirmBtn.addEventListener('click', function () {
+        if (!_blockUserId) return;
+        const reason = blockReasonInput.value.trim();
+        const action = _blockAction ? 'blacklist' : 'unblacklist';
+        this.disabled = true;
+        this.textContent = 'Processing…';
+        showToast(_blockAction ? 'Blocking guest…' : 'Unblocking guest…', 'info');
+
+        fetch('../../api/guests.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ user_id: _blockUserId, action, reason, csrf_token: window.PS_CSRF_TOKEN ?? '' })
+        })
+            .then(r => r.json())
+            .then(data => {
+                closeBlockModal();
+                if (data.success) {
+                    showToast(data.message, 'success', 'Done!');
+                    refreshGuestTable();
+                } else {
+                    showToast(data.message, 'error', 'Failed');
+                }
+            })
+            .catch(() => {
+                closeBlockModal();
+                showToast('Server unreachable.', 'error');
+            })
+            .finally(() => {
+                this.disabled = false;
+                this.textContent = _blockAction ? 'Block' : 'Unblock';
+            });
+    });
+
+    window.toggleBlacklist = (userId, name, blacklist) => openBlockModal(userId, name, blacklist);
+
+    document.addEventListener('ps:refresh_guests', () => refreshGuestTable());
+
 })();
+

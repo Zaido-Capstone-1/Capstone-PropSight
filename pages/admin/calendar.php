@@ -69,7 +69,7 @@ $sql = "
     JOIN users u  ON u.user_id  = b.user_id
     JOIN units un ON un.unit_id = b.unit_id
     LEFT JOIN properties p ON p.property_id = un.property_id
-    WHERE b.status = 'confirmed'
+    WHERE b.status IN ('pending', 'confirmed', 'active')
       AND b.checkin_date  <= '$month_end'
       AND b.checkout_date >= '$month_start'
     ORDER BY b.checkin_date ASC

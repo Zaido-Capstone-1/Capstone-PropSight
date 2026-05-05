@@ -4,6 +4,7 @@ header('Content-Type: application/json');
 include '../../includes/session.php';
 include '../../includes/db.php';
 require_once '../../includes/rate_limiter.php';
+require_not_blacklisted();
 
 // Apply rate limiting to user API endpoints
 applyRateLimit($conn, 'user_api', 30, 3600); // 30 requests per hour for user APIs

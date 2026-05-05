@@ -66,7 +66,7 @@ if ($_sb_initials === '')
   }
 
   .sidebar-avatar-initials {
-    background:linear-gradient(135deg,var(--blue-300),var(--blue-700));
+    background: linear-gradient(135deg, var(--blue-300), var(--blue-700));
     color: white;
     font-weight: 600;
     font-size: 16px;
@@ -131,8 +131,9 @@ if ($_sb_initials === '')
 
     <div class="nav-item has-sub<?= group_active(['properties_list', 'add_property', 'units_rooms', 'amenities']) ?>">
       <div class="nav-icon">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M3 9.5L12 3l9 6.5V21H3V9.5z" />
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
+          <path d="M9 21V12h6v9" />
         </svg>
       </div>
       <span class="nav-label">Properties</span>
@@ -270,6 +271,17 @@ if ($_sb_initials === '')
         <div class="sub-dot"></div>Booking Reports
       </a>
     </div>
+
+    <a href="support.php" class="nav-item<?= nav_active('support') ?>">
+      <div class="nav-icon">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 11l3 3L22 4" />
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
+      </div>
+      <span class="nav-label">Support Tickets</span>
+      <span class="nav-badge" data-rt="messages" style="display:none;">0</span>
+    </a>
 
     <div class="nav-divider"></div>
 

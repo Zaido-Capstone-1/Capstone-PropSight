@@ -1,5 +1,6 @@
 <?php
 include '../../includes/session.php';
+require_not_blacklisted(false);
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
     header('Location: ../../index.php');

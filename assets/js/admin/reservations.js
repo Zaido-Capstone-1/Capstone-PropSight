@@ -76,10 +76,12 @@ function normaliseBooking(b) {
         ((b.property_name || '') + (b.unit_number ? ' — Unit ' + b.unit_number : ''));
     const id = parseInt(b.booking_id, 10);
     if (!id) return null;   // skip malformed records
+    // In normaliseBooking(), add this line:
     return {
         booking_id: id,
         user_name: b.user_name || '',
         user_email: b.user_email || '',
+        user_photo: b.user_photo || '',   // ← ADD THIS
         unit_name: unitLabel,
         unit_number: b.unit_number || '',
         property_name: b.property_name || '',
@@ -187,9 +189,10 @@ async function updateStatus(bookingId, newStatus, btn) {
     fetch('../../api/reservations.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ action: 'update_status', booking_id: bookingId, status: newStatus,
+        body: new URLSearchParams({
+            action: 'update_status', booking_id: bookingId, status: newStatus,
             csrf_token: document.querySelector('meta[name="csrf-token"]')?.content ?? ''
-         }),
+        }),
     })
         .then(r => r.json())
         .then(data => {
@@ -263,13 +266,19 @@ function _animCount(id, target) {
 function rowHtml(b, isNew) {
     const id = b.booking_id;
     const padId = String(id).padStart(4, '0');
-    const init = (b.user_name || '?').charAt(0).toUpperCase();
+    const nameParts = (b.user_name || '?').trim().split(/\s+/).slice(0, 2);
+    const init = nameParts.map(w => w[0].toUpperCase()).join('');
+    const avatarHtml = b.user_photo
+        ? `<img src="${(window.APP_BASE || '')}/${b.user_photo}" class="guest-avatar-img"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+       <div class="guest-avatar" style="display:none;">${init}</div>`
+        : `<div class="guest-avatar">${init}</div>`;
     const badge = isNew ? '<span class="new-booking-badge">NEW</span>' : '';
 
     return `<tr data-id="${id}" data-status="${escHtml(b.status)}">
     <td><span class="booking-id">#BK-${padId}${badge}</span></td>
     <td><div class="guest-cell">
-        <div class="guest-avatar">${init}</div>
+        ${avatarHtml}
         <div>
             <div class="guest-name">${escHtml(b.user_name)}</div>
             <div class="guest-email">${escHtml(b.user_email)}</div>

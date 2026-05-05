@@ -68,6 +68,7 @@ $bookingsSql = "
         DATEDIFF(b.checkout_date, b.checkin_date) AS nights,
         CONCAT(u2.first_name, ' ', u2.last_name)  AS user_name,
         u2.email                                   AS user_email,
+        u2.profile_photo                           AS user_photo,
         un.unit_name,
         un.unit_number,
         p.property_name
@@ -259,7 +260,18 @@ function fmtDate($d)
                                     </td>
                                     <td>
                                         <div class="guest-cell">
-                                            <div class="guest-avatar"><?= strtoupper(substr($b['user_name'], 0, 1)) ?></div>
+                                            <?php
+                                            $parts = array_filter(explode(' ', trim($b['user_name'])));
+                                            $initials = implode('', array_map(fn($w) => strtoupper($w[0]), array_slice($parts, 0, 2)));
+                                            $photo = $b['user_photo'] ?? '';
+                                            ?>
+                                            <?php if ($photo): ?>
+                                                <img src="../../<?= htmlspecialchars($photo) ?>" class="guest-avatar-img"
+                                                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                                <div class="guest-avatar" style="display:none;"><?= $initials ?></div>
+                                            <?php else: ?>
+                                                <div class="guest-avatar"><?= $initials ?></div>
+                                            <?php endif; ?>
                                             <div>
                                                 <div class="guest-name"><?= htmlspecialchars($b['user_name']) ?></div>
                                                 <div class="guest-email"><?= htmlspecialchars($b['user_email']) ?></div>
@@ -365,6 +377,7 @@ function fmtDate($d)
                 'booking_id' => (int) ($b['booking_id'] ?? 0),
                 'user_name' => (string) ($b['user_name'] ?? ''),
                 'user_email' => (string) ($b['user_email'] ?? ''),
+                'user_photo' => (string) ($b['user_photo'] ?? ''),
                 'unit_name' => (string) $unitLabel,
                 'unit_number' => (string) ($b['unit_number'] ?? ''),
                 'property_name' => (string) ($b['property_name'] ?? ''),
@@ -376,6 +389,9 @@ function fmtDate($d)
             ];
         }, $bookings), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
     };
+</script>
+<script>
+    window.APP_BASE = '<?= rtrim(dirname($_SERVER['SCRIPT_NAME'], 3), '/') ?>';
 </script>
 <script src="../../assets/js/toast.js"></script>
 <script>window.PS_RT_PAGE = 'reservations';</script>

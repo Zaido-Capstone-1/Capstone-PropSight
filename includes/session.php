@@ -9,6 +9,19 @@ if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
     exit;
 }
 
+if (
+    isset($_SESSION['login'], $_SESSION['user_id'], $_SESSION['role']) &&
+    $_SESSION['role'] === 'user'
+) {
+    require_once __DIR__ . '/db.php';
+    $__bl = mysqli_fetch_assoc(mysqli_query(
+        $conn,
+        "SELECT is_blacklisted, is_active FROM users WHERE user_id=" . (int) $_SESSION['user_id']
+    ));
+    $_SESSION['is_blacklisted'] = (bool) ($__bl['is_blacklisted'] ?? false);
+    $_SESSION['is_active'] = (bool) ($__bl['is_active'] ?? true);
+}
+
 if (!function_exists('user_is_verified')) {
     function user_is_verified(): bool
     {
@@ -16,15 +29,44 @@ if (!function_exists('user_is_verified')) {
     }
 }
 
+if (!function_exists('user_is_blacklisted')) {
+    function user_is_blacklisted(): bool
+    {
+        return ($_SESSION['role'] ?? '') === 'user' && !empty($_SESSION['is_blacklisted']);
+    }
+}
+
+if (!function_exists('require_not_blacklisted')) {
+    function require_not_blacklisted(bool $jsonResponse = true): void
+    {
+        if (!user_is_blacklisted())
+            return;
+
+        if ($jsonResponse) {
+            if (!headers_sent()) {
+                header('Content-Type: application/json');
+                http_response_code(403);
+            }
+            echo json_encode([
+                'success' => false,
+                'message' => 'Your account has been suspended. Please contact support.',
+            ]);
+            exit;
+        }
+
+        $_SESSION['toast_error'] = 'Your account has been suspended. Please contact support.';
+        header('Location: ../../pages/user/support.php?suspended=1');
+        exit;
+    }
+}
+
 if (!function_exists('require_verified_user_action')) {
     function require_verified_user_action(bool $jsonResponse = true): void
     {
-        if (($_SESSION['role'] ?? '') !== 'user') {
+        if (($_SESSION['role'] ?? '') !== 'user')
             return;
-        }
-        if (user_is_verified()) {
+        if (user_is_verified())
             return;
-        }
 
         if ($jsonResponse) {
             if (!headers_sent()) {
@@ -47,8 +89,8 @@ if (!function_exists('require_verified_user_action')) {
 if (!function_exists('require_csrf_token')) {
     function require_csrf_token(bool $jsonResponse = true): void
     {
-        $sessionToken = (string)($_SESSION['csrf_token'] ?? '');
-        $requestToken = (string)($_POST['csrf_token'] ?? '');
+        $sessionToken = (string) ($_SESSION['csrf_token'] ?? '');
+        $requestToken = (string) ($_POST['csrf_token'] ?? '');
 
         if ($sessionToken !== '' && $requestToken !== '' && hash_equals($sessionToken, $requestToken)) {
             return;

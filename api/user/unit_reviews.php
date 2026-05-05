@@ -5,6 +5,7 @@
  */
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../includes/db.php';
+require_not_blacklisted();
 
 $unitId = (int)($_GET['unit_id'] ?? 0);
 $page   = max(1, (int)($_GET['page'] ?? 1));

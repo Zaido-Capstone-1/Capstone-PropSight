@@ -7,6 +7,7 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../includes/session.php';
 require_once __DIR__ . '/../../includes/db.php';
+require_not_blacklisted();
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(403);

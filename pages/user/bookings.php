@@ -107,7 +107,25 @@ $status_map = [
     </div>
 </div>
 
+<?php if ($_SESSION['is_blacklisted'] ?? false): ?>
+    <div
+        style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+        <svg fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"
+            style="width:20px;height:20px;flex-shrink:0;">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <div>
+            <div style="font-size:13px;font-weight:700;color:#dc2626;">Your account is suspended.</div>
+            <div style="font-size:12px;color:#ef4444;margin-top:2px;">You can view your existing bookings but cannot make
+                new ones. <a href="support.php?suspended=1" style="color:#dc2626;font-weight:700;">Contact support</a> to appeal.</div>
+        </div>
+    </div>
+<?php endif; ?>
+
 <div class="page-two-col">
+
     <div class="col-main">
 
         <div class="tab-bar reveal rd1" id="tabBar">
@@ -224,7 +242,8 @@ $status_map = [
                         </div>
                         <div class="bc-foot">
                             <div class="bc-price" data-field="price">₱<?= number_format((float) $b['total_amount']) ?>
-                                <sub>total</sub></div>
+                                <sub>total</sub>
+                            </div>
                             <div class="bc-actions booking-actions">
                                 <?php if (in_array($rawSt, ['confirmed', 'pending', 'active', 'completed'])): ?>
                                     <?php if (in_array($rawSt, ['confirmed', 'completed'])): ?>

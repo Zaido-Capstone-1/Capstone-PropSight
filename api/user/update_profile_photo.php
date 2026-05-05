@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../includes/session_params.php';
 session_start();
 require_once '../../includes/db.php';
+require_not_blacklisted();
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../../index.php');

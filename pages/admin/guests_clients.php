@@ -24,16 +24,17 @@ include '../../includes/layout_open.php';
 $sql = "
     SELECT
         u.user_id, u.first_name, u.last_name, u.email,
-        u.phone, u.created_at,
+        u.phone, u.created_at, u.profile_photo,
         COALESCE(u.is_blacklisted, 0) AS is_blacklisted,
         COALESCE(u.is_active, 0) AS is_active,
         COUNT(DISTINCT b.booking_id) AS total_stays,
-        (SELECT COALESCE(un.unit_name, un.unit_number)
-         FROM bookings bx
-         JOIN units un ON un.unit_id = bx.unit_id
-         WHERE bx.user_id = u.user_id
-           AND bx.status IN ('confirmed','active')
-         ORDER BY bx.checkin_date DESC LIMIT 1
+        (SELECT COALESCE(NULLIF(TRIM(un.unit_name),''), CONCAT(p2.property_name, ' — ', un.unit_number))
+        FROM bookings bx
+        JOIN units un ON un.unit_id = bx.unit_id
+        LEFT JOIN properties p2 ON p2.property_id = un.property_id
+        WHERE bx.user_id = u.user_id
+          AND bx.status IN ('confirmed', 'active', 'completed')
+        ORDER BY bx.checkin_date DESC LIMIT 1
         ) AS current_unit
     FROM users u
     LEFT JOIN bookings b ON b.user_id = u.user_id AND b.status NOT IN ('cancelled')
@@ -189,7 +190,8 @@ function guestStatus($row)
               <?php foreach ($guests as $g):
                 [$statusLabel, $statusCls] = guestStatus($g);
                 $fullName = htmlspecialchars(trim($g['first_name'] . ' ' . $g['last_name']));
-                $initials = strtoupper(substr($g['first_name'], 0, 1));
+                $initials = strtoupper(substr($g['first_name'], 0, 1)) . strtoupper(substr($g['last_name'], 0, 1));
+                $photo = $g['profile_photo'] ?? '';
 
                 $filterStatus = $g['is_blacklisted'] ? 'blacklisted'
                   : ($g['is_active'] ? 'active'
@@ -200,10 +202,17 @@ function guestStatus($row)
                   $g['email'] . ' ' . ($g['phone'] ?? '')
                 );
                 ?>
-                <tr data-user-id="<?= $g['user_id'] ?>" data-status="<?= $filterStatus ?>" data-search="<?= htmlspecialchars($searchIndex) ?>">
+                <tr data-user-id="<?= $g['user_id'] ?>" data-status="<?= $filterStatus ?>"
+                  data-search="<?= htmlspecialchars($searchIndex) ?>">
                   <td>
                     <div style="display:flex;align-items:center;gap:9px;">
-                      <div class="guest-avatar"><?= $initials ?></div>
+                      <?php if ($photo): ?>
+                        <img src="../../<?= htmlspecialchars($photo) ?>" class="guest-avatar-img"
+                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                        <div class="guest-avatar" style="display:none;"><?= $initials ?></div>
+                      <?php else: ?>
+                        <div class="guest-avatar"><?= $initials ?></div>
+                      <?php endif; ?>
                       <strong><?= $fullName ?></strong>
                     </div>
                   </td>
@@ -246,6 +255,28 @@ function guestStatus($row)
         of <strong><?= count($guests) ?></strong>
         guest<?= count($guests) !== 1 ? 's' : '' ?>
       </div>
+
+      <div id="blockModal" class="confirm-modal-overlay">
+        <div class="confirm-modal">
+          <div class="confirm-modal-header">
+            <h3 class="confirm-modal-title" id="blockModalTitle">Block Guest</h3>
+          </div>
+          <div class="confirm-modal-body">
+            <p id="blockModalDesc"></p>
+            <div id="blockReasonWrap" style="margin-top:14px;">
+              <label
+                style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;display:block;margin-bottom:6px;">Reason
+                (optional)</label>
+              <input id="blockReasonInput" type="text" placeholder="e.g. Violation of terms, fraud…"
+                style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;">
+            </div>
+          </div>
+          <div class="confirm-modal-footer">
+            <button id="blockModalCancelBtn" class="confirm-modal-btn confirm-btn-cancel">Cancel</button>
+            <button id="blockModalConfirmBtn" class="confirm-modal-btn confirm-btn-confirm danger">Block</button>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -253,5 +284,6 @@ function guestStatus($row)
 
 <script>window.PS_RT_PAGE = 'guests_clients';</script>
 <script src="../../assets/js/admin/guest_client.js"></script>
+<link rel="stylesheet" href="../../assets/css/admin-css/reservation.css">
 
 <?php include '../../includes/layout_close.php'; ?>

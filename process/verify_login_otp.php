@@ -31,6 +31,7 @@ function clear_otp_session(): void
 
 function populate_user_session(array $user): void
 {
+    $_SESSION['is_blacklisted'] = (bool)($user['is_blacklisted'] ?? false);
     $_SESSION['login'] = true;
     $_SESSION['user_id'] = $user['user_id'];
     $_SESSION['first_name'] = $user['first_name'];

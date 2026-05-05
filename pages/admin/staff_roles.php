@@ -37,7 +37,7 @@ $sql = "
     SELECT
         u.user_id,
         u.first_name, u.last_name, u.email, u.phone,
-        u.role, u.created_at,
+        u.role, u.created_at, u.profile_photo,
         COALESCE(u.is_active, 1) AS is_active,
         u.last_login
     FROM users u
@@ -195,18 +195,26 @@ function lastActiveLabel($lastLogin)
                             <?php else: ?>
                                 <?php foreach ($staff as $s):
                                     $fullName = htmlspecialchars(trim($s['first_name'] . ' ' . $s['last_name']));
-                                    $initials = strtoupper(substr($s['first_name'], 0, 1));
+                                    $initials = strtoupper(substr($s['first_name'], 0, 1)) . strtoupper(substr($s['last_name'], 0, 1));
+                                    $photo = $s['profile_photo'] ?? '';
                                     $roleCls = 'role-' . strtolower($s['role']);
                                     $isActive = (int) $s['is_active'];
                                     ?>
                                     <tr data-user-id="<?= $s['user_id'] ?>" data-active="<?= $isActive ?>">
                                         <td>
                                             <div style="display:flex;align-items:center;gap:9px;">
-                                                <div class="staff-avatar"><?= $initials ?></div>
+                                                <?php if ($photo): ?>
+                                                    <img src="../../<?= htmlspecialchars($photo) ?>" class="staff-avatar-img"
+                                                        onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                                                    <div class="staff-avatar" style="display:none;"><?= $initials ?></div>
+                                                <?php else: ?>
+                                                    <div class="staff-avatar"><?= $initials ?></div>
+                                                <?php endif; ?>
                                                 <div>
                                                     <div style="font-weight:700;font-size:0.84rem;"><?= $fullName ?></div>
                                                     <div style="font-size:0.72rem;color:#94a3b8;">
-                                                        <?= htmlspecialchars($s['email']) ?></div>
+                                                        <?= htmlspecialchars($s['email']) ?>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
@@ -267,8 +275,8 @@ function lastActiveLabel($lastLogin)
 </div>
 
 <script>
-window.PS_RT_PAGE = 'staff';
-window._currentUserId = <?= (int)$_SESSION['user_id'] ?>;
+    window.PS_RT_PAGE = 'staff';
+    window._currentUserId = <?= (int) $_SESSION['user_id'] ?>;
 </script>
 <script src="../../assets/js/admin/staff_roles.js"></script>
 

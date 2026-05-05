@@ -38,17 +38,19 @@ $pr = $conn->query("SELECT property_id, property_name FROM properties ORDER BY p
 while ($p = $pr->fetch_assoc())
   $properties[] = $p;
 
-$units_result = $conn->query("SELECT u.*, p.property_name, t.full_name AS tenant_name, t.email AS tenant_email, CASE WHEN b.booking_id IS NOT NULL THEN 'occupied' ELSE u.status END AS real_status
+$units_result = $conn->query("
+    SELECT u.*, p.property_name,
+        NULLIF(TRIM(CONCAT(usr.first_name, ' ', usr.last_name)), '') AS tenant_name,
+        usr.email AS tenant_email,
+        usr.profile_photo AS tenant_photo,
+        CASE WHEN b.booking_id IS NOT NULL THEN 'occupied' ELSE u.status END AS real_status
     FROM units u
     LEFT JOIN properties p ON u.property_id = p.property_id
-
-    LEFT JOIN bookings b 
-        ON u.unit_id = b.unit_id 
-        AND b.status = 'confirmed'
-
-    LEFT JOIN tenants t 
-        ON b.tenant_id = t.tenant_id
-
+    LEFT JOIN bookings b
+        ON u.unit_id = b.unit_id
+        AND b.status IN ('confirmed', 'completed')
+    LEFT JOIN users usr
+        ON b.user_id = usr.user_id
     ORDER BY u.unit_id DESC
 ");
 ?>
@@ -183,6 +185,7 @@ $units_result = $conn->query("SELECT u.*, p.property_name, t.full_name AS tenant
             'status' => $unit['real_status'] ?? $unit['status'] ?? '',
             'tenant_name' => $unit['tenant_name'] ?? '',
             'tenant_email' => $unit['tenant_email'] ?? '',
+            'tenant_photo'  => $unit['tenant_photo'] ?? '',
             'images' => $imgs,
           ]), ENT_QUOTES);
 

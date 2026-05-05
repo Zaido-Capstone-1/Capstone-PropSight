@@ -1,5 +1,6 @@
 <?php
 include '../../includes/session.php';
+require_not_blacklisted(false);
 
 if ($_SESSION['role'] !== 'user') {
     echo '<!DOCTYPE html>
