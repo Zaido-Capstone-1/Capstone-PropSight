@@ -290,7 +290,21 @@
     window.addEventListener('ps:booking_updates', function (e) {
         var updates = e.detail || [];
 
+        var unitStatusMap = {};
+
         updates.forEach(function (b) {
+            if (!b || !b.unit_id) return;
+            var unitId = String(b.unit_id);
+            var isOccupied = ['pending', 'confirmed', 'active'].includes(b.status);
+            var priority = isOccupied ? 2 : 1;
+
+            if (!unitStatusMap[unitId] || priority > unitStatusMap[unitId].priority) {
+                unitStatusMap[unitId] = {
+                    status: b.status,
+                    priority: priority,
+                };
+            }
+
             // Update booking count when new booking is created
             if (b.status === 'pending' || b.status === 'confirmed') {
                 var bookingCountEl = document.querySelector('[data-rt-user="booking_total"]');
@@ -303,6 +317,45 @@
                         bookingCountEl.style.transform = 'scale(1.15)';
                         setTimeout(function () { bookingCountEl.style.transform = ''; }, 300);
                     }
+                }
+            }
+        });
+
+        Object.keys(unitStatusMap).forEach(function (unitId) {
+            var status = unitStatusMap[unitId].status;
+            var roomCard = document.querySelector('.room-card[data-unit-id="' + String(unitId) + '"]');
+            if (!roomCard) return;
+
+            if (['cancelled', 'completed'].includes(status)) {
+                roomCard.dataset.status = 'vacant';
+                var availBadge = roomCard.querySelector('[data-avail-status]');
+                if (availBadge) {
+                    availBadge.className = 'room-avail avail-yes';
+                    availBadge.textContent = 'AVAILABLE';
+                }
+                var bookBtn = roomCard.querySelector('[data-book-btn]');
+                if (bookBtn) {
+                    bookBtn.disabled = false;
+                    bookBtn.textContent = 'Book Now';
+                    bookBtn.onclick = function (ev) {
+                        if (ev) ev.stopPropagation();
+                        if (typeof openBookingModal !== 'function') return;
+                        try {
+                            openBookingModal(JSON.parse(roomCard.dataset.roomPayload || '{}'));
+                        } catch (err) { }
+                    };
+                }
+            } else if (['confirmed', 'active', 'pending'].includes(status)) {
+                roomCard.dataset.status = 'occupied';
+                var availBadge = roomCard.querySelector('[data-avail-status]');
+                if (availBadge) {
+                    availBadge.className = 'room-avail avail-no';
+                    availBadge.textContent = 'BOOKED';
+                }
+                var bookBtn = roomCard.querySelector('[data-book-btn]');
+                if (bookBtn) {
+                    bookBtn.disabled = true;
+                    bookBtn.textContent = 'Unavailable';
                 }
             }
         });
@@ -630,6 +683,24 @@
         var id = String(bk.booking_id);
         banner.dataset.bookingId = id;
         if (bk.unit_id) banner.dataset.unitId = String(bk.unit_id);
+
+        if (bk.unit_id) {
+            var roomCard = document.querySelector('.room-card[data-unit-id="' + String(bk.unit_id) + '"]');
+            if (roomCard) {
+                roomCard.dataset.status = 'occupied';
+                var availBadge = roomCard.querySelector('[data-avail-status]');
+                if (availBadge) {
+                    availBadge.className = 'room-avail avail-no';
+                    availBadge.textContent = 'BOOKED';
+                }
+                var bookBtn = roomCard.querySelector('[data-book-btn]');
+                if (bookBtn) {
+                    bookBtn.disabled = true;
+                    bookBtn.textContent = 'Unavailable';
+                    bookBtn.setAttribute('aria-disabled', 'true');
+                }
+            }
+        }
 
         // Restore banner visibility if it was previously collapsed
         if (banner.style.display === 'none' || parseFloat(banner.style.opacity) === 0) {

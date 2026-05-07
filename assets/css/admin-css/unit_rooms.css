@@ -325,12 +325,12 @@
     }
 
     /* Search full width on top */
-    .toolbar-card .tc-right > div {
+    .toolbar-card .tc-right>div {
         flex: 1 1 100%;
         min-width: 0;
     }
 
-    .toolbar-card .tc-right > div input.tc-input {
+    .toolbar-card .tc-right>div input.tc-input {
         width: 100% !important;
         box-sizing: border-box;
     }
@@ -360,5 +360,11 @@
     }
 }
 
-*::-webkit-scrollbar { display: none; }
-* { -ms-overflow-style: none; scrollbar-width: none; }
+*::-webkit-scrollbar {
+    display: none;
+}
+
+* {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

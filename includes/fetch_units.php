@@ -2,6 +2,21 @@
 
 include_once __DIR__ . '/db.php'; 
 
+// Ensure unit availability stays synced with actual bookings, including future pending/confirmed/active reservations.
+mysqli_query($conn, "
+    UPDATE units u
+    SET u.status = CASE
+        WHEN u.status = 'maintenance' THEN 'maintenance'
+        WHEN EXISTS (
+            SELECT 1 FROM bookings b
+            WHERE b.unit_id = u.unit_id
+              AND b.status IN ('pending', 'confirmed', 'active')
+              AND b.checkout_date > CURDATE()
+        ) THEN 'occupied'
+        ELSE 'vacant'
+    END
+");
+
 $ratingExpr = "NULL AS rating";
 $hasBookingsRating = false;
 $hasUnitsRating = false;

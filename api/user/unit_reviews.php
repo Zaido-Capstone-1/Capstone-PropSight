@@ -4,6 +4,7 @@
  * GET  ?unit_id=X&page=1&limit=5  — paginated reviews for a unit
  */
 header('Content-Type: application/json');
+require_once __DIR__ . '/../../includes/session.php';
 require_once __DIR__ . '/../../includes/db.php';
 require_not_blacklisted();
 

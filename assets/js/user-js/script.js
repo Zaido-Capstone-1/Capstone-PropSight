@@ -128,7 +128,6 @@ function _initPdMap(lat, lng) {
     if (mapPanel) mapPanel.style.display = '';
     if (overlay) overlay.style.display = 'flex';
 
-    // Wait for modal transition + Leaflet to be ready
     setTimeout(function () {
         if (typeof L === 'undefined') {
             if (overlay) overlay.style.display = 'none';
@@ -155,7 +154,6 @@ function _initPdMap(lat, lng) {
         L.marker([lat, lng], { icon: pinIcon }).addTo(map);
         map.setView([lat, lng], 15);
 
-        // invalidateSize after tiles render
         setTimeout(() => {
             map.invalidateSize();
             if (overlay) overlay.style.display = 'none';
@@ -168,7 +166,6 @@ function _initPdMap(lat, lng) {
 function openRoomModal(room) {
     window._pdRoom = room;
 
-    // ── Gallery ──────────────────────────────────────────────
     const track = document.getElementById('pdGalleryTrack');
     const fallback = document.getElementById('modalImgFallback');
     const prevBtn = document.getElementById('pdGalleryPrev');
@@ -210,14 +207,12 @@ function openRoomModal(room) {
         }
     }
 
-    // Hero text
     document.getElementById('modalRoomName').textContent = room.name;
     document.getElementById('modalRoomLoc').textContent = room.location;
 
     const badgeEl = document.getElementById('pdHeroBadge');
     if (badgeEl) badgeEl.textContent = (room.view || 'Residential');
 
-    // Stats bar
     document.getElementById('modalRoomPrice').textContent = room.price;
     const ratingEl = document.getElementById('modalRoomRating');
     const ratingNum = Number(room.rating);
@@ -225,10 +220,8 @@ function openRoomModal(room) {
         ratingEl.textContent = Number.isFinite(ratingNum) && ratingNum > 0 ? ratingNum.toFixed(1) : '—';
     }
 
-    // Description
     document.getElementById('modalRoomDesc').textContent = room.desc || 'A comfortable and well-appointed unit.';
 
-    // Amenity chips
     const amenDiv = document.getElementById('modalAmenities');
     const amenList = Array.isArray(room.amenities) ? room.amenities : [];
     if (amenDiv) {
@@ -240,7 +233,6 @@ function openRoomModal(room) {
             : '<span style="font-size:.8rem;color:#8aa4c0;">No amenities listed.</span>';
     }
 
-    // Availability note + date defaults
     const noteEl = document.getElementById('pdAvailNote');
     const today = new Date(); today.setDate(today.getDate() + 1);
     const dayAfter = new Date(); dayAfter.setDate(dayAfter.getDate() + 2);
@@ -267,11 +259,9 @@ function openRoomModal(room) {
     document.getElementById('roomModal').dataset.pricePerNight = String(parseRoomPrice(room.price));
     updateModalTotal();
 
-    // ── Show modal first, then init map ──────────────────────
     document.getElementById('roomModal').classList.add('open');
     document.body.style.overflow = 'hidden';
 
-    // Reset map panel visibility before each open
     const mapPanel = document.getElementById('pdMap');
     if (mapPanel) mapPanel.style.display = '';
 
@@ -281,13 +271,11 @@ function openRoomModal(room) {
         parseFloat(room.longitude || 0)
     );
 
-    // ── Reviews ───────────────────────────────────────────────
     window._pdReviewUnitId = room.id;
     window._pdReviewPage = 1;
     pdLoadReviews(room.id, 1);
 }
 
-// Gallery navigation
 function pdGalleryNav(dir) {
     const images = window._pdGalleryImages || [];
     if (images.length < 2) return;
@@ -299,7 +287,6 @@ function pdGalleryNav(dir) {
     dots.forEach((d, i) => d.style.background = i === idx ? '#fff' : 'rgba(255,255,255,.45)');
 }
 
-// Load reviews
 function pdLoadReviews(unitId, page) {
     const container = document.getElementById('pdReviews');
     const pager = document.getElementById('pdReviewsPager');
@@ -425,7 +412,7 @@ function openPaymentModal(payload) {
 
 function closePaymentModal() {
     const modal = document.getElementById('paymentModal');
-    if (modal) modal.classList.remove('open');  // ← add null check
+    if (modal) modal.classList.remove('open');
     pendingBookingPayload = null;
     document.body.style.overflow = '';
 }
@@ -582,7 +569,7 @@ function _onBookingSuccess(data) {
     const roomModal = document.getElementById('roomModal');
     if (roomModal) roomModal.classList.remove('open');
 
-    closeBookingModal();   // handles .active/.open cleanup + body overflow
+    closeBookingModal();
     closePaymentModal();
 }
 
@@ -606,7 +593,6 @@ function _onBookingCancelled(bookingId, overrideUnitId) {
         if (badge) { badge.textContent = 'Cancelled'; badge.className = 'history-status st-cancelled'; badge.dataset.rawStatus = 'cancelled'; }
     }
 
-    // ── Reset the room card ──────────────────────────────────
     if (unitId) {
         const roomCard = document.querySelector(`.room-card[data-unit-id="${unitId}"]`);
         if (roomCard) {
@@ -629,7 +615,6 @@ function _onBookingCancelled(bookingId, overrideUnitId) {
             }
         }
     }
-    // ────────────────────────────────────────────────────────
 
     document.querySelectorAll('[data-rt-stat="upcoming"], [data-rt-user="upcoming"]').forEach(el => {
         el.textContent = Math.max(0, (parseInt(el.textContent) || 1) - 1);
@@ -640,7 +625,6 @@ function _onBookingCancelled(bookingId, overrideUnitId) {
 
     window.hasActiveBooking = false;
 
-    // Safe close — modal may not exist on all pages
     if (typeof closeManageModal === 'function') {
         try { closeManageModal(); } catch (e) { }
     }
@@ -768,7 +752,6 @@ function openManageModal(booking) {
     document.getElementById('manageModal').classList.add('open');
     document.body.style.overflow = 'hidden';
 
-    // Location map
     const mapWrap = document.getElementById('manageMapWrap');
     const lat = parseFloat(booking.latitude || 0);
     const lng = parseFloat(booking.longitude || 0);
@@ -967,6 +950,7 @@ function toggleSaveRoom(unitId, btn) {
 let _bmCurrentStep = 1;
 let _bmRoom = null;
 let _bmCountdownTimer = null;
+let _bmPollInterval = null;
 
 function openBookingModal(room) {
     if (window.hasActiveBooking) { showToast('You already have an active booking.'); return; }
@@ -995,10 +979,8 @@ function openBookingModal(room) {
     bmGoToStep(1);
     const bmOverlay = document.getElementById('bmOverlay');
     bmOverlay.classList.add('active');
-    // tiny rAF so the translateY(100%) start state renders before we add .open
     requestAnimationFrame(() => bmOverlay.classList.add('open'));
 
-    // Apply popular badge to the most-used payment method
     document.querySelectorAll('#bmPayMethods .bm-pay-option .bm-pay-badge').forEach(b => b.remove());
     const popular = window.PS_POPULAR_PAYMENT || 'GCash';
     const popularEl = document.querySelector(`#bmPayMethods .bm-pay-option[data-method="${popular}"]`);
@@ -1014,12 +996,10 @@ function closeBookingModal() {
     const bmOverlay = document.getElementById('bmOverlay');
     const bmBox = document.getElementById('bmBox');
 
-    // Trigger the exit animation
     bmOverlay.classList.remove('open');
     bmBox.style.transform = 'translateY(40px) scale(.97)';
     bmBox.style.opacity = '0';
 
-    // Wait for it to finish, then fully hide
     setTimeout(() => {
         bmOverlay.classList.remove('active');
         bmBox.style.transform = '';
@@ -1028,6 +1008,7 @@ function closeBookingModal() {
 
     document.body.style.overflow = '';
     if (_bmCountdownTimer) { clearInterval(_bmCountdownTimer); _bmCountdownTimer = null; }
+    if (_bmPollInterval) { clearInterval(_bmPollInterval); _bmPollInterval = null; }
 }
 
 function bmGoToStep(step) {
@@ -1045,7 +1026,8 @@ function bmGoToStep(step) {
     document.getElementById('bmBox').classList.toggle('bm-step-final', step === 4);
     document.getElementById('bmNext').style.display = step < 3 ? '' : 'none';
     document.getElementById('bmConfirmBtn').style.display = step === 3 ? '' : 'none';
-    document.getElementById('bmDoneBtn').style.display = step === 4 ? '' : 'none';
+    // Done button is always hidden by default on step 4 — payment flow shows it when appropriate
+    document.getElementById('bmDoneBtn').style.display = 'none';
     if (step === 2) bmPopulateReview();
     if (step === 3) bmSetupPayment();
 }
@@ -1130,11 +1112,51 @@ function bmSetupPayment() {
     _bmCountdownTimer = setInterval(tick, 1000);
 }
 
+function _bmStartPaymentPolling(bookingId) {
+    let attempts = 0;
+    if (_bmPollInterval) clearInterval(_bmPollInterval);
+    _bmPollInterval = setInterval(() => {
+        attempts++;
+        if (attempts > 120) {
+            clearInterval(_bmPollInterval);
+            _bmPollInterval = null;
+            showToast('Payment timeout. Please check your bookings page.', 'warning');
+            document.getElementById('bmDoneBtn').style.display = '';
+            return;
+        }
+        fetch('../../api/user/check_payment_status.php?booking_id=' + bookingId)
+            .then(r => r.json())
+            .then(res => {
+                if (res.success && res.payment_status === 'paid') {
+                    clearInterval(_bmPollInterval);
+                    _bmPollInterval = null;
+                    _markDashboardUnitBooked(window._lastBmBookingData?.unit_id);
+                    window.hasActiveBooking = true;
+                    if (_bmCountdownTimer) { clearInterval(_bmCountdownTimer); _bmCountdownTimer = null; }
+                    showToast('Payment confirmed! Your booking is confirmed.', 'success');
+                    document.getElementById('bmDoneBtn').style.display = '';
+                }
+            })
+            .catch(() => {});
+    }, 5000);
+}
+
 function bmSubmitBooking() {
+    const confirmBtn = document.getElementById('bmConfirmBtn');
+    if (confirmBtn) {
+        if (confirmBtn.disabled) return;
+        confirmBtn.disabled = true;
+        confirmBtn.setAttribute('aria-disabled', 'true');
+    }
+
     const checkin = document.getElementById('bm-checkin').value;
     const lease = document.getElementById('bm-lease').value;
     const nights = Math.round((new Date(lease) - new Date(checkin)) / 86400000) || 0;
     const deposit = (_bmRoom?.priceNum || 0) * nights * 0.5;
+    const isOnline = ['GCash', 'Maya', 'Bank'].includes(selectedPaymentMethod);
+
+    // Open blank tab NOW (synchronous, in click handler) to avoid popup blocker
+    const payTab = isOnline ? window.open('', '_blank') : null;
 
     showToast('Submitting your booking…');
 
@@ -1151,7 +1173,16 @@ function bmSubmitBooking() {
     window.psAppendCsrf(fd);
 
     fetch('../../api/user/book_unit.php', { method: 'POST', body: fd })
-        .then(r => r.json())
+        .then(r => {
+            if (!r.ok && r.status !== 200) {
+                return r.text().then(text => {
+                    let msg = 'Server error. Please try again.';
+                    try { msg = JSON.parse(text).message || msg; } catch (_) { }
+                    throw new Error(msg);
+                });
+            }
+            return r.json();
+        })
         .then(data => {
             if (data.success) {
                 window._lastBmBookingData = {
@@ -1162,7 +1193,7 @@ function bmSubmitBooking() {
                     checkin, checkout: lease, nights,
                     total_amount: 'PHP ' + deposit.toLocaleString()
                 };
-                _markDashboardUnitBooked(window._lastBmBookingData.unit_id);
+
                 const ref = '#BK-' + String(data.booking_id || '').padStart(4, '0');
                 document.getElementById('bmConfirmRef').textContent = ref;
                 document.getElementById('cf-unit').textContent = _bmRoom?.name || '—';
@@ -1170,14 +1201,58 @@ function bmSubmitBooking() {
                 document.getElementById('cf-checkout').textContent = lease;
                 document.getElementById('cf-method').textContent = selectedPaymentMethod;
                 document.getElementById('cf-total').textContent = '₱' + deposit.toLocaleString();
-                bmGoToStep(4);
-                window.hasActiveBooking = true;
-                if (_bmCountdownTimer) { clearInterval(_bmCountdownTimer); _bmCountdownTimer = null; }
+
+                if (isOnline) {
+                    // Go to step 4 but keep Done hidden — only shown after payment confirmed
+                    bmGoToStep(4);
+
+                    const csrf = typeof window.psGetCsrfToken === 'function' ? window.psGetCsrfToken() : '';
+                    fetch('../../api/user/create_paymongo_link.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ booking_id: data.booking_id, csrf_token: csrf })
+                    })
+                        .then(r => r.json())
+                        .then(pm => {
+                            if (pm.success) {
+                                // Navigate the already-open tab to PayMongo
+                                if (payTab && !payTab.closed) {
+                                    payTab.location.href = pm.checkout_url;
+                                } else {
+                                    window.open(pm.checkout_url, '_blank');
+                                }
+                                _bmStartPaymentPolling(data.booking_id);
+                            } else {
+                                if (payTab) try { payTab.close(); } catch (e) {}
+                                showToast('Payment link failed: ' + (pm.message || 'Unknown error'), 'error');
+                                // Show Done so user isn't stuck
+                                document.getElementById('bmDoneBtn').style.display = '';
+                            }
+                        })
+                        .catch(() => {
+                            if (payTab) try { payTab.close(); } catch (e) {}
+                            showToast('Could not reach payment service. Pay from your bookings page.', 'error');
+                            document.getElementById('bmDoneBtn').style.display = '';
+                        });
+                } else {
+                    // Cash — mark booked, show Done immediately
+                    _markDashboardUnitBooked(window._lastBmBookingData.unit_id);
+                    bmGoToStep(4);
+                    window.hasActiveBooking = true;
+                    if (_bmCountdownTimer) { clearInterval(_bmCountdownTimer); _bmCountdownTimer = null; }
+                    document.getElementById('bmDoneBtn').style.display = '';
+                }
             } else {
+                if (payTab) try { payTab.close(); } catch (e) {}
+                if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.removeAttribute('aria-disabled'); }
                 showToast(data.message || 'Booking failed. Please try again.');
             }
         })
-        .catch(() => showToast('Network error. Please try again.'));
+        .catch(err => {
+            if (payTab) try { payTab.close(); } catch (e) {}
+            if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.removeAttribute('aria-disabled'); }
+            showToast(err?.message || 'Network error. Please try again.');
+        });
 }
 
 function _onBookingDoneFromDashboard() {

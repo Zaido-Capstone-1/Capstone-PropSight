@@ -25,7 +25,8 @@ elseif ($loyaltyPoints >= 2000)
 elseif ($loyaltyPoints >= 500)
     $loyaltyTier = 'Gold';
 
-$_pmRow = mysqli_fetch_assoc(mysqli_query($conn,
+$_pmRow = mysqli_fetch_assoc(mysqli_query(
+    $conn,
     "SELECT payment_method, COUNT(*) AS cnt
      FROM bookings
      WHERE payment_method IS NOT NULL
@@ -1132,7 +1133,63 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
 
                     <!-- STEP 4: Confirmed -->
                     <div class="bm-panel" id="bm-panel-4">
-                        <div class="bm-confirm-check">
+                        <!-- Waiting for payment state -->
+                        <div class="bm-confirm-check" id="bm-payment-waiting">
+                            <div class="bm-check-ring" style="border-color:var(--gold,#c9a84c);animation:none;">
+                                <svg viewBox="0 0 24 24" style="stroke:var(--gold,#c9a84c);">
+                                    <circle cx="12" cy="12" r="10" stroke-width="2" fill="none" />
+                                    <polyline points="12 6 12 12 16 14" stroke-width="2" />
+                                </svg>
+                            </div>
+                            <div class="bm-confirm-title">Complete your payment</div>
+                            <div class="bm-confirm-sub">A PayMongo payment page has opened in a new tab. Return here
+                                once you've paid.</div>
+                            <div class="bm-confirm-ref" id="bmConfirmRef">Ref #BK-0000</div>
+                            <div
+                                style="margin-top:16px;display:flex;flex-direction:column;gap:10px;align-items:center;">
+                                <button class="bm-btn bm-btn-confirm" id="bmReopenPayBtn" style="display:none;"
+                                    onclick="bmReopenPaymongoTab()">
+                                    <svg viewBox="0 0 24 24" stroke="currentColor" fill="none"
+                                        style="width:14px;height:14px;stroke-width:2">
+                                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                                        <polyline points="15 3 21 3 21 9" />
+                                        <line x1="10" y1="14" x2="21" y2="3" />
+                                    </svg>
+                                    Reopen payment page
+                                </button>
+                                <div id="bmPaymentPolling"
+                                    style="font-size:0.8rem;color:var(--ink-soft);display:flex;align-items:center;gap:6px;">
+                                    <svg viewBox="0 0 24 24" stroke="currentColor" fill="none"
+                                        style="width:14px;height:14px;stroke-width:2;animation:spin 1.2s linear infinite;">
+                                        <circle cx="12" cy="12" r="10" stroke-opacity="0.3" />
+                                        <path d="M12 2a10 10 0 0110 10" />
+                                    </svg>
+                                    Waiting for payment confirmation…
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Success state (shown after payment confirmed) -->
+                        <div class="bm-confirm-check" id="bm-payment-success" style="display:none;">
+                            <div class="bm-check-ring">
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            </div>
+                            <div class="bm-confirm-title">Payment confirmed!</div>
+                            <div class="bm-confirm-sub">Your booking is confirmed. Check your bookings for details.
+                            </div>
+                            <div class="bm-confirm-details">
+                                <div class="bm-confirm-row"><span>Unit</span><span id="cf-unit">—</span></div>
+                                <div class="bm-confirm-row"><span>Check-in</span><span id="cf-movein">—</span></div>
+                                <div class="bm-confirm-row"><span>Check-out</span><span id="cf-checkout">—</span></div>
+                                <div class="bm-confirm-row"><span>Payment method</span><span id="cf-method">—</span>
+                                </div>
+                                <div class="bm-confirm-row"><span>Total paid</span><span id="cf-total"
+                                        style="color:var(--teal);">—</span></div>
+                            </div>
+                        </div>
+                        <!-- Cash / no-payment state -->
+                        <div class="bm-confirm-check" id="bm-payment-cash" style="display:none;">
                             <div class="bm-check-ring">
                                 <svg viewBox="0 0 24 24">
                                     <polyline points="20 6 9 17 4 12" />
@@ -1141,15 +1198,15 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                             <div class="bm-confirm-title">Booking submitted!</div>
                             <div class="bm-confirm-sub">Your reservation request has been sent. We'll confirm within 24
                                 hours.</div>
-                            <div class="bm-confirm-ref" id="bmConfirmRef">Ref #BK-0000</div>
-
                             <div class="bm-confirm-details">
-                                <div class="bm-confirm-row"><span>Unit</span><span id="cf-unit">—</span></div>
-                                <div class="bm-confirm-row"><span>Check-in</span><span id="cf-movein">—</span></div>
-                                <div class="bm-confirm-row"><span>Check-out</span><span id="cf-checkout">—</span></div>
-                                <div class="bm-confirm-row"><span>Payment method</span><span id="cf-method">—</span>
+                                <div class="bm-confirm-row"><span>Unit</span><span id="cf-unit-cash">—</span></div>
+                                <div class="bm-confirm-row"><span>Check-in</span><span id="cf-movein-cash">—</span>
                                 </div>
-                                <div class="bm-confirm-row"><span>Total paid / due</span><span id="cf-total"
+                                <div class="bm-confirm-row"><span>Check-out</span><span id="cf-checkout-cash">—</span>
+                                </div>
+                                <div class="bm-confirm-row"><span>Payment method</span><span
+                                        id="cf-method-cash">—</span></div>
+                                <div class="bm-confirm-row"><span>Total due</span><span id="cf-total-cash"
                                         style="color:var(--teal);">—</span></div>
                             </div>
                         </div>

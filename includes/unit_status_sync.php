@@ -22,7 +22,7 @@ function syncUnitAvailabilityFromBookings(mysqli $conn, int $unitId): bool
         FROM bookings
         WHERE unit_id = $unitId
           AND status IN ('pending', 'confirmed', 'active')
-          AND checkout_date >= CURDATE()
+          AND checkout_date > CURDATE()
     ");
     $busyCount = (int)(mysqli_fetch_assoc($busyRes)['c'] ?? 0);
 
@@ -36,4 +36,3 @@ function syncUnitAvailabilityFromBookings(mysqli $conn, int $unitId): bool
     $targetEsc = mysqli_real_escape_string($conn, $target);
     return (bool)mysqli_query($conn, "UPDATE units SET status='$targetEsc' WHERE unit_id=$unitId");
 }
-

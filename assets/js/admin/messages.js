@@ -1,10 +1,10 @@
-let activeUserId = null;
+let activeUserId   = null;
 let activeUserName = '';
-let lastMsgTs = null;
-let pollTimer = null;
+let lastMsgTs      = null;
+let pollTimer      = null;
 
 function escHtml(s) {
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function closeMsgPane() {
@@ -28,7 +28,7 @@ function closeMsgPane() {
 function loadConversation(userId, name, email) {
     userId = parseInt(userId);
     if (activeUserId === userId) return;
-    activeUserId = userId;
+    activeUserId   = userId;
     activeUserName = name;
 
     // Mobile: slide to pane view
@@ -53,7 +53,7 @@ function loadConversation(userId, name, email) {
             </button>
             <div class="avatar">${name[0].toUpperCase()}</div>
             <div><div class="msg-pane-title">${escHtml(name)}</div>
-            <div class="msg-pane-sub">${escHtml(email || '')}</div></div>
+            <div class="msg-pane-sub">${escHtml(email||'')}</div></div>
         </div>
         <div class="msg-pane-body" id="msgBody">
             <div style="padding:30px;text-align:center;color:#94a3b8;font-size:13px;">Loading…</div>
@@ -86,10 +86,10 @@ function loadConversation(userId, name, email) {
             if (!data.success) { document.getElementById('msgBody').innerHTML = `<p style="padding:20px;color:red;">${escHtml(data.message)}</p>`; return; }
             const msgs = data.messages || [];
             renderMsgs(msgs, true);
-            lastMsgTs = msgs.length ? msgs[msgs.length - 1].created_at : new Date().toISOString().slice(0, 19).replace('T', ' ');
+            lastMsgTs = msgs.length ? msgs[msgs.length-1].created_at : new Date().toISOString().slice(0,19).replace('T',' ');
             startPoll();
         })
-        .catch(() => { const b = document.getElementById('msgBody'); if (b) b.innerHTML = '<p style="padding:20px;color:red;">Network error.</p>'; });
+        .catch(() => { const b = document.getElementById('msgBody'); if(b) b.innerHTML='<p style="padding:20px;color:red;">Network error.</p>'; });
 }
 
 function renderMsgs(msgs, clearFirst) {
@@ -102,11 +102,11 @@ function renderMsgs(msgs, clearFirst) {
     }
     let lastDate = body.dataset.lastDate || '';
     msgs.forEach(m => {
-        const mine = parseInt(m.from_user) === ADMIN_ID;
+        const mine    = parseInt(m.from_user) === ADMIN_ID;
         // MySQL returns "YYYY-MM-DD HH:MM:SS" — replace space with T so all browsers parse it correctly
-        const d = new Date((m.created_at || '').replace(' ', 'T'));
-        const dateStr = isNaN(d) ? '' : d.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' });
-        const timeStr = isNaN(d) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const d       = new Date((m.created_at || '').replace(' ', 'T'));
+        const dateStr = isNaN(d) ? '' : d.toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric'});
+        const timeStr = isNaN(d) ? '' : d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
         if (dateStr !== lastDate) {
             const div = document.createElement('div');
             div.style.cssText = 'text-align:center;font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin:8px 0;';
@@ -138,7 +138,7 @@ function renderAdminAttachment(url) {
 function handleAdminAttach(input) {
     const file = input.files[0];
     const preview = document.getElementById('adminAttachPreview');
-    const nameEl = document.getElementById('adminAttachName');
+    const nameEl  = document.getElementById('adminAttachName');
     if (file) { nameEl.textContent = file.name; preview.style.display = 'flex'; }
 }
 
@@ -149,16 +149,16 @@ function clearAdminAttach() {
 }
 
 function sendMsg() {
-    const input = document.getElementById('msgInput');
+    const input     = document.getElementById('msgInput');
     const fileInput = document.getElementById('msgFileInput');
-    const bodyTxt = input ? input.value.trim() : '';
-    const file = fileInput && fileInput.files[0];
+    const bodyTxt   = input ? input.value.trim() : '';
+    const file      = fileInput && fileInput.files[0];
     if ((!bodyTxt && !file) || !activeUserId) return;
     if (input) input.value = '';
 
     // Optimistic bubble
     const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeStr = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
     const msgBody = document.getElementById('msgBody');
     const ph = msgBody?.querySelector('p[style*="text-align:center"]');
     if (ph) ph.remove();
@@ -184,7 +184,7 @@ function sendMsg() {
     fd.append('body', bodyTxt);
     if (file) fd.append('attachment', file);
 
-    fetch(ADMIN_API, { method: 'POST', body: fd })
+    fetch(ADMIN_API, {method:'POST', body:fd})
         .then(r => r.json())
         .then(d => {
             bub.style.opacity = '';
@@ -211,10 +211,10 @@ function startPoll() {
                 const incoming = (data.messages || []).filter(m => parseInt(m.from_user) !== ADMIN_ID);
                 if (incoming.length) {
                     renderMsgs(incoming, false);
-                    updateThreadPreview(activeUserId, incoming[incoming.length - 1].body);
+                    updateThreadPreview(activeUserId, incoming[incoming.length-1].body);
                 }
                 lastMsgTs = data.ts || lastMsgTs;
-            }).catch(() => { });
+            }).catch(()=>{});
     }, 4000);
 }
 function stopPoll() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
@@ -223,9 +223,9 @@ function updateThreadPreview(userId, body) {
     const item = document.querySelector(`.msg-thread[data-user-id="${userId}"]`);
     if (item) {
         const preview = item.querySelector('.thread-preview');
-        if (preview) preview.textContent = body.slice(0, 50);
+        if (preview) preview.textContent = body.slice(0,50);
         const time = item.querySelector('.msg-thread-time');
-        if (time) time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (time) time.textContent = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
         const list = document.querySelector('.msg-threads');
         if (list) list.prepend(item);
     }
@@ -233,7 +233,7 @@ function updateThreadPreview(userId, body) {
 
 function openNewMessage() {
     const users = window.__PS_ADMIN_MSG_USERS__ || [];
-    const opts = users.map(u => `<option value="${u.user_id}">${u.first_name} ${u.last_name} (${u.email})</option>`).join('');
+    const opts = users.map(u=>`<option value="${u.user_id}">${u.first_name} ${u.last_name} (${u.email})</option>`).join('');
     let modal = document.getElementById('ps-msg-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -256,16 +256,16 @@ function openNewMessage() {
     modal.style.display = 'flex';
 
     document.getElementById('nm_send').onclick = () => {
-        const to = document.getElementById('nm_to').value;
+        const to   = document.getElementById('nm_to').value;
         const subj = document.getElementById('nm_subj').value;
         const body = document.getElementById('nm_body').value;
         const errEl = document.getElementById('nm_err');
-        if (!body.trim()) { errEl.textContent = 'Message is required.'; errEl.style.display = 'block'; return; }
+        if (!body.trim()) { errEl.textContent = 'Message is required.'; errEl.style.display='block'; return; }
         errEl.style.display = 'none';
         document.getElementById('nm_send').textContent = 'Sending…';
         const fd = new FormData();
-        fd.append('action', 'send'); fd.append('to_user', to); fd.append('subject', subj); fd.append('body', body);
-        fetch(ADMIN_API, { method: 'POST', body: fd })
+        fd.append('action','send'); fd.append('to_user',to); fd.append('subject',subj); fd.append('body',body);
+        fetch(ADMIN_API, {method:'POST', body:fd})
             .then(r => r.json())
             .then(data => {
                 modal.style.display = 'none';
@@ -273,17 +273,17 @@ function openNewMessage() {
                     showToast('Message sent!', 'success');
                     const sel = document.getElementById('nm_to');
                     const uname = sel.options[sel.selectedIndex]?.text.split(' (')[0] || 'User';
-                    const uid = parseInt(to);
+                    const uid   = parseInt(to);
                     const existing = document.querySelector(`.msg-thread[data-user-id="${uid}"]`);
                     if (!existing) {
                         const el = document.createElement('div');
                         el.className = 'msg-thread';
                         el.dataset.userId = uid;
-                        el.setAttribute('onclick', `loadConversation(${uid},'${uname.replace(/'/g, "\\'")}','')`);
+                        el.setAttribute('onclick', `loadConversation(${uid},'${uname.replace(/'/g,"\\'")}','')`);
                         el.innerHTML = `<div class="avatar">${uname[0].toUpperCase()}</div>
                             <div class="msg-thread-info">
                                 <div class="msg-thread-name">${escHtml(uname)}</div>
-                                <div class="msg-thread-preview thread-preview">${escHtml(body.slice(0, 50))}</div>
+                                <div class="msg-thread-preview thread-preview">${escHtml(body.slice(0,50))}</div>
                             </div>
                             <div class="msg-thread-meta"><div class="msg-thread-time">now</div></div>`;
                         document.querySelector('.msg-threads')?.prepend(el);
@@ -308,17 +308,17 @@ window.addEventListener('ps:new_messages', e => {
         const thread = document.querySelector(`.msg-thread[data-user-id="${fromId}"]`);
         if (thread) {
             const preview = thread.querySelector('.thread-preview');
-            if (preview) preview.textContent = (m.body || '').slice(0, 50);
+            if (preview) preview.textContent = (m.body||'').slice(0,50);
             const time = thread.querySelector('.msg-thread-time');
-            if (time) time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (time) time.textContent = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
             // Only show badge if this conversation is NOT currently open
             if (fromId !== activeUserId) {
                 thread.classList.add('has-unread');
                 const badge = thread.querySelector('.msg-unread');
-                if (badge) badge.textContent = (parseInt(badge.textContent) || 0) + 1;
+                if (badge) badge.textContent = (parseInt(badge.textContent)||0)+1;
                 else {
                     const meta = thread.querySelector('.msg-thread-meta');
-                    if (meta) { const b = document.createElement('div'); b.className = 'msg-unread'; b.textContent = '1'; meta.appendChild(b); }
+                    if (meta) { const b=document.createElement('div'); b.className='msg-unread'; b.textContent='1'; meta.appendChild(b); }
                 }
             }
         }

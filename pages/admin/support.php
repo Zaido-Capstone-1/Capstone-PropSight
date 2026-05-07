@@ -171,23 +171,6 @@ function buildQS(array $overrides = []): string
 
     </div>
 
-    <?php if (isset($_GET['suspended'])): ?>
-        <div
-            style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
-            <svg fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"
-                style="width:20px;height:20px;flex-shrink:0;">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            <div>
-                <div style="font-size:13px;font-weight:700;color:#dc2626;">Your account has been suspended.</div>
-                <div style="font-size:12px;color:#ef4444;margin-top:2px;">Submit a support ticket below to appeal and
-                    request reactivation.</div>
-            </div>
-        </div>
-    <?php endif; ?>
-
     <div class="card">
         <div class="card-header-with-filters">
             <div class="header-left">

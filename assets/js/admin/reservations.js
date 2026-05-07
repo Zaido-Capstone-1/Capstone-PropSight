@@ -76,7 +76,6 @@ function normaliseBooking(b) {
         ((b.property_name || '') + (b.unit_number ? ' — Unit ' + b.unit_number : ''));
     const id = parseInt(b.booking_id, 10);
     if (!id) return null;   // skip malformed records
-    // In normaliseBooking(), add this line:
     return {
         booking_id: id,
         user_name: b.user_name || '',
