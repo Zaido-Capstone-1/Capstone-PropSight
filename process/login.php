@@ -244,8 +244,44 @@ if (!password_verify($password, $user['password'])) {
     json_error("Incorrect password! Attempt {$attempts}/" . MAX_LOGIN_ATTEMPTS);
 }
 
-//Sending of otp
+// Reset login attempts on successful password verification
+$resetStmt = $conn->prepare("UPDATE users SET login_attempts = 0, is_locked = 0, locked_until = NULL WHERE user_id = ?");
+$resetStmt->bind_param('i', $user['user_id']);
+$resetStmt->execute();
+$resetStmt->close();
 
+// Check if user has 2FA enabled in user_settings
+$twoFaEnabled = false;
+$settingsStmt = $conn->prepare("SELECT two_factor_enabled FROM user_settings WHERE user_id = ? LIMIT 1");
+if ($settingsStmt) {
+    $settingsStmt->bind_param('i', $user['user_id']);
+    $settingsStmt->execute();
+    $settingsRow = $settingsStmt->get_result()->fetch_assoc();
+    $settingsStmt->close();
+    $twoFaEnabled = !empty($settingsRow['two_factor_enabled']);
+}
+
+if (!$twoFaEnabled) {
+    // 2FA is OFF — log the user in directly
+    session_regenerate_id(true);
+    $_SESSION['login'] = true;
+    $_SESSION['user_id'] = $user['user_id'];
+    $_SESSION['first_name'] = $user['first_name'];
+    $_SESSION['last_name'] = $user['last_name'];
+    $_SESSION['name'] = $user['first_name'] . ' ' . $user['last_name'];
+    $_SESSION['email'] = $user['email'];
+    $_SESSION['phone'] = $user['phone'];
+    $_SESSION['nationality'] = $user['nationality'];
+    $_SESSION['birthday'] = $user['birthday'];
+    $_SESSION['gender'] = $user['gender'];
+    $_SESSION['role'] = $user['role'] ?? 'user';
+    $_SESSION['verification_status'] = $user['verification_status'] ?? 'Not Verified';
+    $_SESSION['profile_photo'] = $user['profile_photo'] ?? '';
+    $_SESSION['is_blacklisted'] = (bool) ($user['is_blacklisted'] ?? false);
+    json_response('success', 'Login successful!', ['role' => $_SESSION['role']]);
+}
+
+// 2FA is ON — send OTP
 $otp = generate_otp();
 store_otp_in_session($otp, $user);
 

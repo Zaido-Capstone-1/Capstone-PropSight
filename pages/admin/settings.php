@@ -115,8 +115,8 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
                         <div class="form-group full"><label>Address</label><input id="adm_addr" type="text"
                                 value="<?php echo htmlspecialchars($adminRow['address'] ?? ''); ?>" /></div>
                     </div>
-                    <div class="form-actions" style="margin-top:16px;"><button type="submit"
-                            class="btn btn-primary" onclick="saveProfile(event)">Save Changes</button></div>
+                    <div class="form-actions" style="margin-top:16px;"><button type="submit" class="btn btn-primary"
+                            onclick="saveProfile(event)">Save Changes</button></div>
                 </form>
             </div>
 
@@ -131,19 +131,31 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
                         <div class="form-group"><label>Confirm New Password</label><input id="conf_pw" type="password"
                                 placeholder="••••••••" /></div>
                     </div>
-                    <div class="form-actions" style="margin-top:16px;"><button type="submit"
-                            class="btn btn-primary" onclick="changePassword(event)">Update Password</button></div>
+                    <div class="form-actions" style="margin-top:16px;"><button type="submit" class="btn btn-primary"
+                            onclick="changePassword(event)">Update Password</button></div>
                 </form>
                 <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
                     <div style="font-size:14px;font-weight:700;margin-bottom:12px;">Two-Factor Authentication</div>
                     <div
                         style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--gray-light);border-radius:var(--radius);">
                         <div>
-                            <div style="font-size:13.5px;font-weight:600;">Authenticator App</div>
-                            <div style="font-size:11px;color:var(--text-soft);">Use Google Authenticator or similar
-                            </div>
+                            <div style="font-size:13.5px;font-weight:600;">Enable 2FA via Email OTP</div>
+                            <div style="font-size:11px;color:var(--text-soft);">A one-time code will be sent to your
+                                email each time you log in.</div>
                         </div>
-                        <span class="badge badge-success">Enabled</span>
+                        <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
+                            <input type="checkbox" id="admin2faToggle" <?php
+                            $admin2faRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT two_factor_enabled FROM user_settings WHERE user_id=$adminId LIMIT 1"));
+                            echo !empty($admin2faRow['two_factor_enabled']) ? 'checked' : '';
+                            ?>
+                                onchange="toggleAdmin2FA(this)" style="opacity:0;width:0;height:0;position:absolute;">
+                            <span id="admin2faSlider"
+                                style="position:absolute;cursor:pointer;inset:0;background:<?php echo !empty($admin2faRow['two_factor_enabled']) ? 'var(--blue-500,#3b82f6)' : 'var(--border,#cbd5e1)' ?>;border-radius:24px;transition:background .2s;">
+                                <span
+                                    style="position:absolute;content:'';height:18px;width:18px;left:<?php echo !empty($admin2faRow['two_factor_enabled']) ? '23px' : '3px' ?>;bottom:3px;background:white;border-radius:50%;transition:left .2s;display:block;"
+                                    id="admin2faKnob"></span>
+                            </span>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -167,36 +179,6 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
                                 <option <?= $opt === $pref[1] ? 'selected' : '' ?>><?= $opt ?></option>
                             <?php endforeach; ?>
                         </select>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header"><span class="card-title">Notification Preferences</span></div>
-            <div style="display:flex;flex-direction:column;gap:10px;">
-                <?php
-                $notifs = [
-                    ['New Reservation', 'Get notified when a new booking is made', true],
-                    ['Check-in Reminders', 'Alert 1 hour before guest check-in', true],
-                    ['Payment Received', 'Notify when a payment is confirmed', true],
-                    ['Maintenance Requests', 'Alert when a maintenance task is filed', true],
-                    ['Monthly Reports', 'Receive auto-generated monthly reports', false],
-                    ['Low Occupancy Alerts', 'Notify when occupancy drops below 50%', false],
-                ];
-                foreach ($notifs as $n): ?>
-                    <div
-                        style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--gray-light);border-radius:var(--radius);">
-                        <div>
-                            <div style="font-size:13.5px;font-weight:600;"><?= $n[0] ?></div>
-                            <div style="font-size:11px;color:var(--text-soft);"><?= $n[1] ?></div>
-                        </div>
-                        <div
-                            style="width:40px;height:22px;border-radius:20px;background:<?= $n[2] ? 'var(--blue-400)' : 'var(--border)' ?>;position:relative;cursor:pointer;transition:background .2s;">
-                            <div
-                                style="width:16px;height:16px;border-radius:50%;background:white;position:absolute;top:3px;left:<?= $n[2] ? '21px' : '3px' ?>;transition:left .2s;">
-                            </div>
-                        </div>
                     </div>
                 <?php endforeach; ?>
             </div>

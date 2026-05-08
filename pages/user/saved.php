@@ -10,7 +10,7 @@ if ($_SESSION['role'] !== 'user') {
 </head>
 <body>
 
-<script src="../../assets/js/user-js/saved-inline.js"></script>
+
 </body>
 </html>';
     exit;
@@ -217,7 +217,7 @@ while ($row = mysqli_fetch_assoc($res))
     <div class="col-side">
 
         <div class="tip-card reveal rd1">
-            <div class="tip-card-label">❤️ Your Wishlist</div>
+            <div class="tip-card-label">Your Wishlist</div>
             <div class="tip-card-title">Ready to book your favorites?</div>
             <div class="tip-card-body">You have <strong><?php echo count($saved_rooms); ?> saved
                     room<?php echo count($saved_rooms) !== 1 ? 's' : ''; ?></strong>. Book now before they're taken!
@@ -459,40 +459,6 @@ while ($row = mysqli_fetch_assoc($res))
                             <div class="bm-pay-radio"></div>
                         </div>
                     </div>
-
-                    <!-- Payment instruction area (shown for non-cash methods) -->
-                    <div id="bmQrBox" class="bm-qr-wrap"
-                        style="background:#f8fafc;border-radius:10px;padding:16px 18px;border:1px solid #e2e8f0;">
-                        <div class="bm-qr-meta" style="width:100%;">
-                            <div class="bm-qr-title" id="bmQrTitle"
-                                style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:6px;">Pay via GCash
-                            </div>
-                            <div class="bm-qr-sub" id="bmQrSub" style="font-size:13px;color:#64748b;line-height:1.6;">
-                                Send payment to <strong>+63 912 345 6789</strong> (Juan dela Cruz) and use your booking
-                                reference as the note. Upload your proof of payment via the Messages page after paying.
-                            </div>
-                            <div class="bm-qr-amount" id="bmQrAmount"
-                                style="margin-top:10px;font-size:18px;font-weight:700;color:#1e293b;">₱0</div>
-                            <div class="bm-timer">
-                                <div class="bm-timer-dot"></div>
-                                <span id="bmTimerText">Your booking is held for <strong id="bmCountdown">30:00</strong>
-                                    — complete payment to confirm.</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Cash instruction -->
-                    <div id="bmCashBox" class="bm-cash-box" style="display:none;">
-                        <div class="bm-cash-icon">💵</div>
-                        <div>
-                            <div class="bm-cash-title">Pay in cash upon check-in</div>
-                            <div class="bm-cash-sub">
-                                Please prepare <strong id="bmCashAmount" style="color:#92400e;"></strong> in cash on
-                                your check-in date.
-                                Our property manager will collect payment and issue an official receipt.
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- STEP 4: Confirmed -->
@@ -589,5 +555,6 @@ while ($row = mysqli_fetch_assoc($res))
     </div><!-- /bm-box -->
 </div><!-- /bm-overlay -->
 
+<script src="../../assets/js/user-js/saved-inline.js"></script>
 <script>window.PS_RT_PAGE = 'saved';</script>
 <?php require '../../includes/_layout_end.php'; ?>

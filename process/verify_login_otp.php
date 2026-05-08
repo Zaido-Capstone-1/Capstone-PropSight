@@ -31,7 +31,7 @@ function clear_otp_session(): void
 
 function populate_user_session(array $user): void
 {
-    $_SESSION['is_blacklisted'] = (bool)($user['is_blacklisted'] ?? false);
+    $_SESSION['is_blacklisted'] = (bool) ($user['is_blacklisted'] ?? false);
     $_SESSION['login'] = true;
     $_SESSION['user_id'] = $user['user_id'];
     $_SESSION['first_name'] = $user['first_name'];
@@ -72,6 +72,16 @@ if (!hash_equals($_SESSION['pending_otp'], $otp_input)) {
 $user = $_SESSION['pending_user'];
 
 clear_otp_session();
+
+// Reset login attempts and record last login
+require_once __DIR__ . '/../includes/db.php';
+$resetStmt = $conn->prepare("UPDATE users SET login_attempts = 0, is_locked = 0, locked_until = NULL WHERE user_id = ?");
+if ($resetStmt) {
+    $resetStmt->bind_param('i', $user['user_id']);
+    $resetStmt->execute();
+    $resetStmt->close();
+}
+
 session_regenerate_id(true);
 populate_user_session($user);
 

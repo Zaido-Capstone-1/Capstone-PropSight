@@ -10,21 +10,6 @@ showToast("You do not have permission to access this page.", "error", "Unauthori
         let bmTimerInterval = null;
         let bmBookingId = null;
 
-        const bmMethodMeta = {
-            gcash: {
-                title: 'Pay via GCash',
-                sub: 'Send payment to <strong>+63 912 345 6789</strong> (Juan dela Cruz). Use your booking reference as the note. After paying, send your proof of payment via the <strong>Messages</strong> page.'
-            },
-            maya: {
-                title: 'Pay via Maya',
-                sub: 'Send payment to <strong>+63 912 345 6789</strong> (Juan dela Cruz). Use your booking reference as the note. After paying, send your proof of payment via the <strong>Messages</strong> page.'
-            },
-            bank: {
-                title: 'Pay via Bank Transfer',
-                sub: 'Transfer to <strong>BDO Savings — 1234 5678 9012</strong> (Juan dela Cruz). Use your booking reference as the description. After transferring, send your proof of payment via the <strong>Messages</strong> page.'
-            },
-        };
-
         function openBookingModal(room) {
             if (window.hasActiveBooking) {
                 if (typeof showToast === 'function') showToast('You already have an active booking.', 'warning');

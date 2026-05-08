@@ -47,8 +47,8 @@ if (!$settingsRow) {
     ));
 }
 $s = $settingsRow;
-$langCurrent = (string)($s['language'] ?? 'en');
-$activeSessionsCount = max(1, (int)($s['active_sessions_count'] ?? 2));
+$langCurrent = (string) ($s['language'] ?? 'en');
+$activeSessionsCount = max(1, (int) ($s['active_sessions_count'] ?? 2));
 ?>
 
 <link rel="stylesheet" href="../../assets/css/user-css/settings.css" />
@@ -174,8 +174,8 @@ $activeSessionsCount = max(1, (int)($s['active_sessions_count'] ?? 2));
                         <input type="password" placeholder="Repeat new password" id="confirmPw">
                     </div>
                 </div>
-                <button class="btn-primary" style="margin-top:8px;"
-                    id="updatePasswordBtn" onclick="updatePassword(this)">
+                <button class="btn-primary" style="margin-top:8px;" id="updatePasswordBtn"
+                    onclick="updatePassword(this)">
                     <svg viewBox="0 0 24 24">
                         <polyline points="20 6 9 17 4 12" />
                     </svg>
@@ -219,25 +219,26 @@ $activeSessionsCount = max(1, (int)($s['active_sessions_count'] ?? 2));
                             <div class="toggle-desc"><?php echo $p['desc']; ?></div>
                         </div>
                         <label class="toggle">
-                            <input type="checkbox" id="<?php echo $p['key']; ?>"
-                                <?php
-                                if ($p['type'] === 'profile') {
-                                    echo (($s['privacy_profile'] ?? 'private') === 'public') ? 'checked' : '';
-                                } else {
-                                    echo !empty($s[$p['key']]) ? 'checked' : '';
-                                }
-                                ?>>
+                            <input type="checkbox" id="<?php echo $p['key']; ?>" <?php
+                               if ($p['type'] === 'profile') {
+                                   echo (($s['privacy_profile'] ?? 'private') === 'public') ? 'checked' : '';
+                               } else {
+                                   echo !empty($s[$p['key']]) ? 'checked' : '';
+                               }
+                               ?>>
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
                 <?php endforeach; ?>
                 <div style="margin-top:18px;">
                     <button class="btn-primary" id="savePrivacyBtn" onclick="savePrivacy(this)">
-                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
                         Save Privacy
                     </button>
-                    <button class="btn-secondary" style="margin-left:8px;"
-                        onclick="requestMyData(this)">Request My Data</button>
+                    <button class="btn-secondary" style="margin-left:8px;" onclick="requestMyData(this)">Request My
+                        Data</button>
                 </div>
             </div>
         </div>
@@ -262,18 +263,18 @@ $activeSessionsCount = max(1, (int)($s['active_sessions_count'] ?? 2));
                     </div>
                 </div>
                 <?php if ($activeSessionsCount > 1): ?>
-                <div class="session-item">
-                    <div class="session-device"><svg viewBox="0 0 24 24">
-                            <rect x="5" y="2" width="14" height="20" rx="2" />
-                            <line x1="12" y1="18" x2="12.01" y2="18" />
-                        </svg></div>
-                    <div class="session-info">
-                        <div class="session-name">Safari on iPhone</div>
-                        <div class="session-detail">Iloilo, Philippines · Mar 17, 2026 · 9:14 AM</div>
+                    <div class="session-item">
+                        <div class="session-device"><svg viewBox="0 0 24 24">
+                                <rect x="5" y="2" width="14" height="20" rx="2" />
+                                <line x1="12" y1="18" x2="12.01" y2="18" />
+                            </svg></div>
+                        <div class="session-info">
+                            <div class="session-name">Safari on iPhone</div>
+                            <div class="session-detail">Iloilo, Philippines · Mar 17, 2026 · 9:14 AM</div>
+                        </div>
+                        <button class="btn-danger" style="font-size:0.72rem;padding:6px 13px;"
+                            onclick="revokeSession(this)">Revoke</button>
                     </div>
-                    <button class="btn-danger" style="font-size:0.72rem;padding:6px 13px;"
-                        onclick="revokeSession(this)">Revoke</button>
-                </div>
                 <?php endif; ?>
                 <div style="margin-top:16px;">
                     <button class="btn-danger" onclick="signOutOtherDevices(this)">Sign Out
@@ -284,43 +285,48 @@ $activeSessionsCount = max(1, (int)($s['active_sessions_count'] ?? 2));
 
     </div>
 
-<!-- ── Settings Right Sidebar (3rd grid column) ── -->
-<div class="settings-right-side">
+    <!-- ── Settings Right Sidebar (3rd grid column) ── -->
+    <div class="settings-right-side">
 
-    <div class="widget-card reveal rd1">
-        <div class="widget-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            Account Security
+        <div class="widget-card reveal rd1">
+            <div class="widget-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                Account Security
+            </div>
+            <div class="mini-stat-row">
+                <span class="mini-stat-label">Password</span>
+                <span class="mini-stat-val" style="color:#16a34a;">✓ Set</span>
+            </div>
+            <div class="mini-stat-row">
+                <span class="mini-stat-label">2FA / OTP</span>
+                <span class="mini-stat-val" id="security2faStatus"
+                    style="color:<?php echo !empty($s['two_factor_enabled']) ? '#16a34a' : '#94a3b8'; ?>;">
+                    <?php echo !empty($s['two_factor_enabled']) ? '✓ On' : 'Off'; ?>
+                </span>
+            </div>
+            <div class="mini-stat-row">
+                <span class="mini-stat-label">Active Sessions</span>
+                <span class="mini-stat-val" id="activeSessionsCount"><?php echo $activeSessionsCount; ?></span>
+            </div>
+            <div class="mini-stat-row">
+                <span class="mini-stat-label">Last Login</span>
+                <span class="mini-stat-val"><?php echo date('M j, g:i A'); ?></span>
+            </div>
         </div>
-        <div class="mini-stat-row">
-            <span class="mini-stat-label">Password</span>
-            <span class="mini-stat-val" style="color:#16a34a;">✓ Set</span>
-        </div>
-        <div class="mini-stat-row">
-            <span class="mini-stat-label">2FA / OTP</span>
-            <span class="mini-stat-val" id="security2faStatus" style="color:<?php echo !empty($s['two_factor_enabled']) ? '#16a34a' : '#94a3b8'; ?>;">
-                <?php echo !empty($s['two_factor_enabled']) ? '✓ On' : 'Off'; ?>
-            </span>
-        </div>
-        <div class="mini-stat-row">
-            <span class="mini-stat-label">Active Sessions</span>
-            <span class="mini-stat-val" id="activeSessionsCount"><?php echo $activeSessionsCount; ?></span>
-        </div>
-        <div class="mini-stat-row">
-            <span class="mini-stat-label">Last Login</span>
-            <span class="mini-stat-val"><?php echo date('M j, g:i A'); ?></span>
-        </div>
-    </div>
 
-    <div class="tip-card reveal rd2">
-        <div class="tip-card-label">🔒 Security tip</div>
-        <div class="tip-card-title">Keep your account safe</div>
-        <div class="tip-card-body">Use a strong unique password and never share your login details with anyone.</div>
-    </div>
+        <div class="tip-card reveal rd2">
+            <div class="tip-card-label">🔒 Security tip</div>
+            <div class="tip-card-title">Keep your account safe</div>
+            <div class="tip-card-body">Use a strong unique password and never share your login details with anyone.
+            </div>
+        </div>
 
-</div><!-- /settings-right-side -->
+    </div><!-- /settings-right-side -->
 </div><!-- /settings-layout -->
 
 <script src="../../assets/js/user-js/settings.js"></script>
+<script src="../../assets/js/user-js/settings-inline.js"></script>
 <script>window.PS_RT_PAGE = 'settings';</script>
 <?php require '../../includes/_layout_end.php'; ?>

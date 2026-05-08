@@ -3,13 +3,14 @@ header('Content-Type: application/json');
 require_once '../../includes/session.php';
 require_once '../../includes/db.php';
 require_once '../../includes/paymongo.php';
-require_csrf_token(true);
 
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'user') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
     exit;
 }
+
+require_csrf_token(true);
 
 $bookingId = (int) ($_POST['booking_id'] ?? 0);
 $userId = (int) $_SESSION['user_id'];
@@ -19,10 +20,10 @@ if (!$bookingId) {
     exit;
 }
 
-// Fetch booking — must belong to this user and be pending
 $stmt = $conn->prepare("
     SELECT b.booking_id, b.total_amount, b.status, b.unit_id,
-           u.unit_number, pr.property_name
+           COALESCE(u.unit_name, CONCAT(pr.property_name, ' — Unit ', u.unit_number)) AS unit_display,
+           pr.property_name
     FROM bookings b
     LEFT JOIN units u ON u.unit_id = b.unit_id
     LEFT JOIN properties pr ON pr.property_id = u.property_id
@@ -39,10 +40,10 @@ if (!$booking) {
     exit;
 }
 
-// Check no existing unpaid link for this booking
+// Check for existing active link
 $existing = $conn->prepare("
-    SELECT paymongo_link_id FROM paymongo_payments
-    WHERE booking_id = ? AND status NOT IN ('paid', 'expired')
+    SELECT paymongo_link_id, status FROM paymongo_payments
+    WHERE booking_id = ? AND status NOT IN ('paid', 'expired', 'failed')
     ORDER BY created_at DESC LIMIT 1
 ");
 $existing->bind_param('i', $bookingId);
@@ -51,43 +52,69 @@ $existingRow = $existing->get_result()->fetch_assoc();
 $existing->close();
 
 if ($existingRow) {
-    echo json_encode(['success' => false, 'message' => 'A payment link already exists for this booking.']);
+    // Return the existing checkout URL instead of erroring
+    $existingLink = $conn->prepare("SELECT checkout_url FROM paymongo_payments WHERE paymongo_link_id = ? LIMIT 1");
+    $existingLink->bind_param('s', $existingRow['paymongo_link_id']);
+    $existingLink->execute();
+    $existingLinkRow = $existingLink->get_result()->fetch_assoc();
+    $existingLink->close();
+
+    if ($existingLinkRow && !empty($existingLinkRow['checkout_url'])) {
+        echo json_encode([
+            'success' => true,
+            'checkout_url' => $existingLinkRow['checkout_url'],
+            'link_id' => $existingRow['paymongo_link_id'],
+        ]);
+        exit;
+    }
+}
+
+// Deposit = 50% of total
+$depositAmount = (int) round((float) $booking['total_amount'] * 0.5);
+
+if ($depositAmount < 100) {
+    echo json_encode(['success' => false, 'message' => 'Amount too small for PayMongo (minimum ₱1.00).']);
+    exit;
+}
+
+// Verify secret key is present before hitting the API
+$secret = $_ENV['PAYMONGO_SECRET_KEY'] ?? getenv('PAYMONGO_SECRET_KEY');
+if (empty($secret)) {
+    error_log('[create_paymongo_link] PAYMONGO_SECRET_KEY is not set.');
+    echo json_encode(['success' => false, 'message' => 'Payment service is not configured. Please contact support.']);
     exit;
 }
 
 try {
     $description = sprintf(
-        'PropSight — Booking #%d: %s Unit %s',
+        'PropSight Deposit — Booking #%d: %s',
         $bookingId,
-        $booking['property_name'],
-        $booking['unit_number']
+        $booking['unit_display'] ?? $booking['property_name'] ?? 'Unit'
     );
 
     $link = paymongo_create_link(
-        (int) $booking['total_amount'],
+        $depositAmount,
         $description,
         ['booking_id' => $bookingId, 'user_id' => $userId]
     );
 
     if (empty($link['id']) || empty($link['attributes']['checkout_url'])) {
-        throw new Exception('Invalid PayMongo link response.');
+        throw new Exception('Invalid PayMongo link response — missing id or checkout_url.');
     }
 
     $linkId = $link['id'];
     $checkoutUrl = $link['attributes']['checkout_url'];
     $status = 'pending';
+    $amount = (float) $depositAmount;
 
-    // Save to paymongo_payments table. The booking remains pending until PayMongo webhook marks it paid.
     $ins = $conn->prepare("
-        INSERT INTO paymongo_payments (booking_id, user_id, paymongo_link_id, checkout_url, amount, status)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO paymongo_payments (booking_id, user_id, paymongo_link_id, checkout_url, amount, status, created_at, expires_at)
+        VALUES (?, ?, ?, ?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 30 MINUTE))
     ");
-    $amount = (float) $booking['total_amount'];
     $ins->bind_param('iissds', $bookingId, $userId, $linkId, $checkoutUrl, $amount, $status);
     $ins->execute();
     $ins->close();
 
-    // Update booking payment_method only after link creation succeeded
     $conn->query("UPDATE bookings SET payment_method='paymongo' WHERE booking_id=$bookingId");
 
     echo json_encode([
@@ -95,6 +122,8 @@ try {
         'checkout_url' => $checkoutUrl,
         'link_id' => $linkId,
     ]);
+
 } catch (Exception $e) {
+    error_log('[create_paymongo_link] ' . $e->getMessage());
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }

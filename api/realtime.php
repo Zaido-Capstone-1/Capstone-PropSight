@@ -333,7 +333,10 @@ if ($role === 'admin') {
              JOIN units un ON un.unit_id = b.unit_id
              LEFT JOIN properties p ON p.property_id = un.property_id
              WHERE b.user_id = $userId
-               AND b.status IN ('pending','confirmed','active')
+               AND (
+                   b.status IN ('confirmed', 'active')
+                   OR (b.status = 'pending' AND b.payment_method = 'cash')
+               )
              ORDER BY b.checkin_date ASC, b.booking_id DESC
              LIMIT 1");
         $payload['manage_stay_booking'] = $activeRes ? mysqli_fetch_assoc($activeRes) : null;

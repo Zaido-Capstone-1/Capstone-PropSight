@@ -139,3 +139,32 @@ function saveSystemPrefs() {
             showToast(d.message, d.success ? 'success' : 'error');
         }).catch(() => showToast('An error occurred.', 'error'));
 }
+
+async function toggleAdmin2FA(toggleEl) {
+    const enabled = toggleEl.checked ? '1' : '0';
+    toggleEl.disabled = true;
+    const slider = document.getElementById('admin2faSlider');
+    const knob = document.getElementById('admin2faKnob');
+    try {
+        const fd = new FormData();
+        fd.append('action', 'toggle_2fa');
+        fd.append('enabled', enabled);
+        fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
+        const res = await fetch('../../api/settings.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+            const on = !!data.enabled;
+            if (slider) slider.style.background = on ? 'var(--blue-500,#3b82f6)' : 'var(--border,#cbd5e1)';
+            if (knob) knob.style.left = on ? '23px' : '3px';
+            showToast(data.message || (on ? '2FA enabled.' : '2FA disabled.'), 'success');
+        } else {
+            toggleEl.checked = !toggleEl.checked;
+            showToast(data.message || 'Could not update 2FA.', 'error');
+        }
+    } catch (e) {
+        toggleEl.checked = !toggleEl.checked;
+        showToast('Network error while updating 2FA.', 'error');
+    } finally {
+        toggleEl.disabled = false;
+    }
+}

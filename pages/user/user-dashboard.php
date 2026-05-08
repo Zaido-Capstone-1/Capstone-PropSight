@@ -53,6 +53,21 @@ while ($_sr = mysqli_fetch_assoc($_savedRes)) {
     $savedUnitIds[] = (int) $_sr['unit_id'];
 }
 
+$roomTypeFilters = [];
+foreach ($units as $unit) {
+    $typeName = trim((string) ($unit['unit_type'] ?? ''));
+    if ($typeName === '') {
+        continue;
+    }
+    $slug = normalizeRoomType($typeName);
+    if ($slug === '') {
+        continue;
+    }
+    if (!isset($roomTypeFilters[$slug])) {
+        $roomTypeFilters[$slug] = $typeName;
+    }
+}
+
 function statusBadgeClass($status)
 {
     return match (strtolower($status)) {
@@ -80,16 +95,28 @@ function formatDate($d)
 }
 function unitTypeToCategory($type)
 {
-    $type = strtolower($type ?? '');
-    $cats = [];
-    if (str_contains($type, 'sea') || str_contains($type, 'ocean'))
-        $cats[] = 'sea';
-    if (str_contains($type, 'family') || str_contains($type, 'loft'))
-        $cats[] = 'family';
-    if (str_contains($type, 'premium') || str_contains($type, 'suite'))
-        $cats[] = 'premium';
-    $cats[] = 'available';
-    return implode(' ', $cats);
+    $type = trim((string) ($type ?? ''));
+    if ($type === '') {
+        return 'available';
+    }
+
+    $normalized = strtolower($type);
+    $normalized = preg_replace('/[^a-z0-9]+/', '-', $normalized);
+    $normalized = trim($normalized, '-');
+
+    return 'available ' . ($normalized !== '' ? $normalized : 'other');
+}
+
+function normalizeRoomType($type)
+{
+    $type = trim((string) ($type ?? ''));
+    if ($type === '') {
+        return '';
+    }
+
+    $normalized = strtolower($type);
+    $normalized = preg_replace('/[^a-z0-9]+/', '-', $normalized);
+    return trim($normalized, '-');
 }
 
 // Layout vars — dashboard uses its own full-page hero, not the standard page-hero
@@ -481,9 +508,9 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
         <div class="filter-bar reveal">
             <button class="filter-pill active" onclick="filterRooms('all',this)">All Rooms</button>
             <button class="filter-pill" onclick="filterRooms('available',this)">Available Now</button>
-            <button class="filter-pill" onclick="filterRooms('sea',this)">Sea View</button>
-            <button class="filter-pill" onclick="filterRooms('family',this)">Family</button>
-            <button class="filter-pill gold-pill" onclick="filterRooms('premium',this)">✦ Premium</button>
+            <?php foreach ($roomTypeFilters as $slug => $label): ?>
+                <button class="filter-pill" onclick="filterRooms('<?php echo htmlspecialchars($slug); ?>', this)"><?php echo htmlspecialchars($label); ?></button>
+            <?php endforeach; ?>
             <div class="filter-spacer"></div>
             <div class="search-bar">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -575,7 +602,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                             <div class="room-card-img">
                                 <img src="<?php echo $imgSrc; ?>" alt="<?php echo $unitName; ?>" class="room-img-placeholder"
                                     onerror="this.src='../../assets/images/placeholder.jpg'">
-                                <span class="room-badge-img <?php echo $isVacant ? 'badge-gold' : 'badge-blue'; ?>">
+                                <span class="room-badge-img badge-blue">
                                     <?php echo htmlspecialchars(strtoupper($unit['unit_type'] ?? 'UNIT')); ?>
                                 </span>
                                 <span class="room-avail <?php echo $isVacant ? 'avail-yes' : 'avail-no'; ?>" data-avail-status>
@@ -653,6 +680,13 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
+                <div id="roomsEmptyFallback" class="room-empty-state" style="display:none;grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--ink-faint);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                        style="width:48px;height:48px;margin-bottom:12px;">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                    <p>No rooms match your current filter. Try another category or search term.</p>
+                </div>
             </div>
             <button class="carousel-btn carousel-btn-next" id="roomsNext" onclick="scrollCarousel('rooms',1)"
                 aria-label="Next">
@@ -1096,39 +1130,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                 <div class="bm-pay-radio"></div>
                             </div>
                         </div>
-
-                        <div id="bmQrBox" class="bm-qr-wrap"
-                            style="background:#f8fafc;border-radius:10px;padding:16px 18px;border:1px solid #e2e8f0;">
-                            <div class="bm-qr-meta" style="width:100%;">
-                                <div class="bm-qr-title" id="bmQrTitle"
-                                    style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:6px;">Pay via
-                                    GCash</div>
-                                <div class="bm-qr-sub" id="bmQrSub"
-                                    style="font-size:13px;color:#64748b;line-height:1.6;">Send payment to <strong>+63
-                                        912 345 6789</strong> (Juan dela Cruz) and use your booking reference as the
-                                    note. Upload your proof of payment via the Messages page after paying.</div>
-                                <div class="bm-qr-amount" id="bmQrAmount"
-                                    style="margin-top:10px;font-size:18px;font-weight:700;color:#1e293b;">₱0</div>
-                                <div class="bm-timer">
-                                    <div class="bm-timer-dot"></div>
-                                    <span id="bmTimerText">Your booking is held for <strong
-                                            id="bmCountdown">30:00</strong> — complete payment to confirm.</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Cash instruction -->
-                        <div id="bmCashBox" class="bm-cash-box" style="display:none;">
-                            <div class="bm-cash-icon">💵</div>
-                            <div>
-                                <div class="bm-cash-title">Pay in cash upon check-in</div>
-                                <div class="bm-cash-sub">
-                                    Please prepare <strong id="bmCashAmount" style="color:#92400e;"></strong> in cash on
-                                    your check-in date.
-                                    Our property manager will collect payment and issue an official receipt.
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- STEP 4: Confirmed -->
@@ -1209,6 +1210,32 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                 <div class="bm-confirm-row"><span>Total due</span><span id="cf-total-cash"
                                         style="color:var(--teal);">—</span></div>
                             </div>
+                        </div>
+
+                        <div class="bm-confirm-check" id="bm-payment-failed" style="display:none;">
+                            <div class="bm-check-ring" style="border-color:#ef4444;animation:none;">
+                                <svg viewBox="0 0 24 24" style="stroke:#ef4444;">
+                                    <circle cx="12" cy="12" r="10" stroke-width="2" fill="none"/>
+                                    <line x1="15" y1="9" x2="9" y2="15" stroke-width="2"/>
+                                    <line x1="9" y1="9" x2="15" y2="15" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div class="bm-confirm-title" style="color:#ef4444;">Payment failed</div>
+                            <div class="bm-confirm-sub">Your payment was not completed. Your booking has been cancelled. Please try booking again.</div>
+                            <div class="bm-confirm-ref" id="bmFailedRef">Ref #BK-0000</div>
+                        </div>
+
+                        <!-- ✅ ADD HERE — Expired payment state -->
+                        <div class="bm-confirm-check" id="bm-payment-expired" style="display:none;">
+                            <div class="bm-check-ring" style="border-color:var(--gold,#c9a84c);animation:none;">
+                                <svg viewBox="0 0 24 24" style="stroke:var(--gold,#c9a84c);">
+                                    <circle cx="12" cy="12" r="10" stroke-width="2" fill="none"/>
+                                    <polyline points="12 6 12 12 16 14" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div class="bm-confirm-title" style="color:var(--gold,#c9a84c);">Payment link expired</div>
+                            <div class="bm-confirm-sub">Your 30-minute hold has expired and the booking was released. Please start a new booking.</div>
+                            <div class="bm-confirm-ref" id="bmExpiredRef">Ref #BK-0000</div>
                         </div>
                     </div>
 

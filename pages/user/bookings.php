@@ -87,6 +87,7 @@ $status_map = [
 ?>
 
 <link rel="stylesheet" href="../../assets/css/user-css/booking.css">
+<link rel="stylesheet" href="../../assets/css/user-css/bookings-inline.css">
 
 <div class="summary-strip reveal">
     <div class="sstat">
@@ -119,7 +120,8 @@ $status_map = [
         <div>
             <div style="font-size:13px;font-weight:700;color:#dc2626;">Your account is suspended.</div>
             <div style="font-size:12px;color:#ef4444;margin-top:2px;">You can view your existing bookings but cannot make
-                new ones. <a href="support.php?suspended=1" style="color:#dc2626;font-weight:700;">Contact support</a> to appeal.</div>
+                new ones. <a href="support.php?suspended=1" style="color:#dc2626;font-weight:700;">Contact support</a> to
+                appeal.</div>
         </div>
     </div>
 <?php endif; ?>
@@ -142,7 +144,7 @@ $status_map = [
                     <div style="font-size:18px;font-weight:700;color:var(--text-dark);margin-bottom:8px;">No bookings yet
                     </div>
                     <div style="color:var(--text-soft);margin-bottom:24px;">You haven't made any reservations yet.</div>
-                    <a href="../../index.php" class="btn-primary"
+                    <a href="user-dashboard.php#account" class="btn-primary"
                         style="display:inline-block;text-decoration:none;padding:12px 28px;">Browse Units</a>
                 </div>
             <?php else: ?>
@@ -298,6 +300,23 @@ $status_map = [
             <?php endif; ?>
         </div>
 
+        <div id="bookingsEmptyState" style="display:none;text-align:center;padding:60px 20px;">
+            <div style="margin-bottom:16px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none"
+                    stroke="var(--ink-faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                    <line x1="9" y1="15" x2="10" y2="15" />
+                    <line x1="14" y1="15" x2="15" y2="15" />
+                </svg>
+            </div>
+            <div style="font-size:18px;font-weight:700;color:var(--ink);margin-bottom:8px;">No bookings found</div>
+            <div style="color:var(--ink-soft);margin-bottom:24px;">You don't have any bookings in this category yet.
+            </div>
+        </div>
+
         <div id="paginationBar"></div>
     </div><!-- /col-main -->
 
@@ -357,11 +376,6 @@ $status_map = [
             <div class="activity-item">
                 <div class="activity-dot red"></div>
                 <div class="activity-desc"><strong>No-shows</strong> are charged in full</div>
-            </div>
-            <div class="activity-item">
-                <div class="activity-dot"></div>
-                <div class="activity-desc">Check-in: <strong>2:00 PM</strong> · Check-out: <strong>12:00 PM</strong>
-                </div>
             </div>
         </div>
 
@@ -490,11 +504,16 @@ $status_map = [
 
         // Show/hide cards
         getAllCards().forEach(c => c.style.display = 'none');
+        const emptyState = document.getElementById('bookingsEmptyState');
+        const bar = document.getElementById('paginationBar');
+        if (total === 0) {
+            if (emptyState) emptyState.style.display = '';
+            if (bar) bar.innerHTML = '';
+            return;
+        }
+        if (emptyState) emptyState.style.display = 'none';
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
         filtered.slice(start, start + ITEMS_PER_PAGE).forEach(c => c.style.display = '');
-
-        // Render pagination bar
-        const bar = document.getElementById('paginationBar');
         if (!bar) return;
         if (totalPages <= 1) { bar.innerHTML = ''; return; }
 

@@ -191,8 +191,14 @@ try {
     }
 
     // Ensure the booked unit is explicitly marked occupied after successful reservation creation.
-    if (!mysqli_query($conn, "UPDATE units SET status='occupied' WHERE unit_id=$unitId AND status!='maintenance'")) {
-        throw new \RuntimeException('Failed to mark unit occupied.');
+    // if (!mysqli_query($conn, "UPDATE units SET status='occupied' WHERE unit_id=$unitId AND status!='maintenance'")) {
+    //     throw new \RuntimeException('Failed to mark unit occupied.');
+    // }
+
+    if ($paymentMethod === 'cash') {
+        if (!mysqli_query($conn, "UPDATE units SET status='occupied' WHERE unit_id=$unitId AND status!='maintenance'")) {
+            throw new \RuntimeException('Failed to mark unit occupied.');
+        }
     }
 
     $conn->commit();
@@ -254,7 +260,7 @@ try {
     ]);
 
 } catch (\Throwable $e) {
-    if ($conn->in_transaction) {
+    if ($conn->in_transaction ?? false) {
         $conn->rollback();
     }
     error_log('[book_unit.php] Booking failed for user_id=' . $userId . ' unit_id=' . $unitId . ': ' . $e->getMessage());

@@ -113,6 +113,28 @@ if ($method === 'POST') {
         exit;
     }
 
+    // ── Toggle 2FA ────────────────────────────────────────
+    if ($action === 'toggle_2fa') {
+        $new2fa = isset($_POST['enabled']) ? (($_POST['enabled'] === '1') ? 1 : 0) : null;
+        if ($new2fa === null) {
+            $cur = mysqli_fetch_assoc(mysqli_query($conn, "SELECT two_factor_enabled FROM user_settings WHERE user_id=$adminId LIMIT 1"));
+            $new2fa = empty($cur['two_factor_enabled']) ? 1 : 0;
+        }
+        // Ensure row exists
+        mysqli_query($conn, "INSERT INTO user_settings (user_id) VALUES ($adminId) ON DUPLICATE KEY UPDATE user_id=user_id");
+        // Check column exists
+        $colCheck = mysqli_fetch_assoc(mysqli_query($conn, "SHOW COLUMNS FROM user_settings LIKE 'two_factor_enabled'"));
+        if ($colCheck) {
+            mysqli_query($conn, "UPDATE user_settings SET two_factor_enabled=$new2fa WHERE user_id=$adminId");
+        }
+        echo json_encode([
+            'success' => true,
+            'enabled' => (bool) $new2fa,
+            'message' => $new2fa ? 'Two-factor authentication enabled.' : 'Two-factor authentication disabled.',
+        ]);
+        exit;
+    }
+
     // ── Update system settings ────────────────────────────
     if ($action === 'update_system') {
         $allowed = [
