@@ -1,16 +1,22 @@
-
 let currentPage = 1;
 const rowsPerPage = 10;
 
+/* ── Pagination ─────────────────────────────────────────────────────────── */
+
 function paginateTable() {
     const allRows = Array.from(document.querySelectorAll('#tableBody tr'));
-    const visibleRows = allRows.filter(row => row.style.display !== 'none' && !row.classList.contains('paginated-hidden'));
+    // Rows passing the filter (not hidden by applyFilters, not already paginated-hidden)
+    const visibleRows = allRows.filter(row =>
+        row.style.display !== 'none' && !row.classList.contains('paginated-hidden')
+    );
 
-    const totalPages = Math.ceil(visibleRows.length / rowsPerPage);
+    const total = visibleRows.length;
+    const totalPages = Math.max(1, Math.ceil(total / rowsPerPage));
+    currentPage = Math.min(currentPage, totalPages);
+
     const startIdx = (currentPage - 1) * rowsPerPage;
     const endIdx = startIdx + rowsPerPage;
 
-    // Hide all rows first
     visibleRows.forEach((row, idx) => {
         if (idx >= startIdx && idx < endIdx) {
             row.style.display = '';
@@ -21,63 +27,89 @@ function paginateTable() {
         }
     });
 
-    // Update or create pagination controls
-    updatePaginationControls(visibleRows.length, totalPages);
+    renderPaginationFooter(total, totalPages, startIdx, endIdx);
 }
 
-function updatePaginationControls(totalVisible, totalPages) {
-    let paginationDiv = document.getElementById('txnPagination');
+function renderPaginationFooter(total, totalPages, startIdx, endIdx) {
+    const foot = document.getElementById('txnTableFoot');
+    const info = document.getElementById('txnPageInfo');
+    const controls = document.getElementById('txnPageControls');
+    const prevBtn = document.getElementById('txnPrevBtn');
+    const nextBtn = document.getElementById('txnNextBtn');
 
-    if (totalPages <= 1) {
-        if (paginationDiv) paginationDiv.remove();
+    if (!foot) return;
+
+    // No data → hide entire tfoot
+    if (total === 0) {
+        foot.style.display = 'none';
         return;
     }
 
-    if (!paginationDiv) {
-        paginationDiv = document.createElement('div');
-        paginationDiv.id = 'txnPagination';
-        paginationDiv.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);';
-        document.querySelector('.table-wrap').appendChild(paginationDiv);
+    // Has data → show tfoot + info text
+    foot.style.display = '';
+    const from = startIdx + 1;
+    const to = Math.min(endIdx, total);
+    info.innerHTML = `Showing <strong>${from}–${to}</strong> of <strong>${total}</strong> transaction(s)`;
+
+    // Nav controls only needed when there is more than one page
+    if (totalPages <= 1) {
+        if (controls) controls.style.display = 'none';
+        return;
     }
 
-    const startIdx = (currentPage - 1) * rowsPerPage + 1;
-    const endIdx = Math.min(currentPage * rowsPerPage, totalVisible);
+    if (controls) controls.style.display = 'flex';
+    if (prevBtn) prevBtn.disabled = currentPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
 
-    let html = `
-        <div style="font-size:13px;color:var(--text-soft);">
-            Showing ${startIdx} - ${endIdx} of ${totalVisible}
-        </div>
-        <div style="display:flex;gap:4px;">
-    `;
-
-    if (currentPage > 1) {
-        html += `<button onclick="changePage(${currentPage - 1})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:transparent;color:var(--text);cursor:pointer;">‹ Prev</button>`;
-    }
-
-    for (let i = 1; i <= totalPages; i++) {
-        const isActive = i === currentPage;
-        html += `<button onclick="changePage(${i})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:${isActive ? 'var(--primary)' : 'transparent'};color:${isActive ? 'white' : 'var(--text)'};cursor:pointer;">${i}</button>`;
-    }
-
-    if (currentPage < totalPages) {
-        html += `<button onclick="changePage(${currentPage + 1})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:transparent;color:var(--text);cursor:pointer;">Next ›</button>`;
-    }
-
-    html += '</div>';
-    paginationDiv.innerHTML = html;
+    renderPageNumbers(totalPages);
 }
 
+function renderPageNumbers(totalPages) {
+    const wrap = document.getElementById('txnPageNumbers');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+
+    const cur = currentPage;
+    const nums = new Set([1, totalPages, cur, cur - 1, cur + 1].filter(n => n >= 1 && n <= totalPages));
+    const sorted = [...nums].sort((a, b) => a - b);
+
+    sorted.forEach((n, idx) => {
+        // Ellipsis gap
+        if (idx > 0 && n > sorted[idx - 1] + 1) {
+            const el = document.createElement('span');
+            el.className = 'txn-pg-ellipsis';
+            el.textContent = '…';
+            wrap.appendChild(el);
+        }
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'txn-pg-num' + (n === cur ? ' active' : '');
+        btn.textContent = n;
+        btn.onclick = () => { currentPage = n; paginateTable(); };
+        wrap.appendChild(btn);
+    });
+}
+
+// Called by the chevron buttons in the tfoot
+window.txnChangePage = function (dir) {
+    currentPage += dir;
+    paginateTable();
+};
+
+// Legacy alias kept for any existing callers
 window.changePage = function (page) {
     currentPage = page;
     paginateTable();
 };
 
+/* ── Session-restore refresh ────────────────────────────────────────────── */
 if (sessionStorage.getItem('txn_needs_refresh') === '1') {
     sessionStorage.removeItem('txn_needs_refresh');
-    // Small delay to let the page fully render first
     setTimeout(refreshTransactionsTable, 300);
 }
 
+/* ── Filters ────────────────────────────────────────────────────────────── */
 (function () {
     const typeFilter = document.getElementById('typeFilter');
     const catFilter = document.getElementById('categoryFilter');
@@ -153,6 +185,7 @@ if (sessionStorage.getItem('txn_needs_refresh') === '1') {
     window.applyFilters();
 })();
 
+/* ── Table rendering helpers ────────────────────────────────────────────── */
 function fmtPesoTxn(v) {
     return '₱' + Number(v).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -197,6 +230,7 @@ function updateTransactionStats(stats) {
     if (countEl) countEl.textContent = stats.total_count || 0;
 }
 
+/* ── Real-time refresh ──────────────────────────────────────────────────── */
 function refreshTransactionsTable() {
     const year = new Date().getFullYear();
     fetch('../../api/transactions.php?year=' + year + '&_=' + Date.now(), { credentials: 'same-origin' })

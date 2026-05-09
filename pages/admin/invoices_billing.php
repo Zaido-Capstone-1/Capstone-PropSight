@@ -35,6 +35,7 @@ $allResult = mysqli_query($conn, "
         t.email                                  AS tenant_email,
         i.unit,
         DATE_FORMAT(i.issued_date, '%b %d, %Y') AS issued_label,
+        DATE_FORMAT(i.issued_date, '%Y-%m')      AS month_val,
         DATE_FORMAT(i.due_date,    '%b %d, %Y') AS due_label,
         i.items,
         i.total,
@@ -64,12 +65,9 @@ function badge_class(string $status): string
   };
 }
 
-$inv_per_page = 10;
-$inv_total_records = count($invoices);
-$inv_total_pages = ceil($inv_total_records / $inv_per_page);
-$inv_page = isset($_GET['inv_page']) ? max(1, min((int) $_GET['inv_page'], max(1, $inv_total_pages))) : 1;
-$inv_offset = ($inv_page - 1) * $inv_per_page;
-$inv_invoices = array_slice($invoices, $inv_offset, $inv_per_page);
+// Month picker initial values (used to seed the JS picker)
+$inv_cur_picker_month = (int) date('m');
+$inv_cur_picker_year = (int) date('Y');
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/invoice_billings.css">
@@ -151,11 +149,63 @@ $inv_invoices = array_slice($invoices, $inv_offset, $inv_per_page);
 
   </div>
 
-  <div class="inv-card">
+  <div class="inv-card" style="overflow:visible;">
 
-    <div class="inv-card-top">
+    <div class="inv-card-top" style="overflow:visible;">
       <span class="inv-card-title">Invoice List</span>
       <div class="inv-filters">
+
+        <!-- Month/Year Picker -->
+        <div style="position:relative;" id="invMonthPickerWrap">
+          <button type="button" id="invMonthPickerBtn" onclick="toggleInvMonthPicker()"
+            style="display:flex;align-items:center;gap:7px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius);background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--inv-text);white-space:nowrap;height:34px;box-sizing:border-box;">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="13" height="13">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span id="invMonthPickerLabel">May 2026</span>
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="11" height="11">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <input type="hidden" id="invMonthFilter" value="2026-05">
+
+          <!-- Dropdown Calendar -->
+          <div id="invMonthPickerDropdown"
+            style="display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:999;background:#fff;border:1.5px solid var(--inv-border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.13);padding:16px;min-width:252px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <button type="button" onclick="changeInvPickerYear(-1)"
+                style="display:none;border:none;background:none;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:17px;color:var(--inv-text-soft);line-height:1;">‹</button>
+              <span id="invPickerYear"
+                style="font-size:13.5px;font-weight:700;color:var(--inv-text);"><?= $inv_cur_picker_year ?></span>
+              <button type="button" onclick="changeInvPickerYear(1)"
+                style="display:none;border:none;background:none;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:17px;color:var(--inv-text-soft);line-height:1;">›</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">
+              <?php
+              $inv_months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+              foreach ($inv_months as $i => $mon):
+                ?>
+                <button type="button" data-month="<?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?>"
+                  onclick="selectInvPickerMonth(this)" class="inv-picker-month-btn"
+                  style="padding:6px 4px;border:1.5px solid var(--border,#e5e7eb);border-radius:7px;font-size:11.5px;font-weight:500;cursor:pointer;background:var(--white,#fff);color:var(--text,#1e2533);transition:all .15s;">
+                  <?= $mon ?>
+                </button>
+              <?php endforeach; ?>
+            </div>
+            <div style="margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+              <div style="display:flex;gap:6px;">
+                <button type="button" onclick="closeInvMonthPicker()"
+                  style="padding:5px 11px;border:1.5px solid var(--inv-border);border-radius:6px;font-size:12px;background:none;cursor:pointer;color:var(--inv-text-soft);">Cancel</button>
+                <button type="button" onclick="applyInvMonthPicker()"
+                  style="padding:5px 13px;border:none;border-radius:6px;font-size:12px;font-weight:600;background:var(--primary,#3b6ef5);color:white;cursor:pointer;">Apply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="inv-search">
           <input type="text" id="searchFilter" placeholder="Search tenant or invoice" autocomplete="off">
         </div>
@@ -185,18 +235,19 @@ $inv_invoices = array_slice($invoices, $inv_offset, $inv_per_page);
           </tr>
         </thead>
         <tbody id="invoiceTableBody">
-          <?php if (empty($inv_invoices)): ?>
+          <?php if (empty($invoices)): ?>
             <tr id="noDataRow">
               <td colspan="9" style="text-align:center;padding:48px;color:#aab;">
-                <?= empty($invoices) ? 'No invoices yet. Create your first one!' : 'No invoices on this page.' ?>
+                No invoices yet. Create your first one!
               </td>
             </tr>
           <?php else: ?>
-            <?php foreach ($inv_invoices as $inv):
+            <?php foreach ($invoices as $inv):
               $unit = !empty($inv['unit']) ? $inv['unit'] : '—';
               $bc = badge_class($inv['status']);
               ?>
               <tr data-id="<?= (int) $inv['id'] ?>" data-status="<?= htmlspecialchars($inv['status']) ?>"
+                data-month="<?= htmlspecialchars($inv['month_val']) ?>"
                 data-search="<?= strtolower(htmlspecialchars($inv['invoice_no'] . ' ' . $inv['tenant_name'] . ' ' . $unit)) ?>"
                 data-inv='<?= htmlspecialchars(json_encode([
                   'id' => $inv['id'],
@@ -223,41 +274,38 @@ $inv_invoices = array_slice($invoices, $inv_offset, $inv_per_page);
                   <div class="inv-actions">
                     <button class="inv-btn secondary view-btn" data-id="<?= (int) $inv['id'] ?>">View</button>
                     <button class="inv-btn primary send-btn" data-id="<?= (int) $inv['id'] ?>">Send</button>
-                    <button class="inv-btn ghost  more-btn" data-id="<?= (int) $inv['id'] ?>" title="More">⋯</button>
+                    <button class="inv-btn ghost more-btn" data-id="<?= (int) $inv['id'] ?>" title="More">⋯</button>
                   </div>
                 </td>
               </tr>
             <?php endforeach; ?>
           <?php endif; ?>
         </tbody>
+        <tfoot id="invTableFoot" style="display:none;">
+          <tr>
+            <td colspan="9">
+              <div class="inv-pagination">
+                <span class="inv-page-info" id="invPageInfo"></span>
+                <div class="inv-page-controls" id="invPageControls" style="display:none;">
+                  <button type="button" id="invPrevBtn" class="inv-chevron-btn" onclick="invChangePage(-1)" disabled>
+                    <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
+                      height="14">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+                  <span id="invPageNumbers" class="inv-page-numbers"></span>
+                  <button type="button" id="invNextBtn" class="inv-chevron-btn" onclick="invChangePage(1)" disabled>
+                    <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
+                      height="14">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tfoot>
       </table>
-      <?php if ($inv_total_pages > 1): ?>
-        <div
-          style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);">
-          <div style="font-size:13px;color:var(--text-soft);">
-            Showing <?= $inv_offset + 1 ?> - <?= min($inv_offset + $inv_per_page, $inv_total_records) ?> of
-            <?= $inv_total_records ?>
-          </div>
-          <div style="display:flex;gap:4px;">
-            <?php if ($inv_page > 1): ?>
-              <a href="?inv_page=<?= $inv_page - 1 ?>"
-                style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;color:var(--text);">‹
-                Prev</a>
-            <?php endif; ?>
-
-            <?php for ($i = 1; $i <= $inv_total_pages; $i++): ?>
-              <a href="?inv_page=<?= $i ?>"
-                style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;background:<?= $i === $inv_page ? 'var(--primary)' : 'transparent' ?>;color:<?= $i === $inv_page ? 'white' : 'var(--text)' ?>;"><?= $i ?></a>
-            <?php endfor; ?>
-
-            <?php if ($inv_page < $inv_total_pages): ?>
-              <a href="?inv_page=<?= $inv_page + 1 ?>"
-                style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;color:var(--text);">Next
-                ›</a>
-            <?php endif; ?>
-          </div>
-        </div>
-      <?php endif; ?>
 
       <div class="inv-empty" id="emptyState">
         <svg width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -269,6 +317,8 @@ $inv_invoices = array_slice($invoices, $inv_offset, $inv_per_page);
     </div>
 
   </div>
+
+  <!-- ── Modals (unchanged) ─────────────────────────────────────────────── -->
 
   <div id="newInvoiceModal" class="inv-overlay" role="dialog" aria-modal="true" aria-labelledby="newInvTitle">
     <div class="inv-modal">
@@ -504,6 +554,70 @@ $inv_invoices = array_slice($invoices, $inv_offset, $inv_per_page);
       Delete Invoice
     </button>
   </div>
+
+  <!-- Month picker — needs PHP-baked values -->
+  <script>
+    (function () {
+      let invPickerYear = <?= $inv_cur_picker_year ?>;
+      let invSelectedMonth = '05'; // Default to May (current month)
+
+      // Single source of truth — loops ALL buttons so only one can ever be active
+      function _highlightActive() {
+        document.querySelectorAll('.inv-picker-month-btn').forEach(b => {
+          const isActive = invSelectedMonth !== null && b.dataset.month === invSelectedMonth;
+          b.style.background = isActive ? 'var(--primary,#3b6ef5)' : 'var(--white,#fff)';
+          b.style.borderColor = isActive ? 'var(--primary,#3b6ef5)' : 'var(--border,#e5e7eb)';
+          b.style.color = isActive ? 'white' : 'var(--text,#1e2533)';
+          b.style.fontWeight = isActive ? '700' : '500';
+        });
+      }
+
+      window.toggleInvMonthPicker = function () {
+        const d = document.getElementById('invMonthPickerDropdown');
+        const isOpen = d.style.display !== 'none';
+        d.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen) _highlightActive(); // sync on every open
+      };
+      window.closeInvMonthPicker = function () {
+        document.getElementById('invMonthPickerDropdown').style.display = 'none';
+      };
+      window.changeInvPickerYear = function (dir) {
+        const newYear = invPickerYear + dir;
+        if (newYear < 2000 || newYear > new Date().getFullYear() + 1) return;
+        invPickerYear = newYear;
+        document.getElementById('invPickerYear').textContent = invPickerYear;
+      };
+      window.selectInvPickerMonth = function (btn) {
+        invSelectedMonth = btn.dataset.month;
+        _highlightActive(); // update all buttons — dual-highlight impossible
+      };
+      window.clearInvMonthPicker = function () {
+        invSelectedMonth = null;
+        _highlightActive();
+        document.getElementById('invMonthFilter').value = '';
+        document.getElementById('invMonthPickerLabel').textContent = 'All Months';
+        closeInvMonthPicker();
+        document.getElementById('invMonthFilter').dispatchEvent(new Event('change'));
+      };
+      window.applyInvMonthPicker = function () {
+        if (!invSelectedMonth) { clearInvMonthPicker(); return; }
+        const val = invPickerYear + '-' + invSelectedMonth;
+        document.getElementById('invMonthFilter').value = val;
+        const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        document.getElementById('invMonthPickerLabel').textContent = names[parseInt(invSelectedMonth) - 1] + ' ' + invPickerYear;
+        closeInvMonthPicker();
+        document.getElementById('invMonthFilter').dispatchEvent(new Event('change'));
+      };
+      document.addEventListener('click', function (e) {
+        const wrap = document.getElementById('invMonthPickerWrap');
+        if (wrap && !wrap.contains(e.target)) closeInvMonthPicker();
+      });
+
+      // Initialize: highlight May and trigger filter on page load
+      _highlightActive();
+      document.getElementById('invMonthFilter').dispatchEvent(new Event('change'));
+    })();
+  </script>
 
   <script>
     window.PS_CSRF_TOKEN = <?= json_encode($_SESSION['csrf_token'] ?? '') ?>;

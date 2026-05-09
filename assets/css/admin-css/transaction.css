@@ -1,3 +1,4 @@
+/* ── Card header & filters ──────────────────────────────────────────────── */
 .txn-card-header {
     display: flex;
     align-items: center;
@@ -82,4 +83,103 @@
         width: auto;
         box-sizing: border-box;
     }
+}
+
+/* ── Pagination footer ──────────────────────────────────────────────────── */
+#txnTableFoot td {
+    padding: 0;
+    border-top: 1.5px solid var(--border);
+}
+
+.txn-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    gap: 12px;
+}
+
+.txn-page-info {
+    font-size: 12.5px;
+    color: var(--text-soft, #8a94a6);
+    font-weight: 400;
+}
+
+.txn-page-info strong {
+    font-weight: 600;
+    color: var(--text-soft, #8a94a6);
+}
+
+.txn-page-controls {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Chevron prev/next — icon-only */
+.txn-chevron-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--border, #e5e7eb);
+    border-radius: 6px;
+    background: var(--white, #fff);
+    color: var(--text-soft, #8a94a6);
+    cursor: pointer;
+    transition: all .15s;
+    padding: 0;
+}
+
+.txn-chevron-btn:hover:not(:disabled) {
+    border-color: var(--text, #1e2533);
+    color: var(--text, #1e2533);
+}
+
+.txn-chevron-btn:disabled {
+    opacity: 0.32;
+    cursor: not-allowed;
+}
+
+/* Page number pills */
+.txn-page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.txn-pg-num {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    border: 1.5px solid var(--border, #e5e7eb);
+    border-radius: 6px;
+    background: var(--white, #fff);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text, #1e2533);
+    cursor: pointer;
+    transition: all .15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.txn-pg-num:hover:not(.active) {
+    border-color: var(--text, #1e2533);
+}
+
+.txn-pg-num.active {
+    background: var(--text, #1e2533);
+    border-color: var(--text, #1e2533);
+    color: #fff;
+    font-weight: 600;
+}
+
+.txn-pg-ellipsis {
+    font-size: 12px;
+    color: var(--text-soft, #8a94a6);
+    padding: 0 3px;
+    user-select: none;
 }

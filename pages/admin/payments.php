@@ -192,6 +192,7 @@ endif; ?>
     </div>
 </div>
 
+
 <div class="page-inner">
     <div class="cards-area">
 
@@ -259,11 +260,93 @@ endif; ?>
 
         <div class="card">
             <div class="card-header">
-                <span class="card-title">Payment Records</span>
-                <div style="font-size:13px;color:var(--text-soft);">
-                    <?= $pay_total_records ?> total payment(s)
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <span class="card-title">Payment Records</span>
                 </div>
-            </div>
+                <form method="GET" id="filterForm" style="display:flex;align-items:center;gap:8px;">
+
+                    <!-- Search -->
+                    <div style="position:relative;flex-shrink:0;">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="13"
+                            height="13"
+                            style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-soft);pointer-events:none;">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <input type="text" name="q" id="searchInput" value="<?= htmlspecialchars($search) ?>"
+                            placeholder="Search tenant, unit, ID…"
+                            style="padding:7px 10px 7px 28px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12.5px;width:180px;background:var(--white);">
+                    </div>
+
+                    <!-- Month/Year Picker -->
+                    <div style="position:relative;" id="monthPickerWrap">
+                        <button type="button" id="monthPickerBtn" onclick="toggleMonthPicker()"
+                            style="display:flex;align-items:center;gap:7px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--white);font-size:12.5px;font-weight:600;cursor:pointer;color:var(--text);white-space:nowrap;">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="13"
+                                height="13">
+                                <rect x="3" y="4" width="18" height="18" rx="2" />
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                                <line x1="8" y1="2" x2="8" y2="6" />
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                            <span id="monthPickerLabel"><?= date('F Y', strtotime($filter_month . '-01')) ?></span>
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="11"
+                                height="11">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        <input type="hidden" name="month" id="monthPickerValue"
+                            value="<?= htmlspecialchars($filter_month) ?>">
+
+                        <!-- Dropdown Calendar -->
+                        <div id="monthPickerDropdown"
+                            style="display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:999;background:var(--white);border:1.5px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.13);padding:16px;min-width:248px;">
+                            <div
+                                style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                                <button type="button" onclick="changePickerYear(-1)"
+                                    style="border:none;background:none;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:17px;color:var(--text-soft);line-height:1;">‹</button>
+                                <span id="pickerYear"
+                                    style="font-size:13.5px;font-weight:700;color:var(--text);"><?= date('Y', strtotime($filter_month . '-01')) ?></span>
+                                <button type="button" onclick="changePickerYear(1)"
+                                    style="border:none;background:none;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:17px;color:var(--text-soft);line-height:1;">›</button>
+                            </div>
+                            <div id="pickerMonthGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">
+                                <?php
+                                $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                $curPickerMonth = (int) date('m', strtotime($filter_month . '-01'));
+                                $curPickerYear = (int) date('Y', strtotime($filter_month . '-01'));
+                                foreach ($months as $i => $mon):
+                                    $isActive = ($i + 1) === $curPickerMonth;
+                                    ?>
+                                    <button type="button" data-month="<?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?>"
+                                        onclick="selectPickerMonth(this)"
+                                        class="picker-month-btn<?= $isActive ? ' picker-active' : '' ?>"
+                                        style="padding:6px 4px;border:1.5px solid <?= $isActive ? 'var(--primary,#3b6ef5)' : 'var(--border)' ?>;border-radius:7px;font-size:11.5px;font-weight:<?= $isActive ? '700' : '500' ?>;cursor:pointer;background:<?= $isActive ? 'var(--primary,#3b6ef5)' : 'var(--white)' ?>;color:<?= $isActive ? 'white' : 'var(--text)' ?>;transition:all .15s;">
+                                        <?= $mon ?>
+                                    </button>
+                                <?php endforeach; ?>
+                            </div>
+                            <div style="margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+                                <button type="button" onclick="closeMonthPicker()"
+                                    style="padding:5px 11px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;background:none;cursor:pointer;color:var(--text-soft);">Cancel</button>
+                                <button type="button" onclick="applyMonthPicker()"
+                                    style="padding:5px 13px;border:none;border-radius:6px;font-size:12px;font-weight:600;background:var(--primary,#3b6ef5);color:white;cursor:pointer;">Apply</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <select name="status" onchange="this.form.submit()"
+                        style="padding:7px 8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12.5px;background:var(--white);color:var(--text);cursor:pointer;flex-shrink:0;width:110px;">
+                        <option value="all" <?= $filter_status === 'all' ? 'selected' : '' ?>>All Status</option>
+                        <option value="paid" <?= $filter_status === 'paid' ? 'selected' : '' ?>>Paid</option>
+                        <option value="pending" <?= $filter_status === 'pending' ? 'selected' : '' ?>>Pending</option>
+                        <option value="late" <?= $filter_status === 'late' ? 'selected' : '' ?>>Overdue</option>
+                    </select>
+
+                </form>
+            </div><!-- /card-header -->
+
 
             <div class="table-wrap">
                 <table>
@@ -354,8 +437,8 @@ endif; ?>
                     <div
                         style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);">
                         <div style="font-size:13px;color:var(--text-soft);">
-                            Showing <?= $pay_offset + 1 ?> - <?= min($pay_offset + $pay_per_page, $pay_total_records) ?> of
-                            <?= $pay_total_records ?>
+                            Showing <?= $pay_offset + 1 ?>–<?= min($pay_offset + $pay_per_page, $pay_total_records) ?> of
+                            <?= $pay_total_records ?> payment(s)
                         </div>
                         <div style="display:flex;gap:4px;">
                             <?php if ($pay_page > 1): ?>
@@ -374,6 +457,15 @@ endif; ?>
                                     style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;color:var(--text);">Next
                                     ›</a>
                             <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($pay_total_pages <= 1 && $pay_total_records > 0): ?>
+                    <div
+                        style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);">
+                        <div style="font-size:13px;color:var(--text-soft);">
+                            Showing 1–<?= $pay_total_records ?> of <?= $pay_total_records ?> payment(s)
                         </div>
                     </div>
                 <?php endif; ?>
@@ -509,6 +601,54 @@ endif; ?>
     window.__PS_PAYMENTS__.trendLabels = <?= json_encode($trend_labels) ?>;
     window.__PS_PAYMENTS__.trendCollected = <?= json_encode($trend_collected) ?>;
     window.__PS_PAYMENTS__.trendOutstanding = <?= json_encode($trend_outstanding) ?>;
+</script>
+<script>
+    (function () {
+        let pickerYear = <?= $curPickerYear ?>;
+        let selectedMonth = '<?= str_pad($curPickerMonth, 2, '0', STR_PAD_LEFT) ?>';
+
+        window.toggleMonthPicker = function () {
+            const d = document.getElementById('monthPickerDropdown');
+            d.style.display = d.style.display === 'none' ? 'block' : 'none';
+        };
+        window.closeMonthPicker = function () {
+            document.getElementById('monthPickerDropdown').style.display = 'none';
+        };
+        window.changePickerYear = function (dir) {
+            const newYear = pickerYear + dir;
+            if (newYear < 2000 || newYear > new Date().getFullYear() + 1) return;
+            pickerYear = newYear;
+            document.getElementById('pickerYear').textContent = pickerYear;
+        };
+        window.selectPickerMonth = function (btn) {
+            document.querySelectorAll('.picker-month-btn').forEach(b => {
+                b.style.background = 'var(--white)';
+                b.style.borderColor = 'var(--border)';
+                b.style.color = 'var(--text)';
+                b.style.fontWeight = '500';
+            });
+            btn.style.background = 'var(--primary,#3b6ef5)';
+            btn.style.borderColor = 'var(--primary,#3b6ef5)';
+            btn.style.color = 'white';
+            btn.style.fontWeight = '700';
+            selectedMonth = btn.dataset.month;
+        };
+        window.applyMonthPicker = function () {
+            const val = pickerYear + '-' + selectedMonth;
+            document.getElementById('monthPickerValue').value = val;
+            const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
+                'October', 'November', 'December'
+            ];
+            document.getElementById('monthPickerLabel').textContent = names[parseInt(selectedMonth) - 1] + ' ' +
+                pickerYear;
+            closeMonthPicker();
+            document.getElementById('filterForm').submit();
+        };
+        document.addEventListener('click', function (e) {
+            const wrap = document.getElementById('monthPickerWrap');
+            if (wrap && !wrap.contains(e.target)) closeMonthPicker();
+        });
+    })();
 </script>
 <script src="../../assets/js/admin/payments.js"></script>
 

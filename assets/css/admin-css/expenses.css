@@ -295,7 +295,6 @@
     border-radius: 8px;
     padding: 8px 12px;
     font-size: 13px;
-    background: var(--input-bg, #f9fafb);
     color: var(--text, #111);
     outline: none;
     transition: border-color .2s;
@@ -303,7 +302,7 @@
 }
 
 .filter-bar select {
-    width: 140px;
+    width: 140px;   
 }
 
 .filter-bar input:focus,
@@ -349,6 +348,129 @@
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ADD to the bottom of expenses.css
+   (These replace the old .month-nav / .table-footer behaviour for the
+   new calendar-picker + tfoot-pagination design.)
+══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Pagination footer ──────────────────────────────────────────────────── */
+#expTableFoot td {
+    padding: 0;
+    border-top: 1.5px solid var(--border);
+}
+
+.exp-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    gap: 12px;
+}
+
+.exp-page-info {
+    font-size: 12.5px;
+    color: var(--text-soft, #8a94a6);
+    font-weight: 400;
+}
+
+.exp-page-info strong {
+    font-weight: 600;
+    color: var(--text-soft, #8a94a6);
+}
+
+.exp-page-controls {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Chevron prev/next */
+.exp-chevron-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--border, #e5e7eb);
+    border-radius: 6px;
+    background: var(--white, #fff);
+    color: var(--text-soft, #8a94a6);
+    cursor: pointer;
+    transition: all .15s;
+    padding: 0;
+}
+
+.exp-chevron-btn:hover:not(:disabled) {
+    border-color: var(--text, #1e2533);
+    color: var(--text, #1e2533);
+}
+
+.exp-chevron-btn:disabled {
+    opacity: 0.32;
+    cursor: not-allowed;
+}
+
+/* Page number pills */
+.exp-page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.exp-pg-num {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    border: 1.5px solid var(--border, #e5e7eb);
+    border-radius: 6px;
+    background: var(--white, #fff);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text, #1e2533);
+    cursor: pointer;
+    transition: all .15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.exp-pg-num:hover:not(.active) {
+    border-color: var(--text, #1e2533);
+}
+
+.exp-pg-num.active {
+    background: var(--text, #1e2533);
+    border-color: var(--text, #1e2533);
+    color: #fff;
+    font-weight: 600;
+}
+
+.exp-pg-ellipsis {
+    font-size: 12px;
+    color: var(--text-soft, #8a94a6);
+    padding: 0 3px;
+    user-select: none;
+}
+
+/* ── Calendar picker button (matches transactions txn-picker style) ──────── */
+#expMonthPickerBtn:hover {
+    border-color: var(--primary, #3b6ef5);
+    color: var(--primary, #3b6ef5);
+}
+
+.exp-picker-month-btn:hover {
+    border-color: var(--primary, #3b6ef5) !important;
+    color: var(--primary, #3b6ef5) !important;
+}
+
+.exp-picker-active {
+    background: var(--primary, #3b6ef5) !important;
+    border-color: var(--primary, #3b6ef5) !important;
+    color: white !important;
+    font-weight: 700 !important;
 }
 
 /* ══════════════════════════════════════

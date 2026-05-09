@@ -99,62 +99,83 @@ let expCurrentPage = 1;
 const expRowsPerPage = 10;
 let allExpensesData = [];
 
+/* ══════════════════════════════════════════════════════════════════════
+   PAGINATION  (matches transactions / invoice_billings design)
+══════════════════════════════════════════════════════════════════════ */
+
 function paginateExpenses(expenses) {
     allExpensesData = expenses;
-    const totalPages = Math.ceil(expenses.length / expRowsPerPage);
+
+    const total = expenses.length;
+    const totalPages = Math.max(1, Math.ceil(total / expRowsPerPage));
+    expCurrentPage = Math.min(expCurrentPage, totalPages);
+
     const startIdx = (expCurrentPage - 1) * expRowsPerPage;
     const endIdx = startIdx + expRowsPerPage;
-    const paginatedExpenses = expenses.slice(startIdx, endIdx);
-    
-    renderTable(paginatedExpenses)
-    updateExpensePagination(expenses.length, totalPages);
+
+    renderTable(expenses.slice(startIdx, endIdx));
+    renderExpPaginationFooter(total, totalPages, startIdx, endIdx);
 }
 
-function updateExpensePagination(total, totalPages) {
-    let paginationDiv = document.getElementById('expPagination');
-    const tableContainer = document.getElementById('tableContainer');
-    
-    if (totalPages <= 1) {
-        if (paginationDiv) paginationDiv.remove();
+function renderExpPaginationFooter(total, totalPages, startIdx, endIdx) {
+    const foot = $('expTableFoot');
+    const info = $('expPageInfo');
+    const controls = $('expPageControls');
+    const prevBtn = $('expPrevBtn');
+    const nextBtn = $('expNextBtn');
+
+    if (!foot) return;
+
+    if (total === 0) {
+        foot.style.display = 'none';
         return;
     }
-    
-    if (!paginationDiv) {
-        paginationDiv = document.createElement('div');
-        paginationDiv.id = 'expPagination';
-        paginationDiv.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);margin-top:0;';
-        tableContainer.appendChild(paginationDiv);
+
+    foot.style.display = '';
+    const from = startIdx + 1;
+    const to = Math.min(endIdx, total);
+    if (info) info.innerHTML = `Showing <strong>${from}–${to}</strong> of <strong>${total}</strong> expense(s)`;
+
+    if (totalPages <= 1) {
+        if (controls) controls.style.display = 'none';
+        return;
     }
-    
-    const startIdx = (expCurrentPage - 1) * expRowsPerPage + 1;
-    const endIdx = Math.min(expCurrentPage * expRowsPerPage, total);
-    
-    let html = `
-        <div style="font-size:13px;color:var(--text-soft);">
-            Showing ${startIdx} - ${endIdx} of ${total}
-        </div>
-        <div style="display:flex;gap:4px;">
-    `;
-    
-    if (expCurrentPage > 1) {
-        html += `<button onclick="changeExpPage(${expCurrentPage - 1})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:transparent;color:var(--text);cursor:pointer;">‹ Prev</button>`;
-    }
-    
-    for (let i = 1; i <= totalPages; i++) {
-        const isActive = i === expCurrentPage;
-        html += `<button onclick="changeExpPage(${i})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:${isActive ? 'var(--primary)' : 'transparent'};color:${isActive ? 'white' : 'var(--text)'};cursor:pointer;">${i}</button>`;
-    }
-    
-    if (expCurrentPage < totalPages) {
-        html += `<button onclick="changeExpPage(${expCurrentPage + 1})" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:transparent;color:var(--text);cursor:pointer;">Next ›</button>`;
-    }
-    
-    html += '</div>';
-    paginationDiv.innerHTML = html;
+
+    if (controls) controls.style.display = 'flex';
+    if (prevBtn) prevBtn.disabled = expCurrentPage <= 1;
+    if (nextBtn) nextBtn.disabled = expCurrentPage >= totalPages;
+
+    renderExpPageNumbers(totalPages);
 }
 
-window.changeExpPage = function(page) {
-    expCurrentPage = page;
+function renderExpPageNumbers(totalPages) {
+    const wrap = $('expPageNumbers');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+
+    const cur = expCurrentPage;
+    const nums = new Set([1, totalPages, cur, cur - 1, cur + 1].filter(n => n >= 1 && n <= totalPages));
+    const sorted = [...nums].sort((a, b) => a - b);
+
+    sorted.forEach((n, idx) => {
+        if (idx > 0 && n > sorted[idx - 1] + 1) {
+            const el = document.createElement('span');
+            el.className = 'exp-pg-ellipsis';
+            el.textContent = '…';
+            wrap.appendChild(el);
+        }
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'exp-pg-num' + (n === cur ? ' active' : '');
+        btn.textContent = n;
+        btn.onclick = () => { expCurrentPage = n; paginateExpenses(allExpensesData); };
+        wrap.appendChild(btn);
+    });
+}
+
+// Called by tfoot chevron buttons
+window.expChangePage = function (dir) {
+    expCurrentPage += dir;
     paginateExpenses(allExpensesData);
 };
 
@@ -209,12 +230,10 @@ function renderTable(expenses) {
 
     if (!expenses.length) {
         DOM.emptyState.style.display = 'flex';
-        DOM.tableFooter.style.display = 'none';
         return;
     }
 
     DOM.emptyState.style.display = 'none';
-    DOM.tableFooter.style.display = 'block';
 
     let total = 0;
 
@@ -260,11 +279,11 @@ function renderTable(expenses) {
         total += parseFloat(e.amount || 0);
     });
 
-    DOM.recordCount.textContent = expenses.length;
-    DOM.footerTotal.textContent = fmt(total, 0);
+    if (DOM.recordCount) DOM.recordCount.textContent = expenses.length;
+    if (DOM.footerTotal) DOM.footerTotal.textContent = fmt(total, 0);
 
     // Store expense data on rows for edit lookup
-    _expenseCache = expenses;
+    _expenseCache = allExpensesData;
 }
 
 let _expenseCache = [];
@@ -402,6 +421,7 @@ async function loadExpenses() {
             return;
         }
 
+        expCurrentPage = 1;
         paginateExpenses(data.expenses || []);
         renderStats(data.stats || {});
         renderCharts(data.trends || [], data.categories || []);
@@ -484,7 +504,7 @@ async function saveExpense() {
         if (json.success) {
             showToast(expense_id ? 'Expense updated!' : 'Expense logged!');
             _psChannel.postMessage({ type: 'transaction_saved' });
-            sessionStorage.setItem('txn_needs_refresh', '1');        // ✅
+            sessionStorage.setItem('txn_needs_refresh', '1');
             ExpenseModal.close();
             await loadExpenses();
         } else {
@@ -515,7 +535,7 @@ async function deleteExpense(expense_id) {
 
         if (json.success) {
             showToast('Expense deleted.');
-            _psChannel.postMessage({ type: 'transaction_deleted' }); // for other tabs
+            _psChannel.postMessage({ type: 'transaction_deleted' });
             sessionStorage.setItem('txn_needs_refresh', '1');
             const row = document.querySelector(`tr[data-id="${expense_id}"]`);
             if (row) {
@@ -613,6 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial data load
     loadExpenses();
 });
+
 // ─────────────────────────────────────────────────────────
 //  BROADCAST CHANNEL — real-time sync with transactions page
 // ─────────────────────────────────────────────────────────

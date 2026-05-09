@@ -489,6 +489,7 @@
 .toast.warning {
     background: #f39c12;
 }
+
 /* ── Mobile responsive: payments filter ── */
 @media (max-width: 640px) {
     .card-header {
@@ -499,5 +500,32 @@
     .card-header form {
         width: 100%;
         margin-left: 0 !important;
+    }
+}
+
+/* ── Payment Records filter bar ── */
+#filterForm {
+    flex-wrap: nowrap;
+}
+
+#filterForm input[name="q"] {
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .card-header {
+        flex-wrap: wrap !important;
+    }
+
+    #filterForm {
+        flex-wrap: wrap !important;
+    }
+
+    #filterForm input[name="q"] {
+        width: 100% !important;
+    }
+
+    #filterForm select {
+        width: 100% !important;
     }
 }

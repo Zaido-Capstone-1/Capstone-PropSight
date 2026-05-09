@@ -43,6 +43,8 @@ function db_query($conn, string $sql, array $params = []): array
 
 $month_filter = $_GET['month'] ?? date('Y-m');
 [$yr, $mo] = array_pad(explode('-', $month_filter), 2, '01');
+$exp_cur_picker_year = (int) date('Y');
+$exp_cur_picker_month = (int) $mo;
 $date_from = "$yr-$mo-01";
 $date_to = date('Y-m-t', strtotime($date_from));
 
@@ -177,19 +179,60 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
     <div class="card">
       <div class="card-header-with-filters">
         <div class="header-left">
-          Expenses — <?= date('F Y', strtotime($date_from)) ?>
+          Expenses — <span id="expMonthPickerLabel"><?= date('F Y', strtotime($date_from)) ?></span>
         </div>
         <div class="header-right">
 
-          <div class="month-nav">
-            <a href="?month=<?= $prev_month ?>" style="text-decoration:none;">
-              <button title="Previous month">‹</button>
-            </a>
-            <span><?= date('M Y', strtotime($date_from)) ?></span>
-            <a href="?month=<?= $next_month ?>" style="text-decoration:none;">
-              <button <?= $next_disabled ? 'disabled' : '' ?> title="Next month">›</button>
-            </a>
+          <!-- ── Dropdown calendar ── -->
+          <div style="position:relative;" id="expMonthPickerWrap">
+            <button type="button" id="expMonthPickerBtn" onclick="toggleExpMonthPicker()"
+              style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;height:34px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--white);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14">
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              <span id="expMonthPickerLabel2"><?= date('F Y', strtotime($date_from)) ?></span>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="11" height="11">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            <input type="hidden" id="expMonthFilter"
+              value="<?= htmlspecialchars($yr . '-' . str_pad($mo, 2, '0', STR_PAD_LEFT)) ?>">
+
+            <div id="expMonthPickerDropdown"
+              style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:999;background:var(--white);border:1.5px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.13);padding:16px;min-width:248px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <button type="button" onclick="changeExpPickerYear(-1)"
+                  style="border:none;background:none;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:17px;color:var(--text-soft);line-height:1;">‹</button>
+                <span id="expPickerYear"
+                  style="font-size:13.5px;font-weight:700;color:var(--text);"><?= $exp_cur_picker_year ?></span>
+                <button type="button" onclick="changeExpPickerYear(1)"
+                  style="border:none;background:none;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:17px;color:var(--text-soft);line-height:1;">›</button>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">
+                <?php
+                $exp_months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                foreach ($exp_months as $i => $mon):
+                  ?>
+                  <button type="button" data-month="<?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?>"
+                    onclick="selectExpPickerMonth(this)" class="exp-picker-month-btn"
+                    style="padding:6px 4px;border:1.5px solid var(--border);border-radius:7px;font-size:11.5px;font-weight:500;cursor:pointer;background:var(--white);color:var(--text);transition:all .15s;">
+                    <?= $mon ?>
+                  </button>
+                <?php endforeach; ?>
+              </div>
+              <div style="margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">
+                <button type="button" onclick="closeExpMonthPicker()"
+                  style="padding:5px 11px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;background:none;cursor:pointer;color:var(--text-soft);">Cancel</button>
+                <button type="button" onclick="applyExpMonthPicker()"
+                  style="padding:5px 13px;border:none;border-radius:6px;font-size:12px;font-weight:600;background:var(--primary,#3b6ef5);color:white;cursor:pointer;">Apply</button>
+              </div>
+            </div>
           </div>
+          <!-- ── end calendar ── -->
 
           <div class="filter-bar">
             <input type="text" id="searchInput" placeholder="Search…">
@@ -220,17 +263,37 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
             </tr>
           </thead>
           <tbody id="expensesBody"></tbody>
+
+          <tfoot id="expTableFoot" style="display:none;">
+            <tr>
+              <td colspan="7">
+                <div class="exp-pagination">
+                  <span class="exp-page-info" id="expPageInfo"></span>
+                  <div class="exp-page-controls" id="expPageControls" style="display:none;">
+                    <button type="button" id="expPrevBtn" class="exp-chevron-btn" onclick="expChangePage(-1)" disabled>
+                      <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
+                        height="14">
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
+                    </button>
+                    <span id="expPageNumbers" class="exp-page-numbers"></span>
+                    <button type="button" id="expNextBtn" class="exp-chevron-btn" onclick="expChangePage(1)" disabled>
+                      <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
+                        height="14">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+
         </table>
 
         <div id="emptyState" class="table-empty" style="display:none;">
-          <!-- <div class="table-empty-icon">📅</div> -->
           <div class="table-empty-text">No expenses found.</div>
         </div>
-      </div>
-
-      <div id="tableFooter" class="table-footer" style="display:none;">
-        Showing <strong id="recordCount">0</strong> record(s) |
-        Total: <strong style="color:var(--danger);">₱ <span id="footerTotal">0.00</span></strong>
       </div>
     </div>
 
@@ -319,6 +382,67 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
   window.PS_CSRF_TOKEN = <?= json_encode($_SESSION['csrf_token'] ?? '') ?>;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    // Derive initial state from the hidden input (reflects the URL ?month param)
+    const _initVal = document.getElementById('expMonthFilter')?.value || '';
+    const _initParts = _initVal.split('-');
+    let expPickerYear = _initParts[0] ? parseInt(_initParts[0]) : <?= $exp_cur_picker_year ?>;
+    let expSelectedMonth = _initParts[1] || '<?= str_pad($exp_cur_picker_month, 2, '0', STR_PAD_LEFT) ?>';
+
+    // Single source of truth for which month button looks active
+    function _highlightActive() {
+      document.querySelectorAll('.exp-picker-month-btn').forEach(b => {
+        const isActive = b.dataset.month === expSelectedMonth;
+        b.classList.toggle('exp-picker-active', isActive);
+        b.style.background = isActive ? 'var(--primary,#3b6ef5)' : 'var(--white)';
+        b.style.borderColor = isActive ? 'var(--primary,#3b6ef5)' : 'var(--border)';
+        b.style.color = isActive ? 'white' : 'var(--text)';
+        b.style.fontWeight = isActive ? '700' : '500';
+      });
+    }
+
+    window.toggleExpMonthPicker = function () {
+      const d = document.getElementById('expMonthPickerDropdown');
+      const isOpen = d.style.display !== 'none';
+      d.style.display = isOpen ? 'none' : 'block';
+      if (!isOpen) _highlightActive(); // always sync on open
+    };
+    window.closeExpMonthPicker = function () {
+      document.getElementById('expMonthPickerDropdown').style.display = 'none';
+    };
+    window.changeExpPickerYear = function (dir) {
+      const newYear = expPickerYear + dir;
+      if (newYear < 2000 || newYear > new Date().getFullYear() + 1) return;
+      expPickerYear = newYear;
+      document.getElementById('expPickerYear').textContent = expPickerYear;
+    };
+    window.selectExpPickerMonth = function (btn) {
+      expSelectedMonth = btn.dataset.month;
+      _highlightActive(); // update all buttons at once — no dual highlight possible
+    };
+    window.applyExpMonthPicker = function () {
+      const val = expPickerYear + '-' + expSelectedMonth;
+      const names = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+      const label = names[parseInt(expSelectedMonth) - 1] + ' ' + expPickerYear;
+      document.getElementById('expMonthFilter').value = val;
+      document.getElementById('expMonthPickerLabel').textContent = label;
+      document.getElementById('expMonthPickerLabel2').textContent = label;
+      closeExpMonthPicker();
+      const url = new URL(location.href);
+      url.searchParams.set('month', val);
+      history.replaceState(null, '', url);
+      if (typeof loadExpenses === 'function') loadExpenses();
+    };
+
+    // Close when clicking outside the picker
+    document.addEventListener('click', function (e) {
+      const wrap = document.getElementById('expMonthPickerWrap');
+      if (wrap && !wrap.contains(e.target)) closeExpMonthPicker();
+    });
+  })();
+</script>
 <script src="../../assets/js/admin/expenses.js"></script>
 
 <?php include '../../includes/layout_close.php'; ?>
