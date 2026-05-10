@@ -302,7 +302,7 @@
 }
 
 .filter-bar select {
-    width: 140px;   
+    width: 140px;
 }
 
 .filter-bar input:focus,
@@ -471,6 +471,16 @@
     border-color: var(--primary, #3b6ef5) !important;
     color: white !important;
     font-weight: 700 !important;
+}
+
+#searchInput:focus {
+    border-color: #4f8ef7 !important;
+    outline: none;
+}
+
+#categoryFilter:focus {
+    border-color: #4f8ef7 !important;
+    outline: none;
 }
 
 /* ══════════════════════════════════════

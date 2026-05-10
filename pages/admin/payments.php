@@ -265,20 +265,6 @@ endif; ?>
                 </div>
                 <form method="GET" id="filterForm" style="display:flex;align-items:center;gap:8px;">
 
-                    <!-- Search -->
-                    <div style="position:relative;flex-shrink:0;">
-                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="13"
-                            height="13"
-                            style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-soft);pointer-events:none;">
-                            <circle cx="11" cy="11" r="8" />
-                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                        </svg>
-                        <input type="text" name="q" id="searchInput" value="<?= htmlspecialchars($search) ?>"
-                            placeholder="Search tenant, unit, ID…"
-                            style="padding:7px 10px 7px 28px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12.5px;width:180px;background:var(--white);">
-                    </div>
-
-                    <!-- Month/Year Picker -->
                     <div style="position:relative;" id="monthPickerWrap">
                         <button type="button" id="monthPickerBtn" onclick="toggleMonthPicker()"
                             style="display:flex;align-items:center;gap:7px;padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--white);font-size:12.5px;font-weight:600;cursor:pointer;color:var(--text);white-space:nowrap;">
@@ -289,7 +275,9 @@ endif; ?>
                                 <line x1="8" y1="2" x2="8" y2="6" />
                                 <line x1="3" y1="10" x2="21" y2="10" />
                             </svg>
-                            <span id="monthPickerLabel"><?= date('F Y', strtotime($filter_month . '-01')) ?></span>
+                            <span id="monthPickerLabel">
+                                <?= date('F Y', strtotime($filter_month . '-01')) ?>
+                            </span>
                             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="11"
                                 height="11">
                                 <polyline points="6 9 12 15 18 9" />
@@ -305,8 +293,9 @@ endif; ?>
                                 style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                                 <button type="button" onclick="changePickerYear(-1)"
                                     style="border:none;background:none;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:17px;color:var(--text-soft);line-height:1;">‹</button>
-                                <span id="pickerYear"
-                                    style="font-size:13.5px;font-weight:700;color:var(--text);"><?= date('Y', strtotime($filter_month . '-01')) ?></span>
+                                <span id="pickerYear" style="font-size:13.5px;font-weight:700;color:var(--text);">
+                                    <?= date('Y', strtotime($filter_month . '-01')) ?>
+                                </span>
                                 <button type="button" onclick="changePickerYear(1)"
                                     style="border:none;background:none;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:17px;color:var(--text-soft);line-height:1;">›</button>
                             </div>
@@ -335,8 +324,21 @@ endif; ?>
                         </div>
                     </div>
 
+                    <!-- Search -->
+                    <div style="position:relative;flex-shrink:0;">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="13"
+                            height="13"
+                            style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-soft);pointer-events:none;">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <input type="text" name="q" id="searchInput" value="<?= htmlspecialchars($search) ?>"
+                            placeholder="Search tenant, unit, ID…"
+                            style="padding:7px 10px 7px 28px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12.5px;width:180px;background:var(--white);">
+                    </div>
+
                     <!-- Status -->
-                    <select name="status" onchange="this.form.submit()"
+                    <select name="status" onchange="this.form.submit()" id="statusSelect"
                         style="padding:7px 8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12.5px;background:var(--white);color:var(--text);cursor:pointer;flex-shrink:0;width:110px;">
                         <option value="all" <?= $filter_status === 'all' ? 'selected' : '' ?>>All Status</option>
                         <option value="paid" <?= $filter_status === 'paid' ? 'selected' : '' ?>>Paid</option>

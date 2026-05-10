@@ -25,19 +25,6 @@ $active_page = 'properties_list';
 include '../../includes/layout_open.php';
 include '../../includes/properties.php';
 
-// /**
-//  * Variables provided by includes/properties.php:
-//  * @var int $total
-//  * @var int $occupied
-//  * @var int $vacant
-//  * @var int $maintenance
-//  * @var int $new_month
-//  * @var int $occ_pct
-//  * @var string[] $allowed_types
-//  * @var string $filter_type
-//  * @var \mysqli_result $result
-//  * @var \mysqli $conn
-//  */
 ?>
 
 <div class="page-header">
@@ -121,7 +108,7 @@ include '../../includes/properties.php';
         <span class="card-title">Property Directory</span>
         <div style="display:flex;gap:8px;">
           <form method="GET" action="" style="margin:0;">
-            <select name="type" onchange="this.form.submit()"
+            <select name="type" onchange="this.form.submit()" id="typeSelect"
               style="padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text-soft);background:var(--white);">
               <option value="">All Types</option>
               <?php foreach ($allowed_types as $t): ?>
@@ -296,6 +283,13 @@ include '../../includes/properties.php';
 
   </div>
 </div>
+
+<style>
+  #typeSelect:focus {
+    border-color: #4f8ef7 !important;
+    outline: none;
+}
+</style>
 
 <script>
   window.PS_CSRF_TOKEN = <?= json_encode($_SESSION['csrf_token'] ?? '') ?>;

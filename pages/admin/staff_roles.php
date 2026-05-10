@@ -169,7 +169,7 @@ function lastActiveLabel($lastLogin)
                                 <circle cx="11" cy="11" r="8" />
                                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
                             </svg>
-                            <input type="text" name="search" value="<?= htmlspecialchars($search) ?>"
+                            <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" id="searchStaff"
                                 placeholder="Search staff…"
                                 oninput="clearTimeout(st2);st2=setTimeout(()=>this.form.submit(),450)">
                         </div>

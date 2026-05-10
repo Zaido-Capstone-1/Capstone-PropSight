@@ -368,3 +368,15 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+#search-units:focus {
+    border-color: #4f8ef7;
+}
+
+#filter-status:focus {
+    border-color: #4f8ef7;
+}
+
+#filter-property:focus {
+    border-color: #4f8ef7;
+}

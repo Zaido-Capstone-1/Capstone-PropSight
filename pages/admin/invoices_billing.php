@@ -165,12 +165,12 @@ $inv_cur_picker_year = (int) date('Y');
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            <span id="invMonthPickerLabel">May 2026</span>
+            <span id="invMonthPickerLabel"><?= date('F Y') ?></span>
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="11" height="11">
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
-          <input type="hidden" id="invMonthFilter" value="2026-05">
+          <input type="hidden" id="invMonthFilter" value="<?= date('Y-m') ?>">
 
           <!-- Dropdown Calendar -->
           <div id="invMonthPickerDropdown"
@@ -190,7 +190,7 @@ $inv_cur_picker_year = (int) date('Y');
                 ?>
                 <button type="button" data-month="<?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?>"
                   onclick="selectInvPickerMonth(this)" class="inv-picker-month-btn"
-                  style="padding:6px 4px;border:1.5px solid var(--border,#e5e7eb);border-radius:7px;font-size:11.5px;font-weight:500;cursor:pointer;background:var(--white,#fff);color:var(--text,#1e2533);transition:all .15s;">
+                  style="padding:6px 4px;border:1.5px solid var(--inv-border);border-radius:7px;font-size:11.5px;font-weight:500;cursor:pointer;background:var(--inv-bg-soft);color:var(--inv-text);transition:all .15s;">
                   <?= $mon ?>
                 </button>
               <?php endforeach; ?>
@@ -209,13 +209,34 @@ $inv_cur_picker_year = (int) date('Y');
         <div class="inv-search">
           <input type="text" id="searchFilter" placeholder="Search tenant or invoice" autocomplete="off">
         </div>
-        <select class="inv-select" id="statusFilter">
-          <option value="">All Status</option>
-          <option value="Paid">Paid</option>
-          <option value="Pending">Pending</option>
-          <option value="Overdue">Overdue</option>
-          <option value="Sent">Sent</option>
-        </select>
+        <!-- Custom Status Dropdown -->
+        <div class="inv-status-dropdown-wrap" id="statusDropdownWrap">
+          <button type="button" class="inv-status-trigger" id="statusTrigger" onclick="toggleStatusDropdown()">
+            <span id="statusTriggerLabel">All Status</span>
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12" height="12"
+              id="statusChevron">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <!-- Hidden input so JS filter still reads #statusFilter -->
+          <input type="hidden" id="statusFilter" value="">
+          <div class="inv-status-menu" id="statusMenu" style="display:none;">
+            <button type="button" class="inv-status-opt active" data-value="" onclick="selectStatusOpt(this)">All
+              Status</button>
+            <button type="button" class="inv-status-opt" data-value="Paid" onclick="selectStatusOpt(this)">
+              <span class="inv-status-dot paid"></span>Paid
+            </button>
+            <button type="button" class="inv-status-opt" data-value="Pending" onclick="selectStatusOpt(this)">
+              <span class="inv-status-dot pending"></span>Pending
+            </button>
+            <button type="button" class="inv-status-opt" data-value="Overdue" onclick="selectStatusOpt(this)">
+              <span class="inv-status-dot overdue"></span>Overdue
+            </button>
+            <button type="button" class="inv-status-opt" data-value="Sent" onclick="selectStatusOpt(this)">
+              <span class="inv-status-dot sent"></span>Sent
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -559,7 +580,7 @@ $inv_cur_picker_year = (int) date('Y');
   <script>
     (function () {
       let invPickerYear = <?= $inv_cur_picker_year ?>;
-      let invSelectedMonth = '05'; // Default to May (current month)
+      let invSelectedMonth = '<?= date('m') ?>'; // Default to current month
 
       // Single source of truth — loops ALL buttons so only one can ever be active
       function _highlightActive() {
@@ -613,7 +634,7 @@ $inv_cur_picker_year = (int) date('Y');
         if (wrap && !wrap.contains(e.target)) closeInvMonthPicker();
       });
 
-      // Initialize: highlight May and trigger filter on page load
+      // Initialize: highlight current month and trigger filter on page load
       _highlightActive();
       document.getElementById('invMonthFilter').dispatchEvent(new Event('change'));
     })();

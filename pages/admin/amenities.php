@@ -148,13 +148,13 @@ function am_svg(string $key): string
         <span class="tb-count" id="am-count"></span>
       </div>
       <div class="tb-right">
-        <!-- <div class="am-search-wrap">
+        <div class="am-search-wrap">
           <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.35-4.35" />
           </svg>
           <input id="am-search" type="text" placeholder="Search amenities..." class="am-input">
-        </div> -->
+        </div>
         <select id="am-filter-status" class="am-input">
           <option value="">All Statuses</option>
           <option value="available">Available</option>

@@ -93,7 +93,7 @@
         foot.style.display = '';
         const from = startIdx + 1;
         const to = Math.min(endIdx, total);
-        if (info) info.innerHTML = `Showing <strong>${from}–${to}</strong> of <strong>${total}</strong> invoices`;
+        if (info) info.innerHTML = `Showing <strong>${from}–${to}</strong> of <strong>${total}</strong> invoice(s)`;
 
         if (totalPages <= 1) {
             if (controls) controls.style.display = 'none';
@@ -169,6 +169,55 @@
     $('searchFilter')?.addEventListener('input', applyFilters);
     $('statusFilter')?.addEventListener('change', applyFilters);
     $('invMonthFilter')?.addEventListener('change', applyFilters);
+
+    /* ── Custom status dropdown ──────────────────────────────────────────── */
+    window.toggleStatusDropdown = function () {
+        const menu = $('statusMenu');
+        const chevron = $('statusChevron');
+        const wrap = $('statusDropdownWrap');
+        if (!menu) return;
+        const isOpen = menu.style.display !== 'none';
+        menu.style.display = isOpen ? 'none' : 'block';
+        if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+        if (wrap) wrap.classList.toggle('open', !isOpen);
+    };
+
+    window.selectStatusOpt = function (btn) {
+        const val = btn.dataset.value;
+        const label = btn.textContent.trim();
+
+        // Update hidden input + trigger change
+        const hidden = $('statusFilter');
+        if (hidden) { hidden.value = val; hidden.dispatchEvent(new Event('change')); }
+
+        // Update trigger label
+        const triggerLabel = $('statusTriggerLabel');
+        if (triggerLabel) triggerLabel.textContent = label;
+
+        // Update active state on options
+        document.querySelectorAll('.inv-status-opt').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Close
+        const menu = $('statusMenu');
+        const chevron = $('statusChevron');
+        const wrap = $('statusDropdownWrap');
+        if (menu) menu.style.display = 'none';
+        if (chevron) chevron.style.transform = '';
+        if (wrap) wrap.classList.remove('open');
+    };
+
+    // Close when clicking outside
+    document.addEventListener('click', function (e) {
+        const wrap = $('statusDropdownWrap');
+        if (wrap && !wrap.contains(e.target)) {
+            const menu = $('statusMenu');
+            const chevron = $('statusChevron');
+            if (menu) menu.style.display = 'none';
+            if (chevron) chevron.style.transform = '';
+            wrap.classList.remove('open');
+        }
+    });
 
     // Initial run
     applyFilters();

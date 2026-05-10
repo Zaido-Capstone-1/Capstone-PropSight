@@ -383,3 +383,15 @@
         flex: 1 1 calc(50% - 3px) !important;
     }
 }
+
+#am-search:focus {
+    border-color: #4f8ef7;
+}
+
+#am-filter-status:focus {
+    border-color: #4f8ef7;
+}
+
+#am-filter-property:focus {
+    border-color: #4f8ef7;
+}

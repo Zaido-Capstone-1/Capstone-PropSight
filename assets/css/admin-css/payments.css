@@ -512,6 +512,15 @@
     min-width: 0;
 }
 
+#searchInput:focus {
+    border-color: #4f8ef7 !important;
+    outline: none;
+}
+
+#statusSelect:focus {
+    border-color: #4f8ef7 !important;
+}
+
 @media (max-width: 900px) {
     .card-header {
         flex-wrap: wrap !important;

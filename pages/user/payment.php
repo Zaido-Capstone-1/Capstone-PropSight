@@ -1,16 +1,7 @@
 <?php
 include '../../includes/session.php';
 if ($_SESSION['role'] !== 'user') {
-    echo '<!DOCTYPE html>
-<html>
-<head>
-
-</head>
-<body>
-
-<script src="../../assets/js/user-js/payment-inline.js"></script>
-</body>
-</html>';
+    echo '<!DOCTYPE html><html><head></head><body></body></html>';
     exit;
 }
 
@@ -19,157 +10,238 @@ $last_name = htmlspecialchars($_SESSION['last_name'] ?? '');
 $full_name = trim($first_name . ' ' . $last_name);
 $email = htmlspecialchars($_SESSION['email'] ?? '');
 $initials = strtoupper(mb_substr($first_name, 0, 1) . mb_substr($last_name, 0, 1));
-$hour = (int) date('G');
-$greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
 
-$page_title = 'Payment Methods';
-$page_hero_html = 'Payment <em>Methods</em>';
-$page_hero_sub = 'Manage your cards, e-wallets, and billing details securely.';
-$page_hero_icon = '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>';
+$page_title = 'Payment History';
+$page_hero_html = 'Payment <em>History</em>';
+$page_hero_sub = 'A full log of all your transactions and booking payments.';
+$page_hero_icon = '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>';
 $active_nav = 'payment';
 require '../../includes/_layout.php';
 
 require_once '../../includes/db.php';
 $userId = (int) $_SESSION['user_id'];
 
-// DB: Cards
-$cardColors = ['Visa' => 'linear-gradient(135deg,#1a3d7c,#2563c4)', 'Mastercard' => 'linear-gradient(135deg,#b5310c,#f47321)', 'Amex' => 'linear-gradient(135deg,#007bc0,#00205b)'];
-$cRes = mysqli_query($conn, "SELECT * FROM payment_methods WHERE user_id=$userId AND type='card' AND is_active=1 ORDER BY is_default DESC");
-$cards = [];
-while ($r = mysqli_fetch_assoc($cRes)) {
-    $r['color'] = $cardColors[$r['provider']] ?? 'linear-gradient(135deg,#1a3d7c,#2563c4)';
-    $r['holder'] = $r['holder_name'] ?: $full_name;
-    $r['expiry'] = $r['expiry_month'] && $r['expiry_year'] ? str_pad($r['expiry_month'], 2, '0', STR_PAD_LEFT) . '/' . $r['expiry_year'] : '—';
-    $cards[] = $r;
-}
-
-// DB: E-wallets
-$ewallet_icons = ['GCash' => '../../assets/images/gcash-icon.png', 'Maya' => '../../assets/images/maya-icon.png', 'PayPal' => '../../assets/images/paypal-icon.png', 'ShopeePay' => '../../assets/images/shopeepay-icon.png'];
-$ewRes = mysqli_query($conn, "SELECT * FROM payment_methods WHERE user_id=$userId AND type='ewallet' AND is_active=1 ORDER BY created_at");
-$linked_map = [];
-while ($r = mysqli_fetch_assoc($ewRes)) {
-    $linked_map[$r['provider']] = ['name' => $r['provider'], 'icon' => $ewallet_icons[$r['provider']] ?? '', 'linked' => true, 'number' => $r['account_number'], 'id' => $r['id']];
-}
-$ewallets = [];
-foreach (['GCash', 'Maya', 'PayPal', 'ShopeePay'] as $name) {
-    $ewallets[] = $linked_map[$name] ?? ['name' => $name, 'icon' => $ewallet_icons[$name] ?? '', 'linked' => false, 'number' => null, 'id' => null];
-}
-
-// DB: Billing history
+/* ── Payment logs ── */
 $bRes = mysqli_query($conn, "
     SELECT py.payment_id, py.payment_date, py.amount_paid, py.payment_method, py.payment_status,
-           CONCAT(COALESCE(u.unit_name, u.unit_number,'—'), ' · ', DATEDIFF(b.checkout_date,b.checkin_date), ' nights') AS desc_text,
+           COALESCE(u.unit_name, u.unit_number, '—') AS unit_label,
+           DATEDIFF(b.checkout_date, b.checkin_date)  AS nights,
            p.property_name
     FROM payments py
-    JOIN bookings b ON b.booking_id=py.booking_id
-    JOIN units u ON u.unit_id=b.unit_id
-    LEFT JOIN properties p ON p.property_id=u.property_id
-    WHERE b.user_id=$userId ORDER BY py.payment_date DESC LIMIT 20");
+    JOIN bookings    b  ON b.booking_id  = py.booking_id
+    JOIN units       u  ON u.unit_id     = b.unit_id
+    LEFT JOIN properties p ON p.property_id = u.property_id
+    WHERE b.user_id = $userId
+    ORDER BY py.payment_date DESC
+    LIMIT 100
+");
 $bills = [];
+$total_spent = 0;
+$paid_count = 0;
+$pending_count = 0;
 while ($r = mysqli_fetch_assoc($bRes)) {
-    $bills[] = ['date' => date('M j, Y', strtotime($r['payment_date'])), 'desc' => $r['property_name'] . ' - ' . $r['desc_text'], 'amount' => 'P' . number_format($r['amount_paid'], 2), 'status' => $r['payment_status'], 'method' => $r['payment_method']];
+    $bills[] = $r;
+    if ($r['payment_status'] === 'paid') {
+        $total_spent += $r['amount_paid'];
+        $paid_count++;
+    }
+    if ($r['payment_status'] === 'pending') {
+        $pending_count++;
+    }
 }
+
+/* ── Refunds ── */
+$refundsRes = mysqli_query($conn, "
+    SELECT r.refund_id, r.refund_amount, r.refund_reason, r.refund_status,
+           r.refund_method, r.refund_date, r.processed_date, r.created_at,
+           COALESCE(u.unit_name, u.unit_number, '—') AS unit_label,
+           p.property_name, py.payment_id, py.payment_method
+    FROM refunds r
+    JOIN payments py ON py.payment_id = r.payment_id
+    LEFT JOIN bookings b ON b.booking_id = r.booking_id
+    LEFT JOIN units u ON u.unit_id = b.unit_id
+    LEFT JOIN properties p ON p.property_id = u.property_id
+    WHERE r.user_id = $userId
+    ORDER BY r.created_at DESC
+    LIMIT 100
+");
+$refunds = [];
+$total_refunded = 0;
+$pending_refunds = 0;
+while ($r = mysqli_fetch_assoc($refundsRes)) {
+    $refunds[] = $r;
+    if ($r['refund_status'] === 'completed') {
+        $total_refunded += $r['refund_amount'];
+    }
+    if ($r['refund_status'] === 'pending') {
+        $pending_refunds++;
+    }
+}
+
+/* ── Build unified timeline (payments + refunds), newest first ── */
+$unified = [];
+foreach ($bills as $b) {
+    $unified[] = [
+        'type' => 'payment',
+        'sort_date' => $b['payment_date'],
+        'date' => $b['payment_date'],
+        'property_name' => $b['property_name'] ?? '—',
+        'unit_label' => $b['unit_label'] ?? '',
+        'nights' => (int) ($b['nights'] ?? 0),
+        'method' => $b['payment_method'] ?: 'N/A',
+        'amount' => $b['amount_paid'],
+        'status' => $b['payment_status'],
+        'payment_id' => $b['payment_id'],
+        'reason' => null,
+        'processed_date' => null,
+    ];
+}
+foreach ($refunds as $rf) {
+    $unified[] = [
+        'type' => 'refund',
+        'sort_date' => $rf['created_at'],
+        'date' => $rf['created_at'],
+        'property_name' => $rf['property_name'] ?? '—',
+        'unit_label' => $rf['unit_label'] ?? '',
+        'nights' => null,
+        'method' => $rf['refund_method'] ?: ($rf['payment_method'] ?: 'N/A'),
+        'amount' => $rf['refund_amount'],
+        'status' => $rf['refund_status'],
+        'payment_id' => $rf['payment_id'],
+        'reason' => $rf['refund_reason'],
+        'processed_date' => $rf['processed_date'],
+    ];
+}
+usort($unified, fn($a, $b) => strtotime($b['sort_date']) - strtotime($a['sort_date']));
+
+/* ── Spending by method (sidebar chart) ── */
+$methodTotals = [];
+foreach ($bills as $b) {
+    if ($b['payment_status'] !== 'paid')
+        continue;
+    $m = $b['payment_method'] ?: 'Other';
+    $methodTotals[$m] = ($methodTotals[$m] ?? 0) + $b['amount_paid'];
+}
+arsort($methodTotals);
 ?>
 
-<link rel="stylesheet" href="../../assets/css/user-css/payment.css" />
-
+<link rel="stylesheet" href="../../assets/css/user-css/payment.css">
 <div class="page-two-col">
+
+    <!-- ════════════ MAIN COLUMN ════════════ -->
     <div class="col-main">
 
-        <div class="card reveal">
-            <div class="card-title">
-                <svg viewBox="0 0 24 24">
-                    <rect x="1" y="4" width="22" height="16" rx="2" />
-                    <line x1="1" y1="10" x2="23" y2="10" />
-                </svg>
-                Saved Cards
-                <button class="btn-primary" style="margin-left:auto;font-size:0.74rem;padding:8px 18px;"
-                    onclick="openAddCard()">+ Add New Card</button>
+        <!-- Stats -->
+        <div class="pay-stats-row reveal">
+            <div class="pay-stat-card accent">
+                <div class="pay-stat-label">Total Spent</div>
+                <div class="pay-stat-value">₱<?php echo number_format($total_spent, 0); ?></div>
+                <div class="pay-stat-sub"><?php echo $paid_count; ?> Confirmed
+                    Payment<?php echo $paid_count !== 1 ? 's' : ''; ?></div>
             </div>
-            <div class="cards-list">
-                <?php if (empty($cards)): ?>
-                    <div style="padding:20px;text-align:center;color:var(--text-soft);">No saved cards yet.</div>
-                    <?php else:
-                    foreach ($cards as $c): ?>
-                        <div class="card-item-wrap" id="card-<?php echo $c['id']; ?>">
-                            <div class="card-visual" style="background:<?php echo $c['color']; ?>">
-                                <?php if ($c['is_default']): ?>
-                                    <div class="cv-default-badge">Default</div><?php endif; ?>
-                                <div>
-                                    <div class="cv-chip"></div>
-                                    <div class="cv-number">•••• •••• •••• <?php echo htmlspecialchars($c['last4']); ?></div>
-                                </div>
-                                <div class="cv-footer">
-                                    <div>
-                                        <div class="cv-label">Card Holder</div>
-                                        <div class="cv-value"><?php echo strtoupper(htmlspecialchars($c['holder'])); ?></div>
-                                    </div>
-                                    <div style="text-align:right;">
-                                        <div class="cv-label">Expires</div>
-                                        <div class="cv-value"><?php echo htmlspecialchars($c['expiry']); ?></div>
-                                    </div>
-                                    <div class="cv-type"><?php echo htmlspecialchars($c['provider']); ?></div>
-                                </div>
-                            </div>
-                            <div class="card-actions">
-                                <?php if (!$c['is_default']): ?>
-                                    <button class="btn-secondary" style="font-size:0.72rem;padding:7px 14px;"
-                                        onclick="setDefault(<?php echo $c['id']; ?>,'card',this)">Set Default</button>
-                                <?php endif; ?>
-                                <button class="btn-danger" style="font-size:0.72rem;padding:7px 14px;"
-                                    onclick="removePaymentMethod(<?php echo $c['id']; ?>,'card',this)">Remove</button>
-                            </div>
-                        </div>
-                <?php endforeach;
-                endif; ?>
+            <div class="pay-stat-card">
+                <div class="pay-stat-label">Transactions</div>
+                <div class="pay-stat-value"><?php echo count($bills); ?></div>
+                <div class="pay-stat-sub">Across all bookings</div>
+            </div>
+            <div class="pay-stat-card">
+                <div class="pay-stat-label">Pending</div>
+                <div class="pay-stat-value"
+                    style="color:<?php echo $pending_count > 0 ? 'var(--terra)' : 'var(--navy-800)'; ?>">
+                    <?php echo $pending_count; ?>
+                </div>
+                <div class="pay-stat-sub">Awaiting Confirmation</div>
             </div>
         </div>
 
+        <!-- Unified Transaction Log -->
         <div class="card reveal rd1">
-            <div class="card-title">
-                <svg viewBox="0 0 24 24">
-                    <path d="M21 12V7H5a2 2 0 010-4h14v4" />
-                    <path d="M3 5v14a2 2 0 002 2h16v-5" />
-                    <path d="M18 12a2 2 0 000 4h4v-4z" />
-                </svg>
-                E-Wallets
-            </div>
-            <div class="ewallet-grid">
-                <?php foreach ($ewallets as $w): ?>
-                    <div class="ewallet-item <?php echo $w['linked'] ? 'linked' : ''; ?>">
-                        <div class="ewallet-icon"><img src="<?php echo $w['icon']; ?>" alt="<?php echo $w['name']; ?>"></div>
-                        <div class="ewallet-info">
-                            <div class="ewallet-name"><?php echo $w['name']; ?></div>
-                            <div class="ewallet-num"><?php echo $w['linked'] ? $w['number'] : 'Not linked'; ?></div>
-                        </div>
-                        <?php if ($w['linked']): ?>
-                            <span class="badge badge-green">Linked</span>
-                        <?php else: ?>
-                            <button class="btn-secondary" style="font-size:0.7rem;padding:6px 12px;white-space:nowrap;"
-                                type="button">Link</button>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <div class="card reveal rd2">
-            <div class="card-title">
+            <div class="card-title" style="font-size: 22px">
                 <svg viewBox="0 0 24 24">
                     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
                     <line x1="16" y1="13" x2="8" y2="13" />
                     <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
                 </svg>
-                Billing History
+                Transaction History
             </div>
+
+            <div class="billing-filters">
+
+                <!-- right-hand group: dropdowns + search fused together -->
+                <div class="filter-bar-group">
+
+                    <!-- Type dropdown -->
+                    <div class="fdd-wrap" id="fddTypeWrap">
+                        <button class="fdd-trigger" id="fddTypeBtn" type="button" onclick="toggleFdd('Type')"
+                            aria-haspopup="listbox" aria-expanded="false">
+                            <span class="fdd-label" id="fddTypeLabel">All Types</span>
+                            <svg class="fdd-chevron" viewBox="0 0 24 24">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        <ul class="fdd-menu" id="fddTypeMenu" role="listbox">
+                            <li class="fdd-option selected" data-val="all" onclick="pickFdd('Type','all','All Types')">
+                                All Types</li>
+                            <li class="fdd-option" data-val="payment" onclick="pickFdd('Type','payment','Payments')">
+                                Payments</li>
+                            <li class="fdd-option" data-val="refund" onclick="pickFdd('Type','refund','Refunds')">
+                                Refunds</li>
+                        </ul>
+                    </div>
+
+                    <div class="fdd-sep"></div>
+
+                    <!-- Status dropdown -->
+                    <div class="fdd-wrap" id="fddStatusWrap">
+                        <button class="fdd-trigger" id="fddStatusBtn" type="button" onclick="toggleFdd('Status')"
+                            aria-haspopup="listbox" aria-expanded="false">
+                            <span class="fdd-label" id="fddStatusLabel">Any Status</span>
+                            <svg class="fdd-chevron" viewBox="0 0 24 24">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        <ul class="fdd-menu" id="fddStatusMenu" role="listbox">
+                            <li class="fdd-option selected" data-val="all"
+                                onclick="pickFdd('Status','all','Any Status')">Any Status</li>
+                            <li class="fdd-option" data-val="paid" onclick="pickFdd('Status','paid','Paid')">Paid</li>
+                            <li class="fdd-option" data-val="pending" onclick="pickFdd('Status','pending','Pending')">
+                                Pending</li>
+                            <li class="fdd-option" data-val="completed"
+                                onclick="pickFdd('Status','completed','Refunded')">Refunded</li>
+                            <li class="fdd-option" data-val="processing"
+                                onclick="pickFdd('Status','processing','Processing')">Processing</li>
+                            <li class="fdd-option" data-val="failed" onclick="pickFdd('Status','failed','Failed')">
+                                Failed</li>
+                        </ul>
+                    </div>
+
+                    <div class="fdd-sep"></div>
+
+                    <!-- Search -->
+                    <div class="fdd-search">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <input type="text" id="billingSearch" placeholder="Search…" oninput="filterUnified()">
+                    </div>
+
+                </div><!-- /filter-bar-group -->
+
+                <!-- hidden inputs consumed by filterUnified() -->
+                <input type="hidden" id="filterType" value="all">
+                <input type="hidden" id="filterStatus" value="all">
+
+            </div>
+
             <div style="overflow-x:auto;">
-                <table class="billing-table">
+                <table class="billing-table" id="billingTable">
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Description</th>
+                            <th>Type</th>
+                            <th>Property / Room</th>
                             <th>Method</th>
                             <th>Amount</th>
                             <th>Status</th>
@@ -177,187 +249,208 @@ while ($r = mysqli_fetch_assoc($bRes)) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($bills as $b): ?>
+                        <?php if (empty($unified)): ?>
                             <tr>
-                                <td><?php echo $b['date']; ?></td>
-                                <td><?php echo $b['desc']; ?></td>
-                                <td style="font-size:0.78rem;color:var(--text-soft);"><?php echo $b['method']; ?></td>
-                                <td class="bt-amount"><?php echo $b['amount']; ?></td>
-                                <td><span
-                                        class="badge <?php echo $b['status'] === 'paid' ? 'badge-green' : ($b['status'] === 'pending' ? 'badge-gold' : 'badge-red'); ?>"><?php echo ucfirst($b['status']); ?></span>
+                                <td colspan="7" style="text-align:center;padding:40px;color:var(--ink-soft);">
+                                    <svg viewBox="0 0 24 24"
+                                        style="width:38px;height:38px;stroke:var(--border);fill:none;stroke-width:1.5;display:block;margin:0 auto 10px;">
+                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                                        <polyline points="14 2 14 8 20 8" />
+                                    </svg>
+                                    No transaction records yet.
                                 </td>
-                                <td><button class="btn-secondary" style="font-size:0.7rem;padding:5px 12px;"
-                                        onclick="showToast('Invoice downloaded.')">Invoice</button></td>
                             </tr>
-                        <?php endforeach; ?>
+                        <?php else:
+                            foreach ($unified as $row):
+                                $isPayment = $row['type'] === 'payment';
+                                $isRefund = $row['type'] === 'refund';
+
+                                $dateDisp = date('M j, Y', strtotime($row['date']));
+                                $timeDisp = date('g:i A', strtotime($row['date']));
+                                $searchStr = strtolower(
+                                    ($row['property_name'] ?? '') . ' ' .
+                                    ($row['unit_label'] ?? '') . ' ' .
+                                    ($row['method'] ?? '') . ' ' .
+                                    ($row['reason'] ?? '') . ' ' .
+                                    $row['type']
+                                );
+
+                                /* Status badge */
+                                $status = $row['status'];
+                                $badgeCls = match ($status) {
+                                    'paid', 'completed' => 'badge-green',
+                                    'pending', 'processing' => 'badge-gold',
+                                    default => 'badge-red'
+                                };
+                                $statusLabel = match ($status) {
+                                    'completed' => 'Refunded',
+                                    default => ucfirst($status)
+                                };
+
+                                /* Type badge */
+                                if ($isPayment) {
+                                    $typePill = '<span class="type-pill type-payment">Payment</span>';
+                                } else {
+                                    $typePill = '<span class="type-pill type-refund">Refund</span>';
+                                }
+
+                                /* Amount sign */
+                                $amountHtml = $isRefund
+                                    ? '<span style="color:var(--terra);">−₱' . number_format($row['amount'], 2) . '</span>'
+                                    : '₱' . number_format($row['amount'], 2);
+
+                                /* Sub-line under property */
+                                if ($isPayment && $row['nights'] !== null) {
+                                    $nights = $row['nights'];
+                                    $subLine = htmlspecialchars($row['unit_label']) . ' · ' . $nights . ' night' . ($nights !== 1 ? 's' : '');
+                                } elseif ($isRefund && $row['reason']) {
+                                    $subLine = '<span title="' . htmlspecialchars($row['reason']) . '" class="refund-reason-col">' . htmlspecialchars($row['reason']) . '</span>';
+                                } else {
+                                    $subLine = htmlspecialchars($row['unit_label']);
+                                }
+                                ?>
+                                <tr data-type="<?php echo $row['type']; ?>"
+                                    data-status="<?php echo htmlspecialchars($status); ?>"
+                                    data-search="<?php echo htmlspecialchars($searchStr); ?>">
+
+                                    <td style="white-space:nowrap;">
+                                        <div style="font-size:.82rem;color:var(--ink-mid);"><?php echo $dateDisp; ?></div>
+                                        <div style="font-size:.7rem;color:var(--ink-faint);"><?php echo $timeDisp; ?></div>
+                                    </td>
+
+                                    <td><?php echo $typePill; ?></td>
+
+                                    <td style="max-width:200px;">
+                                        <div
+                                            style="font-weight:600;font-size:.82rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                            <?php echo htmlspecialchars($row['property_name']); ?>
+                                        </div>
+                                        <div style="font-size:.72rem;color:var(--ink-soft);"><?php echo $subLine; ?></div>
+                                    </td>
+
+                                    <td>
+                                        <span class="method-pill"><?php echo htmlspecialchars($row['method']); ?></span>
+                                    </td>
+
+                                    <td class="bt-amount"><?php echo $amountHtml; ?></td>
+
+                                    <td>
+                                        <span class="badge <?php echo $badgeCls; ?>"><?php echo $statusLabel; ?></span>
+                                    </td>
+
+                                    <td>
+                                        <?php if ($isPayment): ?>
+                                            <button class="btn-secondary" style="font-size:.7rem;padding:5px 12px;"
+                                                onclick="downloadInvoice(<?php echo $row['payment_id']; ?>,this)">
+                                                Invoice
+                                            </button>
+                                        <?php elseif ($row['processed_date']): ?>
+                                            <span style="font-size:.72rem;color:var(--ink-faint);">
+                                                <?php echo date('M j, Y', strtotime($row['processed_date'])); ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; endif; ?>
                     </tbody>
                 </table>
+                <div class="billing-empty" id="billingEmpty" style="display:none;">No transactions match your filter.
+                </div>
             </div>
         </div>
 
     </div><!-- /col-main -->
 
-    <!-- ── Payment Sidebar ── -->
     <div class="col-side">
+        <?php if (!empty($methodTotals)): ?>
+            <div class="widget-card reveal">
+                <div class="widget-title">
+                    <svg viewBox="0 0 24 24">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                    </svg>
+                    Spending by Method
+                </div>
+                <?php $maxSpend = max($methodTotals);
+                foreach ($methodTotals as $mName => $mAmt): ?>
+                    <div class="spend-bar-row">
+                        <div class="spend-bar-label" title="<?php echo htmlspecialchars($mName); ?>">
+                            <?php echo htmlspecialchars($mName); ?>
+                        </div>
+                        <div class="spend-bar-track">
+                            <div class="spend-bar-fill" style="width:<?php echo round(($mAmt / $maxSpend) * 100); ?>%"></div>
+                        </div>
+                        <div class="spend-bar-amount">₱<?php echo number_format($mAmt, 0); ?></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
 
         <div class="widget-card reveal rd1">
             <div class="widget-title">
                 <svg viewBox="0 0 24 24">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-                Payment Security
-            </div>
-            <div class="activity-item">
-                <div class="activity-dot green"></div>
-                <div class="activity-desc"><strong>256-bit SSL</strong> encryption on all transactions</div>
-            </div>
-            <div class="activity-item">
-                <div class="activity-dot green"></div>
-                <div class="activity-desc"><strong>PCI-DSS</strong> compliant card storage</div>
-            </div>
-            <div class="activity-item">
-                <div class="activity-dot green"></div>
-                <div class="activity-desc">Card numbers are <strong>never stored</strong> in full</div>
-            </div>
-            <div class="activity-item">
-                <div class="activity-dot gold"></div>
-                <div class="activity-desc"><strong>3D Secure</strong> verification for all card payments</div>
-            </div>
-        </div>
-
-        <div class="tip-card reveal rd2">
-            <div class="tip-card-label">💳 Payment tip</div>
-            <div class="tip-card-title">Save a default method</div>
-            <div class="tip-card-body">Set a default card or e-wallet to speed up checkout when making new bookings.</div>
-        </div>
-
-        <div class="widget-card reveal rd3">
-            <div class="widget-title">
-                <svg viewBox="0 0 24 24">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </svg>
-                Accepted Methods
-            </div>
-            <div class="mini-stat-row">
-                <span class="mini-stat-label">Visa / Mastercard</span>
-                <span class="mini-stat-val" style="color:#16a34a;">✓</span>
-            </div>
-            <div class="mini-stat-row">
-                <span class="mini-stat-label">GCash</span>
-                <span class="mini-stat-val" style="color:#16a34a;">✓</span>
-            </div>
-            <div class="mini-stat-row">
-                <span class="mini-stat-label">Maya</span>
-                <span class="mini-stat-val" style="color:#16a34a;">✓</span>
-            </div>
-            <div class="mini-stat-row">
-                <span class="mini-stat-label">PayPal</span>
-                <span class="mini-stat-val" style="color:#16a34a;">✓</span>
-            </div>
-            <div class="mini-stat-row">
-                <span class="mini-stat-label">Cash (on-site)</span>
-                <span class="mini-stat-val" style="color:#16a34a;">✓</span>
-            </div>
-        </div>
-
-    </div><!-- /col-side -->
-</div><!-- /page-two-col -->
-
-<div class="modal-overlay" id="addCardModal">
-    <div class="modal-box" style="max-width:420px;">
-        <button class="modal-close-btn" onclick="closeAddCard()">✕</button>
-        <div class="modal-title">Add New Card</div>
-        <div class="modal-sub">Your details are encrypted and stored securely.</div>
-
-        <!-- Live card preview -->
-        <div id="cardPreview" style="
-            width:100%; aspect-ratio:1.586; border-radius:14px; margin-bottom:20px;
-            background:linear-gradient(135deg,var(--blue-800),var(--blue-500));
-            padding:18px 20px; display:flex; flex-direction:column;
-            justify-content:space-between; position:relative; overflow:hidden;
-            box-shadow:0 10px 30px rgba(10,22,40,.3);">
-            <!-- bg circles -->
-            <div
-                style="position:absolute;top:-30px;right:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,0.06);">
-            </div>
-            <div
-                style="position:absolute;bottom:-40px;left:10px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.04);">
-            </div>
-            <!-- chip -->
-            <div
-                style="width:34px;height:26px;background:rgba(232,200,122,0.75);border-radius:4px;position:relative;z-index:1;">
-                <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(0,0,0,0.2);"></div>
-            </div>
-            <!-- number -->
-            <div id="previewNumber"
-                style="font-family:'Playfair Display',serif;font-size:1.1rem;letter-spacing:0.2em;color:rgba(255,255,255,0.9);position:relative;z-index:1;text-align:center;">
-                •••• •••• •••• ••••
-            </div>
-            <!-- footer -->
-            <div style="display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:1;">
-                <div>
-                    <div
-                        style="font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:3px;">
-                        Card Holder</div>
-                    <div id="previewHolder"
-                        style="font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.9);letter-spacing:0.04em;">
-                        YOUR NAME</div>
-                </div>
-                <div style="text-align:right;">
-                    <div
-                        style="font-size:0.55rem;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:3px;">
-                        Expires</div>
-                    <div id="previewExpiry" style="font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.9);">MM/YY
-                    </div>
-                </div>
-                <div id="previewType"
-                    style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:rgba(255,255,255,0.6);">
-                    CARD</div>
-            </div>
-        </div>
-
-        <div class="form-field" style="margin-bottom:14px;">
-            <label>Card Number</label>
-            <input type="text" id="cardNumber" maxlength="19" placeholder="0000 0000 0000 0000"
-                style="font-family:'Playfair Display',serif;letter-spacing:0.12em;font-size:1rem;"
-                oninput="formatCardNumber(this);updatePreview()">
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-            <div class="form-field">
-                <label>Expiry Date</label>
-                <input type="text" id="cardExpiry" maxlength="7" placeholder="MM / YY"
-                    oninput="formatExpiry(this);updatePreview()">
-            </div>
-            <div class="form-field">
-                <label>CVV</label>
-                <input type="password" id="cardCvv" maxlength="4" placeholder="•••">
-            </div>
-        </div>
-
-        <div class="form-field" style="margin-bottom:20px;">
-            <label>Cardholder Name</label>
-            <input type="text" id="cardHolder" placeholder="Name as printed on card" value="<?php echo $full_name; ?>"
-                oninput="updatePreview()">
-        </div>
-
-        <div id="cardError"
-            style="display:none;color:#ef4444;font-size:0.78rem;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;margin-bottom:14px;">
-        </div>
-
-        <div style="display:flex;gap:10px;">
-            <button class="btn-secondary" style="flex:1;" onclick="closeAddCard()">Cancel</button>
-            <button class="btn-primary" id="saveCardBtn" style="flex:2;" onclick="saveCard()">
-                <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;">
                     <rect x="1" y="4" width="22" height="16" rx="2" />
                     <line x1="1" y1="10" x2="23" y2="10" />
                 </svg>
-                Save Card
-            </button>
+                Summary
+            </div>
+            <div class="mini-stat-row">
+                <span class="mini-stat-label">Total paid</span>
+                <span class="mini-stat-val"
+                    style="color:var(--navy-700);">₱<?php echo number_format($total_spent, 2); ?></span>
+            </div>
+            <div class="mini-stat-row">
+                <span class="mini-stat-label">Total refunded</span>
+                <span class="mini-stat-val"
+                    style="color:var(--terra);">₱<?php echo number_format($total_refunded, 2); ?></span>
+            </div>
+            <div class="mini-stat-row">
+                <span class="mini-stat-label">Paid transactions</span>
+                <span class="mini-stat-val"><?php echo $paid_count; ?></span>
+            </div>
+            <div class="mini-stat-row">
+                <span class="mini-stat-label">Pending payments</span>
+                <span class="mini-stat-val"
+                    style="color:<?php echo $pending_count > 0 ? 'var(--terra)' : 'inherit'; ?>">
+                    <?php echo $pending_count; ?>
+                </span>
+            </div>
+            <div class="mini-stat-row">
+                <span class="mini-stat-label">Pending refunds</span>
+                <span class="mini-stat-val"
+                    style="color:<?php echo $pending_refunds > 0 ? 'var(--terra)' : 'inherit'; ?>">
+                    <?php echo $pending_refunds; ?>
+                </span>
+            </div>
+            <div class="mini-stat-row">
+                <span class="mini-stat-label">Total records</span>
+                <span class="mini-stat-val"><?php echo count($unified); ?></span>
+            </div>
         </div>
-    </div>
-</div>
+
+        <div class="widget-card reveal rd2" style="background:var(--navy-50);border-color:var(--navy-200);">
+            <div class="widget-title" style="margin-bottom:8px;">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                About This Page
+            </div>
+            <p style="font-size:.76rem;color:var(--ink-soft);line-height:1.6;">
+                This log shows all payments and refunds linked to your bookings. Refund amounts are shown in red.
+                For disputes or billing questions, please contact our support team.
+            </p>
+        </div>
+
+    </div><!-- /col-side -->
+
+</div><!-- /page-two-col -->
+
+<style>
+    
+</style>
 
 <script src="../../assets/js/user-js/payment.js"></script>
+
 <script>window.PS_RT_PAGE = 'payment';</script>
 <?php require '../../includes/_layout_end.php'; ?>

@@ -847,9 +847,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
             </div>
         </div>
     </section>
-
-    <!-- ══ ROOM BOOKING MODAL ══ -->
-    <!-- ══ PROPERTY DETAIL MODAL ══ -->
+    
     <div class="modal-overlay" id="roomModal">
         <div class="pd-modal">
             <button class="pd-close" id="roomModalClose" aria-label="Close">✕</button>
