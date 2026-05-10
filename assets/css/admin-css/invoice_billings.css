@@ -1010,9 +1010,9 @@
     font-weight: 600;
 }
 
-.inv-status-opt.active .inv-status-dot {
+/* .inv-status-opt.active .inv-status-dot {
     background: rgba(255, 255, 255, .85);
-}
+} */
 
 /* Coloured dots */
 .inv-status-dot {

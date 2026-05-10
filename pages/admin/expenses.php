@@ -176,14 +176,14 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" style="overflow:visible;">
       <div class="card-header-with-filters">
         <div class="header-left">
           Expenses — <span id="expMonthPickerLabel"><?= date('F Y', strtotime($date_from)) ?></span>
         </div>
-        <div class="header-right">
+        <div class="header-right" style="overflow:visible;">
 
-          <!-- ── Dropdown calendar ── -->
+          <!-- ── Month Picker ── -->
           <div style="position:relative;" id="expMonthPickerWrap">
             <button type="button" id="expMonthPickerBtn" onclick="toggleExpMonthPicker()"
               style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;height:34px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--white);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
@@ -232,18 +232,36 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
               </div>
             </div>
           </div>
-          <!-- ── end calendar ── -->
+          <!-- ── end month picker ── -->
 
           <div class="filter-bar">
             <input type="text" id="searchInput" placeholder="Search…">
-            <select id="categoryFilter">
-              <option value="">All Categories</option>
-              <?php foreach ($all_cats as $cat): ?>
-                <option value="<?= htmlspecialchars($cat['expense_category']) ?>">
-                  <?= htmlspecialchars($cat['expense_category']) ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
+
+            <!-- ── Custom Category Dropdown ── -->
+            <div class="exp-cat-dropdown-wrap" id="expCatDropdownWrap">
+              <button type="button" class="exp-cat-trigger" id="expCatTrigger" onclick="toggleExpCatDropdown()">
+                <span id="expCatTriggerLabel">All Categories</span>
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12" height="12"
+                  id="expCatChevron">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              <!-- Hidden input — expenses.js reads #categoryFilter -->
+              <input type="hidden" id="categoryFilter" value="">
+              <div class="exp-cat-menu" id="expCatMenu" style="display:none;">
+                <button type="button" class="exp-cat-opt active" data-value="" onclick="selectExpCatOpt(this)">All
+                  Categories</button>
+                <?php foreach ($all_cats as $cat):
+                  $cv = htmlspecialchars($cat['expense_category']);
+                  ?>
+                  <button type="button" class="exp-cat-opt" data-value="<?= $cv ?>" onclick="selectExpCatOpt(this)">
+                    <span class="exp-cat-dot" data-cat="<?= $cv ?>"></span><?= $cv ?>
+                  </button>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <!-- ── end custom dropdown ── -->
+
           </div>
 
         </div>
@@ -300,6 +318,7 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
   </div>
 </div>
 
+<!-- ── Add / Edit Modal ── -->
 <div class="modal-overlay" id="expenseModal">
   <div class="modal">
     <button class="modal-close" onclick="ExpenseModal.close()">&times;</button>
@@ -320,9 +339,7 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
         <select id="fProperty">
           <option value="">Select Property</option>
           <?php foreach ($properties as $p): ?>
-            <option value="<?= $p['property_id'] ?>">
-              <?= htmlspecialchars($p['property_name']) ?>
-            </option>
+            <option value="<?= $p['property_id'] ?>"><?= htmlspecialchars($p['property_name']) ?></option>
           <?php endforeach; ?>
         </select>
       </div>
@@ -381,16 +398,17 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
 <script>
   window.PS_CSRF_TOKEN = <?= json_encode($_SESSION['csrf_token'] ?? '') ?>;
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Month picker (needs PHP values baked in) -->
 <script>
   (function () {
-    // Derive initial state from the hidden input (reflects the URL ?month param)
     const _initVal = document.getElementById('expMonthFilter')?.value || '';
     const _initParts = _initVal.split('-');
     let expPickerYear = _initParts[0] ? parseInt(_initParts[0]) : <?= $exp_cur_picker_year ?>;
     let expSelectedMonth = _initParts[1] || '<?= str_pad($exp_cur_picker_month, 2, '0', STR_PAD_LEFT) ?>';
 
-    // Single source of truth for which month button looks active
     function _highlightActive() {
       document.querySelectorAll('.exp-picker-month-btn').forEach(b => {
         const isActive = b.dataset.month === expSelectedMonth;
@@ -406,7 +424,7 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
       const d = document.getElementById('expMonthPickerDropdown');
       const isOpen = d.style.display !== 'none';
       d.style.display = isOpen ? 'none' : 'block';
-      if (!isOpen) _highlightActive(); // always sync on open
+      if (!isOpen) _highlightActive();
     };
     window.closeExpMonthPicker = function () {
       document.getElementById('expMonthPickerDropdown').style.display = 'none';
@@ -419,7 +437,7 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
     };
     window.selectExpPickerMonth = function (btn) {
       expSelectedMonth = btn.dataset.month;
-      _highlightActive(); // update all buttons at once — no dual highlight possible
+      _highlightActive();
     };
     window.applyExpMonthPicker = function () {
       const val = expPickerYear + '-' + expSelectedMonth;
@@ -435,14 +453,79 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
       history.replaceState(null, '', url);
       if (typeof loadExpenses === 'function') loadExpenses();
     };
-
-    // Close when clicking outside the picker
     document.addEventListener('click', function (e) {
       const wrap = document.getElementById('expMonthPickerWrap');
       if (wrap && !wrap.contains(e.target)) closeExpMonthPicker();
     });
   })();
 </script>
+
+<!-- Custom category dropdown -->
+<script>
+  (function () {
+    const CAT_COLOURS = {
+      Maintenance: '#E74C3C',
+      Utilities: '#2563c4',
+      Salaries: '#2ECC71',
+      Admin: '#deaf37',
+      Insurance: '#8B5CF6',
+      Other: '#94a3b8',
+    };
+
+    // Colour the dots on render
+    document.querySelectorAll('.exp-cat-dot').forEach(dot => {
+      const col = CAT_COLOURS[dot.dataset.cat] || '#94a3b8';
+      dot.style.background = col;
+    });
+
+    window.toggleExpCatDropdown = function () {
+      const menu = document.getElementById('expCatMenu');
+      const chevron = document.getElementById('expCatChevron');
+      const wrap = document.getElementById('expCatDropdownWrap');
+      if (!menu) return;
+      const isOpen = menu.style.display !== 'none';
+      menu.style.display = isOpen ? 'none' : 'block';
+      chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+      wrap.classList.toggle('open', !isOpen);
+    };
+
+    window.selectExpCatOpt = function (btn) {
+      const val = btn.dataset.value;
+
+      // Update hidden input + fire change so expenses.js picks it up
+      const hidden = document.getElementById('categoryFilter');
+      if (hidden) { hidden.value = val; hidden.dispatchEvent(new Event('change')); }
+
+      // Update trigger label
+      document.getElementById('expCatTriggerLabel').textContent = btn.textContent.trim();
+
+      // Active state
+      document.querySelectorAll('.exp-cat-opt').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Close
+      const menu = document.getElementById('expCatMenu');
+      const chevron = document.getElementById('expCatChevron');
+      const wrap = document.getElementById('expCatDropdownWrap');
+      if (menu) menu.style.display = 'none';
+      if (chevron) chevron.style.transform = '';
+      if (wrap) wrap.classList.remove('open');
+    };
+
+    // Close on outside click
+    document.addEventListener('click', function (e) {
+      const wrap = document.getElementById('expCatDropdownWrap');
+      if (wrap && !wrap.contains(e.target)) {
+        const menu = document.getElementById('expCatMenu');
+        const chevron = document.getElementById('expCatChevron');
+        if (menu) menu.style.display = 'none';
+        if (chevron) chevron.style.transform = '';
+        wrap.classList.remove('open');
+      }
+    });
+  })();
+</script>
+
 <script src="../../assets/js/admin/expenses.js"></script>
 
 <?php include '../../includes/layout_close.php'; ?>

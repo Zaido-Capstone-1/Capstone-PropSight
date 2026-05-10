@@ -176,33 +176,58 @@ function buildQS(array $overrides = []): string
             <div class="header-left">
                 Support Tickets
                 <span
-                    style="font-size:12px;font-weight:600;background:var(--hover,#f1f5f9);color:var(--text-soft,#666);border-radius:20px;padding:2px 10px;margin-left:8px;"><?= $ticketTotal ?></span>
+                    style="font-size:12px;font-weight:600;background:var(--hover,#f1f5f9);color:var(--text-soft,#666);border-radius:20px;padding:2px 10px;margin-left:8px;"
+                    id="sptTicketCount"><?= $ticketTotal ?></span>
             </div>
             <div class="header-right">
-                <form method="get" id="smToolbar" class="filter-bar" style="margin:0;">
+                <div class="filter-bar" style="margin:0;">
                     <div style="position:relative;display:flex;align-items:center;">
                         <svg style="position:absolute;left:9px;opacity:.4;flex-shrink:0;" width="13" height="13"
                             fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <circle cx="11" cy="11" r="8" />
                             <line x1="21" y1="21" x2="16.65" y2="16.65" />
                         </svg>
-                        <input type="text" name="search" value="<?= htmlspecialchars($search) ?>"
-                            placeholder="Search subject, user, category…" style="padding-left:28px;"
-                            onkeydown="if(event.key==='Enter')this.form.submit()">
+                        <input type="text" id="sptSearch" value="<?= htmlspecialchars($search) ?>"
+                            placeholder="Search subject, user, category…" style="padding-left:28px;">
                     </div>
-                    <select name="status" onchange="this.form.submit()">
-                        <option value="all" <?= $statusFilter === 'all' ? 'selected' : '' ?>>All Status</option>
-                        <option value="open" <?= $statusFilter === 'open' ? 'selected' : '' ?>>Open</option>
-                        <option value="in_progress" <?= $statusFilter === 'in_progress' ? 'selected' : '' ?>>In Progress
-                        </option>
-                        <option value="resolved" <?= $statusFilter === 'resolved' ? 'selected' : '' ?>>Resolved</option>
-                        <option value="closed" <?= $statusFilter === 'closed' ? 'selected' : '' ?>>Closed</option>
-                    </select>
-                    <?php if ($search || $statusFilter !== 'all'): ?>
-                        <a href="<?= buildQS(['p' => 1, 'status' => 'all', 'search' => '']) ?>" class="btn-outline"
-                            style="text-decoration:none;">Clear</a>
-                    <?php endif; ?>
-                </form>
+
+                    <!-- Custom status dropdown -->
+                    <div class="inv-status-dropdown-wrap" id="sptStatusWrap">
+                        <button type="button" class="inv-status-trigger" id="sptStatusTrigger"
+                            onclick="toggleSptStatus()">
+                            <span
+                                id="sptStatusLabel"><?= $statusFilter === 'all' ? 'All Status' : ucwords(str_replace('_', ' ', $statusFilter)) ?></span>
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12"
+                                height="12" id="sptStatusChevron">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        <input type="hidden" id="sptStatusVal" value="<?= htmlspecialchars($statusFilter) ?>">
+                        <div class="inv-status-menu" id="sptStatusMenu" style="display:none; right:0; left:auto;">
+                            <button type="button" class="inv-status-opt <?= $statusFilter === 'all' ? 'active' : '' ?>"
+                                data-value="all" onclick="selectSptStatus(this)">All Status</button>
+                            <button type="button" class="inv-status-opt <?= $statusFilter === 'open' ? 'active' : '' ?>"
+                                data-value="open" onclick="selectSptStatus(this)">
+                                <span class="inv-status-dot" style="background:#ef4444;"></span>Open
+                            </button>
+                            <button type="button"
+                                class="inv-status-opt <?= $statusFilter === 'in_progress' ? 'active' : '' ?>"
+                                data-value="in_progress" onclick="selectSptStatus(this)">
+                                <span class="inv-status-dot" style="background:#3b82f6;"></span>In Progress
+                            </button>
+                            <button type="button"
+                                class="inv-status-opt <?= $statusFilter === 'resolved' ? 'active' : '' ?>"
+                                data-value="resolved" onclick="selectSptStatus(this)">
+                                <span class="inv-status-dot" style="background:#22c55e;"></span>Resolved
+                            </button>
+                            <button type="button"
+                                class="inv-status-opt <?= $statusFilter === 'closed' ? 'active' : '' ?>"
+                                data-value="closed" onclick="selectSptStatus(this)">
+                                <span class="inv-status-dot" style="background:#6b7280;"></span>Closed
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -221,7 +246,7 @@ function buildQS(array $overrides = []): string
                         <th>ACTIONS</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="sptTableBody">
                     <?php if (empty($tickets)): ?>
                         <tr>
                             <td colspan="9">
@@ -237,10 +262,11 @@ function buildQS(array $overrides = []): string
                             $nameParts = array_filter(explode(' ', trim($tk['user_name'] ?? '')));
                             $initials = implode('', array_map(fn($w) => strtoupper($w[0]), array_slice($nameParts, 0, 2)));
                             $photo = $tk['user_photo'] ?? '';
+                            $search_val = strtolower(($tk['subject'] ?? '') . ' ' . ($tk['user_name'] ?? '') . ' ' . ($tk['category'] ?? ''));
                             ?>
-                            <tr>
-                                <td class="muted tkt-id">
-                                    #TKT-<?= str_pad((string) $tk['ticket_id'], 5, '0', STR_PAD_LEFT) ?>
+                            <tr data-status="<?= htmlspecialchars($tk['status']) ?>"
+                                data-search="<?= htmlspecialchars($search_val) ?>">
+                                <td class="muted tkt-id">#TKT-<?= str_pad((string) $tk['ticket_id'], 5, '0', STR_PAD_LEFT) ?>
                                 </td>
                                 <td class="subject-cell">
                                     <strong><?= htmlspecialchars(mb_strimwidth($tk['subject'] ?? '', 0, 55, '…')) ?></strong>
@@ -266,8 +292,7 @@ function buildQS(array $overrides = []): string
                                 <td><span class="badge <?= $tb['cls'] ?>"><?= $tb['label'] ?></span></td>
                                 <td class="muted" style="text-align:center;"><?= (int) $tk['msg_count'] ?></td>
                                 <td class="muted" style="white-space:nowrap;">
-                                    <?= date('M j, Y', strtotime($tk['created_at'])) ?>
-                                </td>
+                                    <?= date('M j, Y', strtotime($tk['created_at'])) ?></td>
                                 <td>
                                     <div class="tbl-actions">
                                         <button class="btn-icon btn-edit"
@@ -280,28 +305,43 @@ function buildQS(array $overrides = []): string
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
+                <tfoot id="sptTableFoot" style="display:none;">
+                    <tr>
+                        <td colspan="9">
+                            <div class="txn-pagination">
+                                <span class="txn-page-info" id="sptPageInfo"></span>
+                                <div class="txn-page-controls" id="sptPageControls" style="display:none;">
+                                    <button type="button" id="sptPrevBtn" class="txn-chevron-btn"
+                                        onclick="sptChangePage(-1)" disabled>
+                                        <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"
+                                            width="14" height="14">
+                                            <polyline points="15 18 9 12 15 6" />
+                                        </svg>
+                                    </button>
+                                    <span id="sptPageNumbers" class="txn-page-numbers"></span>
+                                    <button type="button" id="sptNextBtn" class="txn-chevron-btn"
+                                        onclick="sptChangePage(1)" disabled>
+                                        <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"
+                                            width="14" height="14">
+                                            <polyline points="9 18 15 12 9 6" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
 
-        <?php if ($ticketPages > 1): ?>
-            <div class="table-footer"
-                style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-                <span>
-                    Showing <strong><?= min($perPage, $ticketTotal - $offset) ?></strong> of
-                    <strong><?= $ticketTotal ?></strong> tickets
-                </span>
-                <div style="display:flex;gap:6px;">
-                    <a class="sm-page-btn <?= $page <= 1 ? 'disabled' : '' ?>" href="<?= buildQS(['p' => $page - 1]) ?>">←
-                        Prev</a>
-                    <?php for ($i = max(1, $page - 2); $i <= min($ticketPages, $page + 2); $i++): ?>
-                        <a class="sm-page-btn <?= $i === $page ? 'active' : '' ?>"
-                            href="<?= buildQS(['p' => $i]) ?>"><?= $i ?></a>
-                    <?php endfor; ?>
-                    <a class="sm-page-btn <?= $page >= $ticketPages ? 'disabled' : '' ?>"
-                        href="<?= buildQS(['p' => $page + 1]) ?>">Next →</a>
-                </div>
-            </div>
-        <?php endif; ?>
+        <div id="sptEmptyState" style="display:none;text-align:center;padding:52px 16px;">
+            <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"
+                style="margin:0 auto 12px;display:block;">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <div style="color:#aaa;font-size:14px;">No tickets match your filters.</div>
+        </div>
     </div>
 
     <div class="sm-modal-overlay" id="ticketModal">

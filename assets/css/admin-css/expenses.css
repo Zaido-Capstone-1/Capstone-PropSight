@@ -350,12 +350,6 @@
     letter-spacing: 0.5px;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   ADD to the bottom of expenses.css
-   (These replace the old .month-nav / .table-footer behaviour for the
-   new calendar-picker + tfoot-pagination design.)
-══════════════════════════════════════════════════════════════════════════ */
-
 /* ── Pagination footer ──────────────────────────────────────────────────── */
 #expTableFoot td {
     padding: 0;
@@ -387,7 +381,6 @@
     gap: 3px;
 }
 
-/* Chevron prev/next */
 .exp-chevron-btn {
     display: inline-flex;
     align-items: center;
@@ -413,7 +406,6 @@
     cursor: not-allowed;
 }
 
-/* Page number pills */
 .exp-page-numbers {
     display: flex;
     align-items: center;
@@ -455,7 +447,7 @@
     user-select: none;
 }
 
-/* ── Calendar picker button (matches transactions txn-picker style) ──────── */
+/* ── Calendar picker ── */
 #expMonthPickerBtn:hover {
     border-color: var(--primary, #3b6ef5);
     color: var(--primary, #3b6ef5);
@@ -473,21 +465,113 @@
     font-weight: 700 !important;
 }
 
-#searchInput:focus {
-    border-color: #4f8ef7 !important;
-    outline: none;
+/* ── Custom Category Dropdown ── */
+.exp-cat-dropdown-wrap {
+    position: relative;
 }
 
-#categoryFilter:focus {
-    border-color: #4f8ef7 !important;
-    outline: none;
+.exp-cat-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    padding: 8px 12px;
+    height: 34px;
+    border: 1.5px solid var(--border, #e5e7eb);
+    border-radius: 8px;
+    background: var(--white, #fff);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text, #111);
+    cursor: pointer;
+    white-space: nowrap;
+    box-sizing: border-box;
+    transition: border-color .15s, background .15s;
+    min-width: 148px;
 }
 
-/* ══════════════════════════════════════
-   RESPONSIVE
-══════════════════════════════════════ */
+.exp-cat-trigger:hover,
+.exp-cat-dropdown-wrap.open .exp-cat-trigger {
+    border-color: var(--primary, #2563c4);
+    background: var(--white, #fff);
+}
 
-/* Tablet */
+.exp-cat-trigger svg {
+    flex-shrink: 0;
+    transition: transform .2s;
+    color: var(--text-soft, #888);
+}
+
+.exp-cat-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 999;
+    background: #fff;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 6px 32px rgba(0, 0, 0, .14);
+    padding: 6px;
+    min-width: 175px;
+    animation: expCatDropIn .15s ease;
+}
+
+@keyframes expCatDropIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.exp-cat-opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 13px;
+    border: none;
+    background: none;
+    font-size: 13.5px;
+    font-weight: 400;
+    color: var(--text, #111);
+    cursor: pointer;
+    border-radius: 8px;
+    text-align: left;
+    transition: background .12s;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.exp-cat-opt:hover:not(.active) {
+    background: var(--hover, #f1f5f9);
+}
+
+.exp-cat-opt.active {
+    background: var(--inv-blue, #2563eb);
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.exp-cat-opt.active .exp-cat-dot {
+    opacity: .9;
+}
+
+.exp-cat-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+    background: #94a3b8;
+}
+
+/* ── Responsive ── */
 @media (max-width: 900px) {
     .filter-bar input {
         width: 150px;
@@ -498,10 +582,7 @@
     }
 }
 
-/* ≤768px — main mobile breakpoint */
 @media (max-width: 768px) {
-
-    /* Page header: stack buttons */
     .page-header {
         flex-direction: column;
         align-items: flex-start;
@@ -527,12 +608,10 @@
         gap: 10px;
     }
 
-    /* Charts: stack vertically */
     .two-col {
         flex-direction: column;
     }
 
-    /* Card filter header: full-width stack */
     .card-header-with-filters {
         flex-direction: column;
         align-items: flex-start;
@@ -562,20 +641,16 @@
     .filter-bar {
         width: 100%;
         flex-direction: row;
-        /* ← was column, change to row */
         gap: 8px;
     }
 
     .filter-bar input,
     .filter-bar select {
         width: 0;
-        /* ← remove fixed width */
         flex: 1;
-        /* ← let them share the row equally */
         min-width: 0;
     }
 
-    /* Scrollable table */
     #tableContainer {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -585,7 +660,6 @@
         min-width: 580px;
     }
 
-    /* Modal: full-screen on small screens */
     .modal {
         padding: 22px 18px;
         margin: 12px;
@@ -596,11 +670,14 @@
     .form-row {
         grid-template-columns: 1fr;
     }
+
+    .exp-cat-menu {
+        right: auto;
+        left: 0;
+    }
 }
 
-/* ≤480px — small phones */
 @media (max-width: 480px) {
-
     .stat-value {
         font-size: 20px;
     }

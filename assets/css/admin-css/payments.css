@@ -503,6 +503,179 @@
     }
 }
 
+/* ── Shared custom dropdown (matches invoice/transaction style) ── */
+.inv-status-dropdown-wrap {
+    position: relative;
+}
+
+.inv-status-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    height: 34px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--white);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    box-sizing: border-box;
+    transition: border-color .15s;
+    min-width: 118px;
+    justify-content: space-between;
+}
+
+.inv-status-trigger:hover,
+.inv-status-dropdown-wrap.open .inv-status-trigger {
+    border-color: #4f8ef7;
+}
+
+.inv-status-trigger svg {
+    flex-shrink: 0;
+    transition: transform .2s;
+    color: #6b7a90;
+}
+
+.inv-status-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    z-index: 999;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, .11);
+    padding: 5px;
+    min-width: 150px;
+    animation: invDropIn .15s ease;
+}
+
+@keyframes invDropIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.inv-status-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 11px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 7px;
+    text-align: left;
+    transition: background .12s;
+    white-space: nowrap;
+}
+
+.inv-status-opt:hover {
+    background: #f5f6fa;
+}
+
+.inv-status-opt.active {
+    background: #2563eb;
+    color: #fff;
+    font-weight: 600;
+}
+
+.inv-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+.inv-status-dot.paid {
+    background: #16a34a;
+}
+
+.inv-status-dot.pending {
+    background: #d97706;
+}
+
+.inv-status-dot.overdue {
+    background: #dc2626;
+}
+
+/* ── Mobile: balance month picker + status 50/50 ── */
+@media (max-width: 768px) {
+    #filterForm {
+        flex-wrap: wrap !important;
+        gap: 8px;
+    }
+
+    #monthPickerWrap,
+    #payStatusDropdownWrap {
+        flex: 1 1 calc(50% - 4px);
+        max-width: calc(50% - 4px);
+    }
+
+    #monthPickerBtn,
+    #payStatusDropdownWrap .inv-status-trigger {
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: space-between;
+    }
+
+    #filterForm input[name="q"] {
+        width: 100% !important;
+        flex: 1 1 100%;
+        box-sizing: border-box;
+    }
+
+    #monthPickerDropdown {
+        left: 0;
+        right: auto;
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .inv-status-menu {
+        left: auto;
+        right: 0;
+    }
+}
+
+#payTableFoot td {
+    padding: 0;
+    border-top: 1.5px solid var(--border);
+}
+
+.txn-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    gap: 12px;
+}
+
+.txn-page-info {
+    font-size: 12.5px;
+    color: var(--text-soft, #8a94a6);
+    font-weight: 400;
+}
+
+.txn-page-info strong {
+    font-weight: 600;
+    color: var(--text-soft, #8a94a6);
+}
+
 /* ── Payment Records filter bar ── */
 #filterForm {
     flex-wrap: nowrap;

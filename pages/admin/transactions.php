@@ -240,18 +240,53 @@ function formatPeso(int $n): string
                         </div>
                     </div>
 
-                    <select id="typeFilter">
-                        <option value="">All Types</option>
-                        <option value="Income">Income</option>
-                        <option value="Expense">Expense</option>
-                    </select>
+                    <!-- Type filter -->
+                    <div class="inv-status-dropdown-wrap" id="typeDropdownWrap">
+                        <button type="button" class="inv-status-trigger" id="typeTrigger"
+                            onclick="toggleTypeDropdown()">
+                            <span id="typeTriggerLabel">All Types</span>
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12"
+                                height="12" id="typeChevron">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        <input type="hidden" id="typeFilter" value="">
+                        <div class="inv-status-menu" id="typeMenu" style="display:none;">
+                            <button type="button" class="inv-status-opt active" data-value=""
+                                onclick="selectTypeOpt(this)">All Types</button>
+                            <button type="button" class="inv-status-opt" data-value="Income"
+                                onclick="selectTypeOpt(this)">
+                                <span class="inv-status-dot" style="background:#16a34a;"></span>Income
+                            </button>
+                            <button type="button" class="inv-status-opt" data-value="Expense"
+                                onclick="selectTypeOpt(this)">
+                                <span class="inv-status-dot" style="background:#dc2626;"></span>Expense
+                            </button>
+                        </div>
+                    </div>
 
-                    <select id="categoryFilter">
-                        <option value="">All Categories</option>
-                        <?php foreach ($categories as $cat): ?>
-                            <option value="<?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($cat) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <!-- Category filter -->
+                    <div class="inv-status-dropdown-wrap" id="catDropdownWrap">
+                        <button type="button" class="inv-status-trigger" id="catTrigger" onclick="toggleCatDropdown()">
+                            <span id="catTriggerLabel">All Categories</span>
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12"
+                                height="12" id="catChevron">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        <input type="hidden" id="categoryFilter" value="">
+                        <div class="inv-status-menu" id="catMenu" style="display:none;">
+                            <button type="button" class="inv-status-opt active" data-value=""
+                                onclick="selectCatOpt(this)">All Categories</button>
+                            <?php foreach ($categories as $cat): ?>
+                                <button type="button" class="inv-status-opt" data-value="<?= htmlspecialchars($cat) ?>"
+                                    onclick="selectCatOpt(this)">
+                                    <span class="inv-status-dot" style="background:#6366f1;"></span>
+                                    <?= htmlspecialchars($cat) ?>
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
 
                 </div>
             </div>

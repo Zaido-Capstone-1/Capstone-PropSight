@@ -338,13 +338,42 @@ endif; ?>
                     </div>
 
                     <!-- Status -->
-                    <select name="status" onchange="this.form.submit()" id="statusSelect"
-                        style="padding:7px 8px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12.5px;background:var(--white);color:var(--text);cursor:pointer;flex-shrink:0;width:110px;">
-                        <option value="all" <?= $filter_status === 'all' ? 'selected' : '' ?>>All Status</option>
-                        <option value="paid" <?= $filter_status === 'paid' ? 'selected' : '' ?>>Paid</option>
-                        <option value="pending" <?= $filter_status === 'pending' ? 'selected' : '' ?>>Pending</option>
-                        <option value="late" <?= $filter_status === 'late' ? 'selected' : '' ?>>Overdue</option>
-                    </select>
+                    <div class="inv-status-dropdown-wrap" id="payStatusDropdownWrap">
+                        <button type="button" class="inv-status-trigger" id="payStatusTrigger"
+                            onclick="togglePayStatusDropdown()">
+                            <span id="payStatusTriggerLabel">
+                                <?php
+                                $labels = ['all' => 'All Status', 'paid' => 'Paid', 'pending' => 'Pending', 'late' => 'Overdue'];
+                                echo $labels[$filter_status] ?? 'All Status';
+                                ?>
+                            </span>
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12"
+                                height="12" id="payStatusChevron">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        <input type="hidden" name="status" id="payStatusInput"
+                            value="<?= htmlspecialchars($filter_status) ?>">
+                        <div class="inv-status-menu" id="payStatusMenu" style="display:none; right:0; left:auto;">
+                            <button type="button" class="inv-status-opt <?= $filter_status === 'all' ? 'active' : '' ?>"
+                                data-value="all" onclick="selectPayStatusOpt(this)">All Status</button>
+                            <button type="button"
+                                class="inv-status-opt <?= $filter_status === 'paid' ? 'active' : '' ?>"
+                                data-value="paid" onclick="selectPayStatusOpt(this)">
+                                <span class="inv-status-dot paid"></span>Paid
+                            </button>
+                            <button type="button"
+                                class="inv-status-opt <?= $filter_status === 'pending' ? 'active' : '' ?>"
+                                data-value="pending" onclick="selectPayStatusOpt(this)">
+                                <span class="inv-status-dot pending"></span>Pending
+                            </button>
+                            <button type="button"
+                                class="inv-status-opt <?= $filter_status === 'late' ? 'active' : '' ?>"
+                                data-value="late" onclick="selectPayStatusOpt(this)">
+                                <span class="inv-status-dot overdue"></span>Overdue
+                            </button>
+                        </div>
+                    </div>
 
                 </form>
             </div><!-- /card-header -->
@@ -373,15 +402,20 @@ endif; ?>
                                 </td>
                             </tr>
                         <?php else: ?>
-                            <?php foreach ($pay_records as $p):
+                            <?php foreach ($records as $p):
                                 $badge = $p['payment_status'] === 'paid' ? 'success' : ($p['payment_status'] === 'late' ? 'danger' : 'pending');
                                 $label = $p['payment_status'] === 'paid' ? 'Paid' : ($p['payment_status'] === 'late' ? 'Overdue' : 'Pending');
                                 $display_name = $p['full_name'] ?? $p['tenant_name'] ?? '—';
-                                $initial = strtoupper(substr($display_name, 0, 1));
-                                $pay_date = $p['payment_date'] ? date('M d, Y', strtotime($p['payment_date'])) : '—';
+                                $initial = strtoupper(mb_substr($display_name, 0, 1));
                                 $payment_num = '#PAY-' . str_pad($p['payment_id'], 3, '0', STR_PAD_LEFT);
+                                $month_val = substr($p['payment_date'], 0, 7);
+                                $search_val = strtolower($p['payment_id'] . ' ' . $display_name . ' ' . ($p['unit_number'] ?? ''));
+                                $data_json = htmlspecialchars(json_encode($p), ENT_QUOTES);
                                 ?>
-                                <tr data-payment-id="<?= (int) $p['payment_id'] ?>">
+                                <tr data-payment-id="<?= (int) $p['payment_id'] ?>"
+                                    data-status="<?= htmlspecialchars($p['payment_status']) ?>"
+                                    data-month="<?= htmlspecialchars($month_val) ?>"
+                                    data-search="<?= htmlspecialchars($search_val) ?>">
                                     <td><strong><?= $payment_num ?></strong></td>
                                     <td>
                                         <div style="display:flex;align-items:center;gap:8px;">
@@ -433,44 +467,42 @@ endif; ?>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </tbody>
+                    <tfoot id="payTableFoot" style="display:none;">
+                        <tr>
+                            <td colspan="9">
+                                <div class="txn-pagination">
+                                    <span class="txn-page-info" id="payPageInfo"></span>
+                                    <div class="txn-page-controls" id="payPageControls" style="display:none;">
+                                        <button type="button" id="payPrevBtn" class="txn-chevron-btn"
+                                            onclick="payChangePage(-1)" disabled>
+                                            <svg fill="none" stroke="currentColor" stroke-width="2.2"
+                                                viewBox="0 0 24 24" width="14" height="14">
+                                                <polyline points="15 18 9 12 15 6" />
+                                            </svg>
+                                        </button>
+                                        <span id="payPageNumbers" class="txn-page-numbers"></span>
+                                        <button type="button" id="payNextBtn" class="txn-chevron-btn"
+                                            onclick="payChangePage(1)" disabled>
+                                            <svg fill="none" stroke="currentColor" stroke-width="2.2"
+                                                viewBox="0 0 24 24" width="14" height="14">
+                                                <polyline points="9 18 15 12 9 6" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tfoot>
                 </table>
 
-                <?php if ($pay_total_pages > 1): ?>
-                    <div
-                        style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);">
-                        <div style="font-size:13px;color:var(--text-soft);">
-                            Showing <?= $pay_offset + 1 ?>–<?= min($pay_offset + $pay_per_page, $pay_total_records) ?> of
-                            <?= $pay_total_records ?> payment(s)
-                        </div>
-                        <div style="display:flex;gap:4px;">
-                            <?php if ($pay_page > 1): ?>
-                                <a href="<?= $pay_base_url ?>pay_page=<?= $pay_page - 1 ?>"
-                                    style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;color:var(--text);">‹
-                                    Prev</a>
-                            <?php endif; ?>
-
-                            <?php for ($i = 1; $i <= $pay_total_pages; $i++): ?>
-                                <a href="<?= $pay_base_url ?>pay_page=<?= $i ?>"
-                                    style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;background:<?= $i === $pay_page ? 'var(--primary)' : 'transparent' ?>;color:<?= $i === $pay_page ? 'white' : 'var(--text)' ?>;"><?= $i ?></a>
-                            <?php endfor; ?>
-
-                            <?php if ($pay_page < $pay_total_pages): ?>
-                                <a href="<?= $pay_base_url ?>pay_page=<?= $pay_page + 1 ?>"
-                                    style="padding:6px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;text-decoration:none;color:var(--text);">Next
-                                    ›</a>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-                <?php if ($pay_total_pages <= 1 && $pay_total_records > 0): ?>
-                    <div
-                        style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--border);">
-                        <div style="font-size:13px;color:var(--text-soft);">
-                            Showing 1–<?= $pay_total_records ?> of <?= $pay_total_records ?> payment(s)
-                        </div>
-                    </div>
-                <?php endif; ?>
+                <div id="payEmptyState" style="display:none;text-align:center;padding:52px 16px;">
+                    <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"
+                        style="margin:0 auto 12px;display:block;">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <div style="color:#aaa;font-size:14px;">No payments match your filters.</div>
+                </div>
             </div>
         </div>
     </div>
@@ -641,10 +673,9 @@ endif; ?>
             const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
                 'October', 'November', 'December'
             ];
-            document.getElementById('monthPickerLabel').textContent = names[parseInt(selectedMonth) - 1] + ' ' +
-                pickerYear;
+            document.getElementById('monthPickerLabel').textContent = names[parseInt(selectedMonth) - 1] + ' ' + pickerYear;
             closeMonthPicker();
-            document.getElementById('filterForm').submit();
+            applyPayFilters();
         };
         document.addEventListener('click', function (e) {
             const wrap = document.getElementById('monthPickerWrap');

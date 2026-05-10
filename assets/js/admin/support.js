@@ -1,6 +1,6 @@
 /* ================================================================
-   support_maintenance.js
-   Place at: assets/js/admin/support_maintenance.js
+   support.js
+   Place at: assets/js/admin/support.js
    Depends on: ADMIN_ID being set inline by the PHP page
    ================================================================ */
 
@@ -75,7 +75,10 @@ function openTicketModal(ticketId, data) {
         </div>
     `;
 
-    document.getElementById('ticketStatusSelect').value = data.status || 'open';
+    // Set status select
+    const statusValue = data.status || 'open';
+    document.getElementById('ticketStatusSelect').value = statusValue;
+
     document.getElementById('ticketReplyBody').value = '';
     document.getElementById('ticketMsgThread').innerHTML =
         '<div style="text-align:center;color:#94a3b8;padding:20px;font-size:0.84rem;">Loading…</div>';
@@ -174,6 +177,127 @@ async function updateTicketStatus() {
             showToast(data.message || 'Failed to update status.', 'error');
         }
     } catch (e) {
-        showToast('Network error.', 'error')
+        showToast('Network error.', 'error');
     }
 }
+
+let sptCurrentPage = 1;
+const sptRowsPerPage = 15;
+
+function applySptFilters() {
+    const q = (document.getElementById('sptSearch')?.value || '').toLowerCase().trim();
+    const status = document.getElementById('sptStatusVal')?.value || '';
+
+    let count = 0;
+    document.querySelectorAll('#sptTableBody tr').forEach(row => {
+        row.classList.remove('spt-pg-hidden');
+        const show =
+            (!q || (row.dataset.search || '').includes(q)) &&
+            (!status || status === 'all' || row.dataset.status === status);
+        row.style.display = show ? '' : 'none';
+        if (show) count++;
+    });
+
+    const empty = document.getElementById('sptEmptyState');
+    if (empty) empty.style.display = count === 0 ? 'block' : 'none';
+
+    const countEl = document.getElementById('sptTicketCount');
+    if (countEl) countEl.textContent = count;
+
+    sptCurrentPage = 1;
+    paginateSpt();
+}
+
+function paginateSpt() {
+    const visible = Array.from(document.querySelectorAll('#sptTableBody tr'))
+        .filter(r => r.style.display !== 'none' && !r.classList.contains('spt-pg-hidden'));
+    const total = visible.length;
+    const totalPages = Math.max(1, Math.ceil(total / sptRowsPerPage));
+    sptCurrentPage = Math.min(sptCurrentPage, totalPages);
+
+    const start = (sptCurrentPage - 1) * sptRowsPerPage;
+    const end = start + sptRowsPerPage;
+
+    visible.forEach((row, i) => {
+        if (i >= start && i < end) { row.style.display = ''; row.classList.remove('spt-pg-hidden'); }
+        else { row.classList.add('spt-pg-hidden'); row.style.display = 'none'; }
+    });
+
+    renderSptFoot(total, totalPages, start, end);
+}
+
+function renderSptFoot(total, totalPages, start, end) {
+    const foot = document.getElementById('sptTableFoot');
+    const info = document.getElementById('sptPageInfo');
+    const controls = document.getElementById('sptPageControls');
+    const prevBtn = document.getElementById('sptPrevBtn');
+    const nextBtn = document.getElementById('sptNextBtn');
+    if (!foot) return;
+
+    if (total === 0) { foot.style.display = 'none'; return; }
+    foot.style.display = '';
+    info.innerHTML = `Showing <strong>${start + 1}–${Math.min(end, total)}</strong> of <strong>${total}</strong> ticket(s)`;
+
+    if (totalPages <= 1) { if (controls) controls.style.display = 'none'; return; }
+    if (controls) controls.style.display = 'flex';
+    if (prevBtn) prevBtn.disabled = sptCurrentPage <= 1;
+    if (nextBtn) nextBtn.disabled = sptCurrentPage >= totalPages;
+
+    const wrap = document.getElementById('sptPageNumbers');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    const cur = sptCurrentPage;
+    const nums = [...new Set([1, totalPages, cur, cur - 1, cur + 1].filter(n => n >= 1 && n <= totalPages))].sort((a, b) => a - b);
+    nums.forEach((n, i) => {
+        if (i > 0 && n > nums[i - 1] + 1) {
+            const el = document.createElement('span');
+            el.className = 'txn-pg-ellipsis'; el.textContent = '…';
+            wrap.appendChild(el);
+        }
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'txn-pg-num' + (n === cur ? ' active' : '');
+        btn.textContent = n;
+        btn.onclick = () => { sptCurrentPage = n; paginateSpt(); };
+        wrap.appendChild(btn);
+    });
+}
+
+window.sptChangePage = function (dir) { sptCurrentPage += dir; paginateSpt(); };
+
+/* ── Status dropdown (filter bar) ── */
+window.toggleSptStatus = function () {
+    const menu = document.getElementById('sptStatusMenu');
+    const chevron = document.getElementById('sptStatusChevron');
+    const wrap = document.getElementById('sptStatusWrap');
+    const isOpen = menu.style.display !== 'none';
+    menu.style.display = isOpen ? 'none' : 'block';
+    chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+    wrap.classList.toggle('open', !isOpen);
+};
+
+window.selectSptStatus = function (btn) {
+    document.getElementById('sptStatusVal').value = btn.dataset.value;
+    document.getElementById('sptStatusLabel').textContent = btn.textContent.trim();
+    document.querySelectorAll('#sptStatusMenu .inv-status-opt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('sptStatusMenu').style.display = 'none';
+    document.getElementById('sptStatusChevron').style.transform = '';
+    document.getElementById('sptStatusWrap').classList.remove('open');
+    applySptFilters();
+};
+
+document.addEventListener('click', function (e) {
+    const wrap = document.getElementById('sptStatusWrap');
+    if (wrap && !wrap.contains(e.target)) {
+        const menu = document.getElementById('sptStatusMenu');
+        const chevron = document.getElementById('sptStatusChevron');
+        if (menu) menu.style.display = 'none';
+        if (chevron) chevron.style.transform = '';
+        wrap.classList.remove('open');
+    }
+});
+
+document.getElementById('sptSearch')?.addEventListener('input', applySptFilters);
+
+applySptFilters();
