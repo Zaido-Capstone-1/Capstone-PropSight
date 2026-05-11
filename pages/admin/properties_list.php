@@ -27,21 +27,24 @@ include '../../includes/properties.php';
 
 ?>
 
-<div class="page-header">
-  <div class="top-header">
-    <h2>All Properties</h2>
-    <div class="page-header-sub">Manage and monitor all registered properties</div>
-  </div>
-  <a href="add_property.php" class="btn btn-primary">
-    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-    Add Property
-  </a>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+  <div class="dash-page-header">
+    <div class="dash-header-left">
+      <h1 class="dash-title">All Properties</h1>
+      <p class="dash-subtitle">Manage and monitor all registered properties.</p>
+    </div>
+    <div class="dash-header-actions">
+      <a href="add_property.php" class="btn btn-primary">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Add Property
+      </a>
+    </div>
+  </div>
   <div class="cards-area">
     <div class="stat-row">
 
@@ -288,7 +291,7 @@ include '../../includes/properties.php';
   #typeSelect:focus {
     border-color: #4f8ef7 !important;
     outline: none;
-}
+  }
 </style>
 
 <script>

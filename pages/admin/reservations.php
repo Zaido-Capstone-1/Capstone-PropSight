@@ -112,15 +112,15 @@ function fmtDate($d)
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/reservation.css">
-
-<div class="page-header">
-    <div class="top-header">
-        <h2>Reservations</h2>
-        <div class="page-header-sub">Track all current and upcoming booking requests</div>
-    </div>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner res-page">
+    <div class="dash-page-header">
+        <div class="dash-header-left">
+            <h1 class="dash-title">Reservations</h1>
+            <p class="dash-subtitle">Track all current and upcoming booking requests.</p>
+        </div>
+    </div>
     <div class="cards-area">
 
         <div class="res-stats" id="statsRow">
@@ -371,7 +371,7 @@ function fmtDate($d)
         allRows: <?= json_encode(array_map(function ($b) {
             $unitLabel = !empty($b['unit_name'])
                 ? $b['unit_name']
-                : trim(($b['property_name'] ?? '') . ' — Unit ' . ($b['unit_number'] ?? ''));
+                : trim(($b['property_name'] ?? '') . ' — ' . ($b['unit_number'] ?? ''));
 
             return [
                 'booking_id' => (int) ($b['booking_id'] ?? 0),

@@ -50,21 +50,23 @@ function errClass($key)
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="../../assets/css/admin-css/add_property-inline.css">
-
-<div class="page-header">
-  <div class="top-header">
-    <h2>Add New Property</h2>
-    <div class="page-header-sub">Fill in the details to register a new property</div>
-  </div>
-  <a href="properties_list.php" class="btn btn-secondary">
-    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
-    Back to List
-  </a>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+  <div class="dash-page-header">
+    <div class="dash-header-left">
+      <h1 class="dash-title">Add New Property</h1>
+      <p class="dash-subtitle">Fill in the details to register a new property.</p>
+    </div>
+    <div class="dash-header-actions">
+      <a href="properties_list.php" class="btn btn-secondary">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Back to List
+      </a>
+    </div>
+  </div>
   <div class="cards-area">
 
     <?php if ($success): ?>
@@ -82,7 +84,8 @@ function errClass($key)
 
       <form method="POST" action="../../api/admin/add_property.php" novalidate>
 
-        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">
+        <input type="hidden" name="csrf_token"
+          value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">
 
         <div class="form-grid">
           <div class="form-group">

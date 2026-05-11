@@ -195,34 +195,36 @@ foreach ($topUnits as $u) {
   $unitBookingCounts[] = (int) $u['total_bookings'];
 }
 ?>
-
-<div class="page-header">
-  <div class="top-header">
-    <h2>Booking Reports</h2>
-    <div class="page-header-sub">Reservation trends, cancellations, and booking analytics</div>
-  </div>
-  <div style="display:flex;gap:8px;align-items:center;">
-    <form method="GET" style="display:flex;gap:8px;">
-      <select name="range" onchange="this.form.submit()"
-        style="padding:9px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--white);">
-        <option value="30" <?= $range === '30' ? 'selected' : '' ?>>Last 30 days</option>
-        <option value="60" <?= $range === '60' ? 'selected' : '' ?>>Last 60 days</option>
-        <option value="365" <?= $range === '365' ? 'selected' : '' ?>>This year</option>
-        <option value="all" <?= $range === 'all' ? 'selected' : '' ?>>All time</option>
-      </select>
-    </form>
-    <button class="btn btn-secondary" onclick="exportCSV()">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px;">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <polyline points="7 10 12 15 17 10" />
-        <line x1="12" y1="15" x2="12" y2="3" />
-      </svg>
-      Export
-    </button>
-  </div>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+
+  <div class="dash-page-header">
+    <div class="dash-header-left">
+      <h1 class="dash-title">Booking Reports</h1>
+      <p class="dash-subtitle">Reservation trends, cancellations, and booking analytics.</p>
+    </div>
+    <div class="dash-header-actions">
+      <form method="GET" style="display:flex;gap:8px;">
+        <select name="range" onchange="this.form.submit()"
+          style="padding:9px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--white);">
+          <option value="30" <?= $range === '30' ? 'selected' : '' ?>>Last 30 days</option>
+          <option value="60" <?= $range === '60' ? 'selected' : '' ?>>Last 60 days</option>
+          <option value="365" <?= $range === '365' ? 'selected' : '' ?>>This year</option>
+          <option value="all" <?= $range === 'all' ? 'selected' : '' ?>>All time</option>
+        </select>
+      </form>
+      <button class="btn btn-secondary" onclick="exportCSV()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Export
+      </button>
+    </div>
+  </div>
+
   <div class="cards-area">
 
     <div class="stat-row">

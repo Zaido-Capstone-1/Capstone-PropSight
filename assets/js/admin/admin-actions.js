@@ -303,41 +303,6 @@ PS.initUnits = function () {
    6.  PAYMENTS PAGE
    ───────────────────────────────────────────── */
 PS.initPayments = function () {
-    // document.querySelectorAll('.page-header .btn-primary').forEach(btn => {
-    //     if (btn.textContent.trim().includes('Record Payment')) {
-    //         btn.addEventListener('click', () => {
-    //             PS.openModal(`
-    //       <div class="ps-modal-title">Record Payment</div>
-    //       <div class="ps-modal-grid">
-    //         <div class="form-group"><label>Tenant</label>
-    //           <select id="ps-pay-tenant"><option>Zaldy Co – A-101</option><option>Bongbong Marcos – C-301</option><option>Sarah Duterte – B-201</option><option>Juan dela Cruz – A-102</option><option>Rosa Reyes – B-202</option><option>Anna Torres – C-302</option><option>Pedro Cruz – A-103</option></select>
-    //         </div>
-    //         <div class="form-group"><label>Amount (₱)</label><input type="number" min="0" placeholder="0.00" /></div>
-    //         <div class="form-group"><label>Payment Method</label>
-    //           <select><option>GCash</option><option>Maya</option><option>Cash</option><option>Bank Transfer</option><option>Cheque</option></select>
-    //         </div>
-    //         <div class="form-group"><label>Date Paid</label><input type="date" /></div>
-    //         <div class="form-group"><label>Billing Period</label><input type="month" /></div>
-    //         <div class="form-group"><label>Status</label>
-    //           <select><option>Paid</option><option>Partial</option></select>
-    //         </div>
-    //         <div class="form-group full"><label>Reference / Notes</label><input type="text" placeholder="Reference number or notes" /></div>
-    //       </div>
-    //       <div class="ps-modal-footer">
-    //         <button class="btn btn-secondary" data-ps-cancel>Cancel</button>
-    //         <button class="btn btn-primary" id="ps-save-payment">Record Payment</button>
-    //       </div>
-    //     `, {
-    //                 onMount(bd) {
-    //                     bd.querySelector('#ps-save-payment').addEventListener('click', () => {
-    //                         PS.toast('Payment recorded successfully!', 'success');
-    //                         bd.classList.remove('open'); setTimeout(() => bd.remove(), 220);
-    //                     });
-    //                 }
-    //             });
-    //         });
-    //     }
-    // });
 
     // Status filter + month filter
     document.querySelectorAll('.card-header select, .card-header input[type="month"]').forEach(el => {
@@ -563,36 +528,6 @@ PS.initMessages = function () {
         composeInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
     }
 
-    // New Message button
-    // document.querySelectorAll('.page-header .btn-primary').forEach(btn => {
-    //     if (btn.textContent.trim().includes('New Message')) {
-    //         btn.addEventListener('click', () => {
-    //             PS.openModal(`
-    //       <div class="ps-modal-title">New Message</div>
-    //       <div class="ps-modal-grid">
-    //         <div class="form-group full"><label>Recipient</label>
-    //           <select><option>Zaldy Co</option><option>Carlos Reyes</option><option>Bongbong Marcos</option><option>Sarah Duterte</option><option>Maria Santos</option><option>All Tenants</option></select>
-    //         </div>
-    //         <div class="form-group full"><label>Message</label><textarea id="ps-new-msg" placeholder="Type your message..."></textarea></div>
-    //       </div>
-    //       <div class="ps-modal-footer">
-    //         <button class="btn btn-secondary" data-ps-cancel>Cancel</button>
-    //         <button class="btn btn-primary" id="ps-send-new-msg">Send</button>
-    //       </div>
-    //     `, {
-    //                 onMount(bd) {
-    //                     bd.querySelector('#ps-send-new-msg').addEventListener('click', () => {
-    //                         const msg = bd.querySelector('#ps-new-msg').value.trim();
-    //                         if (!msg) { PS.toast('Please enter a message.', 'error'); return; }
-    //                         PS.toast('Message sent!', 'success');
-    //                         bd.classList.remove('open'); setTimeout(() => bd.remove(), 220);
-    //                     });
-    //                 }
-    //             });
-    //         });
-    //     }
-    // });
-
     // Message search
     const msgSearch = document.querySelector('.msg-list-header input');
     if (msgSearch) {
@@ -605,32 +540,6 @@ PS.initMessages = function () {
         });
     }
 };
-
-/* ─────────────────────────────────────────────
-   11.  PROPERTIES LIST PAGE
-   ───────────────────────────────────────────── */
-// PS.initProperties = function () {
-//     // View buttons
-//     document.querySelectorAll('tbody tr').forEach(tr => {
-//         const cells = [...tr.cells];
-//         const name = cells[0]?.textContent.trim();
-
-//         const viewBtn = tr.querySelector('.btn-secondary');
-//         if (viewBtn) {
-//             viewBtn.addEventListener('click', e => {
-//                 e.preventDefault();
-//                 PS.detailModal(`Property: ${name}`, [
-//                     ['Name', cells[0]?.textContent.trim() || '—'],
-//                     ['Address', cells[1]?.textContent.trim() || '—'],
-//                     ['Units', cells[2]?.textContent.trim() || '—'],
-//                     ['Occupied', cells[3]?.textContent.trim() || '—'],
-//                     ['Revenue', cells[4]?.textContent.trim() || '—'],
-//                     ['Status', cells[5]?.querySelector('.badge')?.textContent.trim() || '—'],
-//                 ]);
-//             });
-//         }
-//     });
-// };
 
 /* ─────────────────────────────────────────────
    12.  SETTINGS PAGE

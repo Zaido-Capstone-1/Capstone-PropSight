@@ -150,63 +150,64 @@ $occ_rate = round(($total_booked + $total_partial * 0.5) / $days_in_month * 100)
 $selected_day = $today_day > 0 ? $today_day : 1;
 $selected_bookings = $bookings_by_day[$selected_day] ?? [];
 ?>
+
 <link rel="stylesheet" href="../../assets/css/admin-css/calendar.css">
-
-<div class="page-header">
-    <div class="top-header">
-        <h2>Calendar / Availability</h2>
-        <div class="page-header-sub">Manage property availability and track reservations by date</div>
-    </div>
-    <div style="display:flex;gap:8px;">
-        <button class="btn btn-secondary" onclick="exportMonthReport()">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Export
-        </button>
-        <button class="btn btn-primary" onclick="openBlockModal()">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            Block Dates
-        </button>
-    </div>
-</div>
-
-<div class="block-modal-overlay" id="blockModalOverlay">
-    <div class="block-modal">
-        <div class="block-modal-header">
-            <div class="block-modal-title" id="blockModalTitle">Block Date</div>
-            <button class="block-modal-close" onclick="closeBlockModal()">✕</button>
-        </div>
-        <div class="block-modal-body">
-            <div class="block-field">
-                <div class="block-label">Date</div>
-                <input type="date" class="block-input" id="blockDateInput">
-            </div>
-            <div class="block-field" id="blockReasonField">
-                <div class="block-label">Reason (optional)</div>
-                <input type="text" class="block-input" id="blockReasonInput"
-                    placeholder="e.g. Maintenance, Staff holiday…">
-            </div>
-        </div>
-        <div class="block-modal-footer">
-            <button class="block-btn-cancel" onclick="closeBlockModal()">Cancel</button>
-            <button class="block-btn-unblock" id="unblockBtn" style="display:none;" onclick="submitUnblock()">Unblock
-                Date</button>
-            <button class="block-btn-confirm" id="blockBtn" onclick="submitBlock()">Block Date</button>
-        </div>
-    </div>
-</div>
-
-<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner" id="calPageInner" style="overflow-y:auto;padding-bottom:90px;">
+    <div class="dash-page-header">
+        <div class="dash-header-left">
+            <h1 class="dash-title">Calendar / Availability</h1>
+            <p class="dash-subtitle">Manage property availability and track reservations by date.</p>
+        </div>
+        <div class="dash-header-actions">
+            <button class="btn btn-secondary" onclick="exportMonthReport()">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Export
+            </button>
+            <button class="btn btn-primary" onclick="openBlockModal()">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                Block Dates
+            </button>
+        </div>
+    </div>
+    <div class="block-modal-overlay" id="blockModalOverlay">
+        <div class="block-modal">
+            <div class="block-modal-header">
+                <div class="block-modal-title" id="blockModalTitle">Block Date</div>
+                <button class="block-modal-close" onclick="closeBlockModal()">✕</button>
+            </div>
+            <div class="block-modal-body">
+                <div class="block-field">
+                    <div class="block-label">Date</div>
+                    <input type="date" class="block-input" id="blockDateInput">
+                </div>
+                <div class="block-field" id="blockReasonField">
+                    <div class="block-label">Reason (optional)</div>
+                    <input type="text" class="block-input" id="blockReasonInput"
+                        placeholder="e.g. Maintenance, Staff holiday…">
+                </div>
+            </div>
+            <div class="block-modal-footer">
+                <button class="block-btn-cancel" onclick="closeBlockModal()">Cancel</button>
+                <button class="block-btn-unblock" id="unblockBtn" style="display:none;"
+                    onclick="submitUnblock()">Unblock
+                    Date</button>
+                <button class="block-btn-confirm" id="blockBtn" onclick="submitBlock()">Block Date</button>
+            </div>
+
+            <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+        </div>
+    </div>
     <div class="cal-page-wrap">
 
         <div class="cal-main">
@@ -499,7 +500,8 @@ $selected_bookings = $bookings_by_day[$selected_day] ?? [];
         selectedDay: <?= $selected_day ?>,
         currentMonth: '<?= $year ?>-<?= str_pad($month_num, 2, '0', STR_PAD_LEFT) ?>',
         prevUrl: '?year=<?= $prev_year ?>&month=<?= $prev_month ?>',
-        nextUrl: '?year=<?= $next_year ?>&month=<?= $next_month ?>'
+        nextUrl: '?year=<?= $next_year ?>&month=<?= $next_month ?>',
+        csrfToken: '<?= htmlspecialchars($_SESSION['csrf_token']) ?>'
     };
 </script>
 <script src="../../assets/js/admin/calendar.js"></script>

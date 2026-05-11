@@ -59,19 +59,102 @@ async function refreshStats() {
 
 // ── Filters ───────────────────────────────────────────────────────────────────
 function applyFilters() {
+    var search = (document.getElementById('am-search')?.value || '').toLowerCase().trim();
     var status = document.getElementById('am-filter-status').value;
     var property = document.getElementById('am-filter-property').value;
-    var cards = document.querySelectorAll('.amenity-card');
+
     var sections = document.querySelectorAll('.prop-section');
-    var visible = 0;
+    var totalVisible = 0;
+
+    sections.forEach(function (section) {
+        var pid = String(section.dataset.propertyId);
+
+        // Hide whole section if property filter doesn't match
+        if (property && pid !== property) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = '';
+
+        var cards = section.querySelectorAll('.amenity-card');
+        var sectionVisible = 0;
+
+        cards.forEach(function (card) {
+            var nameMatch = !search || (card.dataset.search || '').includes(search);
+            var statusMatch = !status || card.dataset.status === status;
+
+            if (nameMatch && statusMatch) {
+                card.style.display = '';
+                sectionVisible++;
+                totalVisible++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Show/hide empty state per section
+        var emptyEl = section.querySelector('.am-empty');
+        var grid = section.querySelector('.amenity-grid');
+        if (grid) {
+            var hasRealCards = grid.querySelectorAll('.amenity-card').length > 0;
+            if (hasRealCards) {
+                // Show a "no results" message if all cards are hidden
+                var noResult = section.querySelector('.am-no-result');
+                if (sectionVisible === 0) {
+                    if (!noResult) {
+                        noResult = document.createElement('div');
+                        noResult.className = 'am-empty am-no-result';
+                        noResult.textContent = 'No amenities match your filters.';
+                        grid.appendChild(noResult);
+                    }
+                } else {
+                    if (noResult) noResult.remove();
+                }
+            }
+        }
+    });
 
     var countEl = document.getElementById('am-count');
-    if (countEl) countEl.textContent = 'Showing ' + visible + ' amenit' + (visible !== 1 ? 'ies' : 'y');
+    if (countEl) countEl.textContent = 'Showing ' + totalVisible + ' amenit' + (totalVisible !== 1 ? 'ies' : 'y');
 }
 
-document.getElementById('am-filter-status').addEventListener('change', applyFilters);
-document.getElementById('am-filter-property').addEventListener('change', applyFilters);
+document.getElementById('am-search')?.addEventListener('input', applyFilters);
 applyFilters();
+
+function toggleUrDrop(wrapId) {
+    const wrap = document.getElementById(wrapId);
+    const menu = wrap.querySelector('.ur-drop-menu');
+    const isOpen = menu.style.display !== 'none';
+    document.querySelectorAll('.ur-drop-wrap').forEach(w => {
+        w.querySelector('.ur-drop-menu').style.display = 'none';
+        w.classList.remove('open');
+    });
+    if (!isOpen) {
+        menu.style.display = 'block';
+        wrap.classList.add('open');
+    }
+}
+
+function selectUrDrop(wrapId, labelId, inputId, btn) {
+    document.getElementById(labelId).textContent = btn.textContent.trim();
+    document.getElementById(inputId).value = btn.dataset.value;
+    const wrap = document.getElementById(wrapId);
+    wrap.querySelectorAll('.ur-drop-opt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    wrap.querySelector('.ur-drop-menu').style.display = 'none';
+    wrap.classList.remove('open');
+    applyFilters();
+}
+
+document.addEventListener('click', function (e) {
+    document.querySelectorAll('.ur-drop-wrap').forEach(wrap => {
+        if (!wrap.contains(e.target)) {
+            wrap.querySelector('.ur-drop-menu').style.display = 'none';
+            wrap.classList.remove('open');
+        }
+    });
+});
 
 // ── Icon picker ───────────────────────────────────────────────────────────────
 function iconPickerHtml(selected) {

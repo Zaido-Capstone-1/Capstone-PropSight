@@ -212,24 +212,15 @@ $active_page = 'dashboard';
 
   <div class="main">
     <div class="content" style="margin-top:5px;">
-      <div class="welcome-inline">
-        <div class="welcome-avatar<?= $_sb_photo_url ? '' : ' welcome-avatar-initials' ?>">
-          <?php if ($_sb_photo_url): ?>
-            <img src="<?= htmlspecialchars($_sb_photo_url) ?>" alt="Profile"
-              style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
-          <?php else: ?>
-            <?= htmlspecialchars($_sb_initials) ?>
-          <?php endif; ?>
-        </div>
-        <div class="welcome-text">
-          <p class="welcome-greeting">Welcome back,
-            <strong><?= htmlspecialchars($_SESSION['first_name'] ?? $_SESSION['name'] ?? 'Admin') ?>!</strong>
-          </p>
-          <p class="welcome-sub">Here's what's happening with your properties today.</p>
-        </div>
-      </div>
-
       <div class="page-inner">
+        <div class="dash-page-header">
+          <div class="dash-header-left">
+            <h1 class="dash-title">Dashboard</h1>
+            <p class="dash-subtitle">Welcome back,
+              <strong><?= htmlspecialchars($_SESSION['first_name'] ?? $_SESSION['name'] ?? 'Admin') ?></strong> — here's
+              what's happening with your properties today.</p>
+          </div>
+        </div>
         <div class="cards-area">
 
           <div class="stat-row">

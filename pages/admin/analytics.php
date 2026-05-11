@@ -161,24 +161,27 @@ if (empty($sourceLabels)) {
 $sourceTotal = array_sum($sourceData) ?: 1;
 ?>
 
-<div class="page-header">
-  <div class="top-header">
-    <h2>Analytics</h2>
-    <div class="page-header-sub">Performance insights across all properties — <?= $year ?></div>
-  </div>
-  <div style="display:flex;gap:8px;">
-    <button class="btn btn-primary" onclick="window.print()">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <polyline points="7 10 12 15 17 10" />
-        <line x1="12" y1="15" x2="12" y2="3" />
-      </svg>
-      Export
-    </button>
-  </div>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+  <div class="dash-page-header">
+    <div class="dash-header-left">
+      <h1 class="dash-title">Analytics</h1>
+      <p class="dash-subtitle">Performance insights across all properties — <strong>
+          <?= $year ?>.
+        </strong></p>
+    </div>
+    <div class="dash-header-actions">
+      <button class="btn btn-primary" onclick="window.print()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Export
+      </button>
+    </div>
+  </div>
   <div class="cards-area">
 
     <div class="stat-row">

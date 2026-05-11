@@ -255,21 +255,19 @@ function renderTable(expenses) {
             <td style="font-weight:700;color:var(--danger);">₱ ${fmt(e.amount, 0)}</td>
             <td>
                 <div class="tbl-actions">
-                    <button class="btn-icon btn-edit" data-action="edit" data-id="${e.expense_id}">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <button class="btn-icon btn-edit" data-action="edit" data-id="${e.expense_id}" title="Edit">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                         </svg>
-                        Edit
                     </button>
-                    <button class="btn-icon btn-delete" data-action="delete" data-id="${e.expense_id}">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <button class="btn-icon btn-delete" data-action="delete" data-id="${e.expense_id}" title="Delete">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <polyline points="3 6 5 6 21 6"/>
                             <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                             <path d="M10 11v6M14 11v6"/>
                             <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
                         </svg>
-                        Delete
                     </button>
                 </div>
             </td>
@@ -643,3 +641,196 @@ _psChannel.onmessage = (e) => {
         loadExpenses();
     }
 };
+
+/* ══════════════════════════════════════════════════════════════════════
+   MONTH PICKER  (moved from inline PHP script)
+══════════════════════════════════════════════════════════════════════ */
+(function () {
+    // Read initial values from the DOM — the hidden input already has the
+    // PHP-rendered value baked in as an HTML attribute, so no PHP echo needed.
+    const _initVal = document.getElementById('expMonthFilter')?.value || '';
+    const _initParts = _initVal.split('-');
+    let expPickerYear = _initParts[0] ? parseInt(_initParts[0]) : new Date().getFullYear();
+    let expSelectedMonth = _initParts[1] || String(new Date().getMonth() + 1).padStart(2, '0');
+
+    function _highlightActive() {
+        document.querySelectorAll('.exp-picker-month-btn').forEach(b => {
+            const isActive = b.dataset.month === expSelectedMonth;
+            b.classList.toggle('exp-picker-active', isActive);
+            b.style.background = isActive ? 'var(--primary,#3b6ef5)' : 'var(--white)';
+            b.style.borderColor = isActive ? 'var(--primary,#3b6ef5)' : 'var(--border)';
+            b.style.color = isActive ? 'white' : 'var(--text)';
+            b.style.fontWeight = isActive ? '700' : '500';
+        });
+    }
+
+    window.toggleExpMonthPicker = function () {
+        const d = document.getElementById('expMonthPickerDropdown');
+        const isOpen = d.style.display !== 'none';
+        d.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen) _highlightActive();
+    };
+
+    window.closeExpMonthPicker = function () {
+        document.getElementById('expMonthPickerDropdown').style.display = 'none';
+    };
+
+    window.changeExpPickerYear = function (dir) {
+        const newYear = expPickerYear + dir;
+        if (newYear < 2000 || newYear > new Date().getFullYear() + 1) return;
+        expPickerYear = newYear;
+        document.getElementById('expPickerYear').textContent = expPickerYear;
+    };
+
+    window.selectExpPickerMonth = function (btn) {
+        expSelectedMonth = btn.dataset.month;
+        _highlightActive();
+    };
+
+    window.applyExpMonthPicker = function () {
+        const val = expPickerYear + '-' + expSelectedMonth;
+        const names = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+        const label = names[parseInt(expSelectedMonth) - 1] + ' ' + expPickerYear;
+        document.getElementById('expMonthFilter').value = val;
+        document.getElementById('expMonthPickerLabel').textContent = label;
+        document.getElementById('expMonthPickerLabel2').textContent = label;
+        closeExpMonthPicker();
+        const url = new URL(location.href);
+        url.searchParams.set('month', val);
+        history.replaceState(null, '', url);
+        if (typeof loadExpenses === 'function') loadExpenses();
+    };
+
+    document.addEventListener('click', function (e) {
+        const wrap = document.getElementById('expMonthPickerWrap');
+        if (wrap && !wrap.contains(e.target)) closeExpMonthPicker();
+    });
+})();
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   CATEGORY DROPDOWN  (moved from inline PHP script)
+══════════════════════════════════════════════════════════════════════ */
+(function () {
+    const CAT_COLOURS = {
+        Maintenance: '#E74C3C',
+        Utilities: '#2563c4',
+        Salaries: '#2ECC71',
+        Admin: '#deaf37',
+        Insurance: '#8B5CF6',
+        Other: '#94a3b8',
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.exp-cat-dot').forEach(dot => {
+            const col = CAT_COLOURS[dot.dataset.cat] || '#94a3b8';
+            dot.style.background = col;
+        });
+    });
+
+    window.toggleExpCatDropdown = function () {
+        const menu = document.getElementById('expCatMenu');
+        const chevron = document.getElementById('expCatChevron');
+        const wrap = document.getElementById('expCatDropdownWrap');
+        if (!menu) return;
+        const isOpen = menu.style.display !== 'none';
+        menu.style.display = isOpen ? 'none' : 'block';
+        chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+        wrap.classList.toggle('open', !isOpen);
+    };
+
+    window.selectExpCatOpt = function (btn) {
+        const val = btn.dataset.value;
+
+        const hidden = document.getElementById('categoryFilter');
+        if (hidden) { hidden.value = val; hidden.dispatchEvent(new Event('change')); }
+
+        document.getElementById('expCatTriggerLabel').textContent = btn.textContent.trim();
+
+        document.querySelectorAll('.exp-cat-opt').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const menu = document.getElementById('expCatMenu');
+        const chevron = document.getElementById('expCatChevron');
+        const wrap = document.getElementById('expCatDropdownWrap');
+        if (menu) menu.style.display = 'none';
+        if (chevron) chevron.style.transform = '';
+        if (wrap) wrap.classList.remove('open');
+    };
+
+    document.addEventListener('click', function (e) {
+        const wrap = document.getElementById('expCatDropdownWrap');
+        if (wrap && !wrap.contains(e.target)) {
+            const menu = document.getElementById('expCatMenu');
+            const chevron = document.getElementById('expCatChevron');
+            if (menu) menu.style.display = 'none';
+            if (chevron) chevron.style.transform = '';
+            wrap.classList.remove('open');
+        }
+    });
+})();
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   DELETE CONFIRMATION MODAL  (from previous session)
+══════════════════════════════════════════════════════════════════════ */
+let _pendingDeleteId = null;
+
+function deleteExpense(expense_id) {
+    _pendingDeleteId = expense_id;
+    const modal = document.getElementById('deleteConfirmModal');
+    if (modal) modal.classList.add('open');
+}
+
+function closeDeleteModal() {
+    _pendingDeleteId = null;
+    const modal = document.getElementById('deleteConfirmModal');
+    if (modal) modal.classList.remove('open');
+}
+
+async function _doDeleteExpense() {
+    const expense_id = _pendingDeleteId;
+    if (!expense_id) return;
+    closeDeleteModal();
+
+    try {
+        const fd = new FormData();
+        fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
+        fd.append('action', 'delete');
+        fd.append('expense_id', expense_id);
+
+        const res = await fetch(EXPENSES.apiUrl, { method: 'POST', body: fd });
+        const json = await res.json();
+
+        if (json.success) {
+            showToast('Expense deleted.');
+            _psChannel.postMessage({ type: 'transaction_deleted' });
+            sessionStorage.setItem('txn_needs_refresh', '1');
+            const row = document.querySelector(`tr[data-id="${expense_id}"]`);
+            if (row) {
+                row.style.transition = 'opacity .3s';
+                row.style.opacity = '0';
+                setTimeout(() => { row.remove(); loadExpenses(); }, 350);
+            } else {
+                await loadExpenses();
+            }
+        } else {
+            showToast(json.message || 'Delete failed.', 'error');
+        }
+    } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const confirmBtn = document.getElementById('btnConfirmDelete');
+    if (confirmBtn) confirmBtn.addEventListener('click', _doDeleteExpense);
+
+    const overlay = document.getElementById('deleteConfirmModal');
+    if (overlay) {
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) closeDeleteModal();
+        });
+    }
+});

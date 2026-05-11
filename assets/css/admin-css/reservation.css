@@ -8,7 +8,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
 }
 
 .res-stat {

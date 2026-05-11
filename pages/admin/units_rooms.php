@@ -56,22 +56,24 @@ $units_result = $conn->query("
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/unit_rooms.css">
-
-<div class="page-header">
-  <div class="top-header">
-    <h2>Units &amp; Rooms</h2>
-    <div class="page-header-sub">View and manage individual units across all properties</div>
-  </div>
-  <button class="btn btn-primary" id="open-add-unit-modal">
-    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-    Add Unit
-  </button>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+  <div class="dash-page-header">
+    <div class="dash-header-left">
+      <h1 class="dash-title">Units & Rooms</h1>
+      <p class="dash-subtitle">View and manage individual units across all properties.</p>
+    </div>
+    <div class="dash-header-actions">
+      <button class="btn btn-primary" id="open-add-unit-modal">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Add Unit
+      </button>
+    </div>
+  </div>
   <div class="cards-area">
 
     <div class="stat-row">
@@ -144,9 +146,57 @@ $units_result = $conn->query("
         <select id="filter-property" class="tc-select" style="width:165px;">
           <option value="">All Properties</option>
           <?php foreach ($properties as $p): ?>
-            <option value="<?= (int) $p['property_id'] ?>"><?= htmlspecialchars($p['property_name']) ?></option>
+            <option value="<?= (int) $p['property_id'] ?>">
+              <?= htmlspecialchars($p['property_name']) ?>
+            </option>
           <?php endforeach; ?>
         </select>
+
+        <div class="ur-drop-wrap" id="urStatusWrap">
+          <button type="button" class="ur-drop-trigger" onclick="toggleUrDrop('urStatusWrap')">
+            <span id="urStatusLabel">All Statuses</span>
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="11" height="11">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <input type="hidden" id="filter-status" value="">
+          <div class="ur-drop-menu" id="urStatusMenu" style="display:none; right:0; left:auto;">
+            <button type="button" class="ur-drop-opt active" data-value=""
+              onclick="selectUrDrop('urStatusWrap','urStatusLabel','filter-status',this)">All Statuses</button>
+            <button type="button" class="ur-drop-opt" data-value="occupied"
+              onclick="selectUrDrop('urStatusWrap','urStatusLabel','filter-status',this)">
+              <span class="ur-drop-dot" style="background:#22c55e;"></span>Occupied
+            </button>
+            <button type="button" class="ur-drop-opt" data-value="vacant"
+              onclick="selectUrDrop('urStatusWrap','urStatusLabel','filter-status',this)">
+              <span class="ur-drop-dot" style="background:#3b82f6;"></span>Vacant
+            </button>
+            <button type="button" class="ur-drop-opt" data-value="maintenance"
+              onclick="selectUrDrop('urStatusWrap','urStatusLabel','filter-status',this)">
+              <span class="ur-drop-dot" style="background:#f59e0b;"></span>Maintenance
+            </button>
+          </div>
+        </div>
+
+        <div class="ur-drop-wrap" id="urPropertyWrap">
+          <button type="button" class="ur-drop-trigger" onclick="toggleUrDrop('urPropertyWrap')">
+            <span id="urPropertyLabel">All Properties</span>
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="11" height="11">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <input type="hidden" id="filter-property" value="">
+          <div class="ur-drop-menu" id="urPropertyMenu" style="display:none;">
+            <button type="button" class="ur-drop-opt active" data-value=""
+              onclick="selectUrDrop('urPropertyWrap','urPropertyLabel','filter-property',this)">All Properties</button>
+            <?php foreach ($properties as $p): ?>
+              <button type="button" class="ur-drop-opt" data-value="<?= (int) $p['property_id'] ?>"
+                onclick="selectUrDrop('urPropertyWrap','urPropertyLabel','filter-property',this)">
+                <?= htmlspecialchars($p['property_name']) ?>
+              </button>
+            <?php endforeach; ?>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -185,7 +235,7 @@ $units_result = $conn->query("
             'status' => $unit['real_status'] ?? $unit['status'] ?? '',
             'tenant_name' => $unit['tenant_name'] ?? '',
             'tenant_email' => $unit['tenant_email'] ?? '',
-            'tenant_photo'  => $unit['tenant_photo'] ?? '',
+            'tenant_photo' => $unit['tenant_photo'] ?? '',
             'images' => $imgs,
           ]), ENT_QUOTES);
 

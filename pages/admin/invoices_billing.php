@@ -71,21 +71,24 @@ $inv_cur_picker_year = (int) date('Y');
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/invoice_billings.css">
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
 
-  <div class="inv-page-header">
-    <div>
-      <h2>Invoices &amp; Billing</h2>
-      <p>Generate, send, and track invoices for all tenants.</p>
+  <div class="dash-page-header">
+    <div class="dash-header-left">
+      <h1 class="dash-title">Invoices &amp; Billing</h1>
+      <p class="dash-subtitle">Generate, send, and track invoices for all tenants.</p>
     </div>
-    <button class="inv-new-btn" id="openNewInvoiceBtn">
-      <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
-      </svg>
-      New Invoice
-    </button>
+    <div class="dash-header-actions">
+      <button class="inv-new-btn" id="openNewInvoiceBtn">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        New Invoice
+      </button>
+    </div>
   </div>
 
   <div class="inv-stat-grid">

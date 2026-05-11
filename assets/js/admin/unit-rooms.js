@@ -67,9 +67,44 @@ function applyFilters() {
 }
 
 document.getElementById('search-units').addEventListener('input', applyFilters);
-document.getElementById('filter-status').addEventListener('change', applyFilters);
-document.getElementById('filter-property').addEventListener('change', applyFilters);
 applyFilters();
+
+function toggleUrDrop(wrapId) {
+  const wrap = document.getElementById(wrapId);
+  const menu = wrap.querySelector('.ur-drop-menu');
+  const isOpen = menu.style.display !== 'none';
+
+  // Close all other dropdowns first
+  document.querySelectorAll('.ur-drop-wrap').forEach(w => {
+    w.querySelector('.ur-drop-menu').style.display = 'none';
+    w.classList.remove('open');
+  });
+
+  if (!isOpen) {
+    menu.style.display = 'block';
+    wrap.classList.add('open');
+  }
+}
+
+function selectUrDrop(wrapId, labelId, inputId, btn) {
+  document.getElementById(labelId).textContent = btn.textContent.trim();
+  document.getElementById(inputId).value = btn.dataset.value;
+  const wrap = document.getElementById(wrapId);
+  wrap.querySelectorAll('.ur-drop-opt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  wrap.querySelector('.ur-drop-menu').style.display = 'none';
+  wrap.classList.remove('open');
+  applyFilters();
+}
+
+document.addEventListener('click', function (e) {
+  document.querySelectorAll('.ur-drop-wrap').forEach(wrap => {
+    if (!wrap.contains(e.target)) {
+      wrap.querySelector('.ur-drop-menu').style.display = 'none';
+      wrap.classList.remove('open');
+    }
+  });
+});
 
 async function fetchPropertyAmenities(propertyId) {
   if (!propertyId) return [];
@@ -334,21 +369,21 @@ async function openViewModal(unit) {
         <div style="margin-bottom:6px;">
           <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-soft);margin-bottom:9px;">Tenant</div>
             ${(status === 'occupied' || unit.tenant_name) && unit.tenant_name
-              ? `<div style="display:flex;align-items:center;gap:10px;">
+      ? `<div style="display:flex;align-items:center;gap:10px;">
               ${unit.tenant_photo
-                ? `<img src="${(window.APP_BASE || '')}/${unit.tenant_photo}"
+        ? `<img src="${(window.APP_BASE || '')}/${unit.tenant_photo}"
                       style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;"
                       onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                   <div style="display:none;width:36px;height:36px;border-radius:50%;background:#dbeafe;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1d4ed8;flex-shrink:0;">${initials}</div>`
-                : `<div style="width:36px;height:36px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1d4ed8;flex-shrink:0;">${initials}</div>`
-              }
+        : `<div style="width:36px;height:36px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1d4ed8;flex-shrink:0;">${initials}</div>`
+      }
               <div>
                 <div style="font-size:14px;font-weight:600;color:var(--text);">${unit.tenant_name}</div>
                 ${unit.tenant_email ? `<div style="font-size:12px;color:var(--text-soft);">${unit.tenant_email}</div>` : ''}
               </div>
             </div>`
-              : '<div style="font-size:12px;color:var(--text-soft);font-style:italic;">No tenant assigned</div>'
-            }
+      : '<div style="font-size:12px;color:var(--text-soft);font-style:italic;">No tenant assigned</div>'
+    }
         </div>
 
       </div>

@@ -2,7 +2,7 @@
 include '../../includes/session.php';
 
 if ($_SESSION['role'] !== 'admin') {
-    echo '<!DOCTYPE html>
+  echo '<!DOCTYPE html>
 <html>
 <head><meta http-equiv="refresh" content="2;url=javascript:history.back()"></head>
 <body>
@@ -12,7 +12,7 @@ if ($_SESSION['role'] !== 'admin') {
 <script src="../../assets/js/admin/amenities-inline.js"></script>
 </body>
 </html>';
-    exit;
+  exit;
 }
 
 $page_title = 'Amenities';
@@ -81,14 +81,15 @@ function am_svg(string $key): string
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/amenities.css">
-<div class="page-header">
-  <div class="top-header">
-    <h2>Amenities</h2>
-    <div class="page-header-sub">Manage amenity offerings across all properties</div>
-  </div>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+  <div class="dash-page-header">
+    <div class="dash-header-left">
+      <h1 class="dash-title">Amenities</h1>
+      <p class="dash-subtitle">Manage amenity offerings across all properties.</p>
+    </div>
+  </div>
   <div class="cards-area">
 
     <div class="stat-row">
@@ -155,18 +156,52 @@ function am_svg(string $key): string
           </svg>
           <input id="am-search" type="text" placeholder="Search amenities..." class="am-input">
         </div>
-        <select id="am-filter-status" class="am-input">
-          <option value="">All Statuses</option>
-          <option value="available">Available</option>
-          <option value="unavailable">Unavailable</option>
-          <option value="maintenance">Maintenance</option>
-        </select>
-        <select id="am-filter-property" class="am-input">
-          <option value="">All Properties</option>
-          <?php foreach ($properties as $p): ?>
-            <option value="<?= (int) $p['property_id'] ?>"><?= htmlspecialchars($p['property_name']) ?></option>
-          <?php endforeach; ?>
-        </select>
+        <div class="ur-drop-wrap" id="amStatusWrap">
+          <button type="button" class="ur-drop-trigger" onclick="toggleUrDrop('amStatusWrap')">
+            <span id="amStatusLabel">All Statuses</span>
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="11" height="11">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <input type="hidden" id="am-filter-status" value="">
+          <div class="ur-drop-menu" id="amStatusMenu" style="display:none;">
+            <button type="button" class="ur-drop-opt active" data-value=""
+              onclick="selectUrDrop('amStatusWrap','amStatusLabel','am-filter-status',this)">All Statuses</button>
+            <button type="button" class="ur-drop-opt" data-value="available"
+              onclick="selectUrDrop('amStatusWrap','amStatusLabel','am-filter-status',this)">
+              <span class="ur-drop-dot" style="background:#22c55e;"></span>Available
+            </button>
+            <button type="button" class="ur-drop-opt" data-value="unavailable"
+              onclick="selectUrDrop('amStatusWrap','amStatusLabel','am-filter-status',this)">
+              <span class="ur-drop-dot" style="background:#ef4444;"></span>Unavailable
+            </button>
+            <button type="button" class="ur-drop-opt" data-value="maintenance"
+              onclick="selectUrDrop('amStatusWrap','amStatusLabel','am-filter-status',this)">
+              <span class="ur-drop-dot" style="background:#f59e0b;"></span>Maintenance
+            </button>
+          </div>
+        </div>
+
+        <div class="ur-drop-wrap" id="amPropertyWrap">
+          <button type="button" class="ur-drop-trigger" onclick="toggleUrDrop('amPropertyWrap')">
+            <span id="amPropertyLabel">All Properties</span>
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="11" height="11">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <input type="hidden" id="am-filter-property" value="">
+          <div class="ur-drop-menu" id="amPropertyMenu" style="display:none; right:0; left:auto;">
+            <button type="button" class="ur-drop-opt active" data-value=""
+              onclick="selectUrDrop('amPropertyWrap','amPropertyLabel','am-filter-property',this)">All
+              Properties</button>
+            <?php foreach ($properties as $p): ?>
+              <button type="button" class="ur-drop-opt" data-value="<?= (int) $p['property_id'] ?>"
+                onclick="selectUrDrop('amPropertyWrap','amPropertyLabel','am-filter-property',this)">
+                <?= htmlspecialchars($p['property_name']) ?>
+              </button>
+            <?php endforeach; ?>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -191,7 +226,7 @@ function am_svg(string $key): string
           <div class="prop-section" data-property-id="<?= $pid ?>">
             <div class="prop-section-header">
               <div class="prop-section-title">
-                
+
                 <div>
                   <div class="prop-name"><?= htmlspecialchars($propName) ?></div>
                   <div class="prop-count"><?= count($items) ?> amenit<?= count($items) !== 1 ? 'ies' : 'y' ?></div>
@@ -210,11 +245,12 @@ function am_svg(string $key): string
             <div class="amenity-grid" id="grid-<?= $pid ?>">
               <?php if (empty($items)): ?>
                 <div class="am-empty" id="empty-<?= $pid ?>">
-                  <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:32px;height:32px;">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+                    style="width:32px;height:32px;">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                   No amenities added yet for this property.
-              </div>
+                </div>
               <?php else: ?>
                 <?php foreach ($items as $am):
                   $s = $am['status'];

@@ -209,33 +209,34 @@ if (!$financial_data) {
   ];
 }
 ?>
-
-<div class="page-header">
-  <div class="left-header">
-    <h2>Financial Reports</h2>
-    <div class="page-header-sub">Income, expenses and profitability overview</div>
-  </div>
-
-  <div style="display:flex;gap:8px;">
-    <select id="yearSelect" onchange="handleYearChange(this.value)"
-      style="padding:9px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--white);">
-      <?php foreach ($available_years as $year): ?>
-        <option value="<?php echo $year; ?>" <?php echo $selected_year === (int) $year ? 'selected' : ''; ?>>
-          <?php echo $year; ?>
-        </option>
-      <?php endforeach; ?>
-    </select>
-    <button class="btn btn-secondary" onclick="exportPDF()">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <polyline points="7 10 12 15 17 10" />
-        <line x1="12" y1="15" x2="12" y2="3" />
-      </svg>Export PDF
-    </button>
-  </div>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+
+  <div class="dash-page-header">
+    <div class="dash-header-left">
+      <h1 class="dash-title">Financial Reports</h1>
+      <p class="dash-subtitle">Income, expenses and profitability overview.</p>
+    </div>
+    <div class="dash-header-actions">
+      <select id="yearSelect" onchange="handleYearChange(this.value)"
+        style="padding:9px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--white);">
+        <?php foreach ($available_years as $year): ?>
+          <option value="<?php echo $year; ?>" <?php echo $selected_year === (int) $year ? 'selected' : ''; ?>>
+            <?php echo $year; ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+      <button class="btn btn-secondary" onclick="exportPDF()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>Export PDF
+      </button>
+    </div>
+  </div>
+
   <div class="cards-area">
 
     <div class="stat-row">
@@ -382,10 +383,10 @@ if (!$financial_data) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
-window.__PS_FINANCIAL__ = window.__PS_DATA__ || {};
-window.__PS_FINANCIAL__.chartData = <?php echo json_encode($financial_data); ?>;
-window.__PS_FINANCIAL__.selectedYear = <?php echo json_encode($selected_year); ?>;
-window.__PS_FINANCIAL__.years = <?php echo json_encode($available_years); ?>;
+  window.__PS_FINANCIAL__ = window.__PS_DATA__ || {};
+  window.__PS_FINANCIAL__.chartData = <?php echo json_encode($financial_data); ?>;
+  window.__PS_FINANCIAL__.selectedYear = <?php echo json_encode($selected_year); ?>;
+  window.__PS_FINANCIAL__.years = <?php echo json_encode($available_years); ?>;
 </script>
 <script src="../../assets/js/admin/financial_reports.js"></script>
 

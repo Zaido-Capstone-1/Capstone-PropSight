@@ -45,22 +45,26 @@ while ($u = mysqli_fetch_assoc($usersRes))
     $userList[] = $u;
 ?>
 <link rel="stylesheet" href="../../assets/css/admin-css/message.css">
-
-<div class="page-header">
-    <div class="top-header">
-        <h2>Messages</h2>
-        <div class="page-header-sub">Communications with tenants and staff</div>
-    </div>
-    <button class="btn btn-primary" onclick="openNewMessage()">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        New Message
-    </button>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner" style="overflow:hidden;">
+
+    <div class="dash-page-header">
+        <div class="dash-header-left">
+            <h1 class="dash-title">Messages</h1>
+            <p class="dash-subtitle">Communications with tenants and staff.</p>
+        </div>
+        <div class="dash-header-actions">
+            <button class="btn btn-primary" onclick="openNewMessage()">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                New Message
+            </button>
+        </div>
+    </div>
+    
     <div class="msg-layout">
 
         <div class="msg-list">
@@ -120,6 +124,7 @@ while ($u = mysqli_fetch_assoc($usersRes))
     const ADMIN_ID = <?php echo $adminId; ?>;
     const ADMIN_API = '../../api/messages.php';
     window.__PS_ADMIN_MSG_USERS__ = <?php echo json_encode($userList); ?>;
+    window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
 </script>
 <script>window.PS_RT_PAGE = 'messages';</script>
 <script src="../../assets/js/admin/messages.js"></script>

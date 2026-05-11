@@ -104,16 +104,16 @@ function buildQS(array $overrides = []): string
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/support.css">
-
-<!-- ── Page Header ──────────────────────────────────────────────── -->
-<div class="page-header">
-    <div class="top-header">
-        <h2>Support Tickets</h2>
-        <div class="page-header-sub">Manage and respond to guest support tickets.</div>
-    </div>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+
+    <div class="dash-page-header">
+        <div class="dash-header-left">
+            <h1 class="dash-title">Support Tickets</h1>
+            <p class="dash-subtitle">Manage and respond to guest support tickets.</p>
+        </div>
+    </div>
 
     <div class="sm-stat-row">
 
@@ -292,7 +292,8 @@ function buildQS(array $overrides = []): string
                                 <td><span class="badge <?= $tb['cls'] ?>"><?= $tb['label'] ?></span></td>
                                 <td class="muted" style="text-align:center;"><?= (int) $tk['msg_count'] ?></td>
                                 <td class="muted" style="white-space:nowrap;">
-                                    <?= date('M j, Y', strtotime($tk['created_at'])) ?></td>
+                                    <?= date('M j, Y', strtotime($tk['created_at'])) ?>
+                                </td>
                                 <td>
                                     <div class="tbl-actions">
                                         <button class="btn-icon btn-edit"

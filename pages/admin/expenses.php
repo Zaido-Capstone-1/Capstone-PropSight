@@ -58,32 +58,34 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/expenses.css">
-
-<div class="page-header">
-  <div class="top-header">
-    <h2>Expenses</h2>
-    <div class="page-header-sub">Monitor all property-related operational costs</div>
-  </div>
-  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-    <button class="btn-outline" id="btnExportCSV">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <polyline points="7 10 12 15 17 10" />
-        <line x1="12" y1="15" x2="12" y2="3" />
-      </svg>
-      Export CSV
-    </button>
-    <button class="btn btn-primary" id="btnOpenAdd">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
-      </svg>
-      Log Expense
-    </button>
-  </div>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+  
+  <div class="dash-page-header">
+    <div class="dash-header-left">
+      <h1 class="dash-title">Expenses</h1>
+      <p class="dash-subtitle">Monitor all property-related operational costs.</p>
+    </div>
+    <div class="dash-header-actions">
+      <button class="btn-outline" id="btnExportCSV">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Export CSV
+      </button>
+      <button class="btn btn-primary" id="btnOpenAdd">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Log Expense
+      </button>
+    </div>
+  </div>
+
   <div class="cards-area">
 
     <div class="stat-row">
@@ -395,137 +397,35 @@ $all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDE
 
 <div class="toast" id="toast"></div>
 
+<!-- ── Delete Confirmation Modal ── -->
+<div class="modal-overlay" id="deleteConfirmModal">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+    <div class="modal-title">
+      <svg width="18" height="18" fill="none" stroke="var(--danger,#e53e3e)" stroke-width="2" viewBox="0 0 24 24">
+        <polyline points="3 6 5 6 21 6" />
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+        <path d="M10 11v6M14 11v6" />
+        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+      </svg>
+      <span>Delete Expense</span>
+    </div>
+    <p style="margin:0 0 24px;font-size:14.5px;color:var(--text-soft,#555);line-height:1.6;">
+      Are you sure you want to delete this expense? This action cannot be undone.
+    </p>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn btn-primary" id="btnConfirmDelete"
+        style="background:var(--danger,#c0392b);border-color:var(--danger,#c0392b);">
+        Yes, Delete
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
   window.PS_CSRF_TOKEN = <?= json_encode($_SESSION['csrf_token'] ?? '') ?>;
 </script>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-<!-- Month picker (needs PHP values baked in) -->
-<script>
-  (function () {
-    const _initVal = document.getElementById('expMonthFilter')?.value || '';
-    const _initParts = _initVal.split('-');
-    let expPickerYear = _initParts[0] ? parseInt(_initParts[0]) : <?= $exp_cur_picker_year ?>;
-    let expSelectedMonth = _initParts[1] || '<?= str_pad($exp_cur_picker_month, 2, '0', STR_PAD_LEFT) ?>';
-
-    function _highlightActive() {
-      document.querySelectorAll('.exp-picker-month-btn').forEach(b => {
-        const isActive = b.dataset.month === expSelectedMonth;
-        b.classList.toggle('exp-picker-active', isActive);
-        b.style.background = isActive ? 'var(--primary,#3b6ef5)' : 'var(--white)';
-        b.style.borderColor = isActive ? 'var(--primary,#3b6ef5)' : 'var(--border)';
-        b.style.color = isActive ? 'white' : 'var(--text)';
-        b.style.fontWeight = isActive ? '700' : '500';
-      });
-    }
-
-    window.toggleExpMonthPicker = function () {
-      const d = document.getElementById('expMonthPickerDropdown');
-      const isOpen = d.style.display !== 'none';
-      d.style.display = isOpen ? 'none' : 'block';
-      if (!isOpen) _highlightActive();
-    };
-    window.closeExpMonthPicker = function () {
-      document.getElementById('expMonthPickerDropdown').style.display = 'none';
-    };
-    window.changeExpPickerYear = function (dir) {
-      const newYear = expPickerYear + dir;
-      if (newYear < 2000 || newYear > new Date().getFullYear() + 1) return;
-      expPickerYear = newYear;
-      document.getElementById('expPickerYear').textContent = expPickerYear;
-    };
-    window.selectExpPickerMonth = function (btn) {
-      expSelectedMonth = btn.dataset.month;
-      _highlightActive();
-    };
-    window.applyExpMonthPicker = function () {
-      const val = expPickerYear + '-' + expSelectedMonth;
-      const names = ['January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'];
-      const label = names[parseInt(expSelectedMonth) - 1] + ' ' + expPickerYear;
-      document.getElementById('expMonthFilter').value = val;
-      document.getElementById('expMonthPickerLabel').textContent = label;
-      document.getElementById('expMonthPickerLabel2').textContent = label;
-      closeExpMonthPicker();
-      const url = new URL(location.href);
-      url.searchParams.set('month', val);
-      history.replaceState(null, '', url);
-      if (typeof loadExpenses === 'function') loadExpenses();
-    };
-    document.addEventListener('click', function (e) {
-      const wrap = document.getElementById('expMonthPickerWrap');
-      if (wrap && !wrap.contains(e.target)) closeExpMonthPicker();
-    });
-  })();
-</script>
-
-<!-- Custom category dropdown -->
-<script>
-  (function () {
-    const CAT_COLOURS = {
-      Maintenance: '#E74C3C',
-      Utilities: '#2563c4',
-      Salaries: '#2ECC71',
-      Admin: '#deaf37',
-      Insurance: '#8B5CF6',
-      Other: '#94a3b8',
-    };
-
-    // Colour the dots on render
-    document.querySelectorAll('.exp-cat-dot').forEach(dot => {
-      const col = CAT_COLOURS[dot.dataset.cat] || '#94a3b8';
-      dot.style.background = col;
-    });
-
-    window.toggleExpCatDropdown = function () {
-      const menu = document.getElementById('expCatMenu');
-      const chevron = document.getElementById('expCatChevron');
-      const wrap = document.getElementById('expCatDropdownWrap');
-      if (!menu) return;
-      const isOpen = menu.style.display !== 'none';
-      menu.style.display = isOpen ? 'none' : 'block';
-      chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
-      wrap.classList.toggle('open', !isOpen);
-    };
-
-    window.selectExpCatOpt = function (btn) {
-      const val = btn.dataset.value;
-
-      // Update hidden input + fire change so expenses.js picks it up
-      const hidden = document.getElementById('categoryFilter');
-      if (hidden) { hidden.value = val; hidden.dispatchEvent(new Event('change')); }
-
-      // Update trigger label
-      document.getElementById('expCatTriggerLabel').textContent = btn.textContent.trim();
-
-      // Active state
-      document.querySelectorAll('.exp-cat-opt').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      // Close
-      const menu = document.getElementById('expCatMenu');
-      const chevron = document.getElementById('expCatChevron');
-      const wrap = document.getElementById('expCatDropdownWrap');
-      if (menu) menu.style.display = 'none';
-      if (chevron) chevron.style.transform = '';
-      if (wrap) wrap.classList.remove('open');
-    };
-
-    // Close on outside click
-    document.addEventListener('click', function (e) {
-      const wrap = document.getElementById('expCatDropdownWrap');
-      if (wrap && !wrap.contains(e.target)) {
-        const menu = document.getElementById('expCatMenu');
-        const chevron = document.getElementById('expCatChevron');
-        if (menu) menu.style.display = 'none';
-        if (chevron) chevron.style.transform = '';
-        wrap.classList.remove('open');
-      }
-    });
-  })();
-</script>
-
 <script src="../../assets/js/admin/expenses.js"></script>
-
 <?php include '../../includes/layout_close.php'; ?>

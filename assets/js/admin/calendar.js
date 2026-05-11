@@ -115,7 +115,7 @@ function submitBlock() {
     fetch('../../api/admin/block_date.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ action: 'block', date, reason })
+        body: new URLSearchParams({ action: 'block', date, reason, csrf_token: window.PS_CSRF_TOKEN ?? '' })
     })
         .then(r => r.json())
         .then(data => {
@@ -135,7 +135,7 @@ function submitUnblock() {
     fetch('../../api/admin/block_date.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ action: 'unblock', date })
+        body: new URLSearchParams({ action: 'unblock', date, csrf_token: window.PS_CSRF_TOKEN ?? '' })
     })
         .then(r => r.json())
         .then(data => {

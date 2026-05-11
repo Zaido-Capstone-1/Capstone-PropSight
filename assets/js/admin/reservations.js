@@ -73,7 +73,7 @@ function confirmAction(message, options = {}) {
 
 function normaliseBooking(b) {
     const unitLabel = b.unit_name ||
-        ((b.property_name || '') + (b.unit_number ? ' — Unit ' + b.unit_number : ''));
+        ((b.property_name || '') + (b.unit_number ? ' — ' + b.unit_number : ''));
     const id = parseInt(b.booking_id, 10);
     if (!id) return null;   // skip malformed records
     return {

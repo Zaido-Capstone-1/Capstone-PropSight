@@ -166,37 +166,38 @@ $pay_base_url = '?' . http_build_query($pay_url_params) . (empty($pay_url_params
 <?php if (!empty($_SESSION['flash'])): ?>
 
     <?php unset($_SESSION['flash']);
-endif; ?>
-
-<div class="page-header">
-    <div class="left-header">
-        <h2>Payments</h2>
-        <div class="page-header-sub">Track rent collections and payment status</div>
-    </div>
-    <div style="display:flex;gap:8px;">
-        <a href="../../api/admin/payments_export.php?<?= http_build_query($_GET) ?>" class="btn btn-outline">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Export CSV
-        </a>
-        <button class="btn btn-primary" onclick="openModal('add')">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Record Payment
-        </button>
-    </div>
-</div>
-
+endif; 
+?>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+
+    <div class="dash-page-header">
+        <div class="dash-header-left">
+            <h1 class="dash-title">Payments</h1>
+            <p class="dash-subtitle">Track rent collections and payment status.</p>
+        </div>
+        <div class="dash-header-actions">
+            <a href="../../api/admin/payments_export.php?<?= http_build_query($_GET) ?>" class="btn btn-outline">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Export CSV
+            </a>
+            <button class="btn btn-primary" onclick="openModal('add')">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Record Payment
+            </button>
+        </div>
+    </div>
+
     <div class="cards-area">
 
-        <!-- stat cards -->
         <div class="stat-row">
             <div class="stat-card sc-green">
                 <div class="stat-card-left">

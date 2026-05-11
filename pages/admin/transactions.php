@@ -100,14 +100,17 @@ function formatPeso(int $n): string
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/transaction.css">
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
-<div class="page-header">
-    <div class="top-header">
-        <h2>Transactions</h2>
-        <div class="page-header-sub">Full ledger of all financial transactions</div>
-    </div>
-    <div style="display:flex;gap:8px;">
-        <button class="btn btn-secondary" id="exportCsvBtn">
+<div class="page-inner">
+
+    <div class="dash-page-header">
+        <div class="dash-header-left">
+            <h1 class="dash-title">Transactions</h1>
+            <p class="dash-subtitle">Full ledger of all financial transactions.</p>
+        </div>
+        <div class="dash-header-actions">
+            <button class="btn btn-secondary" id="exportCsvBtn">
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
@@ -115,10 +118,9 @@ function formatPeso(int $n): string
             </svg>
             Export CSV
         </button>
+        </div>
     </div>
-</div>
 
-<div class="page-inner">
     <div class="cards-area">
 
         <div class="stat-row">

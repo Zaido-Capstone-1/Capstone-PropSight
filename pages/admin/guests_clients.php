@@ -77,15 +77,17 @@ function guestStatus($row)
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/guest_client.css">
-
-<div class="page-header">
-  <div class="top-header">
-    <h2>Guests &amp; Clients</h2>
-    <div class="page-header-sub">Directory of all registered guests and tenants</div>
-  </div>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+
+  <div class="dash-page-header">
+    <div class="dash-header-left">
+      <h1 class="dash-title">Guests &amp; Clients</h1>
+      <p class="dash-subtitle">Directory of all registered guests and tenants.</p>
+    </div>
+  </div>
+
   <div class="cards-area">
 
     <div class="stat-row">

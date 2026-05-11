@@ -40,15 +40,17 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
         }
     }
 </style>
-
-<div class="page-header">
-    <div class="top-header">
-        <h2>Settings</h2>
-        <div class="page-header-sub">Manage your account, system preferences, and integrations</div>
-    </div>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+
+    <div class="dash-page-header">
+        <div class="dash-header-left">
+            <h1 class="dash-title">Settings</h1>
+            <p class="dash-subtitle">Manage your account, system preferences, and integrations.</p>
+        </div>
+    </div>
+
     <div class="cards-area">
 
         <div class="two-col">

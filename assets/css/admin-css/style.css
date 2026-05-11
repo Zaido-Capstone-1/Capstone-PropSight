@@ -80,6 +80,39 @@ body {
   box-sizing: border-box;
 }
 
+.dash-page-header {
+  padding: 8px 0 20px;
+  flex-shrink: 0;
+  margin-top: 22px;
+}
+
+.dash-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dash-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.dash-subtitle {
+  font-size: 1rem;
+  color: var(--text-soft);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dash-subtitle strong {
+  color: var(--blue-500);
+  font-weight: 600;
+}
+
 /* ── SIDEBAR ── */
 .sidebar {
   width: var(--sidebar-w);

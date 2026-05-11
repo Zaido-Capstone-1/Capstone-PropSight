@@ -158,55 +158,57 @@ function coStatusLabel($row, $selectedDate)
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/checkin_checkout.css">
-
-<div class="page-header">
-    <div class="top-header">
-        <h2>Check-in / Check-out</h2>
-        <div class="page-header-sub">
-            <?= $isToday ? "Today's" : htmlspecialchars($dateLabel) ?> guest arrivals and departures
-        </div>
-    </div>
-    <div class="date-nav">
-        <?php
-        $prev = date('Y-m-d', strtotime($selected_date . ' -1 day'));
-        $next = date('Y-m-d', strtotime($selected_date . ' +1 day'));
-        ?>
-        <a href="?date=<?= $prev ?>" class="date-nav-btn" title="Previous day">‹</a>
-
-        <div class="cal-picker-wrap">
-            <div class="cal-picker-trigger" id="calTrigger" onclick="toggleCalPicker()">
-                <svg viewBox="0 0 24 24">
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                <?= date('M j, Y', strtotime($selected_date)) ?>
-                <span class="cal-trigger-arrow">▼</span>
-            </div>
-            <div class="cal-dropdown" id="calDropdown">
-                <div class="cal-drop-header">
-                    <div class="cal-drop-month" id="calDropMonth"></div>
-                    <div class="cal-drop-nav">
-                        <button onclick="calNavMonth(-1)">‹</button>
-                        <button onclick="calNavMonth(1)">›</button>
-                    </div>
-                </div>
-                <div class="cal-drop-dow">
-                    <?php foreach (['S', 'M', 'T', 'W', 'T', 'F', 'S'] as $d): ?>
-                        <span><?= $d ?></span>
-                    <?php endforeach; ?>
-                </div>
-                <div class="cal-drop-grid" id="calDropGrid"></div>
-            </div>
-        </div>
-
-        <a href="?date=<?= $next ?>" class="date-nav-btn" title="Next day">›</a>
-        <a href="?" class="date-today-btn <?= $isToday ? 'active' : '' ?>">Today</a>
-    </div>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+    <div class="dash-page-header">
+        <div class="dash-header-left">
+            <h1 class="dash-title">Check-in / Check-out</h1>
+            <p class="dash-subtitle">
+                <?= $isToday ? "Today's" : htmlspecialchars($dateLabel) ?> guest arrivals and departures.
+            </p>
+        </div>
+        <div class="date-nav dash-header-actions">
+            <?php
+            $prev = date('Y-m-d', strtotime($selected_date . ' -1 day'));
+            $next = date('Y-m-d', strtotime($selected_date . ' +1 day'));
+            ?>
+            <a href="?date=<?= $prev ?>" class="date-nav-btn" title="Previous day">‹</a>
+
+            <div class="cal-picker-wrap">
+                <div class="cal-picker-trigger" id="calTrigger" onclick="toggleCalPicker()">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                    <?= date('M j, Y', strtotime($selected_date)) ?>
+                    <span class="cal-trigger-arrow">▼</span>
+                </div>
+                <div class="cal-dropdown" id="calDropdown">
+                    <div class="cal-drop-header">
+                        <div class="cal-drop-month" id="calDropMonth"></div>
+                        <div class="cal-drop-nav">
+                            <button onclick="calNavMonth(-1)">‹</button>
+                            <button onclick="calNavMonth(1)">›</button>
+                        </div>
+                    </div>
+                    <div class="cal-drop-dow">
+                        <?php foreach (['S', 'M', 'T', 'W', 'T', 'F', 'S'] as $d): ?>
+                            <span>
+                                <?= $d ?>
+                            </span>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="cal-drop-grid" id="calDropGrid"></div>
+                </div>
+            </div>
+
+            <a href="?date=<?= $next ?>" class="date-nav-btn" title="Next day">›</a>
+            <a href="?" class="date-today-btn <?= $isToday ? 'active' : '' ?>">Today</a>
+        </div>
+    </div>
     <div class="cards-area">
 
         <div class="stat-row">

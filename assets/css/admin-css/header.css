@@ -1,0 +1,44 @@
+.dash-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0px 0 20px;
+    /* flex-shrink: 0; */
+    margin-top: 15px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.dash-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.dash-title {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    margin: 0;
+}
+
+.dash-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-soft);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.dash-subtitle strong {
+    color: var(--blue-500);
+    font-weight: 600;
+}
+
+.dash-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
