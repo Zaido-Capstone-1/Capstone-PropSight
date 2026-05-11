@@ -128,17 +128,20 @@ for ($i = 0; $i < 12; $i++) {
   }
 }
 
-$sourceRes = mysqli_query(
-  $conn,
-  "SELECT COALESCE(NULLIF(booking_source,''),'Direct') AS source, COUNT(*) AS total
+$sourceRes = mysqli_query($conn,
+    "SELECT status AS source, COUNT(*) AS total
      FROM bookings
      WHERE YEAR(created_at)=$year
-     GROUP BY source
-     ORDER BY total DESC"
+     GROUP BY status ORDER BY total DESC"
 );
 $sourceLabels = [];
-$sourceData = [];
-$sourceColors = ['#2563c4', '#2ECC71', '#deaf37', '#1a3d7c', '#93c5fd', '#E74C3C'];
+$sourceData   = [];
+while ($r = mysqli_fetch_assoc($sourceRes)) {
+    $sourceLabels[] = ucfirst($r['source']);
+    $sourceData[]   = (int) $r['total'];
+}
+$sourceTotal = array_sum($sourceData) ?: 1;
+
 $si = 0;
 while ($r = mysqli_fetch_assoc($sourceRes)) {
   $sourceLabels[] = $r['source'];
@@ -164,6 +167,7 @@ $sourceTotal = array_sum($sourceData) ?: 1;
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+
   <div class="dash-page-header">
     <div class="dash-header-left">
       <h1 class="dash-title">Analytics</h1>
@@ -171,17 +175,8 @@ $sourceTotal = array_sum($sourceData) ?: 1;
           <?= $year ?>.
         </strong></p>
     </div>
-    <div class="dash-header-actions">
-      <button class="btn btn-primary" onclick="window.print()">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" y1="15" x2="12" y2="3" />
-        </svg>
-        Export
-      </button>
-    </div>
   </div>
+
   <div class="cards-area">
 
     <div class="stat-row">
@@ -265,7 +260,7 @@ $sourceTotal = array_sum($sourceData) ?: 1;
 
     <div class="two-col">
       <div class="card">
-        <div class="card-header"><span class="card-title">Booking Source Breakdown</span></div>
+        <div class="card-header"><span class="card-title">Booking Status Breakdown</span></div>
         <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
           <div class="chart-wrap" style="height:180px;width:180px;flex-shrink:0;">
             <canvas id="sourceDonut"></canvas>

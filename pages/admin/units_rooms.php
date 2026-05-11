@@ -59,6 +59,7 @@ $units_result = $conn->query("
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+
   <div class="dash-page-header">
     <div class="dash-header-left">
       <h1 class="dash-title">Units & Rooms</h1>
@@ -74,6 +75,7 @@ $units_result = $conn->query("
       </button>
     </div>
   </div>
+  
   <div class="cards-area">
 
     <div class="stat-row">

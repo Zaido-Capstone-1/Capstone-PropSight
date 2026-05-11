@@ -204,7 +204,7 @@ foreach ($perProperty as $prop) {
             </button>
         </div>
     </div>
-    
+
     <div class="cards-area">
 
         <div class="stat-row">
@@ -275,35 +275,6 @@ foreach ($perProperty as $prop) {
         </div>
 
         <div class="card">
-            <div class="card-header"><span class="card-title">Occupancy by Property — <?= $monthLabel ?></span></div>
-            <?php if (empty($perProperty)): ?>
-                <div style="padding:24px;text-align:center;color:var(--text-soft);">No properties found.</div>
-            <?php else: ?>
-                <div style="display:flex;flex-direction:column;gap:18px;padding:4px 0;">
-                    <?php $propBgColors = ['var(--blue-400)', 'var(--gold)', 'var(--success)', 'var(--blue-300)', '#8B5CF6', '#E74C3C'];
-                    foreach ($perProperty as $pi => $prop):
-                        $color = $propBgColors[$pi % 6]; ?>
-                        <div>
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                                <span style="font-size:14px;font-weight:600;">🏢
-                                    <?= htmlspecialchars($prop['property_name']) ?></span>
-                                <div style="display:flex;align-items:center;gap:12px;">
-                                    <span style="font-size:12px;color:var(--text-soft);"><?= $prop['occupied_units'] ?> /
-                                        <?= $prop['total_units'] ?> units</span>
-                                    <span
-                                        style="font-size:18px;font-weight:800;color:var(--text-dark);"><?= $prop['rate'] ?>%</span>
-                                </div>
-                            </div>
-                            <div class="progress-bar-wrap" style="height:14px;">
-                                <div class="progress-bar" style="width:<?= $prop['rate'] ?>%;background:<?= $color ?>;"></div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <div class="card">
             <div class="card-header"><span class="card-title">12-Month Occupancy Trend</span></div>
             <div class="table-wrap">
                 <table>
@@ -320,16 +291,22 @@ foreach ($perProperty as $prop) {
                         <?php foreach ($trend as $t):
                             $v = (int) $t['rate'];
                             $bc = $v >= 80 ? 'var(--success)' : ($v >= 60 ? 'var(--blue-400)' : 'var(--gold)');
+                            $badgeColor = $v >= 80 ? '#2ECC71' : ($v >= 50 ? '#2563c4' : '#deaf37');
                             ?>
-                            <tr>
+                            <tr style="<?= $v === 0 ? 'opacity:0.4;' : '' ?>">
                                 <td style="font-weight:600;"><?= htmlspecialchars($t['label']) ?></td>
                                 <td><?= $t['occupied'] ?></td>
                                 <td><?= $totalUnits ?></td>
-                                <td style="font-weight:700;"><?= $v ?>%</td>
+                                <td>
+                                    <span
+                                        style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:<?= $badgeColor ?>18;color:<?= $badgeColor ?>;">
+                                        <?= $v ?>%
+                                    </span>
+                                </td>
                                 <td>
                                     <div style="display:flex;align-items:center;gap:8px;">
                                         <div
-                                            style="flex:1;height:5px;background:var(--blue-50);border-radius:3px;max-width:80px;">
+                                            style="flex:1;height:6px;background:var(--blue-50);border-radius:3px;max-width:80px;">
                                             <div
                                                 style="width:<?= $v ?>%;height:100%;border-radius:3px;background:<?= $bc ?>;">
                                             </div>

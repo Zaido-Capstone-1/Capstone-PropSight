@@ -54,7 +54,7 @@ function getFinancialDataFromDB($conn, $year)
      FROM transactions WHERE type='Income' AND YEAR(transaction_date)=$year GROUP BY m"
   );
   while ($r = mysqli_fetch_assoc($incRes))
-    $monthlyIncome[(int) $r['m']] = (float) $r['v'] / 1000;
+    $monthlyIncome[(int) $r['m']] = (float) $r['v'];
 
   $expRes = mysqli_query(
     $conn,
@@ -68,14 +68,14 @@ function getFinancialDataFromDB($conn, $year)
   );
   while ($r = mysqli_fetch_assoc($expRes)) {
     $m = (int) $r['m'];
-    $monthlyExpenses[$m] = (float) $r['total'] / 1000;
-    $monthlyMaint[$m] = (float) $r['maint'] / 1000;
-    $monthlyUtil[$m] = (float) $r['util'] / 1000;
-    $monthlySal[$m] = (float) $r['sal'] / 1000;
-    $monthlyAdm[$m] = (float) $r['adm'] / 1000;
+    $monthlyExpenses[$m] = (float) $r['total'];
+    $monthlyMaint[$m] = (float) $r['maint'];
+    $monthlyUtil[$m] = (float) $r['util'];
+    $monthlySal[$m] = (float) $r['sal'];
+    $monthlyAdm[$m] = (float) $r['adm'];
   }
 
-  $totalIncome = array_sum($monthlyIncome) * 1000;
+  $totalIncome = array_sum($monthlyIncome);
   $revenue_mix = [];
   $propRes = mysqli_query(
     $conn,
@@ -111,8 +111,8 @@ function getFinancialDataFromDB($conn, $year)
 
   for ($i = 1; $i <= $last_month; $i++) {
     $m = $i - 1;
-    $rev = $monthlyIncome[$m] * 1000;
-    $exp = $monthlyExpenses[$m] * 1000;
+    $rev = $monthlyIncome[$m];
+    $exp = $monthlyExpenses[$m];
     $pft = $rev - $exp;
     $margin = $rev > 0 ? round($pft / $rev * 100, 1) : 0;
 
@@ -187,8 +187,6 @@ function formatCurrency($amount)
 {
   if ($amount >= 1000000)
     return '₱ ' . number_format($amount / 1000000, 2) . 'M';
-  if ($amount >= 1000)
-    return '₱ ' . number_format($amount / 1000, 2) . 'K';
   return '₱ ' . number_format($amount, 0);
 }
 
@@ -232,7 +230,7 @@ if (!$financial_data) {
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="7 10 12 15 17 10" />
           <line x1="12" y1="15" x2="12" y2="3" />
-        </svg>Export PDF
+        </svg>Export
       </button>
     </div>
   </div>
@@ -351,23 +349,36 @@ if (!$financial_data) {
           </thead>
           <tbody id="pnlTableBody">
             <?php if (!empty($financial_data['pnl_summary'])): ?>
-              <?php foreach ($financial_data['pnl_summary'] as $row): ?>
-                <tr>
-                  <td style="font-weight:600;"><?php echo htmlspecialchars($row[0]); ?></td>
-                  <td style="color:var(--success);font-weight:600;"><?php echo htmlspecialchars($row[1]); ?></td>
-                  <td style="color:var(--danger);"><?php echo htmlspecialchars($row[2]); ?></td>
-                  <td style="font-weight:700;"><?php echo htmlspecialchars($row[3]); ?></td>
-                  <td><?php echo htmlspecialchars($row[4]); ?></td>
+              <?php foreach ($financial_data['pnl_summary'] as $row):
+                $isEmpty = $row[1] === '₱ 0' && $row[2] === '₱ 0';
+                $margin = (float) $row[4];
+                $marginColor = $margin >= 80 ? '#2ECC71' : ($margin >= 50 ? '#2563c4' : ($margin > 0 ? '#deaf37' : '#94a3b8'));
+                ?>
+                <tr style="<?= $isEmpty ? 'opacity:0.4;' : '' ?>">
+                  <td style="font-weight:600;"><?= htmlspecialchars($row[0]) ?></td>
+                  <td style="color:var(--success);font-weight:600;"><?= htmlspecialchars($row[1]) ?></td>
+                  <td style="color:var(--danger);"><?= htmlspecialchars($row[2]) ?></td>
+                  <td style="font-weight:700;"><?= htmlspecialchars($row[3]) ?></td>
+                  <td>
+                    <?php if (!$isEmpty): ?>
+                      <span
+                        style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:<?= $marginColor ?>18;color:<?= $marginColor ?>;">
+                        <?= htmlspecialchars($row[4]) ?>
+                      </span>
+                    <?php else: ?>
+                      <span style="color:#94a3b8;">—</span>
+                    <?php endif; ?>
+                  </td>
                   <td
-                    style="color:<?php echo str_contains($row[5], '▲') ? 'var(--success)' : (str_contains($row[5], '▼') ? 'var(--danger)' : 'var(--text-soft)'); ?>; font-weight:600;">
-                    <?php echo htmlspecialchars($row[5]); ?>
+                    style="color:<?= str_contains($row[5], '▲') ? 'var(--success)' : (str_contains($row[5], '▼') ? 'var(--danger)' : 'var(--text-soft)') ?>;font-weight:600;">
+                    <?= htmlspecialchars($row[5]) ?>
                   </td>
                 </tr>
               <?php endforeach; ?>
             <?php else: ?>
               <tr>
                 <td colspan="6" style="text-align:center;padding:20px;color:var(--text-soft);">
-                  No data available for <?php echo $selected_year; ?>
+                  No data available for <?= $selected_year ?>
                 </td>
               </tr>
             <?php endif; ?>

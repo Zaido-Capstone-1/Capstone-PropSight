@@ -379,7 +379,7 @@ PS.initInvoices = function () {
    ───────────────────────────────────────────── */
 PS.initStaff = function () {
     // Invite Staff button
-    document.querySelectorAll('.page-header .btn-primary').forEach(btn => {
+    document.querySelectorAll('.dash-page-header .btn-primary, .page-header .btn-primary').forEach(btn => {
         if (btn.textContent.trim().includes('Invite Staff')) {
             btn.addEventListener('click', () => {
                 PS.openModal(`

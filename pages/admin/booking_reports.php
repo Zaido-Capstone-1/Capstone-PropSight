@@ -97,7 +97,7 @@ $payLabels = [];
 $payData = [];
 while ($r = mysqli_fetch_assoc($payRes)) {
   $byPayment[] = $r;
-  $payLabels[] = $r['method'];
+  $payLabels[] = ucfirst(strtolower($r['method']));
   $payData[] = (int) $r['total'];
 }
 
@@ -295,7 +295,9 @@ foreach ($topUnits as $u) {
     <div class="two-col">
       <div class="card" style="flex:2;">
         <div class="card-header"><span class="card-title">Monthly Booking Volume (12 months)</span></div>
-        <div class="chart-wrap" style="height:220px;"><canvas id="bookingVolChart"></canvas></div>
+        <div class="chart-wrap" style="height:300px;">
+          <canvas id="bookingVolChart"></canvas>
+        </div>
       </div>
       <div class="card" style="flex:1;">
         <div class="card-header"><span class="card-title">Booking Status</span></div>

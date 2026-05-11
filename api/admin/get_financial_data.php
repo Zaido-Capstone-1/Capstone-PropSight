@@ -26,7 +26,7 @@ $incRes = mysqli_query(
      FROM transactions WHERE type='Income' AND YEAR(transaction_date)=$year GROUP BY m"
 );
 while ($r = mysqli_fetch_assoc($incRes))
-    $monthlyIncome[(int) $r['m']] = (float) $r['v'] / 1000;
+    $monthlyIncome[(int) $r['m']] = (float) $r['v'];
 
 // ── Monthly expenses per category ─────────────────────
 $monthlyExpenses = array_fill(0, 12, 0.0);
@@ -47,16 +47,16 @@ $expRes = mysqli_query(
 );
 while ($r = mysqli_fetch_assoc($expRes)) {
     $m = (int) $r['m'];
-    $monthlyExpenses[$m] = (float) $r['total'] / 1000;
-    $monthlyMaint[$m] = (float) $r['maint'] / 1000;
-    $monthlyUtil[$m] = (float) $r['util'] / 1000;
-    $monthlySalaries[$m] = (float) $r['sal'] / 1000;
-    $monthlyAdmin[$m] = (float) $r['adm'] / 1000;
+    $monthlyExpenses[$m] = (float) $r['total'];
+    $monthlyMaint[$m] = (float) $r['maint'];
+    $monthlyUtil[$m] = (float) $r['util'];
+    $monthlySalaries[$m] = (float) $r['sal'];
+    $monthlyAdmin[$m] = (float) $r['adm'];
 }
 
 // ── Totals ─────────────────────────────────────────────
-$totalIncome = array_sum($monthlyIncome) * 1000;
-$totalExpenses = array_sum($monthlyExpenses) * 1000;
+$totalIncome = array_sum($monthlyIncome);
+$totalExpenses = array_sum($monthlyExpenses);
 $netProfit = $totalIncome - $totalExpenses;
 $roi = $totalIncome > 0 ? round($netProfit / $totalIncome * 100, 1) : 0;
 

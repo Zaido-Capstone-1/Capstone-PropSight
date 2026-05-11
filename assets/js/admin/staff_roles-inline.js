@@ -20,15 +20,16 @@ function closeInvite() {
     }
 }
 
-const inviteOverlay = document.getElementById('inviteOverlay');
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('open-invite-modal')?.addEventListener('click', openInvite);
 
-if (inviteOverlay) {
-    inviteOverlay.addEventListener('click', e => {
-        if (e.target === inviteOverlay) {
-            closeInvite();
-        }
-    });
-}
+    const inviteOverlay = document.getElementById('inviteOverlay');
+    if (inviteOverlay) {
+        inviteOverlay.addEventListener('click', e => {
+            if (e.target === inviteOverlay) closeInvite();
+        });
+    }
+});
 
 /* =========================
    Submit Invite

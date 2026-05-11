@@ -88,22 +88,26 @@ function lastActiveLabel($lastLogin)
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/staff_roles.css">
-
-<div class="page-header">
-    <div class="top-header">
-        <h2>Staff &amp; Admin Roles</h2>
-        <div class="page-header-sub">Manage team members and their access permissions</div>
-    </div>
-    <button class="btn btn-primary" onclick="openInvite()">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        Invite Staff
-    </button>
-</div>
+<link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
+
+    <div class="dash-page-header">
+        <div class="dash-header-left">
+            <h1 class="dash-title">Staff &amp; Admin Roles</h1>
+            <p class="dash-subtitle">Manage team members and their access permissions.</p>
+        </div>
+        <div class="dash-header-actions">
+            <button class="btn btn-primary">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Invite Staff
+            </button>
+        </div>
+    </div>
+
     <div class="cards-area">
 
         <div class="stat-row">
@@ -278,6 +282,7 @@ function lastActiveLabel($lastLogin)
     window.PS_RT_PAGE = 'staff';
     window._currentUserId = <?= (int) $_SESSION['user_id'] ?>;
 </script>
+<script src="../../assets/js/admin/staff_roles-inline.js"></script>
 <script src="../../assets/js/admin/staff_roles.js"></script>
 
 <?php include '../../includes/layout_close.php'; ?>
