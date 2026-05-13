@@ -30,25 +30,8 @@ $page_hero_sub = 'Manage your notifications, privacy, security, and preferences.
 $page_hero_icon = '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>';
 $active_nav = 'settings';
 require '../../includes/_layout.php';
-require_once '../../includes/db.php';
+require_once '../../lib/user-queries/settings_queries.php';
 
-$userId = (int) $_SESSION['user_id'];
-
-// Load or init settings row
-$settingsRow = mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT * FROM user_settings WHERE user_id=$userId LIMIT 1"
-));
-if (!$settingsRow) {
-    mysqli_query($conn, "INSERT INTO user_settings (user_id) VALUES ($userId)");
-    $settingsRow = mysqli_fetch_assoc(mysqli_query(
-        $conn,
-        "SELECT * FROM user_settings WHERE user_id=$userId LIMIT 1"
-    ));
-}
-$s = $settingsRow;
-$langCurrent = (string) ($s['language'] ?? 'en');
-$activeSessionsCount = max(1, (int) ($s['active_sessions_count'] ?? 2));
 ?>
 
 <link rel="stylesheet" href="../../assets/css/user-css/settings.css" />

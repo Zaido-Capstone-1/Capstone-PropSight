@@ -33,35 +33,8 @@ $page_hero_sub = 'Manage your personal details and account information.';
 $page_hero_icon = '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>';
 $active_nav = 'profile';
 require '../../includes/_layout.php';
-require_once '../../includes/db.php';
-$userId = (int) $_SESSION['user_id'];
+require_once '../../lib/user-queries/profile_queries.php';
 
-$userRow = mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT created_at, verification_status, profile_photo FROM users WHERE user_id=$userId LIMIT 1"
-));
-$memberSince = $userRow ? date('F Y', strtotime($userRow['created_at'])) : 'Unknown';
-$isVerified = ($userRow['verification_status'] ?? '') === 'Verified';
-$profilePhotoRaw = trim((string) ($userRow['profile_photo'] ?? ''));
-$profilePhoto = $profilePhotoRaw !== '' ? '../../' . ltrim($profilePhotoRaw, '/') : '';
-
-$totalStays = (int) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COUNT(*) AS c FROM bookings WHERE user_id=$userId AND status='completed'"
-))['c'] ?? 0);
-
-$loyaltyBal = max(0, (int) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COALESCE(SUM(points),0) AS v FROM loyalty_points WHERE user_id=$userId"
-))['v'] ?? 0));
-
-$tierName = 'Silver';
-if ($loyaltyBal >= 5000) {
-    $tierName = 'Diamond';
-} elseif ($loyaltyBal >= 2000) {
-    $tierName = 'Platinum';
-} elseif ($loyaltyBal >= 500) {
-}
 ?>
 
 <link rel="stylesheet" href="../../assets/css/user-css/profile.css">

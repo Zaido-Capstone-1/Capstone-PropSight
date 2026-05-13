@@ -31,50 +31,13 @@ $active_nav = 'bookings';
 require '../../includes/_layout.php';
 
 require_once '../../includes/db.php';
+require_once '../../api/user/bookings_data.php';
+
 $uid = (int) $_SESSION['user_id'];
 
-// Stats
-$bStats = mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT
-        SUM(status IN('confirmed','pending'))                AS upcoming,
-        SUM(status='active')                                 AS active_cnt,
-        SUM(status='completed')                              AS completed,
-        SUM(status='cancelled')                              AS cancelled,
-        COALESCE(SUM(CASE WHEN status NOT IN('cancelled') THEN total_amount END),0) AS total_spent
-     FROM bookings WHERE user_id=$uid"
-));
-
-// Bookings
-$bRes = mysqli_query(
-    $conn,
-    "SELECT b.booking_id, b.checkin_date, b.checkout_date, b.guests,
-            b.total_amount, b.status, b.payment_method, b.created_at, b.updated_at, b.confirmed_at,
-            DATEDIFF(b.checkout_date, b.checkin_date) AS nights,
-            COALESCE(u.unit_name, u.unit_number, 'Unit') AS room_name,
-            COALESCE(p.property_name,'') AS property_name,
-            u.floor,
-            br.rating AS review_rating,
-            br.comment AS review_comment,
-            (SELECT ui.image_path FROM unit_images ui
-             WHERE ui.unit_id=u.unit_id ORDER BY ui.sort_order, ui.image_id LIMIT 1) AS img_path
-     FROM bookings b
-     JOIN units u ON u.unit_id=b.unit_id
-     LEFT JOIN properties p ON p.property_id=u.property_id
-     LEFT JOIN booking_reviews br ON br.booking_id=b.booking_id AND br.user_id=$uid
-     WHERE b.user_id=$uid
-     ORDER BY b.created_at DESC"
-);
-
-$bookings = [];
-while ($r = mysqli_fetch_assoc($bRes)) {
-    $st = $r['status'];
-    if (in_array($st, ['confirmed', 'pending', 'active']))
-        $st = 'upcoming';
-    $r['_display_status'] = $st;
-    $r['_raw_status'] = $r['status'];
-    $bookings[] = $r;
-}
+// Fetch data using separated functions
+$bStats = getBookingStats($conn, $uid);
+$bookings = getUserBookings($conn, $uid);
 
 $status_map = [
     'upcoming' => ['label' => 'Upcoming', 'class' => 'badge-blue'],

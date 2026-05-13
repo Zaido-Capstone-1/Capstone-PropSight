@@ -301,3 +301,59 @@ window.addEventListener('ps:task_summary', e => {
         `;
   }).join('');
 });
+
+// ── Live Recent Activity Feed Updates ──────────────────────────────────────
+window.addEventListener('ps:recent_activity', e => {
+  const activities = Array.isArray(e.detail) ? e.detail : [];
+  const feed = document.getElementById('rt-activity-feed');
+  if (!feed) return;
+
+  if (!activities.length) {
+    feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-soft);font-size:13px;">No recent activity.</div>';
+    return;
+  }
+
+  function statusBadge(status) {
+    const map = {
+      pending: { text: 'Pending', bg: 'var(--pending-light)', color: 'var(--accent-dk)' },
+      confirmed: { text: 'Confirmed', bg: 'var(--blue-50)', color: 'var(--blue-500)' },
+      active: { text: 'Active', bg: 'var(--success-light)', color: 'var(--success)' },
+      completed: { text: 'Completed', bg: '#e5e7eb', color: '#6b7280' },
+      cancelled: { text: 'Cancelled', bg: 'var(--danger-light)', color: 'var(--danger)' }
+    };
+    const s = map[status] || map.pending;
+    return `<span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;background:${s.bg};color:${s.color};">${s.text}</span>`;
+  }
+
+  function relativeTime(ts) {
+    if (!ts) return 'just now';
+    const d = new Date(ts);
+    if (Number.isNaN(d.getTime())) return 'just now';
+    const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (sec < 60) return 'just now';
+    if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+    if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+    return `${Math.floor(sec / 86400)}d ago`;
+  }
+
+  feed.innerHTML = activities.slice(0, 5).map(act => `
+    <div class="activity-row" style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f1f5f9;">
+      <div class="activity-icon" style="width:36px;height:36px;border-radius:50%;background:var(--blue-50);color:var(--blue-500);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px;">${escHtml(act.user_name || 'Guest')}</div>
+        <div style="font-size:12px;color:#64748b;">Booked ${escHtml(act.unit_name || 'Unit')} • ₱${Number(act.total_amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 0 })}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        ${statusBadge(act.status)}
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">${relativeTime(act.created_at)}</div>
+      </div>
+    </div>
+  `).join('');
+});

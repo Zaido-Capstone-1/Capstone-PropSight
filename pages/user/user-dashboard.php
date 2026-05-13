@@ -509,7 +509,8 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
             <button class="filter-pill active" onclick="filterRooms('all',this)">All Rooms</button>
             <button class="filter-pill" onclick="filterRooms('available',this)">Available Now</button>
             <?php foreach ($roomTypeFilters as $slug => $label): ?>
-                <button class="filter-pill" onclick="filterRooms('<?php echo htmlspecialchars($slug); ?>', this)"><?php echo htmlspecialchars($label); ?></button>
+                <button class="filter-pill"
+                    onclick="filterRooms('<?php echo htmlspecialchars($slug); ?>', this)"><?php echo htmlspecialchars($label); ?></button>
             <?php endforeach; ?>
             <div class="filter-spacer"></div>
             <div class="search-bar">
@@ -665,12 +666,15 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                 <div class="room-price-row">
                                     <div class="room-price"><?php echo $price; ?> <sub>/ night</sub></div>
                                     <div style="display:flex;gap:8px;align-items:center;" data-action-buttons>
-                                        <button class="btn-view-details" onclick='openRoomModal(<?php echo $roomJs; ?>)'>View
-                                            Details</button>
+                                        <button class="btn-view-details"
+                                            onclick="window.location.href='unit_detail.php?id=<?php echo (int) $unit['unit_id']; ?>'">
+                                            View Details
+                                        </button>
                                         <?php if ($isVacant): ?>
                                             <button class="btn-rent" data-book-btn
-                                                onclick='openBookingModal(<?php echo $roomJs; ?>)'>Book
-                                                Now</button>
+                                                onclick="window.location.href='unit_detail.php?id=<?php echo (int) $unit['unit_id']; ?>&book=1'">
+                                                Book Now
+                                            </button>
                                         <?php else: ?>
                                             <button class="btn-rent" data-book-btn disabled>Unavailable</button>
                                         <?php endif; ?>
@@ -680,7 +684,8 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
-                <div id="roomsEmptyFallback" class="room-empty-state" style="display:none;grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--ink-faint);">
+                <div id="roomsEmptyFallback" class="room-empty-state"
+                    style="display:none;grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--ink-faint);">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
                         style="width:48px;height:48px;margin-bottom:12px;">
                         <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -847,7 +852,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
             </div>
         </div>
     </section>
-    
+
     <div class="modal-overlay" id="roomModal">
         <div class="pd-modal">
             <button class="pd-close" id="roomModalClose" aria-label="Close">✕</button>
@@ -1213,13 +1218,14 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         <div class="bm-confirm-check" id="bm-payment-failed" style="display:none;">
                             <div class="bm-check-ring" style="border-color:#ef4444;animation:none;">
                                 <svg viewBox="0 0 24 24" style="stroke:#ef4444;">
-                                    <circle cx="12" cy="12" r="10" stroke-width="2" fill="none"/>
-                                    <line x1="15" y1="9" x2="9" y2="15" stroke-width="2"/>
-                                    <line x1="9" y1="9" x2="15" y2="15" stroke-width="2"/>
+                                    <circle cx="12" cy="12" r="10" stroke-width="2" fill="none" />
+                                    <line x1="15" y1="9" x2="9" y2="15" stroke-width="2" />
+                                    <line x1="9" y1="9" x2="15" y2="15" stroke-width="2" />
                                 </svg>
                             </div>
                             <div class="bm-confirm-title" style="color:#ef4444;">Payment failed</div>
-                            <div class="bm-confirm-sub">Your payment was not completed. Your booking has been cancelled. Please try booking again.</div>
+                            <div class="bm-confirm-sub">Your payment was not completed. Your booking has been cancelled.
+                                Please try booking again.</div>
                             <div class="bm-confirm-ref" id="bmFailedRef">Ref #BK-0000</div>
                         </div>
 
@@ -1227,12 +1233,13 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         <div class="bm-confirm-check" id="bm-payment-expired" style="display:none;">
                             <div class="bm-check-ring" style="border-color:var(--gold,#c9a84c);animation:none;">
                                 <svg viewBox="0 0 24 24" style="stroke:var(--gold,#c9a84c);">
-                                    <circle cx="12" cy="12" r="10" stroke-width="2" fill="none"/>
-                                    <polyline points="12 6 12 12 16 14" stroke-width="2"/>
+                                    <circle cx="12" cy="12" r="10" stroke-width="2" fill="none" />
+                                    <polyline points="12 6 12 12 16 14" stroke-width="2" />
                                 </svg>
                             </div>
                             <div class="bm-confirm-title" style="color:var(--gold,#c9a84c);">Payment link expired</div>
-                            <div class="bm-confirm-sub">Your 30-minute hold has expired and the booking was released. Please start a new booking.</div>
+                            <div class="bm-confirm-sub">Your 30-minute hold has expired and the booking was released.
+                                Please start a new booking.</div>
                             <div class="bm-confirm-ref" id="bmExpiredRef">Ref #BK-0000</div>
                         </div>
                     </div>

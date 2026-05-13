@@ -559,33 +559,33 @@
     /* ────────────────────────────────────────────────────
      *  ADMIN: DASHBOARD RECENT ACTIVITY FEED
      * ──────────────────────────────────────────────────── */
-    window.addEventListener('ps:recent_activity', e => {
-        const items = e.detail;
-        const feed = document.getElementById('rt-activity-feed');
-        if (!feed) return;
+    // window.addEventListener('ps:recent_activity', e => {
+    //     const items = e.detail;
+    //     const feed = document.getElementById('rt-activity-feed');
+    //     if (!feed) return;
 
-        items.forEach(b => {
-            const key = `act-${b.booking_id}-${b.status}`;
-            if (feed.querySelector(`[data-act-key="${key}"]`)) return;
+    //     items.forEach(b => {
+    //         const key = `act-${b.booking_id}-${b.status}`;
+    //         if (feed.querySelector(`[data-act-key="${key}"]`)) return;
 
-            const lbl = statusLabel(b.status);
-            const div = document.createElement('div');
-            div.className = 'rt-activity-item';
-            div.dataset.actKey = key;
-            div.innerHTML = `
-                <div class="rt-act-dot" style="background:${_statusColor(b.status)}"></div>
-                <div class="rt-act-body">
-                    <span class="rt-act-name">${_escHtml(b.user_name)}</span>
-                    booked <strong>${_escHtml(b.unit_name)}</strong>
-                    — <span class="rt-act-badge ${lbl.cls}">${lbl.text}</span>
-                </div>
-                <div class="rt-act-time">${_relativeTime(b.created_at)}</div>`;
-            feed.prepend(div);
+    //         const lbl = statusLabel(b.status);
+    //         const div = document.createElement('div');
+    //         div.className = 'rt-activity-item';
+    //         div.dataset.actKey = key;
+    //         div.innerHTML = `
+    //             <div class="rt-act-dot" style="background:${_statusColor(b.status)}"></div>
+    //             <div class="rt-act-body">
+    //                 <span class="rt-act-name">${_escHtml(b.user_name)}</span>
+    //                 booked <strong>${_escHtml(b.unit_name)}</strong>
+    //                 — <span class="rt-act-badge ${lbl.cls}">${lbl.text}</span>
+    //             </div>
+    //             <div class="rt-act-time">${_relativeTime(b.created_at)}</div>`;
+    //         feed.prepend(div);
 
-            // Keep max 8 items
-            while (feed.children.length > 8) feed.lastElementChild.remove();
-        });
-    });
+    //         // Keep max 8 items
+    //         while (feed.children.length > 8) feed.lastElementChild.remove();
+    //     });
+    // });
 
     /* ────────────────────────────────────────────────────
      *  ADMIN: MESSAGES — unread thread highlight
