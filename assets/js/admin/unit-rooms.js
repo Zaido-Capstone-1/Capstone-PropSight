@@ -585,14 +585,14 @@ document.getElementById('open-add-unit-modal').addEventListener('click', () => {
       <div class="form-group">
         <label>Property <span style="color:var(--danger)">*</span></label>
         <select id="m-property">
-          <option value="">— Select Property —</option>
+          <option value="">Select Property</option>
           ${opts}
         </select>
       </div>
       <div class="form-group">
         <label>Unit Type</label>
         <select id="m-unit-type">
-          <option value="">— Select Type —</option>
+          <option value="">Select Type</option>
           <option>Studio</option>
           <option>1 Bedroom</option>
           <option>2 Bedroom</option>

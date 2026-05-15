@@ -27,16 +27,17 @@ function updateBookTotal() {
         document.getElementById('bookTotal').textContent = 'Select dates to see total.';
     }
 }
-document.getElementById('book_checkin').addEventListener('change', updateBookTotal);
-document.getElementById('book_checkout').addEventListener('change', updateBookTotal);
+document.getElementById('book_checkin')?.addEventListener('change', updateBookTotal);
+document.getElementById('book_checkout')?.addEventListener('change', updateBookTotal);
 
 function confirmBook() {
-    const ci = document.getElementById('book_checkin').value;
-    const co = document.getElementById('book_checkout').value;
+    const ci = document.getElementById('book_checkin')?.value;
+    const co = document.getElementById('book_checkout')?.value;
     const errEl = document.getElementById('bookError');
-    errEl.style.display = 'none';
-    if (!ci || !co || new Date(co) <= new Date(ci)) { errEl.textContent = 'Please select valid dates.'; errEl.style.display = 'block'; return; }
+    if (errEl) errEl.style.display = 'none';
+    if (!ci || !co || new Date(co) <= new Date(ci)) { if (errEl) { errEl.textContent = 'Please select valid dates.'; errEl.style.display = 'block'; } return; }
     const btn = document.getElementById('bookConfirmBtn');
+    if (!btn) return;
     btn.disabled = true; btn.textContent = 'Processing…';
     setTimeout(() => {
         closeModal('bookModal');
@@ -52,5 +53,48 @@ function unsaveRoom(btn) {
     setTimeout(() => { card.remove(); showToast('Room removed from saved list.'); }, 300);
 }
 
-document.getElementById('bookModal').addEventListener('click', e => { if (e.target.id === 'bookModal') closeModal('bookModal'); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal('bookModal'); closeSidebar(); } });
+function toggleSaveRoom(unitId, btn) {
+    const fd = new FormData();
+    fd.append('unit_id', unitId);
+    window.psAppendCsrf?.(fd);
+
+    const isSaved = btn.classList.contains('saved');
+
+    // Optimistic UI update
+    const syncBtn = btn.id === 'udSaveBtn'
+        ? document.getElementById('udSaveBtn2')
+        : document.getElementById('udSaveBtn');
+
+    [btn, syncBtn].forEach(b => {
+        if (!b) return;
+        b.classList.toggle('saved', !isSaved);
+    });
+
+    fetch('../../api/user/save_toggle.php', {
+        method: 'POST',
+        body: fd
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success) {
+            // Revert on failure
+            [btn, syncBtn].forEach(b => {
+                if (!b) return;
+                b.classList.toggle('saved', isSaved);
+            });
+            showToast?.(data.message || 'Could not update saved status.', 'error');
+            return;
+        }
+        showToast?.(data.saved ? 'Saved to your list!' : 'Removed from saved list.');
+    })
+    .catch(() => {
+        [btn, syncBtn].forEach(b => {
+            if (!b) return;
+            b.classList.toggle('saved', isSaved);
+        });
+        showToast?.('Network error. Please try again.', 'error');
+    });
+}
+
+document.getElementById('bookModal')?.addEventListener('click', e => { if (e.target.id === 'bookModal') closeModal('bookModal'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal('bookModal'); if (typeof closeSidebar === 'function') closeSidebar(); } });

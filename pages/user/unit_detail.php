@@ -1,19 +1,29 @@
 <?php
-/**
- * Unit Detail Page — PropSight
- * Path: pages/user/unit_detail.php
- */
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 include '../../includes/session.php';
 require_not_blacklisted(false);
 
 if ($_SESSION['role'] !== 'user') {
-    echo '<!DOCTYPE html><html><body><script>setTimeout(() => history.back(), 2000);</script></body></html>';
+    echo '<!DOCTYPE html><html><body><script>setTimeout(()=>history.back(),2000);</script></body></html>';
     exit;
 }
+require_once '../../includes/db.php';
 
-require_once '../../lib/user-queries/unit_detail_queries.php';
+$unit_id = (int) ($_GET['id'] ?? 0);
+if ($unit_id <= 0) {
+    header('Location: user-dashboard.php');
+    exit;
+}
+$_uid = (int) $_SESSION['user_id'];
+
+// ── Review pagination params (needed before queries file) ─────────────────────
+$reviewPage = max(1, (int) ($_GET['rp'] ?? 1));
+$reviewLimit = 4;
+$reviewOffset = ($reviewPage - 1) * $reviewLimit;
+
+// ── All SQL queries ───────────────────────────────────────────────────────────
+require '../../lib/user-queries/unit_detail_queries.php';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function ud_esc($s)
@@ -40,37 +50,46 @@ function getAmenityIcon($name)
         'gym' => 'ti-barbell',
         'balcony' => 'ti-sun',
         'hot water' => 'ti-droplet',
-        'refrigerator' => 'ti-device-floppy',
         'shower' => 'ti-droplets',
         'cable' => 'ti-device-tv',
         'heater' => 'ti-flame',
+        'refrigerator' => 'ti-device-floppy',
     ];
     $lower = strtolower($name);
-    foreach ($map as $key => $icon) {
-        if (str_contains($lower, trim($key)))
-            return $icon;
+    foreach ($map as $k => $v) {
+        if (str_contains($lower, trim($k)))
+            return $v;
     }
     return 'ti-circle-check';
 }
 
-// Title
 $rawNum = trim(preg_replace('/^unit\s*/i', '', $unit['unit_number'] ?? ''));
-$unitTitle = !empty($unit['unit_name'])
-    ? $unit['unit_name']
+$unitTitle = !empty($unit['unit_name']) ? $unit['unit_name']
     : (!empty($unit['property_name']) && !empty($rawNum)
         ? $unit['property_name'] . ' — Unit ' . $rawNum
         : ($unit['unit_number'] ?? 'Unit #' . $unit_id));
 
 $isVacant = $unit['status'] === 'vacant';
+$isBooked = $unit['status'] === 'booked';
+$isOccupied = $unit['status'] === 'occupied';
+$isMaintenance = $unit['status'] === 'maintenance';
+
+$statusLabel = match ($unit['status']) {
+    'vacant' => '✓ Available',
+    'booked' => '📅 Booked',
+    'occupied' => 'Occupied',
+    'maintenance' => 'Maintenance',
+    default => ucfirst($unit['status'] ?? 'Unavailable'),
+};
+$statusBadgeClass = $isVacant ? 'avail-yes' : ($isBooked ? 'avail-booked' : 'avail-no');
+
 $priceNum = (float) $unit['rent_amount'];
 $price = '₱' . number_format($priceNum, 0);
-$ratingValue = isset($unit['rating']) && $unit['rating'] !== null
-    ? round((float) $unit['rating'], 1) : null;
+$ratingValue = isset($unit['rating']) && $unit['rating'] !== null ? round((float) $unit['rating'], 1) : null;
 $cityPart = !empty($unit['city']) ? ', ' . $unit['city'] : '';
 $locationStr = ($unit['property_name'] ?? '') . $cityPart;
 $addressStr = trim(($unit['address'] ?? '') . $cityPart);
 
-// JS payload for booking modal
 $roomJs = json_encode([
     'id' => $unit['unit_id'],
     'name' => $unitTitle,
@@ -90,14 +109,77 @@ $roomJs = json_encode([
     'longitude' => (float) ($unit['longitude'] ?? 0),
 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
-// Session
 $first_name = htmlspecialchars($_SESSION['first_name'] ?? 'Guest');
 $last_name = htmlspecialchars($_SESSION['last_name'] ?? '');
 $initials = strtoupper(mb_substr($first_name, 0, 1) . mb_substr($last_name, 0, 1));
 $dashboardPhotoRaw = trim((string) ($_SESSION['profile_photo'] ?? ''));
 $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRaw, '/') : '';
-
 $top_nav_items = require '../../includes/user_top_nav.php';
+
+$full_name = trim($first_name . ' ' . $last_name);
+$email = htmlspecialchars($_SESSION['email'] ?? '');
+$isVerifiedSidebar = (($_SESSION['verification_status'] ?? '') === 'Verified');
+$sidebarPhoto = $dashboardPhoto;
+$active_nav = 'dashboard';
+
+$nav_items = [
+    'profile' => [
+        'label' => 'View Profile',
+        'sub' => 'Personal details & preferences',
+        'href' => 'profile.php',
+        'badge' => null,
+        'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+    ],
+    'bookings' => [
+        'label' => 'My Bookings',
+        'sub' => 'View and manage reservations',
+        'href' => 'bookings.php',
+        'badge' => $_activeBookingCount,
+        'icon' => '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+    ],
+    'payment' => [
+        'label' => 'Payment History',
+        'sub' => 'View transactions & refunds',
+        'href' => 'payment.php',
+        'badge' => null,
+        'icon' => '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>',
+    ],
+    'saved' => [
+        'label' => 'Saved Rooms',
+        'sub' => 'Rooms on your wishlist',
+        'href' => 'saved.php',
+        'badge' => $_savedCount,
+        'icon' => '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>',
+    ],
+    'loyalty' => [
+        'label' => 'Loyalty Points',
+        'sub' => $_loyaltySub,
+        'href' => 'loyalty.php',
+        'badge' => null,
+        'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>',
+    ],
+    'settings' => [
+        'label' => 'Settings',
+        'sub' => 'Notifications, privacy, security',
+        'href' => 'settings.php',
+        'badge' => null,
+        'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>',
+    ],
+    'messages' => [
+        'label' => 'Messages',
+        'sub' => 'Chat with the property team',
+        'href' => 'messages.php',
+        'badge' => null,
+        'icon' => '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>',
+    ],
+    'support' => [
+        'label' => 'Support & Help',
+        'sub' => 'FAQs and contact staff',
+        'href' => 'support.php',
+        'badge' => null,
+        'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+    ],
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -106,28 +188,25 @@ $top_nav_items = require '../../includes/user_top_nav.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo ud_esc($unitTitle); ?> — PropSight</title>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap"
         rel="stylesheet">
-
-    <!-- Tabler Icons — required for amenity chips, breadcrumb, booking card icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-
     <link rel="stylesheet" href="../../assets/css/user-css/layout.css">
     <link rel="stylesheet" href="../../assets/css/user-css/styles.css">
     <link rel="stylesheet" href="../../assets/css/user-css/user-dashboard.css">
     <link rel="stylesheet" href="../../assets/css/user-css/unit_detail.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 
 <body>
 
-    <!-- ══ HEADER ══════════════════════════════════════════════════════════════ -->
+    <!-- HEADER -->
     <header id="hdr">
         <a href="user-dashboard.php" class="logo">
-            <img src="../../assets/images/logo.png" alt="PropSight Logo" class="logo-icon">
+            <img src="../../assets/images/logo.png" alt="PropSight" class="logo-icon">
             <span style="font-family:'Cormorant Garamond',serif;font-weight:700;line-height:1.1;display:block;">
                 Boracay <span class="brand-break">Accommodation</span>
             </span>
@@ -138,9 +217,9 @@ $top_nav_items = require '../../includes/user_top_nav.php';
             <?php endforeach; ?>
         </nav>
         <div class="header-right">
-            <a href="user-dashboard.php#browse" class="btn-browse">Browse Rooms</a>
+            <a href="user-dashboard.php#browse" class="btn-browse" style="text-decoration:none;">Browse Rooms</a>
             <div class="btn-profile-wrap">
-                <button class="btn-profile" id="profileBtn" aria-label="My Profile">
+                <button class="btn-profile" id="profileBtn">
                     <?php if ($dashboardPhoto): ?>
                         <img src="<?php echo ud_esc($dashboardPhoto); ?>" alt="Profile"
                             onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
@@ -151,14 +230,18 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                 </button>
                 <span class="profile-dot"></span>
             </div>
-            <button class="hamburger" id="hamburger" aria-label="Menu">
-                <span></span><span></span><span></span>
-            </button>
+            <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
         </div>
     </header>
 
-    <!-- ══ BREADCRUMB ══════════════════════════════════════════════════════════ -->
+    <?php require '../../includes/_unitdetails_layout.php'; ?>
+
+    <!-- BREADCRUMB -->
     <div class="ud-breadcrumb">
+        <button class="ud-back-btn" onclick="history.back()" title="Go back">
+            <i class="ti ti-arrow-left"></i>
+            <span>Back</span>
+        </button>
         <a href="user-dashboard.php">Dashboard</a>
         <i class="ti ti-chevron-right ud-bc-sep"></i>
         <a href="user-dashboard.php#browse">Browse Rooms</a>
@@ -166,108 +249,11 @@ $top_nav_items = require '../../includes/user_top_nav.php';
         <span><?php echo ud_esc($unitTitle); ?></span>
     </div>
 
-    <!-- ══ GALLERY ═════════════════════════════════════════════════════════════ -->
-    <section class="ud-gallery" id="udGallery">
-
-        <?php if (count($images) >= 3): ?>
-            <!-- Hotel 3-up grid -->
-            <div class="ud-gallery-grid">
-                <div class="ud-gallery-main-cell">
-                    <img src="<?php echo ud_esc($images[0]); ?>" alt="<?php echo ud_esc($unitTitle); ?>"
-                        onerror="this.parentElement.classList.add('ud-img-error')">
-                </div>
-                <div class="ud-gallery-side">
-                    <div class="ud-gallery-side-cell">
-                        <img src="<?php echo ud_esc($images[1]); ?>" alt="<?php echo ud_esc($unitTitle); ?>"
-                            onerror="this.parentElement.classList.add('ud-img-error')">
-                    </div>
-                    <div class="ud-gallery-side-cell">
-                        <img src="<?php echo ud_esc($images[2]); ?>" alt="<?php echo ud_esc($unitTitle); ?>"
-                            onerror="this.parentElement.classList.add('ud-img-error')">
-                        <?php if (count($images) > 3): ?>
-                            <button class="ud-show-all-btn" id="udShowAllBtn">
-                                <i class="ti ti-grid-dots"></i>
-                                Show all <?php echo count($images); ?> photos
-                            </button>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-
-        <?php elseif (count($images) === 2): ?>
-            <!-- 2-image side-by-side -->
-            <div class="ud-gallery-grid" style="grid-template-columns:1fr 1fr">
-                <div class="ud-gallery-main-cell" style="border-radius:18px 0 0 18px">
-                    <img src="<?php echo ud_esc($images[0]); ?>" alt="<?php echo ud_esc($unitTitle); ?>"
-                        onerror="this.parentElement.classList.add('ud-img-error')">
-                </div>
-                <div class="ud-gallery-main-cell" style="border-radius:0 18px 18px 0">
-                    <img src="<?php echo ud_esc($images[1]); ?>" alt="<?php echo ud_esc($unitTitle); ?>"
-                        onerror="this.parentElement.classList.add('ud-img-error')">
-                </div>
-            </div>
-
-        <?php else: ?>
-            <!-- Single image / slider -->
-            <div class="ud-gallery-slider">
-                <div class="ud-gallery-track" id="udTrack">
-                    <?php if (empty($images)): ?>
-                        <div class="ud-gallery-slide ud-img-error"></div>
-                    <?php else: ?>
-                        <?php foreach ($images as $img): ?>
-                            <div class="ud-gallery-slide">
-                                <img src="<?php echo ud_esc($img); ?>" alt="<?php echo ud_esc($unitTitle); ?>"
-                                    onerror="this.parentElement.classList.add('ud-img-error')">
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
-                <?php if (count($images) > 1): ?>
-                    <button class="ud-gnav ud-gprev" id="udPrev" aria-label="Previous">
-                        <i class="ti ti-chevron-left"></i>
-                    </button>
-                    <button class="ud-gnav ud-gnext" id="udNext" aria-label="Next">
-                        <i class="ti ti-chevron-right"></i>
-                    </button>
-                    <div class="ud-gdots" id="udDots">
-                        <?php foreach ($images as $i => $_): ?>
-                            <button class="ud-gdot<?php echo $i === 0 ? ' active' : ''; ?>" data-idx="<?php echo $i; ?>"></button>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-        <?php endif; ?>
-
-        <!-- Overlay: badges -->
-        <div class="ud-gallery-badges">
-            <span class="ud-badge-type"><?php echo ud_esc(strtoupper($unit['unit_type'] ?? 'UNIT')); ?></span>
-            <span class="ud-badge-avail <?php echo $isVacant ? 'avail-yes' : 'avail-no'; ?>">
-                <?php echo $isVacant
-                    ? '✓ Available'
-                    : ($unit['status'] === 'maintenance' ? 'Maintenance' : 'Booked'); ?>
-            </span>
-        </div>
-
-        <!-- Overlay: save button -->
-        <button class="ud-gallery-save <?php echo $isSaved ? 'saved' : ''; ?>" id="udSaveBtn"
-            onclick="toggleSaveRoom(<?php echo (int) $unit['unit_id']; ?>, this)"
-            aria-label="<?php echo $isSaved ? 'Remove from saved' : 'Save'; ?>">
-            <i class="ti <?php echo $isSaved ? 'ti-heart-filled' : 'ti-heart'; ?>"></i>
-        </button>
-
-    </section>
-
-    <!-- Lightbox -->
+    <!-- LIGHTBOX -->
     <div class="ud-lightbox" id="udLightbox" role="dialog" aria-modal="true">
-        <button class="ud-lb-close" id="udLbClose" aria-label="Close lightbox">
-            <i class="ti ti-x"></i>
-        </button>
-        <button class="ud-lb-nav ud-lb-prev" id="udLbPrev" aria-label="Previous photo">
-            <i class="ti ti-chevron-left"></i>
-        </button>
-        <button class="ud-lb-nav ud-lb-next" id="udLbNext" aria-label="Next photo">
-            <i class="ti ti-chevron-right"></i>
-        </button>
+        <button class="ud-lb-close" id="udLbClose"><i class="ti ti-x"></i></button>
+        <button class="ud-lb-nav ud-lb-prev" id="udLbPrev"><i class="ti ti-chevron-left"></i></button>
+        <button class="ud-lb-nav ud-lb-next" id="udLbNext"><i class="ti ti-chevron-right"></i></button>
         <div class="ud-lb-track" id="udLbTrack">
             <?php foreach ($images as $img): ?>
                 <div class="ud-lb-slide">
@@ -275,303 +261,502 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                 </div>
             <?php endforeach; ?>
         </div>
-        <div class="ud-lb-counter">
-            <span id="udLbCurrent">1</span> / <span><?php echo count($images); ?></span>
+        <div class="ud-lb-counter"><span id="udLbCurrent">1</span> / <span><?php echo count($images); ?></span></div>
+    </div>
+
+    <!-- VIRTUAL TOUR MODAL -->
+    <div class="ud-tour-modal" id="udTourModal" role="dialog" aria-modal="true">
+        <button class="ud-tour-close" onclick="closeTour()"><i class="ti ti-x"></i></button>
+        <div class="ud-tour-inner">
+            <div class="ud-tour-placeholder">
+                <i class="ti ti-360" style="font-size:40px;color:var(--ud-green);margin-bottom:10px"></i>
+                <div style="font-size:.9rem;font-weight:600;color:var(--ud-text)">360° Virtual Tour</div>
+                <div style="font-size:.75rem;color:var(--ud-text-soft);margin-top:6px">
+                    Virtual tour not yet available for this unit.<br>Contact the host to schedule a viewing.
+                </div>
+                <a href="messages.php" class="ud-tour-cta" style="margin-top:16px">
+                    <i class="ti ti-message-circle"></i> Message the host
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- ══ MAIN LAYOUT ══════════════════════════════════════════════════════════ -->
-    <div class="ud-layout">
+    <!-- ══ 2-COLUMN PAGE WRAP ══ -->
+    <div class="ud-page-wrap">
 
-        <!-- ══ LEFT COLUMN ══════════════════════════════════════════════════════ -->
-        <div class="ud-main">
+        <!-- ══ LEFT COLUMN ══ -->
+        <div class="ud-left">
 
-            <!-- Title & meta -->
-            <div class="ud-title-block">
-                <h1 class="ud-title"><?php echo ud_esc($unitTitle); ?></h1>
-
-                <div class="ud-meta-row">
-                    <?php if ($ratingValue !== null): ?>
-                        <div class="ud-rating-pill">
-                            <span class="ud-stars">
-                                <?php
-                                $full = min(5, (int) round($ratingValue));
-                                $empty = max(0, 5 - $full);
-                                echo str_repeat('★', $full) . str_repeat('☆', $empty);
-                                ?>
-                            </span>
-                            <strong><?php echo number_format($ratingValue, 1); ?></strong>
-                            <span class="ud-review-link"
-                                onclick="document.getElementById('reviews').scrollIntoView({behavior:'smooth'})">
-                                (<?php echo $totalReviews; ?> review<?php echo $totalReviews !== 1 ? 's' : ''; ?>)
-                            </span>
+            <!-- Gallery -->
+            <div style="position:relative">
+                <?php if (count($images) >= 3): ?>
+                    <div class="ud-gallery-grid" id="udGalleryGrid">
+                        <div class="ud-gallery-main-cell" style="position:relative;">
+                            <img id="udMainGalleryImg" src="<?php echo ud_esc($images[0]); ?>"
+                                alt="<?php echo ud_esc($unitTitle); ?>"
+                                onerror="this.parentElement.classList.add('ud-img-error')" onclick="openLb(0)"
+                                style="cursor:zoom-in;">
+                            <button class="ud-main-nav ud-main-prev" id="udMainPrev" aria-label="Previous">
+                                &#xea64;
+                            </button>
+                            <button class="ud-main-nav ud-main-next" id="udMainNext" aria-label="Next">
+                                &#xea65;
+                            </button>
                         </div>
-                    <?php else: ?>
-                        <div class="ud-no-rating-pill">No ratings yet</div>
-                    <?php endif; ?>
+                        <div class="ud-gallery-side">
+                            <div class="ud-gallery-side-cell" id="udSideCell0" onclick="openLb(1)">
+                                <img src="<?php echo ud_esc($images[1]); ?>" alt="<?php echo ud_esc($unitTitle); ?>"
+                                    onerror="this.parentElement.classList.add('ud-img-error')">
+                            </div>
+                            <div class="ud-gallery-side-cell" id="udSideCell1" onclick="openLb(2)">
+                                <img src="<?php echo ud_esc($images[2]); ?>" alt="<?php echo ud_esc($unitTitle); ?>"
+                                    onerror="this.parentElement.classList.add('ud-img-error')">
+                            </div>
+                        </div>
+                    </div>
+                <?php elseif (count($images) === 2): ?>
+                    <div class="ud-gallery-grid" style="grid-template-columns:1fr 1fr; height: 300px;">
+                        <div class="ud-gallery-main-cell" style="border-radius:12px 0 0 12px; grid-row: 1;"
+                            onclick="openLb(0)">
+                            <img src="<?php echo ud_esc($images[0]); ?>" alt="<?php echo ud_esc($unitTitle); ?>"
+                                onerror="this.parentElement.classList.add('ud-img-error')">
+                        </div>
+                        <div class="ud-gallery-main-cell" style="border-radius:0 12px 12px 0; grid-row: 1;"
+                            onclick="openLb(1)">
+                            <img src="<?php echo ud_esc($images[1]); ?>" alt="<?php echo ud_esc($unitTitle); ?>"
+                                onerror="this.parentElement.classList.add('ud-img-error')">
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <!-- Single image fallback -->
+                    <div class="ud-gallery-slider">
+                        <div class="ud-gallery-track" id="udTrack">
+                            <?php if (empty($images)): ?>
+                                <div class="ud-gallery-slide ud-img-error"></div>
+                            <?php else: ?>
+                                <?php foreach ($images as $img): ?>
+                                    <div class="ud-gallery-slide">
+                                        <img src="<?php echo ud_esc($img); ?>" alt="<?php echo ud_esc($unitTitle); ?>"
+                                            onerror="this.parentElement.classList.add('ud-img-error')">
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                        <?php if (count($images) > 1): ?>
+                            <button class="ud-main-nav ud-main-prev" id="udMainPrev" aria-label="Previous">
+                                &#xea64;
+                            </button>
+                            <button class="ud-main-nav ud-main-next" id="udMainNext" aria-label="Next">
+                                &#xea65;
+                            </button>
+                            <div class="ud-gdots" id="udDots">
+                                <?php foreach ($images as $i => $_): ?>
+                                    <button class="ud-gdot<?php echo $i === 0 ? ' active' : ''; ?>"
+                                        data-idx="<?php echo $i; ?>"></button>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
 
-                    <span class="ud-meta-sep">·</span>
+                <!-- Badges -->
+                <div class="ud-gallery-badges">
+                    <span class="ud-badge-type"><?php echo ud_esc(strtoupper($unit['unit_type'] ?? 'UNIT')); ?></span>
+                    <span class="ud-badge-avail <?php echo $statusBadgeClass; ?>">
+                        <?php echo $statusLabel; ?>
+                    </span>
+                </div>
 
-                    <div class="ud-location-pill">
+                <!-- Save -->
+                <button class="ud-gallery-save <?php echo $isSaved ? 'saved' : ''; ?>" id="udSaveBtn"
+                    onclick="toggleSaveRoom(<?php echo (int) $unit['unit_id']; ?>, this)">
+                    <i class="ti <?php echo $isSaved ? 'ti-heart-filled' : 'ti-heart'; ?>"></i>
+                </button>
+            </div><!-- /gallery wrapper -->
+
+            <!-- Price + CTA block -->
+            <div class="ud-price-block">
+                <div class="ud-price-left">
+                    <div class="ud-price-label">Nightly rate</div>
+                    <div class="ud-price-amount"><?php echo $price; ?><sub>/night</sub></div>
+                    <div class="ud-price-meta">
                         <i class="ti ti-map-pin"></i>
                         <?php echo ud_esc($locationStr); ?>
                         <?php if ($addressStr): ?>
-                            <span class="ud-addr-sm">· <?php echo ud_esc($addressStr); ?></span>
+                            · <span style="color:#636b7d"><?php echo ud_esc($addressStr); ?></span>
                         <?php endif; ?>
                     </div>
                 </div>
-
-                <!-- Facts strip -->
-                <div class="ud-facts-strip">
-                    <div class="ud-fact">
-                        <div class="ud-fact-label">Rate</div>
-                        <div class="ud-fact-val"><?php echo $price; ?><sub>/night</sub></div>
-                    </div>
-                    <div class="ud-fact-sep"></div>
-                    <div class="ud-fact">
-                        <div class="ud-fact-label">Type</div>
-                        <div class="ud-fact-val"><?php echo ud_esc(ucfirst($unit['unit_type'] ?? 'Standard')); ?></div>
-                    </div>
-                    <div class="ud-fact-sep"></div>
-                    <div class="ud-fact">
-                        <div class="ud-fact-label">Beds</div>
-                        <div class="ud-fact-val"><?php echo (int) ($unit['num_beds'] ?? 2); ?></div>
-                    </div>
-                    <div class="ud-fact-sep"></div>
-                    <div class="ud-fact">
-                        <div class="ud-fact-label">Baths</div>
-                        <div class="ud-fact-val"><?php echo (int) ($unit['num_baths'] ?? 1); ?></div>
-                    </div>
-                    <?php if (!empty($unit['floor'])): ?>
-                        <div class="ud-fact-sep"></div>
-                        <div class="ud-fact">
-                            <div class="ud-fact-label">Floor</div>
-                            <div class="ud-fact-val"><?php echo (int) $unit['floor']; ?></div>
-                        </div>
-                    <?php endif; ?>
-                    <div class="ud-fact-sep"></div>
-                    <div class="ud-fact">
-                        <div class="ud-fact-label">Max Guests</div>
-                        <div class="ud-fact-val"><?php echo (int) ($unit['max_guests'] ?? 2); ?></div>
-                    </div>
-                </div>
+                <?php if ($isVacant && !$hasActiveBooking): ?>
+                    <button class="ud-cta-btn" id="udBookBtn"
+                        onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
+                        <i class="ti ti-calendar-plus"></i>
+                        Book Now
+                    </button>
+                <?php elseif ($hasActiveBooking): ?>
+                    <button class="ud-cta-btn" style="background:#3a9470;cursor:default" disabled>
+                        <i class="ti ti-circle-check"></i> Already Booked
+                    </button>
+                <?php elseif ($isBooked || $isOccupied): ?>
+                    <button class="ud-cta-btn" id="udBookBtn"
+                        onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
+                        <i class="ti ti-calendar-plus"></i> Book a Future Date
+                    </button>
+                <?php elseif ($isMaintenance): ?>
+                    <button class="ud-cta-btn" style="background:#9ca3af;cursor:default" disabled>
+                        <i class="ti ti-tool"></i> Under Maintenance
+                    </button>
+                <?php else: ?>
+                    <button class="ud-cta-btn" disabled>
+                        <i class="ti ti-ban"></i> Unavailable
+                    </button>
+                <?php endif; ?>
             </div>
 
-            <!-- About -->
-            <section class="ud-section">
-                <h2 class="ud-section-title">About this unit</h2>
-                <p class="ud-desc">
-                    <?php echo nl2br(ud_esc($unit['description'] ?? 'A comfortable and well-appointed unit.')); ?>
-                </p>
-            </section>
-
-            <!-- Amenities -->
-            <?php if (!empty($amenities)): ?>
-                <section class="ud-section">
-                    <h2 class="ud-section-title">Amenities</h2>
-                    <div class="ud-amenities-grid">
-                        <?php foreach ($amenities as $am): ?>
-                            <div class="ud-amenity-chip">
-                                <i class="ti <?php echo getAmenityIcon($am); ?>"></i>
-                                <?php echo ud_esc($am); ?>
-                            </div>
-                        <?php endforeach; ?>
+            <!-- Quick stats -->
+            <div class="ud-stats-row">
+                <div class="ud-stat-item">
+                    <i class="ti ti-bed"></i>
+                    <strong><?php echo (int) ($unit['bedrooms'] ?? 2); ?></strong>
+                    Bed<?php echo (int) ($unit['bedrooms'] ?? 2) !== 1 ? 's' : ''; ?>
+                </div>
+                <div class="ud-stat-item">
+                    <i class="ti ti-bath"></i>
+                    <strong><?php echo (int) ($unit['bathrooms'] ?? 1); ?></strong>
+                    Bath<?php echo (int) ($unit['bathrooms'] ?? 1) !== 1 ? 's' : ''; ?>
+                </div>
+                <?php if (!empty($unit['floor'])): ?>
+                    <div class="ud-stat-item">
+                        <i class="ti ti-building"></i>
+                        Floor <strong><?php echo (int) $unit['floor']; ?></strong>
                     </div>
-                    <?php if (count($amenities) > 8): ?>
-                        <button class="ud-show-more-amenities" id="udShowMoreAmenities">
-                            Show all <?php echo count($amenities); ?> amenities
-                            <i class="ti ti-chevron-down"></i>
-                        </button>
-                    <?php endif; ?>
-                </section>
-            <?php endif; ?>
-
-            <!-- Map -->
-            <?php if (!empty($unit['latitude']) && (float) $unit['latitude'] !== 0.0): ?>
-                <section class="ud-section">
-                    <h2 class="ud-section-title">Where you'll be</h2>
-                    <div class="ud-map-wrap">
-                        <div id="udLeafletMap"></div>
+                <?php endif; ?>
+                <div class="ud-stat-item">
+                    <i class="ti ti-users"></i>
+                    Up to <strong><?php echo (int) ($unit['max_guests'] ?? 2); ?></strong>
+                    guest<?php echo (int) ($unit['max_guests'] ?? 2) !== 1 ? 's' : ''; ?>
+                </div>
+                <?php if ($ratingValue !== null): ?>
+                    <div class="ud-stat-item">
+                        <i class="ti ti-star-filled" style="color:#d97706"></i>
+                        <strong><?php echo number_format($ratingValue, 1); ?></strong>
+                        <span style="color:#636b7d">(<?php echo $totalReviews; ?>
+                            review<?php echo $totalReviews !== 1 ? 's' : ''; ?>)</span>
                     </div>
-                    <?php if ($addressStr): ?>
-                        <p class="ud-map-caption">
-                            <i class="ti ti-map-pin"></i>
-                            <?php echo ud_esc($addressStr); ?>
-                        </p>
-                    <?php endif; ?>
-                </section>
-            <?php endif; ?>
+                <?php endif; ?>
+            </div>
 
-            <!-- Reviews -->
-            <section class="ud-section" id="reviews">
-                <div class="ud-reviews-header">
-                    <h2 class="ud-section-title">
-                        <?php if ($ratingValue !== null): ?>
-                            <span class="ud-rv-star">★</span>
-                            <?php echo number_format($ratingValue, 1); ?> ·
-                        <?php endif; ?>
-                        Guest Reviews
-                        <?php if ($totalReviews > 0): ?>
-                            <span class="ud-review-count-badge"><?php echo $totalReviews; ?></span>
-                        <?php endif; ?>
-                    </h2>
+            <!-- Info card -->
+            <div class="ud-info-card">
+
+                <!-- About -->
+                <div class="ud-info-section">
+                    <div class="ud-info-label">Property information</div>
+                    <p class="ud-desc">
+                        <?php echo nl2br(ud_esc($unit['description'] ?? 'A comfortable and well-appointed unit.')); ?>
+                    </p>
                 </div>
 
-                <?php if (empty($reviews)): ?>
-                    <div class="ud-no-reviews">
-                        <i class="ti ti-message-circle"></i>
-                        <p>No reviews yet for this unit.</p>
+                <!-- Amenities -->
+                <?php if (!empty($amenities)): ?>
+                    <div class="ud-info-section">
+                        <div class="ud-info-label">Amenities</div>
+                        <div class="ud-amenities-grid">
+                            <?php foreach ($amenities as $am): ?>
+                                <div class="ud-amenity-chip">
+                                    <i class="ti <?php echo getAmenityIcon($am); ?>"></i>
+                                    <?php echo ud_esc($am); ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php if (count($amenities) > 8): ?>
+                            <button class="ud-show-more-amenities" id="udShowMoreAmenities">
+                                Show all <?php echo count($amenities); ?> amenities
+                                <i class="ti ti-chevron-down"></i>
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Nearby Attractions -->
+                <div class="ud-info-section">
+                    <div class="ud-info-label">Nearby attractions</div>
+                    <div class="ud-nearby-list">
+                        <div class="ud-nearby-item">
+                            <span class="ud-nearby-icon"><i class="ti ti-beach"></i></span>
+                            <div class="ud-nearby-body">
+                                <div class="ud-nearby-name">White Beach</div>
+                                <div class="ud-nearby-dist">~200m · 3 min walk</div>
+                            </div>
+                            <span class="ud-nearby-tag">Beach</span>
+                        </div>
+                        <div class="ud-nearby-item">
+                            <span class="ud-nearby-icon"><i class="ti ti-plane"></i></span>
+                            <div class="ud-nearby-body">
+                                <div class="ud-nearby-name">Caticlan Airport</div>
+                                <div class="ud-nearby-dist">~7 km · 20 min drive</div>
+                            </div>
+                            <span class="ud-nearby-tag">Transport</span>
+                        </div>
+                        <div class="ud-nearby-item">
+                            <span class="ud-nearby-icon"><i class="ti ti-anchor"></i></span>
+                            <div class="ud-nearby-body">
+                                <div class="ud-nearby-name">Cagban Jetty Port</div>
+                                <div class="ud-nearby-dist">~1.2 km · 5 min drive</div>
+                            </div>
+                            <span class="ud-nearby-tag">Ferry</span>
+                        </div>
+                        <div class="ud-nearby-item">
+                            <span class="ud-nearby-icon"><i class="ti ti-tools-kitchen-2"></i></span>
+                            <div class="ud-nearby-body">
+                                <div class="ud-nearby-name">D'Mall Restaurants</div>
+                                <div class="ud-nearby-dist">~500m · 7 min walk</div>
+                            </div>
+                            <span class="ud-nearby-tag">Dining</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews -->
+                <div class="ud-info-section" id="reviews">
+                    <div class="ud-info-label">
+                        Guest Reviews
+                        <?php if ($totalReviews > 0): ?>
+                            <span style="background:rgba(76,175,133,0.15);color:#4caf85;font-size:0.58rem;
+                                 padding:1px 7px;border-radius:99px;margin-left:6px;font-weight:700">
+                                <?php echo $totalReviews; ?>
+                            </span>
+                        <?php endif; ?>
                     </div>
 
-                <?php else: ?>
-                    <div class="ud-reviews-list">
-                        <?php foreach ($reviews as $rv): ?>
-                            <div class="ud-review-card">
-                                <div class="ud-rv-top">
-                                    <div class="ud-rv-avatar">
-                                        <?php echo strtoupper(mb_substr($rv['reviewer'], 0, 1)); ?>
-                                    </div>
-                                    <div class="ud-rv-info">
-                                        <div class="ud-rv-name"><?php echo ud_esc($rv['reviewer']); ?></div>
-                                        <div class="ud-rv-date"><?php echo date('F Y', strtotime($rv['created_at'])); ?></div>
-                                    </div>
-                                    <div class="ud-rv-stars">
-                                        <?php for ($s = 1; $s <= 5; $s++): ?>
-                                            <span class="<?php echo $s <= (int) $rv['rating'] ? 'sf' : 'se'; ?>">★</span>
-                                        <?php endfor; ?>
+                    <?php if (empty($reviews)): ?>
+                        <div class="ud-no-reviews">
+                            <i class="ti ti-message-circle"></i>
+                            <p>No reviews yet for this unit.</p>
+                        </div>
+                    <?php else: ?>
+
+                        <!-- Rating breakdown -->
+                        <?php if ($ratingValue !== null): ?>
+                            <div class="ud-rating-summary">
+                                <div class="ud-rating-big">
+                                    <span class="ud-rating-num"><?php echo number_format((float) $ratingValue, 1); ?></span>
+                                    <div>
+                                        <div class="ud-rating-stars-lg">
+                                            <?php for ($s = 1; $s <= 5; $s++): ?>
+                                                <span
+                                                    class="<?php echo $s <= round((float) $ratingValue) ? 'sf' : 'se'; ?>">★</span>
+                                            <?php endfor; ?>
+                                        </div>
+                                        <div class="ud-rating-total">
+                                            <?php echo $totalReviews; ?> review<?php echo $totalReviews !== 1 ? 's' : ''; ?>
+                                        </div>
                                     </div>
                                 </div>
-                                <?php if (!empty($rv['comment'])): ?>
-                                    <p class="ud-rv-body"><?php echo ud_esc($rv['comment']); ?></p>
+                                <div class="ud-rating-bars">
+                                    <?php
+                                    $categories = [
+                                        ['label' => 'Cleanliness', 'pct' => 90],
+                                        ['label' => 'Location', 'pct' => 95],
+                                        ['label' => 'Value', 'pct' => 85],
+                                        ['label' => 'Comfort', 'pct' => 88],
+                                    ];
+                                    foreach ($categories as $cat): ?>
+                                        <div class="ud-rbar-row">
+                                            <span class="ud-rbar-label"><?php echo $cat['label']; ?></span>
+                                            <div class="ud-rbar-track">
+                                                <div class="ud-rbar-fill" style="width:<?php echo $cat['pct']; ?>%"></div>
+                                            </div>
+                                            <span class="ud-rbar-pct"><?php echo number_format($cat['pct'] / 20, 1); ?></span>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="ud-reviews-list">
+                            <?php foreach ($reviews as $rv): ?>
+                                <div class="ud-review-card">
+                                    <div class="ud-rv-top">
+                                        <div class="ud-rv-avatar">
+                                            <?php echo strtoupper(mb_substr($rv['reviewer'], 0, 1)); ?>
+                                        </div>
+                                        <div class="ud-rv-info">
+                                            <div class="ud-rv-name"><?php echo ud_esc($rv['reviewer']); ?></div>
+                                            <div class="ud-rv-date">
+                                                <?php echo date('F Y', strtotime($rv['created_at'])); ?>
+                                            </div>
+                                        </div>
+                                        <div class="ud-rv-stars">
+                                            <?php for ($s = 1; $s <= 5; $s++): ?>
+                                                <span class="<?php echo $s <= (int) $rv['rating'] ? 'sf' : 'se'; ?>">★</span>
+                                            <?php endfor; ?>
+                                        </div>
+                                    </div>
+                                    <?php if (!empty($rv['comment'])): ?>
+                                        <p class="ud-rv-body"><?php echo ud_esc($rv['comment']); ?></p>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <?php if ($totalReviewPages > 1): ?>
+                            <div class="ud-reviews-pager">
+                                <?php if ($reviewPage > 1): ?>
+                                    <a href="?id=<?php echo $unit_id; ?>&rp=<?php echo $reviewPage - 1; ?>#reviews"
+                                        class="ud-pager-btn">
+                                        <i class="ti ti-arrow-left"></i> Prev
+                                    </a>
+                                <?php endif; ?>
+                                <span class="ud-pager-label">
+                                    Page <?php echo $reviewPage; ?> of <?php echo $totalReviewPages; ?>
+                                </span>
+                                <?php if ($reviewPage < $totalReviewPages): ?>
+                                    <a href="?id=<?php echo $unit_id; ?>&rp=<?php echo $reviewPage + 1; ?>#reviews"
+                                        class="ud-pager-btn">
+                                        Next <i class="ti ti-arrow-right"></i>
+                                    </a>
                                 <?php endif; ?>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
+                        <?php endif; ?>
 
-                    <?php if ($totalReviewPages > 1): ?>
-                        <div class="ud-reviews-pager">
-                            <?php if ($reviewPage > 1): ?>
-                                <a href="?id=<?php echo $unit_id; ?>&rp=<?php echo $reviewPage - 1; ?>#reviews"
-                                    class="ud-pager-btn">
-                                    <i class="ti ti-arrow-left"></i> Previous
-                                </a>
-                            <?php endif; ?>
-                            <span class="ud-pager-label">
-                                Page <?php echo $reviewPage; ?> of <?php echo $totalReviewPages; ?>
-                            </span>
-                            <?php if ($reviewPage < $totalReviewPages): ?>
-                                <a href="?id=<?php echo $unit_id; ?>&rp=<?php echo $reviewPage + 1; ?>#reviews"
-                                    class="ud-pager-btn">
-                                    Next <i class="ti ti-arrow-right"></i>
-                                </a>
-                            <?php endif; ?>
-                        </div>
                     <?php endif; ?>
-                <?php endif; ?>
-            </section>
+                </div>
 
-        </div><!-- /ud-main -->
+            </div><!-- /ud-info-card -->
 
-        <!-- ══ RIGHT COLUMN: BOOKING CARD ════════════════════════════════════════ -->
-        <aside class="ud-aside" id="udAside">
+        </div><!-- /ud-left -->
+
+        <!-- ══ RIGHT COLUMN ══ -->
+        <div class="ud-right">
+
+            <!-- Card 1: Booking -->
             <div class="ud-booking-card" id="udBookingCard">
-
-                <!-- Dark green header -->
                 <div class="ud-bc-header">
-                    <div class="ud-bc-price">
-                        <?php echo $price; ?><span class="ud-bc-per"> / night</span>
-                    </div>
+                    <div class="ud-bc-price"><?php echo $price; ?><span class="ud-bc-per"> / night</span></div>
                     <?php if ($ratingValue !== null): ?>
                         <div class="ud-bc-rating">
-                            <span class="ud-bc-stars">★</span>
+                            <span class="ud-bc-stars">★★★★★</span>
                             <strong><?php echo number_format($ratingValue, 1); ?></strong>
                             <span>· <?php echo $totalReviews; ?> review<?php echo $totalReviews !== 1 ? 's' : ''; ?></span>
                         </div>
                     <?php endif; ?>
                 </div>
-
-                <!-- Body -->
                 <div class="ud-bc-body">
-
-                    <!-- Date + Guests unified block -->
                     <div class="ud-date-grid">
                         <div class="ud-date-cell ud-date-in">
                             <label for="udCheckin">Check-in</label>
-                            <input type="date" id="udCheckin" min="<?php echo date('Y-m-d'); ?>">
+                            <input type="text" id="udCheckin" placeholder="Select date" readonly>
                         </div>
                         <div class="ud-date-cell ud-date-out">
                             <label for="udCheckout">Check-out</label>
-                            <input type="date" id="udCheckout" min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>">
+                            <input type="text" id="udCheckout" placeholder="Select date" readonly>
                         </div>
                         <div class="ud-date-cell ud-date-guests">
                             <div>
                                 <label>Guests</label>
                                 <div
-                                    style="font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;color:#1a2332">
+                                    style="font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;color:#e8eaf0">
                                     <span id="udGCount">2</span> guest<span id="udGPlural">s</span>
                                 </div>
                             </div>
                             <div class="ud-guests-ctl">
-                                <button class="ud-g-btn" id="udGMinus" aria-label="Fewer guests">−</button>
-                                <button class="ud-g-btn" id="udGPlus" aria-label="More guests">+</button>
+                                <button class="ud-g-btn" id="udGMinus">−</button>
+                                <button class="ud-g-btn" id="udGPlus">+</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Availability note -->
                     <div class="ud-avail-note<?php echo !$isVacant ? ' unavail' : ''; ?>" id="udAvailNote">
                         <?php if ($isVacant): ?>
                             <i class="ti ti-circle-check"></i>
-                            <span>Unit is available from <?php echo date('M j, Y'); ?>.
-                                Security deposit is 50% of total stay.</span>
+                            <span>Available from <?php echo date('M j, Y'); ?>. Deposit is 50% of stay.</span>
+                        <?php elseif ($isBooked): ?>
+                            <i class="ti ti-calendar-event"></i>
+                            <span>This unit has been booked and is awaiting check-in.</span>
+                        <?php elseif ($isOccupied): ?>
+                            <i class="ti ti-home"></i>
+                            <span>This unit is currently occupied by a guest.</span>
+                        <?php elseif ($isMaintenance): ?>
+                            <i class="ti ti-tool"></i>
+                            <span>This unit is under maintenance.</span>
                         <?php else: ?>
                             <i class="ti ti-circle-x"></i>
-                            <span>This unit is currently <?php echo ud_esc($unit['status']); ?>.</span>
+                            <span>Unit is currently <?php echo ud_esc($unit['status']); ?>.</span>
                         <?php endif; ?>
                     </div>
 
-                    <!-- Price breakdown (shown after dates chosen) -->
+                    <!-- Minimum stay + cancellation policy -->
+                    <div class="ud-policy-row">
+                        <div class="ud-policy-item">
+                            <i class="ti ti-moon"></i>
+                            <div>
+                                <div class="ud-policy-label">Minimum stay</div>
+                                <div class="ud-policy-val">3 nights</div>
+                            </div>
+                        </div>
+                        <div class="ud-policy-item">
+                            <i class="ti ti-shield-check"></i>
+                            <div>
+                                <div class="ud-policy-label">Cancellation</div>
+                                <div class="ud-policy-val">Free · 48h before</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="ud-price-breakdown" id="udPriceBreakdown" style="display:none">
-                        <div class="ud-pb-row">
-                            <span id="udNightsLabel">—</span>
-                            <span id="udNightsTotal">—</span>
-                        </div>
-                        <div class="ud-pb-row ud-pb-muted">
-                            <span>Security deposit (50%)</span>
-                            <span id="udDeposit">—</span>
-                        </div>
-                        <div class="ud-pb-row ud-pb-muted">
-                            <span>Cleaning fee</span>
-                            <span>₱500</span>
-                        </div>
+                        <div class="ud-pb-row"><span id="udNightsLabel">—</span><span id="udNightsTotal">—</span></div>
+                        <div class="ud-pb-row ud-pb-muted"><span>Security deposit (50%)</span><span
+                                id="udDeposit">—</span></div>
+                        <div class="ud-pb-row ud-pb-muted"><span>Cleaning fee</span><span>₱500</span></div>
                         <div class="ud-pb-divider"></div>
-                        <div class="ud-pb-total">
-                            <span>Total due today</span>
-                            <span id="udTotalDue">—</span>
-                        </div>
+                        <div class="ud-pb-total"><span>Total due today</span><span id="udTotalDue">—</span></div>
                         <div class="ud-pb-note" id="udRemainingNote"></div>
                     </div>
 
-                    <!-- Reserve button -->
-                    <?php if ($isVacant): ?>
-                        <button class="ud-book-btn" id="udBookBtn"
+                    <!-- Social proof nudge -->
+                    <?php if ($bookingCount >= 5): ?>
+                        <div class="ud-social-nudge">
+                            <i class="ti ti-flame"></i>
+                            <span>Booked <strong><?php echo $bookingCount; ?> times</strong> — popular stay!</span>
+                        </div>
+                    <?php elseif ($isVacant): ?>
+                        <div class="ud-social-nudge ud-social-nudge--rare">
+                            <i class="ti ti-star"></i>
+                            <span><strong>Rare find</strong> — this unit is usually taken.</span>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($isVacant && !$hasActiveBooking): ?>
+                        <button class="ud-book-btn" id="udBookBtn2"
                             onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
                             Reserve this unit
                         </button>
+                    <?php elseif ($hasActiveBooking): ?>
+                        <button class="ud-book-btn ud-book-btn--disabled" disabled>
+                            <i class="ti ti-circle-check"></i> Already Booked
+                        </button>
+                    <?php elseif ($isBooked || $isOccupied): ?>
+                        <button class="ud-book-btn" id="udBookBtn2"
+                            onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
+                            <i class="ti ti-calendar-plus"></i> Book a Future Date
+                        </button>
+                    <?php elseif ($isMaintenance): ?>
+                        <button class="ud-book-btn ud-book-btn--disabled" disabled
+                            style="background:#9ca3af!important;color:#fff!important;">
+                            <i class="ti ti-tool"></i> Under Maintenance
+                        </button>
                     <?php else: ?>
                         <button class="ud-book-btn ud-book-btn--disabled" disabled>
-                            Currently Unavailable
+                            Unavailable
                         </button>
                     <?php endif; ?>
 
                     <p class="ud-book-note">
                         <i class="ti ti-shield-check"></i>
-                        You won't be charged yet — booking holds for 30 minutes
+                        No charge yet — holds for 30 minutes
                     </p>
-
-                </div><!-- /ud-bc-body -->
-
-                <!-- Share / Save -->
+                </div>
                 <div class="ud-bc-actions">
                     <button class="ud-bc-action" onclick="shareUnit()">
                         <i class="ti ti-share"></i> Share
@@ -582,40 +767,122 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                         <span id="udSaveLabel2"><?php echo $isSaved ? 'Saved' : 'Save'; ?></span>
                     </button>
                 </div>
+            </div>
 
-            </div><!-- /ud-booking-card -->
-        </aside>
+            <!-- Card 2: Location / Map -->
+            <?php if (!empty($unit['latitude']) && (float) $unit['latitude'] !== 0.0): ?>
+                <div class="ud-side-card">
+                    <span class="ud-side-label">Location</span>
+                    <?php if ($addressStr): ?>
+                        <div class="ud-map-addr">
+                            <i class="ti ti-map-pin"></i>
+                            <?php echo ud_esc($addressStr); ?>
+                        </div>
+                    <?php endif; ?>
+                    <div class="ud-map-wrap">
+                        <div id="udLeafletMap"></div>
+                    </div>
+                </div>
+            <?php endif; ?>
 
-    </div><!-- /ud-layout -->
+        </div><!-- /ud-right -->
 
-    <!-- ══ TOAST ════════════════════════════════════════════════════════════════ -->
-    <div id="toast" role="status" aria-live="polite" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(80px);
-            background:#1a2332;color:#fff;padding:13px 26px;border-radius:40px;
-            font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;
-            box-shadow:0 8px 32px rgba(10,22,40,.3);z-index:600;
-            transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .4s;
-            opacity:0;white-space:nowrap;display:flex;align-items:center;gap:10px;">
-        <i class="ti ti-check" style="font-size:15px;color:#6ee7b7"></i>
+    </div><!-- /ud-page-wrap -->
+
+    <!-- SIMILAR UNITS -->
+    <?php if (!empty($similarUnits)): ?>
+        <section class="ud-similar-section">
+            <div class="ud-similar-inner">
+                <div class="ud-similar-header">
+                    <div class="ud-similar-header-left">
+                        <span class="ud-similar-eyebrow">Explore more</span>
+                        <h2 class="ud-similar-title">More units you might like</h2>
+                    </div>
+                    <a href="user-dashboard.php#browse" class="ud-similar-all">
+                        Browse all <i class="ti ti-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="ud-similar-grid">
+                    <?php foreach ($similarUnits as $su):
+                        $suImg = !empty($su['img']) ? '../../' . ltrim($su['img'], '/') : '';
+                        $suTitle = !empty($su['unit_name']) ? $su['unit_name']
+                            : ($su['property_name'] . ' — Unit ' . preg_replace('/^unit\s*/i', '', $su['unit_number'] ?? ''));
+                        $suPrice = '₱' . number_format((float) $su['rent_amount'], 0);
+                        ?>
+                        <a href="unit_detail.php?id=<?php echo (int) $su['unit_id']; ?>" class="ud-similar-card">
+                            <div class="ud-similar-img-wrap">
+                                <?php if ($suImg): ?>
+                                    <img src="<?php echo ud_esc($suImg); ?>" alt="<?php echo ud_esc($suTitle); ?>"
+                                        onerror="this.parentElement.classList.add('ud-img-error')">
+                                <?php else: ?>
+                                    <div class="ud-similar-img-placeholder"><i class="ti ti-building"></i></div>
+                                <?php endif; ?>
+                                <span
+                                    class="ud-similar-badge <?php echo $su['status'] === 'vacant' ? 'avail-yes' : 'avail-no'; ?>">
+                                    <?php echo $su['status'] === 'vacant' ? '✓ Available' : ucfirst($su['status']); ?>
+                                </span>
+                            </div>
+                            <div class="ud-similar-info">
+                                <div class="ud-similar-name"><?php echo ud_esc($suTitle); ?></div>
+                                <div class="ud-similar-meta">
+                                    <span><i class="ti ti-bed"></i> <?php echo (int) ($su['num_beds'] ?? 1); ?></span>
+                                    <span><i class="ti ti-bath"></i> <?php echo (int) ($su['num_baths'] ?? 1); ?></span>
+                                    <?php if (!empty($su['rating'])): ?>
+                                        <span><i class="ti ti-star-filled" style="color:#d97706"></i>
+                                            <?php echo number_format((float) $su['rating'], 1); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="ud-similar-price"><?php echo $suPrice; ?><span>/night</span></div>
+                            </div>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </section>
+    <?php endif; ?>
+
+    <!-- TOAST -->
+    <div id="toast" role="status" aria-live="polite" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);
+            background:#282c35;border:1px solid rgba(255,255,255,0.1);color:#e8eaf0;
+            padding:10px 20px;border-radius:40px;font-family:'DM Sans',sans-serif;
+            font-size:.8rem;font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,.4);z-index:600;
+            transition:transform .38s cubic-bezier(.4,0,.2,1),opacity .38s;
+            opacity:0;white-space:nowrap;display:flex;align-items:center;gap:8px;">
+        <i class="ti ti-check" style="font-size:13px;color:#4caf85"></i>
         <span id="toastMsg"></span>
     </div>
 
-    <!-- ══ MOBILE FLOAT BAR ═════════════════════════════════════════════════════ -->
+    <!-- MOBILE + DESKTOP STICKY FLOAT BAR -->
     <div class="ud-float-bar" id="udFloatBar">
         <div class="ud-float-left">
             <div class="ud-float-price"><?php echo $price; ?><sub>/night</sub></div>
-            <div class="ud-float-dates" id="udFloatDates">Select dates</div>
+            <div class="ud-float-dates" id="udFloatDates">Select dates to see total</div>
         </div>
-        <?php if ($isVacant): ?>
-            <button class="ud-float-btn" id="udFloatBtn"
-                onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
-                Book Now
+        <div class="ud-float-right">
+            <button class="ud-float-share" onclick="shareUnit()" title="Share">
+                <i class="ti ti-share"></i>
             </button>
-        <?php else: ?>
-            <button class="ud-float-btn ud-float-btn--disabled" disabled>Unavailable</button>
-        <?php endif; ?>
+            <?php if ($isVacant && !$hasActiveBooking): ?>
+                <button class="ud-float-btn" id="udFloatBtn"
+                    onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
+                    Book Now
+                </button>
+            <?php elseif ($hasActiveBooking): ?>
+                <button class="ud-float-btn" disabled style="background:#3a9470">Booked</button>
+            <?php elseif ($isBooked || $isOccupied): ?>
+                <button class="ud-float-btn" id="udFloatBtn"
+                    onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
+                    Book Future Date
+                </button>
+            <?php elseif ($isMaintenance): ?>
+                <button class="ud-float-btn" disabled style="background:#9ca3af">Maintenance</button>
+            <?php else: ?>
+                <button class="ud-float-btn" disabled>Unavailable</button>
+            <?php endif; ?>
+        </div>
     </div>
 
-    <!-- ══ BOOKING MODAL ════════════════════════════════════════════════════════ -->
+    <!-- BOOKING MODAL -->
     <div class="bm-overlay" id="bmOverlay">
         <div class="bm-box" id="bmBox">
             <button class="bm-close" id="bmClose" onclick="closeBookingModal()">✕</button>
@@ -643,7 +910,6 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                     </div>
                 </div>
                 <div class="bm-panels-wrap">
-                    <!-- Step 1 -->
                     <div class="bm-panel active" id="bm-panel-1">
                         <div class="bm-panel-title">Tenant information</div>
                         <div class="bm-panel-sub">We'll use these details for your reservation.</div>
@@ -654,7 +920,7 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                                     placeholder="Jimenez" autocomplete="family-name"></div>
                         </div>
                         <div class="bm-row full">
-                            <div class="bm-field"><label>Email address</label><input type="email" id="bm-email"
+                            <div class="bm-field"><label>Email</label><input type="email" id="bm-email"
                                     placeholder="ana@email.com" autocomplete="email"></div>
                         </div>
                         <div class="bm-row full">
@@ -662,14 +928,20 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                                     placeholder="+63 912 345 6789" autocomplete="tel"></div>
                         </div>
                         <div class="bm-row">
-                            <div class="bm-field"><label>Check-in date</label><input type="date" id="bm-checkin"></div>
-                            <div class="bm-field"><label>Check-out date</label><input type="date" id="bm-lease"></div>
+                            <div class="bm-field"><label>Check-in</label><input type="text" id="bm-checkin"
+                                    placeholder="Select date" readonly></div>
+                            <div class="bm-field"><label>Check-out</label><input type="text" id="bm-lease"
+                                    placeholder="Select date" readonly></div>
+                        </div>
+                        <div class="fp-legend">
+                            <span><span class="fp-legend-dot avail"></span> Selected</span>
+                            <span><span class="fp-legend-dot inrange"></span> Stay range</span>
+                            <span><span class="fp-legend-dot booked"></span> Already booked</span>
                         </div>
                     </div>
-                    <!-- Step 2 -->
                     <div class="bm-panel" id="bm-panel-2">
                         <div class="bm-panel-title">Review your booking</div>
-                        <div class="bm-panel-sub">Check all details before proceeding to payment.</div>
+                        <div class="bm-panel-sub">Check all details before proceeding.</div>
                         <div class="bm-review-block">
                             <div class="bm-review-label">Tenant</div>
                             <div class="bm-review-row"><span class="bm-review-key">Name</span><span
@@ -689,7 +961,7 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                                     class="bm-review-val" id="rv-checkout">—</span></div>
                             <div class="bm-review-row"><span class="bm-review-key">Nights</span><span
                                     class="bm-review-val" id="rv-nights">—</span></div>
-                            <div class="bm-review-row"><span class="bm-review-key">Price per night</span><span
+                            <div class="bm-review-row"><span class="bm-review-key">Price/night</span><span
                                     class="bm-review-val" id="rv-rent">—</span></div>
                         </div>
                         <div class="bm-review-block">
@@ -698,7 +970,7 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                                     class="bm-review-val" id="rv-deposit">—</span></div>
                             <div class="bm-review-row"><span class="bm-review-key">Cleaning fee</span><span
                                     class="bm-review-val">₱500</span></div>
-                            <div class="bm-review-row" style="padding-top:10px">
+                            <div class="bm-review-row" style="padding-top:8px">
                                 <span class="bm-review-key" style="font-weight:700;color:var(--text-dark)">Total due
                                     now</span>
                                 <span class="bm-review-val" id="rv-total"
@@ -706,17 +978,16 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                             </div>
                         </div>
                     </div>
-                    <!-- Step 3 -->
                     <div class="bm-panel" id="bm-panel-3">
                         <div class="bm-panel-title">Payment method</div>
-                        <div class="bm-panel-sub">Choose how you'd like to pay the amount due today.</div>
+                        <div class="bm-panel-sub">Choose how to pay the amount due today.</div>
                         <div class="bm-pay-methods" id="bmPayMethods">
                             <div class="bm-pay-option selected" data-method="GCash">
                                 <div class="bm-pay-icon"><img src="../../assets/images/logo-icon/gcash.png" alt="GCash">
                                 </div>
                                 <div class="bm-pay-info">
                                     <div class="bm-pay-name">GCash</div>
-                                    <div class="bm-pay-desc">Pay via GCash online transfer</div>
+                                    <div class="bm-pay-desc">Pay via GCash transfer</div>
                                 </div>
                                 <div class="bm-pay-radio"></div>
                             </div>
@@ -725,7 +996,7 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                                 </div>
                                 <div class="bm-pay-info">
                                     <div class="bm-pay-name">Maya</div>
-                                    <div class="bm-pay-desc">Pay via Maya online transfer</div>
+                                    <div class="bm-pay-desc">Pay via Maya transfer</div>
                                 </div>
                                 <div class="bm-pay-radio"></div>
                             </div>
@@ -740,21 +1011,20 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                             </div>
                             <div class="bm-pay-option" data-method="Cash">
                                 <div class="bm-pay-icon"
-                                    style="height:45px;width:45px;font-size:28px;display:flex;align-items:center;justify-content:center">
+                                    style="height:45px;width:45px;font-size:26px;display:flex;align-items:center;justify-content:center">
                                     💵</div>
                                 <div class="bm-pay-info">
                                     <div class="bm-pay-name">Cash (On-site)</div>
-                                    <div class="bm-pay-desc">Pay at the front desk upon check-in</div>
+                                    <div class="bm-pay-desc">Pay at check-in</div>
                                 </div>
                                 <div class="bm-pay-radio"></div>
                             </div>
                         </div>
                     </div>
-                    <!-- Step 4 -->
                     <div class="bm-panel" id="bm-panel-4">
                         <div class="bm-confirm-check" id="bm-payment-waiting">
-                            <div class="bm-check-ring" style="border-color:#c9a84c;animation:none">
-                                <svg viewBox="0 0 24 24" style="stroke:#c9a84c">
+                            <div class="bm-check-ring" style="border-color:#4caf85;animation:none">
+                                <svg viewBox="0 0 24 24" style="stroke:#4caf85">
                                     <circle cx="12" cy="12" r="10" stroke-width="2" fill="none" />
                                     <polyline points="12 6 12 12 16 14" stroke-width="2" />
                                 </svg>
@@ -817,7 +1087,7 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                                 </svg>
                             </div>
                             <div class="bm-confirm-title" style="color:#ef4444">Payment failed</div>
-                            <div class="bm-confirm-sub">Your payment was not completed. Please try again.</div>
+                            <div class="bm-confirm-sub">Please try again.</div>
                             <div class="bm-confirm-ref" id="bmFailedRef">Ref #BK-0000</div>
                         </div>
                         <div class="bm-confirm-check" id="bm-payment-expired" style="display:none">
@@ -834,7 +1104,6 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                         </div>
                     </div>
                 </div>
-                <!-- Modal sidebar -->
                 <div class="bm-sidebar">
                     <div class="bm-unit-card">
                         <div class="bm-unit-img-fallback" id="bmUnitImgWrap">
@@ -856,57 +1125,43 @@ $top_nav_items = require '../../includes/user_top_nav.php';
                                 class="bm-summary-val">₱500</span></div>
                     </div>
                     <div class="bm-summary-divider"></div>
-                    <div class="bm-total-row">
-                        <span class="bm-total-label">Total due now</span>
-                        <span class="bm-total-amount" id="sb-total">—</span>
-                    </div>
-                    <div class="bm-hold-notice">
-                        Your booking is held for <strong>30 minutes</strong>. Complete payment to confirm.
-                    </div>
+                    <div class="bm-total-row"><span class="bm-total-label">Total due now</span><span
+                            class="bm-total-amount" id="sb-total">—</span></div>
+                    <div class="bm-hold-notice">Your booking is held for <strong>30 minutes</strong>.</div>
                 </div>
-                <!-- Modal footer -->
                 <div class="bm-footer-wrap" id="bmFooter">
                     <button class="bm-btn bm-btn-back" id="bmBack" onclick="bmPrevStep()" style="display:none">
                         <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
                             <polyline points="15 18 9 12 15 6" />
-                        </svg>
-                        Back
+                        </svg>Back
                     </button>
                     <div style="flex:1"></div>
-                    <button class="bm-btn bm-btn-next" id="bmNext" onclick="bmNextStep()">
-                        Continue
-                        <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
+                    <button class="bm-btn bm-btn-next" id="bmNext" onclick="bmNextStep()">Continue<svg
+                            viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
                             <polyline points="9 18 15 12 9 6" />
-                        </svg>
-                    </button>
+                        </svg></button>
                     <button class="bm-btn bm-btn-confirm" id="bmConfirmBtn" style="display:none"
-                        onclick="bmSubmitBooking()">
-                        <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
+                        onclick="bmSubmitBooking()"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none"
+                            stroke-width="2">
                             <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        Confirm Payment
-                    </button>
+                        </svg>Confirm Payment</button>
                     <button class="bm-btn bm-btn-next" id="bmDoneBtn" style="display:none"
-                        onclick="closeBookingModal();window.location.href='bookings.php'">
-                        Done
-                        <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
+                        onclick="closeBookingModal();window.location.href='bookings.php'">Done<svg viewBox="0 0 24 24"
+                            stroke="currentColor" fill="none" stroke-width="2">
                             <polyline points="9 18 15 12 9 6" />
-                        </svg>
-                    </button>
+                        </svg></button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ══ SCRIPTS ══════════════════════════════════════════════════════════════ -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="../../assets/js/user-js/script.js"></script>
-    <script src="../../assets/js/toast.js"></script>
-    <script src="../../assets/js/user-js/saved.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
-        /* ── Globals ── */
         window.PS_POPULAR_PAYMENT = <?php echo json_encode($popularPaymentMethod); ?>;
         window.hasActiveBooking = <?php echo json_encode($hasActiveBooking); ?>;
+        window.UD_BOOKED_RANGES = <?php echo json_encode($bookedRanges, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
+        window.UD_BLOCKED_DATES = <?php echo json_encode($adminBlockedDates, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
         window._psSessionFields = {
             fname: <?php echo json_encode($_SESSION['first_name'] ?? ''); ?>,
             lname: <?php echo json_encode($_SESSION['last_name'] ?? ''); ?>,
@@ -916,469 +1171,20 @@ $top_nav_items = require '../../includes/user_top_nav.php';
         window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
         window.psGetCsrfToken = () => String(window.PS_CSRF_TOKEN || '');
         window.psAppendCsrf = t => { const k = window.psGetCsrfToken(); if (k && t?.append) t.append('csrf_token', k); return t; };
-        window.PS_RT_PAGE = 'unit_detail';
-        window.PS_RT_ROLE = 'user';
-        window.PS_RT_API = '../../api/realtime.php';
-
-        const UD_UNIT = {
+        window.PS_RT_PAGE = 'unit_detail'; window.PS_RT_ROLE = 'user'; window.PS_RT_API = '../../api/realtime.php';
+        window.UD_IMAGES = <?php echo json_encode($images, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        window.UD_UNIT = {
             lat: <?php echo (float) ($unit['latitude'] ?? 0); ?>,
             lng: <?php echo (float) ($unit['longitude'] ?? 0); ?>,
             priceNum: <?php echo (float) $unit['rent_amount']; ?>,
             maxGuests: <?php echo (int) ($unit['max_guests'] ?? 6); ?>,
         };
-
-        if (new URLSearchParams(location.search).get('book') === '1')
-            window.addEventListener('load', () => document.getElementById('udBookBtn')?.click());
+        fetch('../../api/user/sync_unit_statuses.php').catch(() => { });
     </script>
-
-    <script>
-        (function () {
-            'use strict';
-
-            const CLEANING = 500;
-            const fmt = n => '₱' + Math.round(n).toLocaleString('en-PH');
-            const $ = id => document.getElementById(id);
-            const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
-            const val = id => ($(id)?.value || '').trim();
-
-            /* ── Booking modal bridge ─────────────────────────────────────────────
-               script.js defines modal functions inside a closure — not on window.
-               We shim them here so PHP onclick attrs can reach them.
-            ── */
-            window.openBookingModal = window.openBookingModal || function (room) {
-                if (window.hasActiveBooking) {
-                    showToast?.('You already have an active booking for this unit.');
-                    return;
-                }
-
-                // Sidebar defaults
-                set('bmSbName', room.name || '—');
-                set('bmSbLoc', room.location || '—');
-                set('sb-rent', (room.price || '—') + ' / night');
-                set('sb-deposit', '—');
-                set('sb-total', '—');
-
-                const img = $('bmUnitImg');
-                if (img && room.image) { img.src = room.image; img.style.display = 'block'; }
-
-                // Pre-fill tenant
-                const s = window._psSessionFields || {};
-                [['bm-fname', s.fname], ['bm-lname', s.lname],
-                ['bm-email', s.email], ['bm-phone', s.phone]].forEach(([id, v]) => {
-                    const el = $(id); if (el) el.value = v || '';
-                });
-
-                // Pre-fill dates
-                const ci = $('bm-checkin'), co = $('bm-lease');
-                if (ci) { ci.value = room._prefillCheckin || ''; ci.min = new Date().toISOString().split('T')[0]; }
-                if (co) { co.value = room._prefillCheckout || ''; co.min = new Date(Date.now() + 86400000).toISOString().split('T')[0]; }
-
-                // Popular badge
-                document.querySelectorAll('#bmPayMethods .bm-pay-badge').forEach(b => b.remove());
-                const pop = window.PS_POPULAR_PAYMENT || 'GCash';
-                const popEl = document.querySelector(`#bmPayMethods [data-method="${pop}"]`);
-                if (popEl && !popEl.querySelector('.bm-pay-badge')) {
-                    const b = document.createElement('span');
-                    b.className = 'bm-pay-badge'; b.textContent = 'Popular';
-                    popEl.appendChild(b);
-                }
-
-                window._bmRoom = room;
-                _goTo(1);
-
-                const ov = $('bmOverlay');
-                if (ov) {
-                    ov.classList.add('active');
-                    requestAnimationFrame(() => ov.classList.add('open'));
-                    ov.onclick = e => { if (e.target === ov) closeBookingModal(); };
-                }
-            };
-
-            window.closeBookingModal = window.closeBookingModal || function () {
-                const ov = $('bmOverlay');
-                if (!ov) return;
-                ov.classList.remove('open');
-                setTimeout(() => ov.classList.remove('active'), 350);
-                clearInterval(window._bmPollInterval);
-            };
-
-            function _goTo(step) {
-                step = Math.max(1, Math.min(4, step));
-                window._bmCurrentStep = step;
-
-                document.querySelectorAll('.bm-panel')
-                    .forEach((p, i) => p.classList.toggle('active', i + 1 === step));
-                document.querySelectorAll('.bm-step').forEach((s, i) => {
-                    s.classList.toggle('active', i + 1 === step);
-                    s.classList.toggle('done', i + 1 < step);
-                });
-
-                const back = $('bmBack'), next = $('bmNext'),
-                    conf = $('bmConfirmBtn'), done = $('bmDoneBtn');
-                if (back) back.style.display = (step > 1 && step < 4) ? '' : 'none';
-                if (next) next.style.display = step < 3 ? '' : 'none';
-                if (conf) conf.style.display = step === 3 ? '' : 'none';
-                if (done) done.style.display = 'none';
-
-                if (step === 2) {
-                    const room = window._bmRoom || {};
-                    const ci = val('bm-checkin'), co = val('bm-lease');
-                    const nights = Math.max(0, Math.round((new Date(co) - new Date(ci)) / 86400000));
-                    const subtot = nights * (room.priceNum || 0);
-                    const deposit = subtot * 0.5;
-                    const total = deposit + CLEANING;
-
-                    set('rv-name', [val('bm-fname'), val('bm-lname')].join(' '));
-                    set('rv-email', val('bm-email'));
-                    set('rv-phone', val('bm-phone'));
-                    set('rv-unit', room.name || '—');
-                    set('rv-movein', ci);
-                    set('rv-checkout', co);
-                    set('rv-nights', nights);
-                    set('rv-rent', fmt(room.priceNum || 0));
-                    set('rv-deposit', fmt(deposit));
-                    set('rv-total', fmt(total));
-                    set('sb-deposit', fmt(deposit));
-                    set('sb-total', fmt(total));
-                }
-            }
-
-            window.bmNextStep = window.bmNextStep || function () {
-                const step = window._bmCurrentStep || 1;
-                if (step === 1) {
-                    if (!val('bm-fname') || !val('bm-lname')) { showToast?.('Please enter your full name.'); return; }
-                    if (!val('bm-email')) { showToast?.('Please enter your email.'); return; }
-                    if (!val('bm-phone')) { showToast?.('Please enter your contact number.'); return; }
-                    if (!val('bm-checkin')) { showToast?.('Please select a check-in date.'); return; }
-                    if (!val('bm-lease')) { showToast?.('Please select a check-out date.'); return; }
-                    if (val('bm-lease') <= val('bm-checkin')) { showToast?.('Check-out must be after check-in.'); return; }
-                }
-                _goTo(step + 1);
-            };
-
-            window.bmPrevStep = window.bmPrevStep || function () {
-                if ((window._bmCurrentStep || 1) > 1) _goTo((window._bmCurrentStep || 1) - 1);
-            };
-
-            window.bmSubmitBooking = window.bmSubmitBooking || function () {
-                const room = window._bmRoom || {};
-                const method = document.querySelector('#bmPayMethods .bm-pay-option.selected')?.dataset.method || 'GCash';
-                const ci = val('bm-checkin'), co = val('bm-lease');
-                const nights = Math.max(0, Math.round((new Date(co) - new Date(ci)) / 86400000));
-                const subtot = nights * (room.priceNum || 0);
-                const deposit = subtot * 0.5;
-                const total = deposit + CLEANING;
-
-                showToast?.('Submitting your booking…');
-
-                const fd = new FormData();
-                fd.append('unit_id', room.id || '');
-                fd.append('first_name', val('bm-fname'));
-                fd.append('last_name', val('bm-lname'));
-                fd.append('email', val('bm-email'));
-                fd.append('phone', val('bm-phone'));
-                fd.append('checkin_date', ci);
-                fd.append('checkout_date', co);
-                fd.append('payment_method', method);
-                fd.append('total_amount', subtot);
-                window.psAppendCsrf(fd);
-
-                _goTo(4);
-                ['bm-payment-waiting', 'bm-payment-success', 'bm-payment-cash',
-                    'bm-payment-failed', 'bm-payment-expired'].forEach((id, i) => {
-                        const el = $(id); if (el) el.style.display = i === 0 ? '' : 'none';
-                    });
-                $('bmFooter')?.querySelectorAll('button').forEach(b => b.style.display = 'none');
-
-                fetch('../../api/user/book_unit.php', { method: 'POST', body: fd })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (!data.success) {
-                            showToast?.(data.message || 'Booking failed.', 'error');
-                            _goTo(3); return;
-                        }
-                        const bid = data.booking_id;
-                        set('bmConfirmRef', `Ref #BK-${String(bid).padStart(4, '0')}`);
-
-                        if (method === 'Cash') {
-                            $('bm-payment-waiting').style.display = 'none';
-                            $('bm-payment-cash').style.display = '';
-                            set('cf-unit-cash', room.name || '—');
-                            set('cf-movein-cash', ci);
-                            set('cf-checkout-cash', co);
-                            set('cf-method-cash', method);
-                            set('cf-total-cash', fmt(total));
-                            $('bmDoneBtn').style.display = '';
-                            window.hasActiveBooking = true;
-                            return;
-                        }
-
-                        if (data.payment_url) {
-                            window._bmPayTab = window.open(data.payment_url, '_blank');
-                            window._bmPayUrl = data.payment_url;
-                            setTimeout(() => { const b = $('bmReopenPayBtn'); if (b) b.style.display = ''; }, 4000);
-                        }
-
-                        let polls = 0;
-                        window._bmPollInterval = setInterval(() => {
-                            if (++polls > 60) {
-                                clearInterval(window._bmPollInterval);
-                                $('bm-payment-waiting').style.display = 'none';
-                                $('bm-payment-expired').style.display = '';
-                                set('bmExpiredRef', `Ref #BK-${String(bid).padStart(4, '0')}`);
-                                return;
-                            }
-                            fetch(`../../api/user/check_payment_status.php?booking_id=${bid}`)
-                                .then(r => r.json())
-                                .then(st => {
-                                    if (st.status === 'confirmed') {
-                                        clearInterval(window._bmPollInterval);
-                                        $('bm-payment-waiting').style.display = 'none';
-                                        $('bm-payment-success').style.display = '';
-                                        set('cf-unit', room.name || '—');
-                                        set('cf-movein', ci);
-                                        set('cf-checkout', co);
-                                        set('cf-method', method);
-                                        set('cf-total', fmt(total));
-                                        $('bmDoneBtn').style.display = '';
-                                        window.hasActiveBooking = true;
-                                        showToast?.('Payment confirmed!');
-                                    } else if (st.status === 'failed') {
-                                        clearInterval(window._bmPollInterval);
-                                        $('bm-payment-waiting').style.display = 'none';
-                                        $('bm-payment-failed').style.display = '';
-                                        set('bmFailedRef', `Ref #BK-${String(bid).padStart(4, '0')}`);
-                                    }
-                                }).catch(() => { });
-                        }, 5000);
-                    })
-                    .catch(err => { showToast?.(err?.message || 'Network error.', 'error'); _goTo(3); });
-            };
-
-            window.bmReopenPaymongoTab = window.bmReopenPaymongoTab || function () {
-                if (window._bmPayTab && !window._bmPayTab.closed) window._bmPayTab.focus();
-                else if (window._bmPayUrl) window._bmPayTab = window.open(window._bmPayUrl, '_blank');
-            };
-
-            // Payment option clicks
-            document.querySelectorAll('#bmPayMethods .bm-pay-option').forEach(opt => {
-                opt.addEventListener('click', () => {
-                    document.querySelectorAll('#bmPayMethods .bm-pay-option')
-                        .forEach(o => o.classList.remove('selected'));
-                    opt.classList.add('selected');
-                });
-            });
-
-            /* ── Gallery slider (fallback) ───────────────────────────────────────── */
-            const track = $('udTrack');
-            const dots = $('udDots');
-            let gCur = 0;
-            const gSlides = track ? track.querySelectorAll('.ud-gallery-slide') : [];
-
-            function goTo(idx) {
-                if (!track || !gSlides.length) return;
-                gCur = ((idx % gSlides.length) + gSlides.length) % gSlides.length;
-                track.style.transform = `translateX(-${gCur * 100}%)`;
-                dots?.querySelectorAll('.ud-gdot')
-                    .forEach((d, i) => d.classList.toggle('active', i === gCur));
-            }
-
-            $('udPrev')?.addEventListener('click', () => goTo(gCur - 1));
-            $('udNext')?.addEventListener('click', () => goTo(gCur + 1));
-            dots?.addEventListener('click', e => {
-                const b = e.target.closest('.ud-gdot');
-                if (b) goTo(+b.dataset.idx);
-            });
-            if (track) {
-                let tx = 0;
-                track.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
-                track.addEventListener('touchend', e => {
-                    const dx = e.changedTouches[0].clientX - tx;
-                    if (Math.abs(dx) > 50) goTo(gCur + (dx < 0 ? 1 : -1));
-                });
-            }
-
-            /* ── Lightbox ─────────────────────────────────────────────────────────── */
-            const lb = $('udLightbox');
-            const lbTrack = $('udLbTrack');
-            const lbCurEl = $('udLbCurrent');
-            let lbIdx = 0;
-            const lbSlides = lbTrack ? lbTrack.querySelectorAll('.ud-lb-slide') : [];
-
-            function lbGoTo(idx) {
-                if (!lbTrack || !lbSlides.length) return;
-                lbIdx = ((idx % lbSlides.length) + lbSlides.length) % lbSlides.length;
-                lbTrack.style.transform = `translateX(-${lbIdx * 100}%)`;
-                if (lbCurEl) lbCurEl.textContent = lbIdx + 1;
-            }
-
-            function openLightbox(startIdx) {
-                if (!lb) return;
-                lb.classList.add('open');
-                lbGoTo(startIdx || 0);
-                document.body.style.overflow = 'hidden';
-            }
-            function closeLightbox() {
-                lb?.classList.remove('open');
-                document.body.style.overflow = '';
-            }
-
-            $('udShowAllBtn')?.addEventListener('click', () => openLightbox(0));
-
-            // Also open lightbox on clicking main/side cells
-            document.querySelector('.ud-gallery-main-cell')?.addEventListener('click', () => openLightbox(0));
-            document.querySelectorAll('.ud-gallery-side-cell').forEach((el, i) => {
-                el.addEventListener('click', e => {
-                    if (e.target.closest('.ud-show-all-btn')) return;
-                    openLightbox(i + 1);
-                });
-            });
-
-            $('udLbClose')?.addEventListener('click', closeLightbox);
-            $('udLbPrev')?.addEventListener('click', () => lbGoTo(lbIdx - 1));
-            $('udLbNext')?.addEventListener('click', () => lbGoTo(lbIdx + 1));
-            lb?.addEventListener('click', e => { if (e.target === lb) closeLightbox(); });
-
-            document.addEventListener('keydown', e => {
-                if (lb?.classList.contains('open')) {
-                    if (e.key === 'Escape') closeLightbox();
-                    if (e.key === 'ArrowLeft') lbGoTo(lbIdx - 1);
-                    if (e.key === 'ArrowRight') lbGoTo(lbIdx + 1);
-                    return;
-                }
-                if ($('bmOverlay')?.classList.contains('active')) return;
-                if (e.key === 'ArrowLeft') goTo(gCur - 1);
-                if (e.key === 'ArrowRight') goTo(gCur + 1);
-            });
-
-            /* ── Leaflet map ─────────────────────────────────────────────────────── */
-            if (UD_UNIT.lat && UD_UNIT.lng) {
-                const map = L.map('udLeafletMap', { zoomControl: true, scrollWheelZoom: false })
-                    .setView([UD_UNIT.lat, UD_UNIT.lng], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors'
-                }).addTo(map);
-                L.marker([UD_UNIT.lat, UD_UNIT.lng]).addTo(map);
-            }
-
-            /* ── Date pickers + price breakdown ──────────────────────────────────── */
-            const ciEl = $('udCheckin'), coEl = $('udCheckout');
-
-            function updateBreakdown() {
-                const bd = $('udPriceBreakdown');
-                if (!ciEl || !coEl || !bd) return;
-
-                const a = new Date(ciEl.value), b = new Date(coEl.value);
-                if (!ciEl.value || !coEl.value || b <= a) { bd.style.display = 'none'; return; }
-
-                const nights = Math.round((b - a) / 86400000);
-                const subtot = nights * UD_UNIT.priceNum;
-                const deposit = subtot * 0.5;            // 50% deposit charged at booking
-                const total = deposit + CLEANING;      // deposit + cleaning = due today
-
-                set('udNightsLabel', `${nights} night${nights !== 1 ? 's' : ''} × ${fmt(UD_UNIT.priceNum)}`);
-                set('udNightsTotal', fmt(subtot));
-                set('udDeposit', fmt(deposit));
-                set('udTotalDue', fmt(total));
-                set('udRemainingNote',
-                    `Remaining ${fmt(subtot - deposit)} balance due at check-out`);
-
-                bd.style.display = 'block';
-
-                // Update float bar label
-                const fd = $('udFloatDates');
-                if (fd) {
-                    const o = { month: 'short', day: 'numeric' };
-                    fd.textContent = `${a.toLocaleDateString('en-PH', o)} – `
-                        + `${b.toLocaleDateString('en-PH', o)} · `
-                        + `${nights} night${nights !== 1 ? 's' : ''}`;
-                }
-            }
-
-            ciEl?.addEventListener('change', () => {
-                if (ciEl.value && coEl) {
-                    const nd = new Date(ciEl.value);
-                    nd.setDate(nd.getDate() + 1);
-                    coEl.min = nd.toISOString().split('T')[0];
-                    if (coEl.value && coEl.value <= ciEl.value) coEl.value = '';
-                }
-                updateBreakdown();
-            });
-            coEl?.addEventListener('change', updateBreakdown);
-
-            /* ── Guests stepper ──────────────────────────────────────────────────── */
-            let gCount = 2;
-            const gCountEl = $('udGCount');
-            const gPluralEl = $('udGPlural');
-
-            function updateGuests() {
-                if (gCountEl) gCountEl.textContent = gCount;
-                if (gPluralEl) gPluralEl.textContent = gCount === 1 ? '' : 's';
-            }
-
-            $('udGMinus')?.addEventListener('click', () => {
-                if (gCount > 1) { gCount--; updateGuests(); }
-            });
-            $('udGPlus')?.addEventListener('click', () => {
-                if (gCount < UD_UNIT.maxGuests) { gCount++; updateGuests(); }
-            });
-
-            /* ── Book button — pass dates + guests to modal ──────────────────────── */
-            window.openBookingModalFromDetail = function (roomData) {
-                roomData._prefillCheckin = ciEl?.value || '';
-                roomData._prefillCheckout = coEl?.value || '';
-                roomData.guests = gCount;
-                window.openBookingModal(roomData);
-            };
-
-            /* ── Disable buttons if already booked ──────────────────────────────── */
-            if (window.hasActiveBooking) {
-                const bb = $('udBookBtn');
-                if (bb) {
-                    bb.disabled = true;
-                    bb.textContent = 'You already have an active booking';
-                    bb.classList.add('ud-book-btn--disabled');
-                }
-                const fb = $('udFloatBtn');
-                if (fb) { fb.disabled = true; fb.textContent = 'Already Booked'; }
-            }
-
-            /* ── Share ───────────────────────────────────────────────────────────── */
-            window.shareUnit = function () {
-                if (navigator.share) {
-                    navigator.share({ title: document.title, url: location.href }).catch(() => { });
-                } else {
-                    navigator.clipboard?.writeText(location.href)
-                        .then(() => showToast?.('Link copied to clipboard!'));
-                }
-            };
-
-            /* ── Float bar IntersectionObserver ─────────────────────────────────── */
-            const card = $('udBookingCard');
-            if (card) {
-                new IntersectionObserver(([e]) => {
-                    document.body.classList.toggle('ud-card-offscreen', !e.isIntersecting);
-                }, { threshold: 0 }).observe(card);
-            }
-
-            /* ── Amenities show-more ─────────────────────────────────────────────── */
-            const showMoreBtn = $('udShowMoreAmenities');
-            if (showMoreBtn) {
-                // Hide chips after the 8th
-                document.querySelectorAll('.ud-amenity-chip')
-                    .forEach((c, i) => { if (i >= 8) c.classList.add('ud-am-hidden'); });
-
-                showMoreBtn.addEventListener('click', () => {
-                    document.querySelectorAll('.ud-amenity-chip.ud-am-hidden')
-                        .forEach(c => c.classList.remove('ud-am-hidden'));
-                    showMoreBtn.style.display = 'none';
-                });
-            }
-
-        })();
-    </script>
-
+    <script src="../../assets/js/user-js/script.js"></script>
+    <script src="../../assets/js/toast.js"></script>
+    <script src="../../assets/js/user-js/saved.js"></script>
+    <script src="../../assets/js/user-js/unit_detail_additions.js"></script>
 </body>
-<?php require '../../includes/_layout_end.php'; ?>
 
 </html>

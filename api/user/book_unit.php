@@ -1,7 +1,4 @@
 <?php
-ini_set('display_errors', 0);
-error_reporting(E_ALL);
-ini_set('log_errors', 1);
 ob_start();
 header('Content-Type: application/json');
 include '../../includes/session.php';
@@ -104,26 +101,11 @@ try {
         exit;
     }
 
-    if ($unit['status'] !== 'vacant') {
-        $busyStmt = $conn->prepare(
-            "SELECT COUNT(*) AS c FROM bookings
-             WHERE unit_id = ?
-               AND status IN ('pending','confirmed','active')
-               AND checkout_date >= CURDATE()"
-        );
-        $busyStmt->bind_param('i', $unitId);
-        $busyStmt->execute();
-        $stillBusy = $busyStmt->get_result()->fetch_assoc();
-        $busyStmt->close();
-
-        if ((int) ($stillBusy['c'] ?? 0) > 0) {
-            $reason = $unit['status'] === 'maintenance'
-                ? 'This unit is currently under maintenance.'
-                : 'This unit is not available for booking.';
-            ob_clean();
-            echo json_encode(['success' => false, 'message' => $reason]);
-            exit;
-        }
+    // Block maintenance units entirely; booked/occupied can accept future bookings
+    if ($unit['status'] === 'maintenance') {
+        ob_clean();
+        echo json_encode(['success' => false, 'message' => 'This unit is currently under maintenance.']);
+        exit;
     }
 
     $conflictStmt = $conn->prepare(
@@ -190,15 +172,12 @@ try {
         throw new \RuntimeException('Failed to sync unit availability.');
     }
 
-    // Ensure the booked unit is explicitly marked occupied after successful reservation creation.
-    // if (!mysqli_query($conn, "UPDATE units SET status='occupied' WHERE unit_id=$unitId AND status!='maintenance'")) {
-    //     throw new \RuntimeException('Failed to mark unit occupied.');
-    // }
-
-    if ($paymentMethod === 'cash') {
-        if (!mysqli_query($conn, "UPDATE units SET status='occupied' WHERE unit_id=$unitId AND status!='maintenance'")) {
-            throw new \RuntimeException('Failed to mark unit occupied.');
-        }
+    // If checkin is today, mark occupied immediately; otherwise mark booked
+    $today = new DateTime('today');
+    if ($dtIn <= $today) {
+        mysqli_query($conn, "UPDATE units SET status='occupied' WHERE unit_id=$unitId AND status!='maintenance'");
+    } else {
+        mysqli_query($conn, "UPDATE units SET status='booked' WHERE unit_id=$unitId AND status!='maintenance'");
     }
 
     $conn->commit();

@@ -173,6 +173,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                 return $r['c'] > 0 ? (string) $r['c'] : null; })(),
             'icon' => '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'
         ],
+        'payment'  => ['label' => 'Payment History',  'sub' => 'View transactions & refunds',     'href' => 'payment.php',  'badge' => null, 'icon' => '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'],
         'saved' => ['label' => 'Saved Rooms', 'sub' => 'Rooms on your wishlist', 'href' => 'saved.php', 'badge' => count($savedUnitIds) > 0 ? (string) count($savedUnitIds) : null, 'icon' => '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>'],
         'loyalty' => ['label' => 'Loyalty Points', 'sub' => $loyaltyPoints . ' pts · ' . $loyaltyTier . ' tier', 'href' => 'loyalty.php', 'badge' => null, 'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'],
         'settings' => ['label' => 'Settings', 'sub' => 'Notifications, privacy, security', 'href' => 'settings.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
@@ -853,11 +854,10 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
         </div>
     </section>
 
-    <div class="modal-overlay" id="roomModal">
+    <!-- <div class="modal-overlay" id="roomModal">
         <div class="pd-modal">
             <button class="pd-close" id="roomModalClose" aria-label="Close">✕</button>
 
-            <!-- Hero Gallery -->
             <div class="pd-hero" id="pdHero" style="position:relative;height:260px;overflow:hidden;background:#0b3d35;">
                 <div id="pdGalleryTrack"
                     style="display:flex;height:100%;transition:transform .35s ease;will-change:transform;"></div>
@@ -883,7 +883,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                 </div>
             </div>
 
-            <!-- Stats bar -->
             <div class="pd-stats">
                 <div class="pd-stat">
                     <div class="pd-stat-label">RENT</div>
@@ -903,18 +902,14 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                 </div>
             </div>
 
-            <!-- Two-column body -->
             <div class="pd-body">
-                <!-- Left column -->
                 <div class="pd-left">
-                    <!-- About -->
                     <div class="pd-section">
                         <div class="pd-section-title">About this property</div>
                         <p class="pd-desc" id="modalRoomDesc"></p>
                         <div class="pd-amenities" id="modalAmenities"></div>
                     </div>
 
-                    <!-- Tenant reviews -->
                     <div class="pd-section">
                         <div class="pd-section-title">Tenant Reviews <span id="pdReviewCount"
                                 style="font-size:.8rem;font-weight:500;color:#8aa4c0;"></span></div>
@@ -936,9 +931,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                     </div>
                 </div>
 
-                <!-- Right column -->
                 <div class="pd-right">
-                    <!-- Real Leaflet Map -->
                     <div class="pd-map" id="pdMap"
                         style="padding:0;overflow:hidden;border-radius:16px;min-height:220px;position:relative;">
                         <div id="pdLeafletMap" style="width:100%;height:220px;border-radius:16px;z-index:1;"></div>
@@ -954,7 +947,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                     </div>
 
 
-                    <!-- Availability -->
                     <div class="pd-panel">
                         <div class="pd-panel-title">Availability</div>
                         <div class="pd-fields">
@@ -970,21 +962,18 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         <div class="pd-avail-note" id="pdAvailNote"></div>
                         <button class="pd-book-btn" id="bookConfirmBtn" onclick="confirmBooking()">Book this unit
                             →</button>
-                        <!-- <div id="modalTotal" class="pd-total"></div> -->
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 
-    <!-- ══ MULTI-STEP BOOKING MODAL ══ -->
-    <div class="bm-overlay" id="bmOverlay">
+    <!-- <div class="bm-overlay" id="bmOverlay">
         <div class="bm-box" id="bmBox">
             <button class="bm-close" id="bmClose" onclick="closeBookingModal()">✕</button>
 
             <div class="bm-content">
 
-                <!-- Step indicator -->
                 <div class="bm-stepper-wrap">
                     <div class="bm-stepper">
                         <div class="bm-steps">
@@ -1008,10 +997,8 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                     </div>
                 </div>
 
-                <!-- Step panels -->
                 <div class="bm-panels-wrap">
 
-                    <!-- STEP 1: Tenant Details -->
                     <div class="bm-panel active" id="bm-panel-1">
                         <div class="bm-panel-title">Tenant information</div>
                         <div class="bm-panel-sub">We'll use these details for your reservation.</div>
@@ -1050,7 +1037,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         </div>
                     </div>
 
-                    <!-- STEP 2: Review -->
                     <div class="bm-panel" id="bm-panel-2">
                         <div class="bm-panel-title">Review your booking</div>
                         <div class="bm-panel-sub">Check all details before proceeding to payment.</div>
@@ -1092,7 +1078,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         </div>
                     </div>
 
-                    <!-- STEP 3: Payment -->
                     <div class="bm-panel" id="bm-panel-3">
                         <div class="bm-panel-title">Payment method</div>
                         <div class="bm-panel-sub">Choose how you'd like to pay the amount due today.</div>
@@ -1135,9 +1120,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         </div>
                     </div>
 
-                    <!-- STEP 4: Confirmed -->
                     <div class="bm-panel" id="bm-panel-4">
-                        <!-- Waiting for payment state -->
                         <div class="bm-confirm-check" id="bm-payment-waiting">
                             <div class="bm-check-ring" style="border-color:var(--gold,#c9a84c);animation:none;">
                                 <svg viewBox="0 0 24 24" style="stroke:var(--gold,#c9a84c);">
@@ -1172,7 +1155,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                 </div>
                             </div>
                         </div>
-                        <!-- Success state (shown after payment confirmed) -->
                         <div class="bm-confirm-check" id="bm-payment-success" style="display:none;">
                             <div class="bm-check-ring">
                                 <svg viewBox="0 0 24 24">
@@ -1192,7 +1174,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                         style="color:var(--teal);">—</span></div>
                             </div>
                         </div>
-                        <!-- Cash / no-payment state -->
                         <div class="bm-confirm-check" id="bm-payment-cash" style="display:none;">
                             <div class="bm-check-ring">
                                 <svg viewBox="0 0 24 24">
@@ -1229,7 +1210,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                             <div class="bm-confirm-ref" id="bmFailedRef">Ref #BK-0000</div>
                         </div>
 
-                        <!-- ✅ ADD HERE — Expired payment state -->
                         <div class="bm-confirm-check" id="bm-payment-expired" style="display:none;">
                             <div class="bm-check-ring" style="border-color:var(--gold,#c9a84c);animation:none;">
                                 <svg viewBox="0 0 24 24" style="stroke:var(--gold,#c9a84c);">
@@ -1244,9 +1224,8 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         </div>
                     </div>
 
-                </div><!-- /panels-wrap -->
+                </div>
 
-                <!-- Sidebar summary -->
                 <div class="bm-sidebar">
                     <div class="bm-unit-card">
                         <div class="bm-unit-img-fallback" id="bmUnitImgWrap">
@@ -1278,7 +1257,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                     </div>
                 </div>
 
-                <!-- Footer nav -->
                 <div class="bm-footer-wrap" id="bmFooter">
                     <button class="bm-btn bm-btn-back" id="bmBack" onclick="bmPrevStep()" style="display:none;">
                         <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
@@ -1309,9 +1287,9 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                     </button>
                 </div>
 
-            </div><!-- /bm-content -->
-        </div><!-- /bm-box -->
-    </div><!-- /bm-overlay -->
+            </div>
+        </div>
+    </div> -->
 
     <!-- ══ MANAGE STAY MODAL ══ -->
     <div class="manage-modal-overlay" id="manageModal">

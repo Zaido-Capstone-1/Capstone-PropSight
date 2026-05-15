@@ -1,0 +1,820 @@
+(function () {
+    'use strict';
+
+    /* =========================================================================
+       HELPERS
+    ========================================================================= */
+    const CLEANING = 500;
+    const fmt = n => '₱' + Math.round(n).toLocaleString('en-PH');
+    const $ = id => document.getElementById(id);
+    const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+    const val = id => ($(id)?.value || '').trim();
+
+    /* =========================================================================
+       SHARED CALENDAR HELPERS
+       Builds booked date utilities used by both the card and the modal.
+    ========================================================================= */
+    function buildCalendarHelpers() {
+        const ranges = window.UD_BOOKED_RANGES || [];
+        const blocked = window.UD_BLOCKED_DATES || [];
+
+        // Build a Set of every booked date string YYYY-MM-DD
+        // inclusive of checkin, exclusive of checkout
+        const disabledSet = new Set();
+        ranges.forEach(r => {
+            const d = new Date(r.from + 'T12:00:00');
+            const end = new Date(r.to + 'T12:00:00');
+            while (d < end) {
+                disabledSet.add(d.toISOString().split('T')[0]);
+                d.setDate(d.getDate() + 1);
+            }
+        });
+
+        // Add admin-blocked individual dates directly
+        blocked.forEach(date => disabledSet.add(date));
+
+        // Is this date inside a booked range?
+        function isBooked(dateObj) {
+            return disabledSet.has(dateObj.toISOString().split('T')[0]);
+        }
+
+        // Is this date blocked for CHECK-IN?
+        // Blocked if: it is itself booked, OR the very next day is booked
+        // (because you need at least 1 night, and you can't check out on a booked start date)
+        function isCheckinBlocked(dateObj) {
+            if (isBooked(dateObj)) return true;
+            const next = new Date(dateObj);
+            next.setDate(next.getDate() + 1);
+            return isBooked(next);
+        }
+
+        // Given a check-in date, find the next booked date after it
+        // so we can cap the checkout picker before that date
+        function getNextBookedAfter(fromDateObj) {
+            const d = new Date(fromDateObj);
+            for (let i = 1; i <= 365; i++) {
+                const n = new Date(d);
+                n.setDate(d.getDate() + i);
+                if (isBooked(n)) return n;
+            }
+            return null;
+        }
+
+        // Find the next available check-in date after a given date
+        function nextAvailableCheckin(fromDateObj) {
+            const d = new Date(fromDateObj);
+            for (let i = 1; i <= 365; i++) {
+                d.setDate(d.getDate() + 1);
+                if (!isCheckinBlocked(d)) return new Date(d);
+            }
+            return new Date(fromDateObj);
+        }
+
+        return { isBooked, isCheckinBlocked, getNextBookedAfter, nextAvailableCheckin };
+    }
+
+
+    /* =========================================================================
+       1. GRID GALLERY — prev/next on main image, side cells update too
+    ========================================================================= */
+    (function initGridGallery() {
+        const imgs = window.UD_IMAGES || [];
+        const mainImg = $('udMainGalleryImg');
+        if (!mainImg || imgs.length < 3) return;
+
+        const side0 = document.querySelector('#udSideCell0 img');
+        const side1 = document.querySelector('#udSideCell1 img');
+        const sideCell0 = $('udSideCell0');
+        const sideCell1 = $('udSideCell1');
+        let cur = 0;
+
+        function go(idx) {
+            cur = ((idx % imgs.length) + imgs.length) % imgs.length;
+            mainImg.src = imgs[cur];
+            mainImg.onclick = () => window.openLb(cur);
+
+            const n1 = (cur + 1) % imgs.length;
+            const n2 = (cur + 2) % imgs.length;
+            if (side0) side0.src = imgs[n1];
+            if (side1) side1.src = imgs[n2];
+            if (sideCell0) sideCell0.onclick = () => window.openLb(n1);
+            if (sideCell1) sideCell1.onclick = () => window.openLb(n2);
+        }
+
+        $('udMainPrev')?.addEventListener('click', e => { e.stopPropagation(); go(cur - 1); });
+        $('udMainNext')?.addEventListener('click', e => { e.stopPropagation(); go(cur + 1); });
+    })();
+
+
+    /* =========================================================================
+       2. SLIDER GALLERY (single / 2-image fallback)
+    ========================================================================= */
+    (function initSliderGallery() {
+        const track = $('udTrack');
+        const dots = $('udDots');
+        if (!track) return;
+
+        let gCur = 0;
+        const gSlides = track.querySelectorAll('.ud-gallery-slide');
+
+        function goTo(idx) {
+            if (!gSlides.length) return;
+            gCur = ((idx % gSlides.length) + gSlides.length) % gSlides.length;
+            track.style.transform = `translateX(-${gCur * 100}%)`;
+            dots?.querySelectorAll('.ud-gdot').forEach((d, i) =>
+                d.classList.toggle('active', i === gCur));
+        }
+
+        $('udPrev')?.addEventListener('click', () => goTo(gCur - 1));
+        $('udNext')?.addEventListener('click', () => goTo(gCur + 1));
+        dots?.addEventListener('click', e => {
+            const b = e.target.closest('.ud-gdot');
+            if (b) goTo(+b.dataset.idx);
+        });
+
+        let tx = 0;
+        track.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+        track.addEventListener('touchend', e => {
+            const dx = e.changedTouches[0].clientX - tx;
+            if (Math.abs(dx) > 50) goTo(gCur + (dx < 0 ? 1 : -1));
+        });
+
+        window._udSliderGoTo = goTo;
+        window._udSliderCur = () => gCur;
+    })();
+
+
+    /* =========================================================================
+       3. LIGHTBOX
+    ========================================================================= */
+    (function initLightbox() {
+        const lb = $('udLightbox');
+        const lbTrack = $('udLbTrack');
+        const lbCurEl = $('udLbCurrent');
+        if (!lb) return;
+
+        let lbIdx = 0;
+        const lbSlides = lbTrack ? lbTrack.querySelectorAll('.ud-lb-slide') : [];
+
+        function lbGoTo(idx) {
+            if (!lbTrack || !lbSlides.length) return;
+            lbIdx = ((idx % lbSlides.length) + lbSlides.length) % lbSlides.length;
+            lbTrack.style.transform = `translateX(-${lbIdx * 100}%)`;
+            if (lbCurEl) lbCurEl.textContent = lbIdx + 1;
+        }
+
+        function closeLb() {
+            lb.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        window.openLb = function (i) {
+            if (!lb) return;
+            lb.classList.add('open');
+            lbGoTo(i || 0);
+            document.body.style.overflow = 'hidden';
+        };
+
+        $('udLbClose')?.addEventListener('click', closeLb);
+        $('udLbPrev')?.addEventListener('click', () => lbGoTo(lbIdx - 1));
+        $('udLbNext')?.addEventListener('click', () => lbGoTo(lbIdx + 1));
+        lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
+
+        document.addEventListener('keydown', e => {
+            if (lb.classList.contains('open')) {
+                if (e.key === 'Escape') closeLb();
+                if (e.key === 'ArrowLeft') lbGoTo(lbIdx - 1);
+                if (e.key === 'ArrowRight') lbGoTo(lbIdx + 1);
+                return;
+            }
+            if ($('bmOverlay')?.classList.contains('active')) return;
+            if (e.key === 'ArrowLeft') window._udSliderGoTo?.(window._udSliderCur?.() - 1);
+            if (e.key === 'ArrowRight') window._udSliderGoTo?.(window._udSliderCur?.() + 1);
+        });
+    })();
+
+
+    /* =========================================================================
+       4. MAP (Leaflet)
+    ========================================================================= */
+    (function initMap() {
+        const u = window.UD_UNIT || {};
+        if (!u.lat || !u.lng || typeof L === 'undefined') return;
+        const map = L.map('udLeafletMap', {
+            zoomControl: false, scrollWheelZoom: false, attributionControl: false
+        }).setView([u.lat, u.lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.marker([u.lat, u.lng]).addTo(map);
+    })();
+
+
+    /* =========================================================================
+       5. CARD DATE PICKERS + PRICE BREAKDOWN
+       Uses flatpickr on the booking card (udCheckin / udCheckout).
+       - Check-in: blocks booked dates AND dates where next day is booked
+       - Check-out: only blocks actually-booked dates; capped before next booked block
+       - No default date selected — starts empty
+    ========================================================================= */
+    (function initCardDatePickers() {
+        const u = window.UD_UNIT || {};
+        const ciEl = $('udCheckin');
+        const coEl = $('udCheckout');
+
+        function updateBreakdown() {
+            const bd = $('udPriceBreakdown');
+            if (!ciEl || !coEl || !bd) return;
+            if (!ciEl.value || !coEl.value) { bd.style.display = 'none'; return; }
+            const a = new Date(ciEl.value);
+            const b = new Date(coEl.value);
+            if (b <= a) { bd.style.display = 'none'; return; }
+            const nights = Math.round((b - a) / 86400000);
+            const subtot = nights * (u.priceNum || 0);
+            const deposit = subtot * 0.5;
+            const total = deposit + CLEANING;
+            set('udNightsLabel', `${nights} night${nights !== 1 ? 's' : ''} × ${fmt(u.priceNum || 0)}`);
+            set('udNightsTotal', fmt(subtot));
+            set('udDeposit', fmt(deposit));
+            set('udTotalDue', fmt(total));
+            set('udRemainingNote', `Remaining ${fmt(subtot - deposit)} balance due at check-out`);
+            bd.style.display = 'block';
+            const fd = $('udFloatDates');
+            if (fd) {
+                const o = { month: 'short', day: 'numeric' };
+                fd.textContent = `${a.toLocaleDateString('en-PH', o)} – ${b.toLocaleDateString('en-PH', o)} · ${nights}n`;
+            }
+        }
+
+        function initCardCalendars() {
+            if (typeof flatpickr === 'undefined' || !ciEl || !coEl) return;
+
+            const { isBooked, isCheckinBlocked, getNextBookedAfter } = buildCalendarHelpers();
+
+            const today = new Date();
+            today.setHours(12, 0, 0, 0);
+
+            // Check-in picker — blocks booked + dates where next day is booked
+            const fpCi = flatpickr(ciEl, {
+                dateFormat: 'Y-m-d',
+                minDate: today,
+                disableMobile: false,
+                disable: [date => isCheckinBlocked(date)],
+                onDayCreate(dObj, dStr, fp, dayElem) {
+                    if (isCheckinBlocked(dayElem.dateObj)) {
+                        dayElem.classList.add('fp-booked');
+                        dayElem.title = isBooked(dayElem.dateObj)
+                            ? 'Already booked'
+                            : 'Not available — next day is booked';
+                    }
+                },
+                onChange([date]) {
+                    if (!date) return;
+                    // Find next booked date to cap checkout
+                    const nextBooked = getNextBookedAfter(date);
+                    // Checkout must be at least tomorrow
+                    const minCo = new Date(date);
+                    minCo.setDate(minCo.getDate() + 1);
+                    fpCo.set('minDate', minCo);
+                    // Cap checkout before the next booked block
+                    fpCo.set('maxDate', nextBooked || null);
+                    // Clear checkout if it's now invalid
+                    const coVal = fpCo.selectedDates[0];
+                    if (!coVal || coVal <= date || (nextBooked && coVal >= nextBooked)) {
+                        fpCo.clear();
+                    }
+                    updateBreakdown();
+                },
+            });
+
+            // Check-out picker — only blocks actually-booked dates
+            const fpCo = flatpickr(coEl, {
+                dateFormat: 'Y-m-d',
+                minDate: today,
+                disableMobile: false,
+                disable: [date => isBooked(date)],
+                onDayCreate(dObj, dStr, fp, dayElem) {
+                    if (isBooked(dayElem.dateObj)) {
+                        dayElem.classList.add('fp-booked');
+                        dayElem.title = 'Already booked';
+                    }
+                },
+                onChange([date]) {
+                    if (!date) return;
+                    updateBreakdown();
+                },
+            });
+
+            ciEl._fp = fpCi;
+            coEl._fp = fpCo;
+        }
+
+        if (typeof flatpickr !== 'undefined') {
+            initCardCalendars();
+        } else {
+            window.addEventListener('load', initCardCalendars);
+        }
+
+        // Expose card dates for modal prefill
+        window._udGetCheckin = () => ciEl?.value || '';
+        window._udGetCheckout = () => coEl?.value || '';
+    })();
+
+
+    /* =========================================================================
+       6. GUEST COUNTER
+    ========================================================================= */
+    (function initGuests() {
+        const u = window.UD_UNIT || {};
+        let gCount = 2;
+        const gCountEl = $('udGCount');
+        const gPluralEl = $('udGPlural');
+
+        function updateGuests() {
+            if (gCountEl) gCountEl.textContent = gCount;
+            if (gPluralEl) gPluralEl.textContent = gCount === 1 ? '' : 's';
+        }
+
+        $('udGMinus')?.addEventListener('click', () => { if (gCount > 1) { gCount--; updateGuests(); } });
+        $('udGPlus')?.addEventListener('click', () => { if (gCount < (u.maxGuests || 6)) { gCount++; updateGuests(); } });
+
+        window._udGetGuestCount = () => gCount;
+    })();
+
+
+    /* =========================================================================
+       7. BOOKING MODAL — open/close/steps/submit
+    ========================================================================= */
+    (function initBookingModal() {
+
+        window.openBookingModal = window.openBookingModal || function (room) {
+            if (window.hasActiveBooking) { showToast?.('You already have an active booking.'); return; }
+            set('bmSbName', room.name || '—');
+            set('bmSbLoc', room.location || '—');
+            set('sb-rent', (room.price || '—') + ' / night');
+            set('sb-deposit', '—');
+            set('sb-total', '—');
+
+            const img = $('bmUnitImg');
+            if (img && room.image) { img.src = room.image; img.style.display = 'block'; }
+
+            const s = window._psSessionFields || {};
+            [['bm-fname', s.fname], ['bm-lname', s.lname],
+            ['bm-email', s.email], ['bm-phone', s.phone]]
+                .forEach(([id, v]) => { const el = $(id); if (el) el.value = v || ''; });
+
+            // Clear date fields — flatpickr will handle them
+            const ci = $('bm-checkin'), co = $('bm-lease');
+            if (ci) ci.value = '';
+            if (co) co.value = '';
+
+            document.querySelectorAll('#bmPayMethods .bm-pay-badge').forEach(b => b.remove());
+            const pop = window.PS_POPULAR_PAYMENT || 'GCash';
+            const popEl = document.querySelector(`#bmPayMethods [data-method="${pop}"]`);
+            if (popEl && !popEl.querySelector('.bm-pay-badge')) {
+                const b = document.createElement('span');
+                b.className = 'bm-pay-badge';
+                b.textContent = 'Popular';
+                popEl.appendChild(b);
+            }
+
+            window._bmRoom = room;
+            _goTo(1);
+            const ov = $('bmOverlay');
+            if (ov) {
+                ov.classList.add('active');
+                requestAnimationFrame(() => ov.classList.add('open'));
+                ov.onclick = e => { if (e.target === ov) closeBookingModal(); };
+            }
+        };
+
+        window.closeBookingModal = window.closeBookingModal || function () {
+            const ov = $('bmOverlay');
+            if (!ov) return;
+            ov.classList.remove('open');
+            setTimeout(() => ov.classList.remove('active'), 350);
+            clearInterval(window._bmPollInterval);
+        };
+
+        function _goTo(step) {
+            step = Math.max(1, Math.min(4, step));
+            window._bmCurrentStep = step;
+            document.querySelectorAll('.bm-panel').forEach((p, i) =>
+                p.classList.toggle('active', i + 1 === step));
+            document.querySelectorAll('.bm-step').forEach((s, i) => {
+                s.classList.toggle('active', i + 1 === step);
+                s.classList.toggle('done', i + 1 < step);
+            });
+            const back = $('bmBack'), next = $('bmNext'),
+                conf = $('bmConfirmBtn'), done = $('bmDoneBtn');
+            if (back) back.style.display = (step > 1 && step < 4) ? '' : 'none';
+            if (next) next.style.display = step < 3 ? '' : 'none';
+            if (conf) conf.style.display = step === 3 ? '' : 'none';
+            if (done) done.style.display = 'none';
+
+            if (step === 2) {
+                const room = window._bmRoom || {};
+                const ci = val('bm-checkin'), co = val('bm-lease');
+                const nights = Math.max(0, Math.round((new Date(co) - new Date(ci)) / 86400000));
+                const subtot = nights * (room.priceNum || 0);
+                const deposit = subtot * 0.5;
+                const total = deposit + CLEANING;
+                set('rv-name', [val('bm-fname'), val('bm-lname')].join(' '));
+                set('rv-email', val('bm-email'));
+                set('rv-phone', val('bm-phone'));
+                set('rv-unit', room.name || '—');
+                set('rv-movein', ci);
+                set('rv-checkout', co);
+                set('rv-nights', nights);
+                set('rv-rent', fmt(room.priceNum || 0));
+                set('rv-deposit', fmt(deposit));
+                set('rv-total', fmt(total));
+                set('sb-deposit', fmt(deposit));
+                set('sb-total', fmt(total));
+            }
+        }
+
+        window.bmNextStep = window.bmNextStep || function () {
+            const step = window._bmCurrentStep || 1;
+            if (step === 1) {
+                if (!val('bm-fname') || !val('bm-lname')) { showToast?.('Please enter your full name.'); return; }
+                if (!val('bm-email')) { showToast?.('Please enter your email.'); return; }
+                if (!val('bm-phone')) { showToast?.('Please enter your contact number.'); return; }
+                if (!val('bm-checkin')) { showToast?.('Please select a check-in date.'); return; }
+                if (!val('bm-lease')) { showToast?.('Please select a check-out date.'); return; }
+                if (val('bm-lease') <= val('bm-checkin')) { showToast?.('Check-out must be after check-in.'); return; }
+            }
+            _goTo(step + 1);
+        };
+
+        window.bmPrevStep = window.bmPrevStep || function () {
+            if ((window._bmCurrentStep || 1) > 1) _goTo((window._bmCurrentStep || 1) - 1);
+        };
+
+        window.bmSubmitBooking = window.bmSubmitBooking || function () {
+            const room = window._bmRoom || {};
+            const method = document.querySelector('#bmPayMethods .bm-pay-option.selected')?.dataset.method || 'GCash';
+            const ci = val('bm-checkin'), co = val('bm-lease');
+            const nights = Math.max(0, Math.round((new Date(co) - new Date(ci)) / 86400000));
+            const subtot = nights * (room.priceNum || 0);
+            const deposit = subtot * 0.5;
+            const total = deposit + CLEANING;
+
+            showToast?.('Submitting your booking…');
+
+            const fd = new FormData();
+            fd.append('unit_id', room.id || '');
+            fd.append('first_name', val('bm-fname'));
+            fd.append('last_name', val('bm-lname'));
+            fd.append('email', val('bm-email'));
+            fd.append('phone', val('bm-phone'));
+            fd.append('checkin', ci);
+            fd.append('checkout', co);
+            fd.append('payment_method', method);
+            fd.append('guests', room.guests || 1);
+            fd.append('total_amount', subtot);
+            window.psAppendCsrf?.(fd);
+
+            _goTo(4);
+            ['bm-payment-waiting', 'bm-payment-success', 'bm-payment-cash',
+                'bm-payment-failed', 'bm-payment-expired']
+                .forEach((id, i) => { const el = $(id); if (el) el.style.display = i === 0 ? '' : 'none'; });
+            $('bmFooter')?.querySelectorAll('button').forEach(b => b.style.display = 'none');
+
+            fetch('../../api/user/book_unit.php', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) { showToast?.(data.message || 'Booking failed.', 'error'); _goTo(3); return; }
+
+                    const bid = data.booking_id;
+                    set('bmConfirmRef', `Ref #BK-${String(bid).padStart(4, '0')}`);
+
+                    if (method === 'Cash') {
+                        $('bm-payment-waiting').style.display = 'none';
+                        $('bm-payment-cash').style.display = '';
+                        set('cf-unit-cash', room.name || '—');
+                        set('cf-movein-cash', ci);
+                        set('cf-checkout-cash', co);
+                        set('cf-method-cash', method);
+                        set('cf-total-cash', fmt(total));
+                        $('bmDoneBtn').style.display = '';
+                        window.hasActiveBooking = true;
+                        return;
+                    }
+
+                    if (data.payment_url) {
+                        window._bmPayTab = window.open(data.payment_url, '_blank');
+                        window._bmPayUrl = data.payment_url;
+                        setTimeout(() => { const b = $('bmReopenPayBtn'); if (b) b.style.display = ''; }, 4000);
+                    }
+
+                    let polls = 0;
+                    window._bmPollInterval = setInterval(() => {
+                        if (++polls > 60) {
+                            clearInterval(window._bmPollInterval);
+                            $('bm-payment-waiting').style.display = 'none';
+                            $('bm-payment-expired').style.display = '';
+                            set('bmExpiredRef', `Ref #BK-${String(bid).padStart(4, '0')}`);
+                            return;
+                        }
+                        fetch(`../../api/user/check_payment_status.php?booking_id=${bid}`)
+                            .then(r => r.json())
+                            .then(st => {
+                                if (st.status === 'confirmed') {
+                                    clearInterval(window._bmPollInterval);
+                                    $('bm-payment-waiting').style.display = 'none';
+                                    $('bm-payment-success').style.display = '';
+                                    set('cf-unit', room.name || '—');
+                                    set('cf-movein', ci);
+                                    set('cf-checkout', co);
+                                    set('cf-method', method);
+                                    set('cf-total', fmt(total));
+                                    $('bmDoneBtn').style.display = '';
+                                    window.hasActiveBooking = true;
+                                    showToast?.('Payment confirmed!');
+                                } else if (st.status === 'failed') {
+                                    clearInterval(window._bmPollInterval);
+                                    $('bm-payment-waiting').style.display = 'none';
+                                    $('bm-payment-failed').style.display = '';
+                                    set('bmFailedRef', `Ref #BK-${String(bid).padStart(4, '0')}`);
+                                }
+                            }).catch(() => { });
+                    }, 5000);
+                })
+                .catch(err => { showToast?.(err?.message || 'Network error.', 'error'); _goTo(3); });
+        };
+
+        window.bmReopenPaymongoTab = window.bmReopenPaymongoTab || function () {
+            if (window._bmPayTab && !window._bmPayTab.closed) window._bmPayTab.focus();
+            else if (window._bmPayUrl) window._bmPayTab = window.open(window._bmPayUrl, '_blank');
+        };
+
+        // Payment method selection
+        document.querySelectorAll('#bmPayMethods .bm-pay-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                document.querySelectorAll('#bmPayMethods .bm-pay-option')
+                    .forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+            });
+        });
+
+        // Open modal from detail page (prefills dates + guest count)
+        window.openBookingModalFromDetail = function (roomData) {
+            roomData._prefillCheckin = window._udGetCheckin?.() || '';
+            roomData._prefillCheckout = window._udGetCheckout?.() || '';
+            roomData.guests = window._udGetGuestCount?.() || 1;
+            window.openBookingModal(roomData);
+            requestAnimationFrame(() => _initModalCalendars());
+        };
+
+        // ── Modal flatpickr calendars ──────────────────────────────────────
+        // Same rules as card: check-in blocks booked + "next day booked" dates
+        // Check-out only blocks actually-booked dates, capped before next block
+        function _initModalCalendars() {
+            if (typeof flatpickr === 'undefined') return;
+
+            const ciInput = $('bm-checkin');
+            const coInput = $('bm-lease');
+            if (!ciInput || !coInput) return;
+
+            // Destroy previous instances
+            if (ciInput._fp) { ciInput._fp.destroy(); ciInput._fp = null; }
+            if (coInput._fp) { coInput._fp.destroy(); coInput._fp = null; }
+
+            const { isBooked, isCheckinBlocked, getNextBookedAfter } = buildCalendarHelpers();
+
+            const today = new Date();
+            today.setHours(12, 0, 0, 0);
+
+            // Check-in picker
+            const fpCi = flatpickr(ciInput, {
+                dateFormat: 'Y-m-d',
+                minDate: today,
+                disableMobile: false,
+                disable: [date => isCheckinBlocked(date)],
+                onDayCreate(dObj, dStr, fp, dayElem) {
+                    if (isCheckinBlocked(dayElem.dateObj)) {
+                        dayElem.classList.add('fp-booked');
+                        dayElem.title = isBooked(dayElem.dateObj)
+                            ? 'Already booked'
+                            : 'Not available — next day is booked';
+                    }
+                },
+                onChange([date]) {
+                    if (!date) return;
+                    const nextBooked = getNextBookedAfter(date);
+                    const minCo = new Date(date);
+                    minCo.setDate(minCo.getDate() + 1);
+                    fpCo.set('minDate', minCo);
+                    fpCo.set('maxDate', nextBooked || null);
+                    const coVal = fpCo.selectedDates[0];
+                    if (!coVal || coVal <= date || (nextBooked && coVal >= nextBooked)) {
+                        fpCo.clear();
+                    }
+                    _updateModalSummary();
+                },
+            });
+
+            // Check-out picker
+            const fpCo = flatpickr(coInput, {
+                dateFormat: 'Y-m-d',
+                minDate: today,
+                disableMobile: false,
+                disable: [date => isBooked(date)],
+                onDayCreate(dObj, dStr, fp, dayElem) {
+                    if (isBooked(dayElem.dateObj)) {
+                        dayElem.classList.add('fp-booked');
+                        dayElem.title = 'Already booked';
+                    }
+                },
+                onChange([date]) {
+                    if (!date) return;
+                    _updateModalSummary();
+                },
+            });
+
+            ciInput._fp = fpCi;
+            coInput._fp = fpCo;
+        }
+
+        // Update the booking summary sidebar in the modal
+        function _updateModalSummary() {
+            const ci = $('bm-checkin')?.value;
+            const co = $('bm-lease')?.value;
+            if (!ci || !co) {
+                set('sb-deposit', '—');
+                set('sb-total', '—');
+                return;
+            }
+            const nights = Math.max(0, Math.round((new Date(co) - new Date(ci)) / 86400000));
+            if (nights <= 0) {
+                set('sb-deposit', '—');
+                set('sb-total', '—');
+                return;
+            }
+            const room = window._bmRoom || {};
+            const subtot = nights * (room.priceNum || 0);
+            const deposit = subtot * 0.5;
+            const total = deposit + CLEANING;
+            set('sb-deposit', fmt(deposit));
+            set('sb-total', fmt(total));
+        }
+
+        // Auto-open if ?book=1
+        if (new URLSearchParams(location.search).get('book') === '1') {
+            window.addEventListener('load', () => $('udBookBtn')?.click());
+        }
+    })();
+
+
+    /* =========================================================================
+       8. FLOAT BAR — show when booking card scrolls out of view
+    ========================================================================= */
+    (function initFloatBar() {
+        const card = $('udBookingCard');
+        if (!card || !('IntersectionObserver' in window)) return;
+        new IntersectionObserver(([e]) => {
+            document.body.classList.toggle('ud-card-offscreen', !e.isIntersecting);
+        }, { threshold: 0 }).observe(card);
+    })();
+
+
+    /* =========================================================================
+       9. AMENITIES SHOW-MORE
+    ========================================================================= */
+    (function initAmenities() {
+        const showMoreBtn = $('udShowMoreAmenities');
+        if (!showMoreBtn) return;
+        document.querySelectorAll('.ud-amenity-chip').forEach((c, i) => {
+            if (i >= 8) c.classList.add('ud-am-hidden');
+        });
+        showMoreBtn.addEventListener('click', () => {
+            document.querySelectorAll('.ud-amenity-chip.ud-am-hidden')
+                .forEach(c => c.classList.remove('ud-am-hidden'));
+            showMoreBtn.style.display = 'none';
+        });
+    })();
+
+
+    /* =========================================================================
+       10. VIRTUAL TOUR MODAL
+    ========================================================================= */
+    window.openVirtualTour = function () {
+        const modal = $('udTourModal');
+        if (!modal) return;
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeTour = function () {
+        const modal = $('udTourModal');
+        if (!modal) return;
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+    };
+
+    $('udTourModal')?.addEventListener('click', e => {
+        if (e.target === $('udTourModal')) window.closeTour();
+    });
+
+
+    /* =========================================================================
+       11. SHARE UNIT
+    ========================================================================= */
+    window.shareUnit = function () {
+        const shareData = {
+            title: document.title,
+            text: 'Check out this unit on PropSight — ' + document.title,
+            url: location.href,
+        };
+        if (navigator.share && navigator.canShare?.(shareData)) {
+            navigator.share(shareData).catch(() => { });
+        } else if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(location.href)
+                .then(() => showToast?.('Link copied to clipboard!'))
+                .catch(() => prompt('Copy this link:', location.href));
+        } else {
+            prompt('Copy this link:', location.href);
+        }
+    };
+
+
+    /* =========================================================================
+       12. RATING BAR SCROLL ANIMATION
+    ========================================================================= */
+    (function initRatingBars() {
+        const bars = document.querySelectorAll('.ud-rbar-fill');
+        if (!bars.length) return;
+        const targets = Array.from(bars).map(b => b.style.width);
+        bars.forEach(b => { b.style.width = '0%'; b.style.transition = 'width 0.6s cubic-bezier(0.4,0,0.2,1)'; });
+        const summary = document.querySelector('.ud-rating-summary');
+        if (summary && 'IntersectionObserver' in window) {
+            new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    bars.forEach((b, i) => setTimeout(() => { b.style.width = targets[i]; }, i * 80));
+                    obs.disconnect();
+                });
+            }, { threshold: 0.3 }).observe(summary);
+        } else {
+            bars.forEach((b, i) => { b.style.width = targets[i]; });
+        }
+    })();
+
+
+    /* =========================================================================
+       13. NEARBY ATTRACTIONS — staggered slide-in
+    ========================================================================= */
+    (function initNearby() {
+        const items = document.querySelectorAll('.ud-nearby-item');
+        if (!items.length || !('IntersectionObserver' in window)) return;
+        items.forEach((item, i) => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-8px)';
+            item.style.transition = `opacity 0.35s ease ${i * 0.07}s, transform 0.35s ease ${i * 0.07}s`;
+        });
+        const list = document.querySelector('.ud-nearby-list');
+        if (!list) return;
+        new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                items.forEach(item => { item.style.opacity = '1'; item.style.transform = 'translateX(0)'; });
+                obs.disconnect();
+            });
+        }, { threshold: 0.2 }).observe(list);
+    })();
+
+
+    /* =========================================================================
+       14. SOCIAL PROOF NUDGE — fade in
+    ========================================================================= */
+    document.querySelectorAll('.ud-social-nudge').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.5s ease 0.3s';
+        setTimeout(() => { el.style.opacity = '1'; }, 400);
+    });
+
+
+    /* =========================================================================
+       15. MINIMUM STAY VALIDATION (3-night minimum)
+    ========================================================================= */
+    (function initMinStay() {
+        const MIN = 3;
+        function bump(ciEl, coEl) {
+            if (!ciEl?.value || !coEl?.value) return;
+            const nights = Math.round((new Date(coEl.value) - new Date(ciEl.value)) / 86400000);
+            if (nights > 0 && nights < MIN) {
+                const minCo = new Date(ciEl.value);
+                minCo.setDate(minCo.getDate() + MIN);
+                coEl.value = minCo.toISOString().split('T')[0];
+                showToast?.(`Minimum stay is ${MIN} nights — checkout updated.`);
+                coEl.dispatchEvent(new Event('change'));
+            }
+        }
+        const udCi = $('udCheckin'), udCo = $('udCheckout');
+        const bmCi = $('bm-checkin'), bmCo = $('bm-lease');
+        udCi?.addEventListener('change', () => bump(udCi, udCo));
+        udCo?.addEventListener('change', () => bump(udCi, udCo));
+        bmCi?.addEventListener('change', () => bump(bmCi, bmCo));
+        bmCo?.addEventListener('change', () => bump(bmCi, bmCo));
+    })();
+
+})();

@@ -6,6 +6,24 @@
      padding: 0;
  }
 
+/* Force buttons/inputs to inherit font so icon fonts work inside them */
+button, input, select, textarea {
+    font-family: inherit;
+}
+
+/* Always render Tabler icon glyphs correctly regardless of parent element */
+.ti, [class^="ti-"], [class*=" ti-"] {
+    font-family: 'tabler-icons' !important;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    display: inline-block;
+}
+
  :root {
      /* layout.css defines the master vars — these extend for dashboard */
      --blue-900: #0b1829; --blue-800: #112240; --blue-700: #1a3a5c;
