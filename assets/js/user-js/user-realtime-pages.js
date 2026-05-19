@@ -252,7 +252,7 @@
                         var availBadge = roomCard.querySelector('[data-avail-status]');
                         if (availBadge) {
                             availBadge.className = 'room-avail avail-yes';
-                            availBadge.textContent = 'AVAILABLE';
+                            availBadge.textContent = '✓ Available';
                         }
                         var bookBtn = roomCard.querySelector('[data-book-btn]');
                         if (bookBtn) {
@@ -271,7 +271,7 @@
                         var availBadge = roomCard.querySelector('[data-avail-status]');
                         if (availBadge) {
                             availBadge.className = 'room-avail avail-no';
-                            availBadge.textContent = 'BOOKED';
+                            availBadge.textContent = 'Booked';
                         }
                         var bookBtn = roomCard.querySelector('[data-book-btn]');
                         if (bookBtn) {
@@ -331,7 +331,7 @@
                 var availBadge = roomCard.querySelector('[data-avail-status]');
                 if (availBadge) {
                     availBadge.className = 'room-avail avail-yes';
-                    availBadge.textContent = 'AVAILABLE';
+                    availBadge.textContent = '✓ Available';
                 }
                 var bookBtn = roomCard.querySelector('[data-book-btn]');
                 if (bookBtn) {
@@ -350,7 +350,7 @@
                 var availBadge = roomCard.querySelector('[data-avail-status]');
                 if (availBadge) {
                     availBadge.className = 'room-avail avail-no';
-                    availBadge.textContent = 'BOOKED';
+                    availBadge.textContent = 'Booked';
                 }
                 var bookBtn = roomCard.querySelector('[data-book-btn]');
                 if (bookBtn) {
@@ -649,7 +649,7 @@
                     var availBadge = roomCard.querySelector('[data-avail-status]');
                     if (availBadge) {
                         availBadge.className = 'room-avail avail-yes';
-                        availBadge.textContent = 'AVAILABLE';
+                        availBadge.textContent = '✓ Available';
                     }
                     var bookBtn = roomCard.querySelector('[data-book-btn]');
                     if (bookBtn) {
@@ -691,7 +691,7 @@
                 var availBadge = roomCard.querySelector('[data-avail-status]');
                 if (availBadge) {
                     availBadge.className = 'room-avail avail-no';
-                    availBadge.textContent = 'BOOKED';
+                    availBadge.textContent = 'Booked';
                 }
                 var bookBtn = roomCard.querySelector('[data-book-btn]');
                 if (bookBtn) {

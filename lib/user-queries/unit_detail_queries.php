@@ -127,10 +127,14 @@ $ratingBreakdown = mysqli_fetch_assoc(mysqli_query(
 $_similarRes = mysqli_query(
     $conn,
     "SELECT u.unit_id, u.unit_name, u.unit_number, u.unit_type, u.rent_amount,
-            u.bedrooms AS num_beds, u.bathrooms AS num_baths, u.status,
-            p.property_name,
-            (SELECT image_path FROM unit_images WHERE unit_id=u.unit_id ORDER BY image_id ASC LIMIT 1) AS img,
-            ROUND(AVG(r.rating),1) AS rating
+        u.bedrooms AS num_beds, u.bathrooms AS num_baths, u.max_guests, u.status,
+        u.description,
+        p.property_name,
+        (SELECT image_path FROM unit_images WHERE unit_id=u.unit_id ORDER BY image_id ASC LIMIT 1) AS img,
+        ROUND(AVG(r.rating),1) AS rating,
+        (SELECT GROUP_CONCAT(a.name ORDER BY a.name SEPARATOR '||' )
+         FROM unit_amenities ua JOIN amenities a ON a.amenity_id = ua.amenity_id
+         WHERE ua.unit_id = u.unit_id LIMIT 4) AS amenities_list
      FROM units u
      LEFT JOIN properties p ON p.property_id = u.property_id
      LEFT JOIN booking_reviews r ON r.unit_id = u.unit_id

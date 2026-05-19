@@ -206,10 +206,11 @@ $nav_items = [
     <!-- HEADER -->
     <header id="hdr">
         <a href="user-dashboard.php" class="logo">
-            <img src="../../assets/images/logo.png" alt="PropSight" class="logo-icon">
-            <span style="font-family:'Cormorant Garamond',serif;font-weight:700;line-height:1.1;display:block;">
-                Boracay <span class="brand-break">Accommodation</span>
-            </span>
+            <img src="../../assets/images/logo.png" alt="Boracay Accommodation" class="logo-icon">
+            <div class="logo-wordmark">
+                <strong>Boracay Accommodation</strong>
+                <span>Boracay, Philippines</span>
+            </div>
         </a>
         <nav>
             <?php foreach ($top_nav_items as $item): ?>
@@ -376,75 +377,65 @@ $nav_items = [
 
             <!-- Price + CTA block -->
             <div class="ud-price-block">
-                <div class="ud-price-left">
-                    <div class="ud-price-label">Nightly rate</div>
-                    <div class="ud-price-amount"><?php echo $price; ?><sub>/night</sub></div>
-                    <div class="ud-price-meta">
-                        <i class="ti ti-map-pin"></i>
-                        <?php echo ud_esc($locationStr); ?>
-                        <?php if ($addressStr): ?>
-                            · <span style="color:#636b7d"><?php echo ud_esc($addressStr); ?></span>
-                        <?php endif; ?>
+                <div class="ud-price-top">
+                    <div class="ud-price-left">
+                        <div class="ud-price-label">Nightly rate</div>
+                        <div class="ud-price-amount"><?php echo $price; ?><sub>/night</sub></div>
+                        <div class="ud-price-meta">
+                            <i class="ti ti-map-pin"></i>
+                            <?php echo ud_esc($locationStr); ?>
+                            <?php if ($addressStr): ?>
+                                · <span style="color:#636b7d"><?php echo ud_esc($addressStr); ?></span>
+                            <?php endif; ?>
+                        </div>
                     </div>
+                    <?php if ($isVacant && !$hasActiveBooking): ?>
+                        <button class="ud-cta-btn" id="udBookBtn"
+                            onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
+                            <i class="ti ti-calendar-plus"></i> Book Now
+                        </button>
+                    <?php elseif ($hasActiveBooking): ?>
+                        <button class="ud-cta-btn" style="background:#112240;cursor:default;color:#e8c882;" disabled>
+                            <i class="ti ti-circle-check"></i> Already Booked
+                        </button>
+                    <?php elseif ($isBooked || $isOccupied): ?>
+                        <button class="ud-cta-btn" id="udBookBtn"
+                            onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
+                            <i class="ti ti-calendar-plus"></i> Book a Future Date
+                        </button>
+                    <?php elseif ($isMaintenance): ?>
+                        <button class="ud-cta-btn" style="background:#9ca3af;cursor:default" disabled>
+                            <i class="ti ti-tool"></i> Under Maintenance
+                        </button>
+                    <?php else: ?>
+                        <button class="ud-cta-btn" disabled>
+                            <i class="ti ti-ban"></i> Unavailable
+                        </button>
+                    <?php endif; ?>
+                </div><!-- /ud-price-top -->
+
+                <div class="ud-price-stats">
+                    <span><i class="ti ti-bed"></i> <?php echo (int) ($unit['bedrooms'] ?? 2); ?>
+                        Bed<?php echo (int) ($unit['bedrooms'] ?? 2) !== 1 ? 's' : ''; ?></span>
+                    <span><i class="ti ti-bath"></i> <?php echo (int) ($unit['bathrooms'] ?? 1); ?>
+                        Bath<?php echo (int) ($unit['bathrooms'] ?? 1) !== 1 ? 's' : ''; ?></span>
+                    <?php if (!empty($unit['floor'])): ?>
+                        <span><i class="ti ti-building"></i> Floor <?php echo (int) $unit['floor']; ?></span>
+                    <?php endif; ?>
+                    <span><i class="ti ti-users"></i> Up to <?php echo (int) ($unit['max_guests'] ?? 2); ?>
+                        guest<?php echo (int) ($unit['max_guests'] ?? 2) !== 1 ? 's' : ''; ?></span>
+                    <?php if ($ratingValue !== null): ?>
+                        <span><i class="ti ti-star-filled" style="color:#d97706"></i>
+                            <?php echo number_format($ratingValue, 1); ?> <span
+                                style="color:var(--ud-text-soft);font-weight:400">(<?php echo $totalReviews; ?>
+                                review<?php echo $totalReviews !== 1 ? 's' : ''; ?>)</span></span>
+                    <?php endif; ?>
                 </div>
-                <?php if ($isVacant && !$hasActiveBooking): ?>
-                    <button class="ud-cta-btn" id="udBookBtn"
-                        onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
-                        <i class="ti ti-calendar-plus"></i>
-                        Book Now
-                    </button>
-                <?php elseif ($hasActiveBooking): ?>
-                    <button class="ud-cta-btn" style="background:#3a9470;cursor:default" disabled>
-                        <i class="ti ti-circle-check"></i> Already Booked
-                    </button>
-                <?php elseif ($isBooked || $isOccupied): ?>
-                    <button class="ud-cta-btn" id="udBookBtn"
-                        onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
-                        <i class="ti ti-calendar-plus"></i> Book a Future Date
-                    </button>
-                <?php elseif ($isMaintenance): ?>
-                    <button class="ud-cta-btn" style="background:#9ca3af;cursor:default" disabled>
-                        <i class="ti ti-tool"></i> Under Maintenance
-                    </button>
-                <?php else: ?>
-                    <button class="ud-cta-btn" disabled>
-                        <i class="ti ti-ban"></i> Unavailable
-                    </button>
-                <?php endif; ?>
-            </div>
+
+            </div><!-- /ud-price-block -->
 
             <!-- Quick stats -->
-            <div class="ud-stats-row">
-                <div class="ud-stat-item">
-                    <i class="ti ti-bed"></i>
-                    <strong><?php echo (int) ($unit['bedrooms'] ?? 2); ?></strong>
-                    Bed<?php echo (int) ($unit['bedrooms'] ?? 2) !== 1 ? 's' : ''; ?>
-                </div>
-                <div class="ud-stat-item">
-                    <i class="ti ti-bath"></i>
-                    <strong><?php echo (int) ($unit['bathrooms'] ?? 1); ?></strong>
-                    Bath<?php echo (int) ($unit['bathrooms'] ?? 1) !== 1 ? 's' : ''; ?>
-                </div>
-                <?php if (!empty($unit['floor'])): ?>
-                    <div class="ud-stat-item">
-                        <i class="ti ti-building"></i>
-                        Floor <strong><?php echo (int) $unit['floor']; ?></strong>
-                    </div>
-                <?php endif; ?>
-                <div class="ud-stat-item">
-                    <i class="ti ti-users"></i>
-                    Up to <strong><?php echo (int) ($unit['max_guests'] ?? 2); ?></strong>
-                    guest<?php echo (int) ($unit['max_guests'] ?? 2) !== 1 ? 's' : ''; ?>
-                </div>
-                <?php if ($ratingValue !== null): ?>
-                    <div class="ud-stat-item">
-                        <i class="ti ti-star-filled" style="color:#d97706"></i>
-                        <strong><?php echo number_format($ratingValue, 1); ?></strong>
-                        <span style="color:#636b7d">(<?php echo $totalReviews; ?>
-                            review<?php echo $totalReviews !== 1 ? 's' : ''; ?>)</span>
-                    </div>
-                <?php endif; ?>
-            </div>
+
 
             <!-- Info card -->
             <div class="ud-info-card">
@@ -640,6 +631,11 @@ $nav_items = [
                             <strong><?php echo number_format($ratingValue, 1); ?></strong>
                             <span>· <?php echo $totalReviews; ?> review<?php echo $totalReviews !== 1 ? 's' : ''; ?></span>
                         </div>
+                    <?php else: ?>
+                        <div class="ud-bc-rating">
+                            <span style="opacity:0.5;font-size:10px;">★★★★★</span>
+                            <span style="font-size:0.65rem;opacity:0.6;margin-left:4px;">No ratings yet</span>
+                        </div>
                     <?php endif; ?>
                 </div>
                 <div class="ud-bc-body">
@@ -656,7 +652,7 @@ $nav_items = [
                             <div>
                                 <label>Guests</label>
                                 <div
-                                    style="font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;color:#e8eaf0">
+                                    style="font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;color:#0c1a2e">
                                     <span id="udGCount">2</span> guest<span id="udGPlural">s</span>
                                 </div>
                             </div>
@@ -707,7 +703,8 @@ $nav_items = [
                     <div class="ud-price-breakdown" id="udPriceBreakdown" style="display:none">
                         <div class="ud-pb-row"><span id="udNightsLabel">—</span><span id="udNightsTotal">—</span></div>
                         <div class="ud-pb-row ud-pb-muted"><span>Security deposit (50%)</span><span
-                                id="udDeposit">—</span></div>
+                                id="udDeposit">—</span>
+                        </div>
                         <div class="ud-pb-row ud-pb-muted"><span>Cleaning fee</span><span>₱500</span></div>
                         <div class="ud-pb-divider"></div>
                         <div class="ud-pb-total"><span>Total due today</span><span id="udTotalDue">—</span></div>
@@ -720,10 +717,14 @@ $nav_items = [
                             <i class="ti ti-flame"></i>
                             <span>Booked <strong><?php echo $bookingCount; ?> times</strong> — popular stay!</span>
                         </div>
-                    <?php elseif ($isVacant): ?>
-                        <div class="ud-social-nudge ud-social-nudge--rare">
+                    <?php elseif ($isVacant && $bookingCount >= 2): ?>
+                        <div class="ud-social-nudge ud-social-nudge--rare"
+                            onclick="document.getElementById('reviews').scrollIntoView({behavior:'smooth'})"
+                            style="cursor:pointer;">
                             <i class="ti ti-star"></i>
-                            <span><strong>Rare find</strong> — this unit is usually taken.</span>
+                            <span><strong>Rare find</strong> — this unit is usually taken.
+                                <span style="text-decoration:underline;opacity:0.8;">See reviews</span>
+                            </span>
                         </div>
                     <?php endif; ?>
 
@@ -733,7 +734,8 @@ $nav_items = [
                             Reserve this unit
                         </button>
                     <?php elseif ($hasActiveBooking): ?>
-                        <button class="ud-book-btn ud-book-btn--disabled" disabled>
+                        <button class="ud-book-btn" disabled
+                            style="background:#112240!important;color:#e8c882!important;cursor:default;">
                             <i class="ti ti-circle-check"></i> Already Booked
                         </button>
                     <?php elseif ($isBooked || $isOccupied): ?>
@@ -823,16 +825,28 @@ $nav_items = [
                                 </span>
                             </div>
                             <div class="ud-similar-info">
-                                <div class="ud-similar-name"><?php echo ud_esc($suTitle); ?></div>
+                                <div class="ud-similar-name"><i class="ti ti-map-pin"></i><?php echo ud_esc($suTitle); ?></div>
                                 <div class="ud-similar-meta">
-                                    <span><i class="ti ti-bed"></i> <?php echo (int) ($su['num_beds'] ?? 1); ?></span>
-                                    <span><i class="ti ti-bath"></i> <?php echo (int) ($su['num_baths'] ?? 1); ?></span>
-                                    <?php if (!empty($su['rating'])): ?>
-                                        <span><i class="ti ti-star-filled" style="color:#d97706"></i>
-                                            <?php echo number_format((float) $su['rating'], 1); ?></span>
-                                    <?php endif; ?>
+                                    <span><i class="ti ti-users"></i> <?php echo (int) ($su['max_guests'] ?? 2); ?> Guests
+                                        max</span>
                                 </div>
-                                <div class="ud-similar-price"><?php echo $suPrice; ?><span>/night</span></div>
+                                <?php if (!empty($su['description'])): ?>
+                                    <div class="ud-similar-desc"><?php echo ud_esc(mb_substr($su['description'], 0, 90)); ?>...
+                                    </div>
+                                <?php endif; ?>
+                                <?php if (!empty($su['amenities_list'])): ?>
+                                    <div class="ud-similar-amenities">
+                                        <?php foreach (array_slice(explode('||', $su['amenities_list']), 0, 3) as $am): ?>
+                                            <span class="ud-similar-amenity-chip">
+                                                <i class="ti <?php echo getAmenityIcon(trim($am)); ?>"></i>
+                                                <?php echo ud_esc(trim($am)); ?>
+                                            </span>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                                <div class="ud-similar-footer">
+                                    <div class="ud-similar-price"><?php echo $suPrice; ?><span>/night</span></div>
+                                </div>
                             </div>
                         </a>
                     <?php endforeach; ?>
@@ -868,7 +882,7 @@ $nav_items = [
                     Book Now
                 </button>
             <?php elseif ($hasActiveBooking): ?>
-                <button class="ud-float-btn" disabled style="background:#3a9470">Booked</button>
+                <button class="ud-float-btn" disabled style="background:#112240;color:#e8c882;">Booked</button>
             <?php elseif ($isBooked || $isOccupied): ?>
                 <button class="ud-float-btn" id="udFloatBtn"
                     onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>

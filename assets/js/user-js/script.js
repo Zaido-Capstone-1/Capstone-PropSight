@@ -73,6 +73,7 @@ function openSidebar() {
     document.getElementById('profileSidebar').classList.add('open');
     document.body.style.overflow = 'hidden';
 }
+
 function closeSidebar() {
     document.getElementById('sidebarOverlay')?.classList.remove('open');
     document.getElementById('profileSidebar')?.classList.remove('open');
@@ -104,8 +105,19 @@ if (burger && mob) {
             s[2].style.transform = 'translateY(-6.5px) rotate(-45deg)';
         } else resetB();
     });
-    function resetB() { burger.querySelectorAll('span').forEach(s => { s.style.transform = ''; s.style.opacity = ''; }); }
-    function closeMob() { mobOpen = false; mob.classList.remove('open'); resetB(); }
+
+    function resetB() {
+        burger.querySelectorAll('span').forEach(s => {
+            s.style.transform = '';
+            s.style.opacity = '';
+        });
+    }
+
+    function closeMob() {
+        mobOpen = false;
+        mob.classList.remove('open');
+        resetB();
+    }
 
     // ── MAP HELPERS ────────────────────────────────────────────
     function _destroyPdMap() {
@@ -141,7 +153,10 @@ if (burger && mob) {
 
             _destroyPdMap();
 
-            const map = L.map(mapEl, { scrollWheelZoom: false, zoomControl: true });
+            const map = L.map(mapEl, {
+                scrollWheelZoom: false,
+                zoomControl: true
+            });
             window._pdMapInstance = map;
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -156,7 +171,9 @@ if (burger && mob) {
                 iconAnchor: [14, 28]
             });
 
-            L.marker([lat, lng], { icon: pinIcon }).addTo(map);
+            L.marker([lat, lng], {
+                icon: pinIcon
+            }).addTo(map);
             map.setView([lat, lng], 15);
 
             setTimeout(() => {
@@ -177,9 +194,9 @@ if (burger && mob) {
         const nextBtn = document.getElementById('pdGalleryNext');
         const dotsWrap = document.getElementById('pdGalleryDots');
 
-        const images = (Array.isArray(room.images) && room.images.length)
-            ? room.images
-            : (room.image ? [room.image] : []);
+        const images = (Array.isArray(room.images) && room.images.length) ?
+            room.images :
+            (room.image ? [room.image] : []);
 
         window._pdGalleryIdx = 0;
         window._pdGalleryImages = images;
@@ -193,19 +210,32 @@ if (burger && mob) {
                     img.src = src;
                     img.alt = room.name || 'Room image';
                     img.style.cssText = 'flex-shrink:0;width:100%;height:100%;object-fit:cover;display:block;';
-                    img.onerror = () => { img.style.display = 'none'; };
+                    img.onerror = () => {
+                        img.style.display = 'none';
+                    };
                     track.appendChild(img);
                 });
                 track.style.transform = 'translateX(0)';
-                if (prevBtn) { prevBtn.style.display = images.length > 1 ? 'flex' : 'none'; prevBtn.style.alignItems = 'center'; prevBtn.style.justifyContent = 'center'; }
-                if (nextBtn) { nextBtn.style.display = images.length > 1 ? 'flex' : 'none'; nextBtn.style.alignItems = 'center'; nextBtn.style.justifyContent = 'center'; }
+                if (prevBtn) {
+                    prevBtn.style.display = images.length > 1 ? 'flex' : 'none';
+                    prevBtn.style.alignItems = 'center';
+                    prevBtn.style.justifyContent = 'center';
+                }
+                if (nextBtn) {
+                    nextBtn.style.display = images.length > 1 ? 'flex' : 'none';
+                    nextBtn.style.alignItems = 'center';
+                    nextBtn.style.justifyContent = 'center';
+                }
                 if (dotsWrap) {
-                    dotsWrap.innerHTML = images.length > 1
-                        ? images.map((_, i) => `<span style="width:7px;height:7px;border-radius:50%;background:${i === 0 ? '#fff' : 'rgba(255,255,255,.45)'};display:inline-block;transition:background .2s;"></span>`).join('')
-                        : '';
+                    dotsWrap.innerHTML = images.length > 1 ?
+                        images.map((_, i) => `<span style="width:7px;height:7px;border-radius:50%;background:${i === 0 ? '#fff' : 'rgba(255,255,255,.45)'};display:inline-block;transition:background .2s;"></span>`).join('') :
+                        '';
                 }
             } else {
-                if (fallback) { fallback.className = `pd-hero-fallback ${room.grad || 'g1'}`; fallback.style.display = 'block'; }
+                if (fallback) {
+                    fallback.className = `pd-hero-fallback ${room.grad || 'g1'}`;
+                    fallback.style.display = 'block';
+                }
                 if (prevBtn) prevBtn.style.display = 'none';
                 if (nextBtn) nextBtn.style.display = 'none';
                 if (dotsWrap) dotsWrap.innerHTML = '';
@@ -230,17 +260,19 @@ if (burger && mob) {
         const amenDiv = document.getElementById('modalAmenities');
         const amenList = Array.isArray(room.amenities) ? room.amenities : [];
         if (amenDiv) {
-            amenDiv.innerHTML = amenList.length
-                ? amenList.map(a => {
+            amenDiv.innerHTML = amenList.length ?
+                amenList.map(a => {
                     const name = (a && typeof a === 'object') ? (a.name || '') : String(a);
                     return `<span class="pd-amenity-chip"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>${escHtml(name)}</span>`;
-                }).join('')
-                : '<span style="font-size:.8rem;color:#8aa4c0;">No amenities listed.</span>';
+                }).join('') :
+                '<span style="font-size:.8rem;color:#8aa4c0;">No amenities listed.</span>';
         }
 
         const noteEl = document.getElementById('pdAvailNote');
-        const today = new Date(); today.setDate(today.getDate() + 1);
-        const dayAfter = new Date(); dayAfter.setDate(dayAfter.getDate() + 2);
+        const today = new Date();
+        today.setDate(today.getDate() + 1);
+        const dayAfter = new Date();
+        dayAfter.setDate(dayAfter.getDate() + 2);
         if (noteEl) noteEl.textContent = `Unit is available from ${today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Security deposit is 50% of total stay.`;
 
         document.getElementById('modalCheckin').value = today.toISOString().split('T')[0];
@@ -304,14 +336,19 @@ if (burger && mob) {
         fetch(`../../api/user/unit_reviews.php?unit_id=${unitId}&page=${page}&limit=5`)
             .then(r => r.json())
             .then(data => {
-                if (!data.success) { container.innerHTML = '<p style="color:#8aa4c0;font-size:.83rem;">Could not load reviews.</p>'; return; }
+                if (!data.success) {
+                    container.innerHTML = '<p style="color:#8aa4c0;font-size:.83rem;">Could not load reviews.</p>';
+                    return;
+                }
                 if (countEl) countEl.textContent = data.total > 0 ? `(${data.total})` : '';
                 if (!data.reviews.length) {
                     container.innerHTML = '<p style="color:#8aa4c0;font-size:.83rem;padding:10px 0;">No reviews yet for this unit.</p>';
                     return;
                 }
                 container.innerHTML = data.reviews.map(r => {
-                    const stars = Array.from({ length: 5 }, (_, i) =>
+                    const stars = Array.from({
+                            length: 5
+                        }, (_, i) =>
                         `<span style="color:${i < r.rating ? '#e8c87a' : '#d0d8e4'};">★</span>`).join('');
                     return `<div class="pd-review">
                     <div class="pd-review-stars">${stars}</div>
@@ -331,7 +368,9 @@ if (burger && mob) {
                     window._pdReviewTotalPages = data.total_pages;
                 }
             })
-            .catch(() => { container.innerHTML = '<p style="color:#8aa4c0;font-size:.83rem;">Failed to load reviews.</p>'; });
+            .catch(() => {
+                container.innerHTML = '<p style="color:#8aa4c0;font-size:.83rem;">Failed to load reviews.</p>';
+            });
     }
 
     function pdReviewsNav(dir) {
@@ -388,10 +427,22 @@ if (burger && mob) {
 
     // ── PAYMENT ────────────────────────────────────────────────
     const paymentMethodMeta = {
-        GCash: { title: 'Pay with GCash', desc: 'Scan this QR code in GCash, then tap Confirm Payment.' },
-        Maya: { title: 'Pay with Maya', desc: 'Scan this QR code in Maya, then tap Confirm Payment.' },
-        Bank: { title: 'Pay via Bank Transfer', desc: 'Use your banking app to scan this QR and proceed with transfer.' },
-        Cash: { title: 'Pay with Cash', desc: 'Pay in cash upon check-in at the front desk. Please prepare the exact amount if possible.' },
+        GCash: {
+            title: 'Pay with GCash',
+            desc: 'Scan this QR code in GCash, then tap Confirm Payment.'
+        },
+        Maya: {
+            title: 'Pay with Maya',
+            desc: 'Scan this QR code in Maya, then tap Confirm Payment.'
+        },
+        Bank: {
+            title: 'Pay via Bank Transfer',
+            desc: 'Use your banking app to scan this QR and proceed with transfer.'
+        },
+        Cash: {
+            title: 'Pay with Cash',
+            desc: 'Pay in cash upon check-in at the front desk. Please prepare the exact amount if possible.'
+        },
     };
     let pendingBookingPayload = null;
     let selectedPaymentMethod = 'GCash';
@@ -455,7 +506,10 @@ if (burger && mob) {
 
     // ── CONFIRM BOOKING ────────────────────────────────────────
     function confirmBooking() {
-        if (window.hasActiveBooking) { showToast('You already have an active booking.'); return; }
+        if (window.hasActiveBooking) {
+            showToast('You already have an active booking.');
+            return;
+        }
         const checkin = document.getElementById('modalCheckin').value;
         const checkout = document.getElementById('modalGuests').value;
         closeRoomModal();
@@ -468,17 +522,28 @@ if (burger && mob) {
 
     function submitBookingAfterPayment() {
         if (!pendingBookingPayload) return;
-        const { checkin, checkout, guests, roomName, unitId } = pendingBookingPayload;
+        const {
+            checkin,
+            checkout,
+            guests,
+            roomName,
+            unitId
+        } = pendingBookingPayload;
         showToast('Submitting your booking request…', 'info');
         fetch('../../api/user/book_unit.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-                unit_id: unitId, checkin, checkout, guests,
-                payment_method: selectedPaymentMethod,
-                csrf_token: (typeof window.psGetCsrfToken === 'function' ? window.psGetCsrfToken() : '')
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    unit_id: unitId,
+                    checkin,
+                    checkout,
+                    guests,
+                    payment_method: selectedPaymentMethod,
+                    csrf_token: (typeof window.psGetCsrfToken === 'function' ? window.psGetCsrfToken() : '')
+                })
             })
-        })
             .then(r => r.json())
             .then(data => {
                 closePaymentModal();
@@ -500,7 +565,11 @@ if (burger && mob) {
         if (!iso) return '—';
         const d = new Date(iso + (iso.includes('-') && iso.length === 10 ? 'T00:00:00' : ''));
         if (isNaN(d)) return iso;
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return d.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
     }
 
     function _markDashboardUnitBooked(unitId) {
@@ -509,13 +578,22 @@ if (burger && mob) {
         if (!roomCard) return;
         roomCard.dataset.status = 'occupied';
         const availBadge = roomCard.querySelector('[data-avail-status]');
-        if (availBadge) { availBadge.className = 'room-avail avail-no'; availBadge.textContent = 'BOOKED'; }
+        if (availBadge) {
+            availBadge.className = 'room-avail avail-no';
+            availBadge.textContent = 'Booked'; // was 'BOOKED'
+        }
         const bookBtn = roomCard.querySelector('[data-book-btn]');
         if (bookBtn) {
             bookBtn.disabled = true;
             bookBtn.textContent = 'Unavailable';
             bookBtn.setAttribute('aria-disabled', 'true');
-            bookBtn.onclick = function (ev) { if (ev) { ev.preventDefault(); ev.stopPropagation(); } return false; };
+            bookBtn.onclick = function (ev) {
+                if (ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                }
+                return false;
+            };
         }
     }
 
@@ -534,7 +612,10 @@ if (burger && mob) {
             banner.style.opacity = '1';
             banner.style.maxHeight = '';
             const pill = document.getElementById('rt-active-booking-status');
-            if (pill) { pill.textContent = 'Pending'; pill.className = 'bb-status st-pending'; }
+            if (pill) {
+                pill.textContent = 'Pending';
+                pill.className = 'bb-status st-pending';
+            }
             const bbDates = banner.querySelector('.bb-dates');
             if (bbDates) {
                 bbDates.innerHTML = `Check-in: ${_fmtDateDash(data.checkin)}<span class="bb-date-sep"> &nbsp;·&nbsp; </span>Check-out: ${_fmtDateDash(data.checkout)}`;
@@ -591,14 +672,24 @@ if (burger && mob) {
             banner.style.transition = 'opacity 0.5s, max-height 0.7s ease';
             banner.style.overflow = 'hidden';
             banner.style.opacity = '0';
-            setTimeout(() => { banner.style.maxHeight = '0'; banner.style.marginTop = '0'; banner.style.marginBottom = '0'; }, 520);
-            setTimeout(() => { banner.style.display = 'none'; }, 1300);
+            setTimeout(() => {
+                banner.style.maxHeight = '0';
+                banner.style.marginTop = '0';
+                banner.style.marginBottom = '0';
+            }, 520);
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 1300);
         }
 
         const histItem = document.querySelector(`.history-item[data-booking-id="${id}"]`);
         if (histItem) {
             const badge = histItem.querySelector('[data-field="status"]');
-            if (badge) { badge.textContent = 'Cancelled'; badge.className = 'history-status st-cancelled'; badge.dataset.rawStatus = 'cancelled'; }
+            if (badge) {
+                badge.textContent = 'Cancelled';
+                badge.className = 'history-status st-cancelled';
+                badge.dataset.rawStatus = 'cancelled';
+            }
         }
 
         if (unitId) {
@@ -607,7 +698,7 @@ if (burger && mob) {
                 roomCard.dataset.status = 'vacant';
                 const availBadge = roomCard.querySelector('[data-avail-status]');
                 if (availBadge) {
-                    availBadge.textContent = 'AVAILABLE';
+                    availBadge.textContent = '✓ Available'; 
                     availBadge.classList.remove('avail-no');
                     availBadge.classList.add('avail-yes');
                 }
@@ -618,7 +709,9 @@ if (burger && mob) {
                     bookBtn.removeAttribute('aria-disabled');
                     bookBtn.onclick = function (ev) {
                         if (ev) ev.stopPropagation();
-                        try { openBookingModal(JSON.parse(roomCard.dataset.roomPayload || '{}')); } catch (err) { }
+                        try {
+                            openBookingModal(JSON.parse(roomCard.dataset.roomPayload || '{}'));
+                        } catch (err) {}
                     };
                 }
             }
@@ -634,7 +727,9 @@ if (burger && mob) {
         window.hasActiveBooking = false;
 
         if (typeof closeManageModal === 'function') {
-            try { closeManageModal(); } catch (e) { }
+            try {
+                closeManageModal();
+            } catch (e) {}
         }
     }
     window._onBookingCancelled = _onBookingCancelled;
@@ -665,12 +760,14 @@ if (burger && mob) {
         carouselState.rooms.page = 0;
         renderPage('rooms');
     }
+
     function filterRooms(cat, btn) {
         document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
         currentRoomCategory = (cat || 'all').toLowerCase();
         applyRoomFilters();
     }
+
     function searchRooms(val) {
         currentRoomSearch = (val || '').toLowerCase().trim();
         applyRoomFilters();
@@ -682,20 +779,32 @@ if (burger && mob) {
     // ── SCROLL REVEAL ──────────────────────────────────────────
     const revObs = new IntersectionObserver(entries => {
         entries.forEach(e => {
-            if (e.isIntersecting) { e.target.classList.add('visible'); revObs.unobserve(e.target); }
+            if (e.isIntersecting) {
+                e.target.classList.add('visible');
+                revObs.unobserve(e.target);
+            }
         });
-    }, { threshold: 0.1, rootMargin: '0px 0px -32px 0px' });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -32px 0px'
+    });
     document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
 
     // ── KEYBOARD ──────────────────────────────────────────────
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') { closeRoomModal(); closePaymentModal(); closeSidebar(); closeManageModal(); }
+        if (e.key === 'Escape') {
+            closeRoomModal();
+            closePaymentModal();
+            closeSidebar();
+            closeManageModal();
+        }
     });
 
     // ── VERIFICATION BADGE ─────────────────────────────────────
     const badgeText = document.getElementById('badgeText');
     const badgeDot = document.getElementById('badgeDot');
     const verifyBtn = document.getElementById('verifyBtn');
+
     function updateBadge() {
         const status = badgeText ? badgeText.textContent.trim().toLowerCase() : '';
         if (status === 'verified' || status === 'verified guest') {
@@ -728,11 +837,12 @@ if (burger && mob) {
         document.getElementById('manageStatusText').textContent = booking.status;
 
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        let inDate = null, outDate = null;
+        let inDate = null,
+            outDate = null;
         try {
             inDate = new Date(booking.checkin + 'T12:00:00');
             outDate = new Date(booking.checkout + 'T12:00:00');
-        } catch (e) { }
+        } catch (e) {}
 
         document.getElementById('manageCheckin').textContent = booking.checkin;
         document.getElementById('manageCheckout').textContent = booking.checkout;
@@ -770,15 +880,28 @@ if (burger && mob) {
             document.getElementById('manageMapAddress').textContent = booking.address || booking.property_name;
             setTimeout(function () {
                 const mapEl = document.getElementById('manageMap');
-                if (window._manageMapInstance) { window._manageMapInstance.remove(); window._manageMapInstance = null; mapEl.innerHTML = ''; }
-                const map = L.map(mapEl, { scrollWheelZoom: false, zoomControl: true });
+                if (window._manageMapInstance) {
+                    window._manageMapInstance.remove();
+                    window._manageMapInstance = null;
+                    mapEl.innerHTML = '';
+                }
+                const map = L.map(mapEl, {
+                    scrollWheelZoom: false,
+                    zoomControl: true
+                });
                 window._manageMapInstance = map;
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19
+                }).addTo(map);
                 const pinIcon = L.divIcon({
                     html: '<div style="background:#2563eb;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);"></div>',
-                    className: '', iconSize: [28, 28], iconAnchor: [14, 28]
+                    className: '',
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 28]
                 });
-                L.marker([lat, lng], { icon: pinIcon }).addTo(map);
+                L.marker([lat, lng], {
+                    icon: pinIcon
+                }).addTo(map);
                 map.setView([lat, lng], 15);
                 map.invalidateSize();
             }, 320);
@@ -810,13 +933,15 @@ if (burger && mob) {
         if (!confirm('Are you sure you want to cancel this reservation? This cannot be undone.')) return;
         showToast('Cancelling your reservation…', 'info');
         fetch('../../api/user/cancel_booking.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-                booking_id: currentBookingId,
-                csrf_token: (typeof window.psGetCsrfToken === 'function' ? window.psGetCsrfToken() : '')
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    booking_id: currentBookingId,
+                    csrf_token: (typeof window.psGetCsrfToken === 'function' ? window.psGetCsrfToken() : '')
+                })
             })
-        })
             .then(r => r.json())
             .then(data => {
                 const cancelledBookingId = currentBookingId;
@@ -834,14 +959,23 @@ if (burger && mob) {
     function goToSupportFromManage() {
         const id = Number(currentBookingId);
         closeManageModal();
-        if (Number.isFinite(id) && id > 0) { window.location.href = `support.php?booking_id=${encodeURIComponent(String(id))}`; return; }
+        if (Number.isFinite(id) && id > 0) {
+            window.location.href = `support.php?booking_id=${encodeURIComponent(String(id))}`;
+            return;
+        }
         window.location.href = 'support.php';
     }
 
     // ── CAROUSEL ───────────────────────────────────────────────
     const carouselState = {
-        rooms: { page: 0, perPage: 8 },
-        history: { page: 0, perPage: 5 },
+        rooms: {
+            page: 0,
+            perPage: 8
+        },
+        history: {
+            page: 0,
+            perPage: 5
+        },
     };
 
     function getRoomsPerPage() {
@@ -869,12 +1003,12 @@ if (burger && mob) {
         if (!grid) return;
         if (type === 'rooms') state.perPage = getRoomsPerPage();
 
-        const cards = type === 'rooms'
-            ? Array.from(grid.querySelectorAll('.room-card'))
-            : Array.from(grid.children);
-        const pageItems = type === 'rooms'
-            ? cards.filter(el => !el.classList.contains('room-filter-hidden'))
-            : cards;
+        const cards = type === 'rooms' ?
+            Array.from(grid.querySelectorAll('.room-card')) :
+            Array.from(grid.children);
+        const pageItems = type === 'rooms' ?
+            cards.filter(el => !el.classList.contains('room-filter-hidden')) :
+            cards;
         const total = pageItems.length;
         const pages = Math.max(1, Math.ceil(total / state.perPage));
         if (state.page >= pages) state.page = pages - 1;
@@ -884,7 +1018,10 @@ if (burger && mob) {
         const fallback = document.getElementById('roomsEmptyFallback');
 
         cards.forEach(el => {
-            if (type === 'rooms' && el.classList.contains('room-filter-hidden')) { el.style.display = 'none'; return; }
+            if (type === 'rooms' && el.classList.contains('room-filter-hidden')) {
+                el.style.display = 'none';
+                return;
+            }
             const i = pageItems.indexOf(el);
             el.style.display = (i >= start && i < end) ? '' : 'none';
         });
@@ -907,8 +1044,14 @@ if (burger && mob) {
 
         const prevBtn = document.getElementById(prevId);
         const nextBtn = document.getElementById(nextId);
-        if (prevBtn) { prevBtn.disabled = state.page === 0; prevBtn.style.display = total > state.perPage ? '' : 'none'; }
-        if (nextBtn) { nextBtn.disabled = state.page >= pages - 1; nextBtn.style.display = total > state.perPage ? '' : 'none'; }
+        if (prevBtn) {
+            prevBtn.disabled = state.page === 0;
+            prevBtn.style.display = total > state.perPage ? '' : 'none';
+        }
+        if (nextBtn) {
+            nextBtn.disabled = state.page >= pages - 1;
+            nextBtn.style.display = total > state.perPage ? '' : 'none';
+        }
     }
 
     function scrollCarousel(type, dir) {
@@ -934,7 +1077,10 @@ if (burger && mob) {
         initCarousel('history');
         document.getElementById('modalCheckin')?.addEventListener('change', updateModalTotal);
         document.getElementById('modalGuests')?.addEventListener('change', updateModalTotal);
-        window.addEventListener('resize', () => { carouselState.rooms.page = 0; renderPage('rooms'); });
+        window.addEventListener('resize', () => {
+            carouselState.rooms.page = 0;
+            renderPage('rooms');
+        });
     });
 
     function toggleSaveRoom(unitId, btn) {
@@ -943,7 +1089,10 @@ if (burger && mob) {
         fd.append('unit_id', unitId);
         fd.append('action', isSaved ? 'unsave' : 'save');
         window.psAppendCsrf(fd);
-        fetch('../../api/user/save_toggle.php', { method: 'POST', body: fd })
+        fetch('../../api/user/save_toggle.php', {
+                method: 'POST',
+                body: fd
+            })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
@@ -972,7 +1121,10 @@ if (burger && mob) {
     let _bmPollInterval = null;
 
     function openBookingModal(room) {
-        if (window.hasActiveBooking) { showToast('You already have an active booking.'); return; }
+        if (window.hasActiveBooking) {
+            showToast('You already have an active booking.');
+            return;
+        }
         _bmRoom = room;
 
         document.getElementById('bmSbName').textContent = room.name || '—';
@@ -983,7 +1135,10 @@ if (burger && mob) {
         document.getElementById('sb-total').textContent = '₱' + dep.toLocaleString();
 
         const img = document.getElementById('bmUnitImg');
-        if (img && room.image) { img.src = room.image; img.style.display = 'block'; }
+        if (img && room.image) {
+            img.src = room.image;
+            img.style.display = 'block';
+        }
 
         const s = window._psSessionFields || {};
         document.getElementById('bm-fname').value = s.fname || '';
@@ -1023,13 +1178,15 @@ if (burger && mob) {
                 const bookingId = window._lastBmBookingData.booking_id;
                 if (bookingId) {
                     fetch('../../api/user/cancel_booking.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams({
-                            booking_id: bookingId,
-                            csrf_token: (typeof window.psGetCsrfToken === 'function' ? window.psGetCsrfToken() : '')
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: new URLSearchParams({
+                                booking_id: bookingId,
+                                csrf_token: (typeof window.psGetCsrfToken === 'function' ? window.psGetCsrfToken() : '')
+                            })
                         })
-                    })
                         .then(r => r.json())
                         .then(data => {
                             if (data.success) {
@@ -1037,14 +1194,20 @@ if (burger && mob) {
                                 showToast('Booking cancelled — payment was not completed.');
                             }
                         })
-                        .catch(() => { });
+                        .catch(() => {});
                     window._lastBmBookingData = null;
                 }
             }
         }
 
-        if (_bmPollInterval) { clearInterval(_bmPollInterval); _bmPollInterval = null; }
-        if (_bmCountdownTimer) { clearInterval(_bmCountdownTimer); _bmCountdownTimer = null; }
+        if (_bmPollInterval) {
+            clearInterval(_bmPollInterval);
+            _bmPollInterval = null;
+        }
+        if (_bmCountdownTimer) {
+            clearInterval(_bmCountdownTimer);
+            _bmCountdownTimer = null;
+        }
 
         bmOverlay.classList.remove('open');
         bmBox.style.transform = 'translateY(40px) scale(.97)';
@@ -1061,14 +1224,25 @@ if (burger && mob) {
 
     function bmGoToStep(step) {
         _bmCurrentStep = step;
-        document.querySelectorAll('.bm-panel').forEach((p, i) => { p.classList.toggle('active', i + 1 === step); });
+        document.querySelectorAll('.bm-panel').forEach((p, i) => {
+            p.classList.toggle('active', i + 1 === step);
+        });
         for (let i = 1; i <= 4; i++) {
             const circle = document.getElementById('bm-circle-' + i);
             const stepEl = document.getElementById('bm-step-' + i);
             if (!circle || !stepEl) continue;
-            if (i < step) { circle.innerHTML = '✓'; stepEl.classList.add('done'); stepEl.classList.remove('active'); }
-            else if (i === step) { circle.textContent = i; stepEl.classList.add('active'); stepEl.classList.remove('done'); }
-            else { circle.textContent = i; stepEl.classList.remove('active', 'done'); }
+            if (i < step) {
+                circle.innerHTML = '✓';
+                stepEl.classList.add('done');
+                stepEl.classList.remove('active');
+            } else if (i === step) {
+                circle.textContent = i;
+                stepEl.classList.add('active');
+                stepEl.classList.remove('done');
+            } else {
+                circle.textContent = i;
+                stepEl.classList.remove('active', 'done');
+            }
         }
         document.getElementById('bmBack').style.display = (step > 1 && step < 4) ? '' : 'none';
         document.getElementById('bmBox').classList.toggle('bm-step-final', step === 4);
@@ -1080,8 +1254,14 @@ if (burger && mob) {
         if (step === 3) bmSetupPayment();
     }
 
-    function bmNextStep() { if (_bmCurrentStep === 1 && !bmValidateStep1()) return; bmGoToStep(_bmCurrentStep + 1); }
-    function bmPrevStep() { if (_bmCurrentStep > 1) bmGoToStep(_bmCurrentStep - 1); }
+    function bmNextStep() {
+        if (_bmCurrentStep === 1 && !bmValidateStep1()) return;
+        bmGoToStep(_bmCurrentStep + 1);
+    }
+
+    function bmPrevStep() {
+        if (_bmCurrentStep > 1) bmGoToStep(_bmCurrentStep - 1);
+    }
 
     function bmValidateStep1() {
         const fname = document.getElementById('bm-fname').value.trim();
@@ -1090,12 +1270,30 @@ if (burger && mob) {
         const phone = document.getElementById('bm-phone').value.trim();
         const checkin = document.getElementById('bm-checkin').value;
         const lease = document.getElementById('bm-lease').value;
-        if (!fname || !lname) { showToast('Please enter your full name.'); return false; }
-        if (!email) { showToast('Please enter your email.'); return false; }
-        if (!phone) { showToast('Please enter your contact number.'); return false; }
-        if (!checkin) { showToast('Please select a check-in date.'); return false; }
-        if (!lease) { showToast('Please select a check-out date.'); return false; }
-        if (lease <= checkin) { showToast('Check-out must be after check-in.'); return false; }
+        if (!fname || !lname) {
+            showToast('Please enter your full name.');
+            return false;
+        }
+        if (!email) {
+            showToast('Please enter your email.');
+            return false;
+        }
+        if (!phone) {
+            showToast('Please enter your contact number.');
+            return false;
+        }
+        if (!checkin) {
+            showToast('Please select a check-in date.');
+            return false;
+        }
+        if (!lease) {
+            showToast('Please select a check-out date.');
+            return false;
+        }
+        if (lease <= checkin) {
+            showToast('Check-out must be after check-in.');
+            return false;
+        }
         return true;
     }
 
@@ -1140,7 +1338,11 @@ if (burger && mob) {
                 document.querySelectorAll('#bmPayMethods .bm-pay-option').forEach(o => o.classList.remove('selected'));
                 el.classList.add('selected');
                 selectedPaymentMethod = el.dataset.method;
-                const titles = { GCash: 'Pay via GCash', Maya: 'Pay via Maya', Bank: 'Pay via Bank Transfer' };
+                const titles = {
+                    GCash: 'Pay via GCash',
+                    Maya: 'Pay via Maya',
+                    Bank: 'Pay via Bank Transfer'
+                };
             };
         });
 
@@ -1177,7 +1379,10 @@ if (burger && mob) {
                         if (res.payment_status === 'paid') {
                             clearInterval(_bmPollInterval);
                             _bmPollInterval = null;
-                            if (_bmCountdownTimer) { clearInterval(_bmCountdownTimer); _bmCountdownTimer = null; }
+                            if (_bmCountdownTimer) {
+                                clearInterval(_bmCountdownTimer);
+                                _bmCountdownTimer = null;
+                            }
                             document.getElementById('bm-payment-waiting').style.display = 'none';
                             document.getElementById('bm-payment-success').style.display = '';
                             showToast('Payment confirmed! Click Done to continue.', 'success');
@@ -1186,7 +1391,10 @@ if (burger && mob) {
                         } else if (res.payment_status === 'failed') {
                             clearInterval(_bmPollInterval);
                             _bmPollInterval = null;
-                            if (_bmCountdownTimer) { clearInterval(_bmCountdownTimer); _bmCountdownTimer = null; }
+                            if (_bmCountdownTimer) {
+                                clearInterval(_bmCountdownTimer);
+                                _bmCountdownTimer = null;
+                            }
                             document.getElementById('bm-payment-waiting').style.display = 'none';
                             document.getElementById('bm-payment-failed').style.display = '';
                             document.getElementById('bmFailedRef').textContent = document.getElementById('bmConfirmRef').textContent;
@@ -1197,7 +1405,10 @@ if (burger && mob) {
                         } else if (res.payment_status === 'expired') {
                             clearInterval(_bmPollInterval);
                             _bmPollInterval = null;
-                            if (_bmCountdownTimer) { clearInterval(_bmCountdownTimer); _bmCountdownTimer = null; }
+                            if (_bmCountdownTimer) {
+                                clearInterval(_bmCountdownTimer);
+                                _bmCountdownTimer = null;
+                            }
                             document.getElementById('bm-payment-waiting').style.display = 'none';
                             document.getElementById('bm-payment-expired').style.display = '';
                             document.getElementById('bmExpiredRef').textContent = document.getElementById('bmConfirmRef').textContent;
@@ -1207,7 +1418,7 @@ if (burger && mob) {
                         }
                     }
                 })
-                .catch(() => { });
+                .catch(() => {});
         }, 5000);
     }
 
@@ -1242,12 +1453,17 @@ if (burger && mob) {
         fd.append('payment_method', selectedPaymentMethod);
         window.psAppendCsrf(fd);
 
-        fetch('../../api/user/book_unit.php', { method: 'POST', body: fd })
+        fetch('../../api/user/book_unit.php', {
+                method: 'POST',
+                body: fd
+            })
             .then(r => {
                 if (!r.ok && r.status !== 200) {
                     return r.text().then(text => {
                         let msg = 'Server error. Please try again.';
-                        try { msg = JSON.parse(text).message || msg; } catch (_) { }
+                        try {
+                            msg = JSON.parse(text).message || msg;
+                        } catch (_) {}
                         throw new Error(msg);
                     });
                 }
@@ -1260,7 +1476,9 @@ if (burger && mob) {
                         unit_id: _bmRoom?.id || data.unit_id || '',
                         unit_name: _bmRoom?.name || data.unit_name || 'Unit',
                         property_name: _bmRoom?.location || data.property_name || '',
-                        checkin, checkout: lease, nights,
+                        checkin,
+                        checkout: lease,
+                        nights,
                         total_amount: 'PHP ' + deposit.toLocaleString()
                     };
 
@@ -1289,10 +1507,15 @@ if (burger && mob) {
 
                         const csrf = typeof window.psGetCsrfToken === 'function' ? window.psGetCsrfToken() : '';
                         fetch('../../api/user/create_paymongo_link.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: new URLSearchParams({ booking_id: data.booking_id, csrf_token: csrf })
-                        })
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded'
+                                },
+                                body: new URLSearchParams({
+                                    booking_id: data.booking_id,
+                                    csrf_token: csrf
+                                })
+                            })
                             .then(r => r.json())
                             .then(pm => {
                                 if (pm.success) {
@@ -1312,13 +1535,15 @@ if (burger && mob) {
                                                     clearInterval(srcPoller);
                                                     fetch('../../api/user/save_payment_source.php', {
                                                         method: 'POST',
-                                                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                                        headers: {
+                                                            'Content-Type': 'application/x-www-form-urlencoded'
+                                                        },
                                                         body: new URLSearchParams({
                                                             booking_id: data.booking_id,
                                                             source_id: srcMatch[1],
                                                             csrf_token: window.psGetCsrfToken()
                                                         })
-                                                    }).catch(() => { });
+                                                    }).catch(() => {});
                                                 }
                                             } catch (e) {
                                                 // clearInterval(srcPoller);
@@ -1328,13 +1553,17 @@ if (burger && mob) {
 
                                     _bmStartPaymentPolling(data.booking_id);
                                 } else {
-                                    if (payTab) try { payTab.close(); } catch (e) { }
+                                    if (payTab) try {
+                                        payTab.close();
+                                    } catch (e) {}
                                     showToast('Payment link failed: ' + (pm.message || 'Unknown error'), 'error');
                                     document.getElementById('bmDoneBtn').style.display = '';
                                 }
                             })
                             .catch(() => {
-                                if (payTab) try { payTab.close(); } catch (e) { }
+                                if (payTab) try {
+                                    payTab.close();
+                                } catch (e) {}
                                 showToast('Could not reach payment service. Pay from your bookings page.', 'error');
                                 document.getElementById('bmDoneBtn').style.display = '';
                             });
@@ -1344,19 +1573,35 @@ if (burger && mob) {
                         document.getElementById('bm-payment-success').style.display = 'none';
                         document.getElementById('bm-payment-cash').style.display = '';
                         bmGoToStep(4);
-                        if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.removeAttribute('aria-disabled'); }
-                        if (_bmCountdownTimer) { clearInterval(_bmCountdownTimer); _bmCountdownTimer = null; }
+                        if (confirmBtn) {
+                            confirmBtn.disabled = false;
+                            confirmBtn.removeAttribute('aria-disabled');
+                        }
+                        if (_bmCountdownTimer) {
+                            clearInterval(_bmCountdownTimer);
+                            _bmCountdownTimer = null;
+                        }
                         document.getElementById('bmDoneBtn').style.display = '';
                     }
                 } else {
-                    if (payTab) try { payTab.close(); } catch (e) { }
-                    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.removeAttribute('aria-disabled'); }
+                    if (payTab) try {
+                        payTab.close();
+                    } catch (e) {}
+                    if (confirmBtn) {
+                        confirmBtn.disabled = false;
+                        confirmBtn.removeAttribute('aria-disabled');
+                    }
                     showToast(data.message || 'Booking failed. Please try again.');
                 }
             })
             .catch(err => {
-                if (payTab) try { payTab.close(); } catch (e) { }
-                if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.removeAttribute('aria-disabled'); }
+                if (payTab) try {
+                    payTab.close();
+                } catch (e) {}
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.removeAttribute('aria-disabled');
+                }
                 showToast(err?.message || 'Network error. Please try again.');
             });
     }

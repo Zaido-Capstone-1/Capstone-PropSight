@@ -1034,4 +1034,49 @@
     }
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Room card — TYPE badge (matches ud-badge-type) */
+.room-badge-img {
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: rgba(200, 160, 60, 0.92);
+    color: #fff;
+    border: 1px solid rgba(180, 140, 40, 0.6);
+    /* remove any previous overrides */
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 8;
+}
+
+/* Room card — AVAILABILITY badge (matches ud-badge-avail) */
+.room-avail {
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    padding: 3px 9px;
+    border-radius: 99px;
+    position: absolute;
+    top: 10px;
+    z-index: 8;
+}
+
+.room-avail.avail-yes {
+    background: rgba(22, 163, 74, 0.9);
+    color: #fff;
+}
+
+.room-avail.avail-no {
+    background: rgba(185, 28, 28, 0.85);
+    color: #fecaca;
+}

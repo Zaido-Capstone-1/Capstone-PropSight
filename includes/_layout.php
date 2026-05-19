@@ -109,12 +109,11 @@ $nav_items = [
     </script>
     <header id="hdr">
         <a href="user-dashboard.php" class="logo">
-            <img src="../../assets/images/logo.png" alt="Boracay Accommodation Logo" class="logo-icon">
-            <span>
-                <span
-                    style="display:block;font-family:'Playfair Display',serif;font-weight:700;line-height:1.1;">Boracay
-                    <span class="brand-break">Accommodation</span></span>
-            </span>
+            <img src="../../assets/images/logo.png" alt="Boracay Accommodation" class="logo-icon">
+            <div class="logo-wordmark">
+                <strong>Boracay Accommodation</strong>
+                <span>Boracay, Philippines</span>
+            </div>
         </a>
         <nav>
             <?php foreach ($top_nav_items as $top_nav): ?>
@@ -164,7 +163,7 @@ $nav_items = [
         </div>
     </header>
 
-     <?php require __DIR__ . '/_unitdetails_layout.php'; ?>
+    <?php require __DIR__ . '/_unitdetails_layout.php'; ?>
 
     <div id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="20 6 9 17 4 12" />
