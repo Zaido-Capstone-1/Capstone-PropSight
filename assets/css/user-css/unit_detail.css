@@ -2500,3 +2500,124 @@
     background: rgba(139, 92, 246, 0.14);
     border-color: rgba(139, 92, 246, 0.35);
   }
+
+  /* Map view button overlay */
+  .ud-map-view-btn {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(11, 24, 41, 0.15);
+    border-radius: 99px;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #112240;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+
+  .ud-map-view-btn:hover {
+    background: #112240;
+    color: #e8c882;
+    border-color: #112240;
+    transform: translateX(-50%) translateY(-2px);
+    box-shadow: 0 4px 16px rgba(17, 34, 64, 0.24);
+  }
+
+  .ud-map-view-btn .ti {
+    font-size: 14px;
+  }
+
+  /* Map modal */
+  .ud-map-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 12, 18, 0.92);
+    z-index: 1200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .ud-map-modal.open {
+    display: flex;
+  }
+
+  .ud-map-modal-inner {
+    width: 100%;
+    max-width: 1200px;
+    height: 85vh;
+    background: var(--ud-surface);
+    border: 1px solid var(--ud-border);
+    border-radius: var(--ud-radius);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  }
+
+  .ud-map-modal-header {
+    padding: 16px 20px;
+    background: #112240;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(232, 200, 130, 0.2);
+  }
+
+  .ud-map-modal-title {
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ud-map-modal-title .ti {
+    font-size: 18px;
+    color: #e8c882;
+  }
+
+  .ud-map-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(232, 200, 130, 0.15);
+    border: 1px solid rgba(232, 200, 130, 0.3);
+    color: #e8c882;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .ud-map-modal-close:hover {
+    background: rgba(232, 200, 130, 0.25);
+    transform: scale(1.05);
+  }
+
+  .ud-map-modal-map {
+    width: 100%;
+    height: calc(100% - 64px);
+  }
+
+  @media (max-width: 768px) {
+    .ud-map-modal-inner {
+      height: 90vh;
+      max-width: 100%;
+    }
+  }

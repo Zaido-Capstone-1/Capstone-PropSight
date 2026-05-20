@@ -135,23 +135,8 @@ require_once '../../lib/user-queries/saved_queries.php';
                                 <div>
                                     <div class="sc-price">₱<?php echo number_format($price); ?> <sub>/ night</sub></div>
                                 </div>
-                                <?php
-                                $modalRoomData = [
-                                    'id' => (int) $r['unit_id'],
-                                    'unit_id' => (int) $r['unit_id'],
-                                    'name' => html_entity_decode($unitName, ENT_QUOTES),
-                                    'location' => html_entity_decode($propLoc, ENT_QUOTES),
-                                    'price' => '₱' . number_format($price) . ' / night',
-                                    'priceNum' => $price,
-                                    'description' => trim((string) ($r['description'] ?? '')) ?: 'A comfortable and well-appointed unit.',
-                                    'image' => $imgSrc,
-                                    'guests' => max(1, $guests),
-                                    'rating' => $ratingValue,
-                                    'amenities' => ['Water', 'Wi-Fi', 'Air Conditioning', 'Rooftop'],
-                                ];
-                                ?>
                                 <button class="btn-book-sc" <?php echo !$avail ? 'disabled' : ''; ?>         <?php if ($avail): ?>
-                                        onclick='openBookingModal(<?php echo htmlspecialchars(json_encode($modalRoomData), ENT_QUOTES); ?>)'
+                                        onclick="window.location.href='unit_detail.php?id=<?php echo (int) $r['unit_id']; ?>&book=1'"
                                     <?php endif; ?>>
                                     <?php echo $avail ? 'Book Now' : 'Unavailable'; ?>
                                 </button>

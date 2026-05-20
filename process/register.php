@@ -8,33 +8,101 @@ require_once '../includes/db.php';
 header('Content-Type: application/json');
 
 const BLOCKED_DOMAINS = [
-    'mailinator.com', 'guerrillamail.com', 'tempmail.com', 'throwam.com',
-    'sharklasers.com', 'guerrillamailblock.com', 'grr.la', 'guerrillamail.info',
-    'spam4.me', 'trashmail.com', 'trashmail.me', 'trashmail.net', 'dispostable.com',
-    'yopmail.com', 'yopmail.fr', 'cool.fr.nf', 'jetable.fr.nf', 'nospam.ze.tc',
-    'nomail.xl.cx', 'mega.zik.dj', 'speed.1s.fr', 'courriel.fr.nf', 'moncourrier.fr.nf',
-    'monemail.fr.nf', 'monmail.fr.nf', 'fakeinbox.com', 'mailnull.com', 'spamgourmet.com',
-    'spamgourmet.net', 'spamgourmet.org', 'maildrop.cc', 'discard.email',
-    'spamspot.com', 'spamthisplease.com', 'spamhereplease.com',
-    'getnada.com', 'filzmail.com', 'tempr.email', 'mailnesia.com', 'owlpic.com',
+    'mailinator.com',
+    'guerrillamail.com',
+    'tempmail.com',
+    'throwam.com',
+    'sharklasers.com',
+    'guerrillamailblock.com',
+    'grr.la',
+    'guerrillamail.info',
+    'spam4.me',
+    'trashmail.com',
+    'trashmail.me',
+    'trashmail.net',
+    'dispostable.com',
+    'yopmail.com',
+    'yopmail.fr',
+    'cool.fr.nf',
+    'jetable.fr.nf',
+    'nospam.ze.tc',
+    'nomail.xl.cx',
+    'mega.zik.dj',
+    'speed.1s.fr',
+    'courriel.fr.nf',
+    'moncourrier.fr.nf',
+    'monemail.fr.nf',
+    'monmail.fr.nf',
+    'fakeinbox.com',
+    'mailnull.com',
+    'spamgourmet.com',
+    'spamgourmet.net',
+    'spamgourmet.org',
+    'maildrop.cc',
+    'discard.email',
+    'spamspot.com',
+    'spamthisplease.com',
+    'spamhereplease.com',
+    'getnada.com',
+    'filzmail.com',
+    'tempr.email',
+    'mailnesia.com',
+    'owlpic.com',
 ];
 
 const ALLOWED_EMAIL_DOMAINS = [
-    'gmail.com', 'googlemail.com', 'phinmaed.com',
-    'outlook.com', 'hotmail.com', 'live.com', 'msn.com',
-    'hotmail.co.uk', 'hotmail.fr', 'hotmail.de', 'hotmail.it', 'hotmail.es',
-    'live.co.uk', 'live.fr', 'live.de', 'live.it', 'live.es', 'live.com.au',
-    'yahoo.com', 'yahoo.co.uk', 'yahoo.co.in', 'yahoo.fr', 'yahoo.de',
-    'yahoo.it', 'yahoo.es', 'yahoo.com.au', 'yahoo.com.ph',
-    'icloud.com', 'me.com', 'mac.com',
-    'proton.me', 'protonmail.com', 'protonmail.ch',
-    'zoho.com', 'zohomail.com',
-    'aol.com', 'aol.co.uk',
-    'pldtmydsl.net', 'globe.com.ph', 'smart.com.ph',
-    'mail.com', 'email.com', 'fastmail.com', 'fastmail.fm',
-    'tutanota.com', 'tutamail.com', 'tuta.io',
-    'gmx.com', 'gmx.net', 'gmx.de',
-    'hey.com', 'pm.me',
+    'gmail.com',
+    'googlemail.com',
+    'phinmaed.com',
+    'outlook.com',
+    'hotmail.com',
+    'live.com',
+    'msn.com',
+    'hotmail.co.uk',
+    'hotmail.fr',
+    'hotmail.de',
+    'hotmail.it',
+    'hotmail.es',
+    'live.co.uk',
+    'live.fr',
+    'live.de',
+    'live.it',
+    'live.es',
+    'live.com.au',
+    'yahoo.com',
+    'yahoo.co.uk',
+    'yahoo.co.in',
+    'yahoo.fr',
+    'yahoo.de',
+    'yahoo.it',
+    'yahoo.es',
+    'yahoo.com.au',
+    'yahoo.com.ph',
+    'icloud.com',
+    'me.com',
+    'mac.com',
+    'proton.me',
+    'protonmail.com',
+    'protonmail.ch',
+    'zoho.com',
+    'zohomail.com',
+    'aol.com',
+    'aol.co.uk',
+    'pldtmydsl.net',
+    'globe.com.ph',
+    'smart.com.ph',
+    'mail.com',
+    'email.com',
+    'fastmail.com',
+    'fastmail.fm',
+    'tutanota.com',
+    'tutamail.com',
+    'tuta.io',
+    'gmx.com',
+    'gmx.net',
+    'gmx.de',
+    'hey.com',
+    'pm.me',
 ];
 
 function json_response(string $status, string $message): never
@@ -169,7 +237,36 @@ if (!$stmt->execute()) {
     json_error('Something went wrong. Please try again.');
 }
 
+$new_user_id = $stmt->insert_id;
+// Also insert default user_settings row for 2FA etc.
+$settingsStmt = $conn->prepare("INSERT IGNORE INTO user_settings (user_id) VALUES (?)");
+if ($settingsStmt) {
+    $settingsStmt->bind_param('i', $new_user_id);
+    $settingsStmt->execute();
+    $settingsStmt->close();
+}
 $stmt->close();
+$_SESSION['csrf_token'] = bin2hex(random_bytes(32)); // refresh CSRF after register
+
+// Auto-login with a restricted pending_verification session
+session_regenerate_id(true);
+$_SESSION['login'] = true;
+$_SESSION['pending_verification'] = true;
+$_SESSION['user_id'] = $new_user_id;
+$_SESSION['first_name'] = $first_name;
+$_SESSION['last_name'] = $last_name;
+$_SESSION['name'] = $first_name . ' ' . $last_name;
+$_SESSION['email'] = $email;
+$_SESSION['phone'] = $phone;
+$_SESSION['role'] = 'user';
+$_SESSION['verification_status'] = 'Not Verified';
+
 $conn->close();
 
-json_success('Registered successfully!');
+// Return redirect — JS will send user to verify.php
+echo json_encode([
+    'status' => 'verify_required',
+    'message' => 'Account created! Please verify your account.',
+    'redirect' => 'verify.php',
+]);
+exit;

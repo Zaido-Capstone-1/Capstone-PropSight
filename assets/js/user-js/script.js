@@ -698,7 +698,7 @@ if (burger && mob) {
                 roomCard.dataset.status = 'vacant';
                 const availBadge = roomCard.querySelector('[data-avail-status]');
                 if (availBadge) {
-                    availBadge.textContent = '✓ Available'; 
+                    availBadge.textContent = '✓ Available';
                     availBadge.classList.remove('avail-no');
                     availBadge.classList.add('avail-yes');
                 }
@@ -1125,6 +1125,28 @@ if (burger && mob) {
             showToast('You already have an active booking.');
             return;
         }
+
+        // Gate: require approved ID before showing the booking modal
+        const idStatus = (window._psSessionFields || {}).idVerified || 'none';
+        if (idStatus !== 'approved') {
+            const msgs = {
+                pending: 'Your ID is still processing. Please refresh your profile page.',
+                rejected: 'Your ID verification failed. Please upload a valid government ID on your profile.',
+                none: 'You need to verify your identity before booking. Please upload a valid government ID on your profile.',
+            };
+            showToast(msgs[idStatus] || msgs.none, 'warning', 'Identity Verification Required', 7000);
+            // Show a more prominent inline nudge if the ID wall element exists
+            const wall = document.getElementById('id-verify-wall');
+            if (wall) {
+                wall.style.display = 'flex';
+                wall.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+            }
+            return;
+        }
+
         _bmRoom = room;
 
         document.getElementById('bmSbName').textContent = room.name || '—';

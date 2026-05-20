@@ -19,6 +19,19 @@ if (!isset($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'user')) {
 require_verified_user_action(true);
 require_csrf_token(true);
 
+// Block booking if ID is not approved
+$idStatus = $_SESSION['id_verified'] ?? 'none';
+if ($idStatus !== 'approved') {
+    ob_clean();
+    $msg = match ($idStatus) {
+        'pending' => 'Your ID is still under review. You can book once it\'s approved.',
+        'rejected' => 'Your ID verification was rejected. Please re-upload a valid government ID.',
+        default => 'You need to verify your identity before booking. Please upload a valid government ID on your profile.',
+    };
+    echo json_encode(['success' => false, 'message' => $msg, 'id_gate' => true, 'id_status' => $idStatus]);
+    exit;
+}
+
 $user_id = $_SESSION['user_id'];
 
 $check = $conn->prepare("

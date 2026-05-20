@@ -173,14 +173,111 @@ $nav_items = [
 
     <div class="page-shell">
         <?php
-        echo '<div class="page-hero"><div class="page-hero-inner reveal">';
+        /* Apartment-lifestyle illustration — rendered as inline SVG so no image files needed.
+           Each page can override $page_hero_art_id to pick a variant (default: building facade). */
+        $art_id = $page_hero_art_id ?? 'default';
+        $art_svgs = [
+            /* Generic building facade with windows */
+            'default' => '<svg viewBox="0 0 340 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Main building body -->
+                <rect x="40" y="20" width="120" height="140" rx="3" fill="white" opacity=".07"/>
+                <rect x="42" y="22" width="116" height="138" rx="2" fill="none" stroke="white" stroke-width=".8" opacity=".2"/>
+                <!-- Windows row 1 -->
+                <rect x="54" y="34" width="22" height="18" rx="2" fill="white" opacity=".13"/>
+                <rect x="84" y="34" width="22" height="18" rx="2" fill="white" opacity=".13"/>
+                <rect x="114" y="34" width="22" height="18" rx="2" fill="#e8c882" opacity=".18"/>
+                <!-- Windows row 2 -->
+                <rect x="54" y="62" width="22" height="18" rx="2" fill="#e8c882" opacity=".18"/>
+                <rect x="84" y="62" width="22" height="18" rx="2" fill="white" opacity=".13"/>
+                <rect x="114" y="62" width="22" height="18" rx="2" fill="white" opacity=".13"/>
+                <!-- Windows row 3 -->
+                <rect x="54" y="90" width="22" height="18" rx="2" fill="white" opacity=".13"/>
+                <rect x="84" y="90" width="22" height="18" rx="2" fill="#e8c882" opacity=".22"/>
+                <rect x="114" y="90" width="22" height="18" rx="2" fill="white" opacity=".13"/>
+                <!-- Door -->
+                <rect x="84" y="128" width="32" height="32" rx="2" fill="white" opacity=".12"/>
+                <circle cx="112" cy="144" r="2" fill="white" opacity=".3"/>
+                <!-- Second building (taller, right) -->
+                <rect x="178" y="8" width="90" height="152" rx="3" fill="white" opacity=".05"/>
+                <rect x="180" y="10" width="86" height="150" rx="2" fill="none" stroke="white" stroke-width=".8" opacity=".15"/>
+                <!-- Second building windows -->
+                <rect x="190" y="22" width="18" height="14" rx="1.5" fill="white" opacity=".1"/>
+                <rect x="215" y="22" width="18" height="14" rx="1.5" fill="#e8c882" opacity=".2"/>
+                <rect x="240" y="22" width="18" height="14" rx="1.5" fill="white" opacity=".1"/>
+                <rect x="190" y="44" width="18" height="14" rx="1.5" fill="#e8c882" opacity=".15"/>
+                <rect x="215" y="44" width="18" height="14" rx="1.5" fill="white" opacity=".1"/>
+                <rect x="240" y="44" width="18" height="14" rx="1.5" fill="#e8c882" opacity=".2"/>
+                <rect x="190" y="66" width="18" height="14" rx="1.5" fill="white" opacity=".1"/>
+                <rect x="215" y="66" width="18" height="14" rx="1.5" fill="white" opacity=".1"/>
+                <rect x="240" y="66" width="18" height="14" rx="1.5" fill="#e8c882" opacity=".15"/>
+                <rect x="190" y="88" width="18" height="14" rx="1.5" fill="#e8c882" opacity=".2"/>
+                <rect x="215" y="88" width="18" height="14" rx="1.5" fill="white" opacity=".1"/>
+                <rect x="240" y="88" width="18" height="14" rx="1.5" fill="white" opacity=".1"/>
+                <rect x="190" y="110" width="18" height="14" rx="1.5" fill="white" opacity=".1"/>
+                <rect x="215" y="110" width="18" height="14" rx="1.5" fill="#e8c882" opacity=".18"/>
+                <rect x="240" y="110" width="18" height="14" rx="1.5" fill="white" opacity=".1"/>
+                <!-- Ground line -->
+                <line x1="20" y1="160" x2="320" y2="160" stroke="white" stroke-width=".6" opacity=".12"/>
+                <!-- Palm accent -->
+                <line x1="300" y1="160" x2="300" y2="100" stroke="white" stroke-width="1.5" opacity=".15"/>
+                <path d="M300 100 Q310 88 325 84" stroke="white" stroke-width="1.2" opacity=".15" fill="none"/>
+                <path d="M300 100 Q290 86 278 88" stroke="white" stroke-width="1.2" opacity=".15" fill="none"/>
+                <path d="M300 105 Q315 98 330 102" stroke="white" stroke-width="1" opacity=".12" fill="none"/>
+            </svg>',
+            /* Key / booking variant */
+            'bookings' => '<svg viewBox="0 0 340 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="40" y="20" width="120" height="140" rx="3" fill="white" opacity=".07"/>
+                <rect x="42" y="22" width="116" height="138" rx="2" fill="none" stroke="white" stroke-width=".8" opacity=".2"/>
+                <rect x="54" y="34" width="22" height="18" rx="2" fill="#e8c882" opacity=".22"/>
+                <rect x="84" y="34" width="22" height="18" rx="2" fill="white" opacity=".13"/>
+                <rect x="114" y="34" width="22" height="18" rx="2" fill="white" opacity=".13"/>
+                <rect x="54" y="62" width="22" height="18" rx="2" fill="white" opacity=".13"/>
+                <rect x="84" y="62" width="22" height="18" rx="2" fill="#e8c882" opacity=".18"/>
+                <rect x="114" y="62" width="22" height="18" rx="2" fill="white" opacity=".13"/>
+                <rect x="54" y="90" width="22" height="18" rx="2" fill="white" opacity=".13"/>
+                <rect x="84" y="90" width="22" height="18" rx="2" fill="white" opacity=".13"/>
+                <rect x="114" y="90" width="22" height="18" rx="2" fill="#e8c882" opacity=".22"/>
+                <rect x="84" y="128" width="32" height="32" rx="2" fill="white" opacity=".12"/>
+                <!-- Floating calendar -->
+                <rect x="190" y="40" width="100" height="90" rx="8" fill="white" opacity=".08" stroke="white" stroke-width=".7" stroke-opacity=".2"/>
+                <rect x="190" y="40" width="100" height="22" rx="8" fill="white" opacity=".07"/>
+                <rect x="190" y="52" width="100" height="10" rx="0" fill="white" opacity=".07"/>
+                <line x1="190" y1="62" x2="290" y2="62" stroke="white" stroke-width=".5" opacity=".15"/>
+                <!-- Cal grid -->
+                <rect x="200" y="68" width="13" height="10" rx="2" fill="#e8c882" opacity=".25"/>
+                <rect x="220" y="68" width="13" height="10" rx="2" fill="white" opacity=".1"/>
+                <rect x="240" y="68" width="13" height="10" rx="2" fill="white" opacity=".1"/>
+                <rect x="260" y="68" width="13" height="10" rx="2" fill="white" opacity=".1"/>
+                <rect x="200" y="84" width="13" height="10" rx="2" fill="white" opacity=".1"/>
+                <rect x="220" y="84" width="13" height="10" rx="2" fill="#e8c882" opacity=".3"/>
+                <rect x="240" y="84" width="13" height="10" rx="2" fill="white" opacity=".1"/>
+                <rect x="260" y="84" width="13" height="10" rx="2" fill="white" opacity=".1"/>
+                <rect x="200" y="100" width="13" height="10" rx="2" fill="white" opacity=".1"/>
+                <rect x="220" y="100" width="13" height="10" rx="2" fill="white" opacity=".1"/>
+                <rect x="240" y="100" width="13" height="10" rx="2" fill="#e8c882" opacity=".22"/>
+                <rect x="260" y="100" width="13" height="10" rx="2" fill="white" opacity=".1"/>
+                <line x1="20" y1="160" x2="320" y2="160" stroke="white" stroke-width=".6" opacity=".12"/>
+            </svg>',
+        ];
+        /* Map page keys to art variants */
+        $art_map = ['bookings' => 'bookings'];
+        $resolved_art = $art_map[$art_id] ?? 'default';
+        $art_svg = $art_svgs[$resolved_art];
+
+        $_heroImg = '../../assets/images/hero.jpg';
+        $_heroStyle = ' style="background-image:url(\'' . $_heroImg . '\');background-size:cover;background-position:center;background-repeat:no-repeat;"';
+        echo '<div class="page-hero"' . $_heroStyle . '>';
+        echo '<div class="page-hero-art" aria-hidden="true">' . $art_svg . '</div>';
+        echo '<div class="page-hero-rule"></div>';
+        echo '<div class="page-hero-inner reveal">';
         echo '<div>';
         echo '<div class="breadcrumb"><a href="user-dashboard.php">My Account</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg><span>' . htmlspecialchars($page_title) . '</span></div>';
         echo '<h1 class="page-hero-title">' . ($page_hero_html ?? htmlspecialchars($page_title)) . '</h1>';
         echo '<p class="page-hero-sub">' . ($page_hero_sub ?? '') . '</p>';
         echo '</div>';
-        echo '<div class="page-hero-icon"><svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.8">' . ($page_hero_icon ?? '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>') . '</svg></div>';
-        echo '</div></div>';
+        echo '<div class="page-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">' . ($page_hero_icon ?? '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>') . '</svg></div>';
+        echo '</div>';
+        echo '</div>';
         ?>
         <?php if (!$isVerifiedSidebar): ?>
             <div class="verify-lock-banner">

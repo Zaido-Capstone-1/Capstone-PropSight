@@ -5,10 +5,12 @@ function openModal(tab = 'login') {
     document.body.style.overflow = 'hidden';
     switchTab(tab);
 }
+
 function closeModal() {
     loginModal.classList.remove('open');
     document.body.style.overflow = '';
 }
+
 function switchTab(tab) {
     document.querySelectorAll('.modal-tab').forEach(t =>
         t.classList.toggle('active', t.dataset.tab === tab));
@@ -30,11 +32,15 @@ document.querySelectorAll('.toggle-password').forEach(btn => {
 });
 
 document.getElementById('modalClose').addEventListener('click', closeModal);
-loginModal.addEventListener('click', e => { if (e.target === loginModal) closeModal(); });
+loginModal.addEventListener('click', e => {
+    if (e.target === loginModal) closeModal();
+});
 
 document.querySelectorAll('.btn-login-header').forEach(btn => btn.addEventListener('click', () => openModal('login')));
 document.querySelector('.btn-book-header')?.addEventListener('click', () => {
-    document.querySelector('#cta')?.scrollIntoView({ behavior: 'smooth' });
+    document.querySelector('#cta')?.scrollIntoView({
+        behavior: 'smooth'
+    });
 });
 document.querySelector('.btn-book-big')?.addEventListener('click', () => {
     openModal('login');
@@ -57,10 +63,19 @@ burger.addEventListener('click', () => {
         s[2].style.transform = 'translateY(-6.5px) rotate(-45deg)';
     } else resetB();
 });
+
 function resetB() {
-    burger.querySelectorAll('span').forEach(s => { s.style.transform = ''; s.style.opacity = ''; });
+    burger.querySelectorAll('span').forEach(s => {
+        s.style.transform = '';
+        s.style.opacity = '';
+    });
 }
-function closeMob() { mobOpen = false; mob.classList.remove('open'); resetB(); }
+
+function closeMob() {
+    mobOpen = false;
+    mob.classList.remove('open');
+    resetB();
+}
 
 const slides = document.querySelectorAll('.carousel-slide');
 const dots = document.querySelectorAll('.carousel-dots .dot');
@@ -100,7 +115,11 @@ thumbs.forEach(t => t.addEventListener('click', () => goTo(+t.dataset.idx)));
 
 let touchStartX = 0;
 const frame = document.getElementById('carouselFrame');
-frame?.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+frame?.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+}, {
+    passive: true
+});
 frame?.addEventListener('touchend', e => {
     const diff = touchStartX - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 40) goTo(diff > 0 ? current + 1 : current - 1);
@@ -122,9 +141,15 @@ if (slides.length > 1) resetAuto();
 
 const revealObs = new IntersectionObserver(entries => {
     entries.forEach(e => {
-        if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); }
+        if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            revealObs.unobserve(e.target);
+        }
     });
-}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+}, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -40px 0px'
+});
 
 document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
@@ -143,9 +168,9 @@ function openRoomPreview(room) {
 
     const amenitiesWrap = document.getElementById('roomPreviewAmenities');
     const amenities = Array.isArray(room.amenities) ? room.amenities.filter(Boolean) : [];
-    amenitiesWrap.innerHTML = amenities.length
-        ? amenities.slice(0, 8).map(a => `<span class="room-preview-chip">${a}</span>`).join('')
-        : '<span class="room-preview-chip">No amenities listed</span>';
+    amenitiesWrap.innerHTML = amenities.length ?
+        amenities.slice(0, 8).map(a => `<span class="room-preview-chip">${a}</span>`).join('') :
+        '<span class="room-preview-chip">No amenities listed</span>';
 
     roomPreviewModal.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -496,7 +521,9 @@ async function verifyOtp(attempts = 0, expiresInSeconds = 300) {
             showAuthLoading('Verifying OTP...');
             const res = await fetch('process/verify_login_otp.php', {
                 method: 'POST',
-                body: new URLSearchParams({ otp })
+                body: new URLSearchParams({
+                    otp
+                })
             });
             const data = await res.json();
             hideAuthLoading();
@@ -505,9 +532,9 @@ async function verifyOtp(attempts = 0, expiresInSeconds = 300) {
                 otpDeadlineMs = 0;
                 // showToast(data.message, 'success');
                 setTimeout(() => {
-                    window.location.href = data.role === 'admin'
-                        ? 'pages/admin/index.php'
-                        : 'pages/user/user-dashboard.php';
+                    window.location.href = data.role === 'admin' ?
+                        'pages/admin/index.php' :
+                        'pages/user/user-dashboard.php';
                 }, 1200);
             } else {
                 hideAuthLoading();
@@ -581,7 +608,10 @@ loginForm.addEventListener('submit', async function (e) {
 
     try {
         showAuthLoading('Logging in...');
-        const response = await fetch('process/login.php', { method: 'POST', body: formData });
+        const response = await fetch('process/login.php', {
+            method: 'POST',
+            body: formData
+        });
         const data = await response.json();
         hideAuthLoading();
 
@@ -592,9 +622,9 @@ loginForm.addEventListener('submit', async function (e) {
         } else if (data.status === 'success') {
             showToast(data.message, 'success');
             setTimeout(() => {
-                window.location.href = data.role === 'admin'
-                    ? 'pages/admin/index.php'
-                    : 'pages/user/user-dashboard.php';
+                window.location.href = data.role === 'admin' ?
+                    'pages/admin/index.php' :
+                    'pages/user/user-dashboard.php';
             }, 1200);
         } else {
             showToast(data.message, 'error');
@@ -618,24 +648,80 @@ const signupPasswordStrengthBar = document.getElementById('signupPasswordStrengt
 const signupPasswordStrengthText = document.getElementById('signupPasswordStrengthText');
 
 const phoneGuides = {
-    '+63': { placeholder: '9123456789', max: 10, hint: 'Philippines: enter 10 digits (e.g. 9123456789).' },
-    '+1': { placeholder: '5551234567', max: 10, hint: 'US/Canada: enter 10 digits area + number.' },
-    '+44': { placeholder: '7400123456', max: 10, hint: 'UK: enter number without leading 0.' },
-    '+61': { placeholder: '412345678', max: 9, hint: 'Australia: enter mobile without leading 0.' },
-    '+65': { placeholder: '81234567', max: 8, hint: 'Singapore: enter 8-digit number.' },
-    '+81': { placeholder: '9012345678', max: 10, hint: 'Japan: enter number without leading 0.' },
-    '+82': { placeholder: '1012345678', max: 10, hint: 'Korea: enter number without leading 0.' },
-    '+91': { placeholder: '9876543210', max: 10, hint: 'India: enter 10-digit mobile number.' },
-    '+971': { placeholder: '501234567', max: 9, hint: 'UAE: enter number without leading 0.' },
-    '+966': { placeholder: '512345678', max: 9, hint: 'Saudi: enter number without leading 0.' },
-    '+974': { placeholder: '33123456', max: 8, hint: 'Qatar: enter 8-digit number.' },
-    '+973': { placeholder: '36001234', max: 8, hint: 'Bahrain: enter 8-digit number.' },
-    '+965': { placeholder: '50012345', max: 8, hint: 'Kuwait: enter 8-digit number.' },
+    '+63': {
+        placeholder: '9123456789',
+        max: 10,
+        hint: 'Philippines: enter 10 digits (e.g. 9123456789).'
+    },
+    '+1': {
+        placeholder: '5551234567',
+        max: 10,
+        hint: 'US/Canada: enter 10 digits area + number.'
+    },
+    '+44': {
+        placeholder: '7400123456',
+        max: 10,
+        hint: 'UK: enter number without leading 0.'
+    },
+    '+61': {
+        placeholder: '412345678',
+        max: 9,
+        hint: 'Australia: enter mobile without leading 0.'
+    },
+    '+65': {
+        placeholder: '81234567',
+        max: 8,
+        hint: 'Singapore: enter 8-digit number.'
+    },
+    '+81': {
+        placeholder: '9012345678',
+        max: 10,
+        hint: 'Japan: enter number without leading 0.'
+    },
+    '+82': {
+        placeholder: '1012345678',
+        max: 10,
+        hint: 'Korea: enter number without leading 0.'
+    },
+    '+91': {
+        placeholder: '9876543210',
+        max: 10,
+        hint: 'India: enter 10-digit mobile number.'
+    },
+    '+971': {
+        placeholder: '501234567',
+        max: 9,
+        hint: 'UAE: enter number without leading 0.'
+    },
+    '+966': {
+        placeholder: '512345678',
+        max: 9,
+        hint: 'Saudi: enter number without leading 0.'
+    },
+    '+974': {
+        placeholder: '33123456',
+        max: 8,
+        hint: 'Qatar: enter 8-digit number.'
+    },
+    '+973': {
+        placeholder: '36001234',
+        max: 8,
+        hint: 'Bahrain: enter 8-digit number.'
+    },
+    '+965': {
+        placeholder: '50012345',
+        max: 8,
+        hint: 'Kuwait: enter 8-digit number.'
+    },
 };
 
 function applyPhoneGuide() {
     if (!signupCountryCode || !signupPhoneNumber) return;
-    const cfg = phoneGuides[signupCountryCode.value] || { placeholder: 'Phone Number', max: 15, hint: 'Use your local number without leading 0.' };
+    const cfg = phoneGuides[signupCountryCode.value] || {
+        placeholder: 'Phone Number',
+        max: 15,
+        hint: 'Use your local number without leading 0.'
+    };
     signupPhoneNumber.placeholder = cfg.placeholder;
     signupPhoneNumber.maxLength = cfg.max;
     if (countryCodeHint) countryCodeHint.textContent = cfg.hint;
@@ -744,13 +830,24 @@ registerForm.addEventListener('submit', async function (e) {
             createBtn.style.cursor = 'not-allowed';
         }
         showAuthLoading('Creating account...');
-        const response = await fetch('process/register.php', { method: 'POST', body: formData });
+        const response = await fetch('process/register.php', {
+            method: 'POST',
+            body: formData
+        });
         const data = await response.json();
         hideAuthLoading();
 
-        if (data.status === 'success') {
+        if (data.status === 'verify_required') {
             showToast(data.message, 'success');
-            setTimeout(() => { switchTab('login'); registerForm.reset(); }, 1500);
+            setTimeout(() => {
+                window.location.href = data.redirect ?? 'verify.php';
+            }, 800);
+        } else if (data.status === 'success') {
+            showToast(data.message, 'success');
+            setTimeout(() => {
+                switchTab('login');
+                registerForm.reset();
+            }, 1500);
         } else {
             showToast(data.message, 'error');
         }
@@ -793,7 +890,11 @@ registerForm.addEventListener('submit', async function (e) {
 
     // Touch / swipe support
     let startX = 0;
-    inner.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    inner.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+    }, {
+        passive: true
+    });
     inner.addEventListener('touchend', e => {
         const diff = startX - e.changedTouches[0].clientX;
         if (Math.abs(diff) > 40) goTo(diff > 0 ? cur + 1 : cur - 1);
@@ -801,7 +902,9 @@ registerForm.addEventListener('submit', async function (e) {
 
     // Auto-advance every 6 seconds
     let timer = setInterval(() => goTo(cur + 1), 6000);
-    wrap.addEventListener('touchstart', () => clearInterval(timer), { passive: true });
+    wrap.addEventListener('touchstart', () => clearInterval(timer), {
+        passive: true
+    });
 })();
 
 // Store the original form HTML once, before any submission can mutate it
@@ -835,7 +938,10 @@ function openForgotModal() {
 
     // Reset the alert
     const alert = document.getElementById('forgotAlert');
-    if (alert) { alert.style.display = 'none'; alert.textContent = ''; }
+    if (alert) {
+        alert.style.display = 'none';
+        alert.textContent = '';
+    }
 
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -877,7 +983,10 @@ async function submitForgotPassword() {
     try {
         const fd = new FormData();
         fd.append('email', email.value.trim());
-        const res = await fetch('process/forgot_password.php', { method: 'POST', body: fd });
+        const res = await fetch('process/forgot_password.php', {
+            method: 'POST',
+            body: fd
+        });
         const data = await res.json();
 
         if (data.success) {
@@ -936,7 +1045,9 @@ async function submitForgotPassword() {
 // Close forgot modal on backdrop click
 document.addEventListener('DOMContentLoaded', () => {
     const fm = document.getElementById('forgotModal');
-    if (fm) fm.addEventListener('click', e => { if (e.target === fm) closeForgotModal(); });
+    if (fm) fm.addEventListener('click', e => {
+        if (e.target === fm) closeForgotModal();
+    });
 
     // Auto-open forgot modal if URL has ?forgot=1
     if (new URLSearchParams(window.location.search).get('forgot') === '1') {

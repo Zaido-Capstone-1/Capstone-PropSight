@@ -732,31 +732,71 @@ nav a.active {
 }
 
 /* ── PAGE HERO ── */
+/* ═══════════════════════════════════════════════════════════
+   PAGE HERO — Rich apartment-lifestyle banner
+   ═══════════════════════════════════════════════════════════ */
+
 .page-hero {
-    background: var(--white);
-    border-bottom: 1px solid var(--border-lt);
+    background: linear-gradient(118deg, var(--navy-900) 0%, var(--navy-800) 55%, #1a3d5c 100%);
+    border-bottom: none;
     padding: 0 5vw;
     position: relative;
     overflow: hidden;
+    min-height: 140px;
 }
 
+/* Subtle dot-grid texture */
 .page-hero::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(105deg, rgba(240, 247, 255, .8) 0%, transparent 55%);
+    background: 
+        radial-gradient(circle, rgba(232, 200, 130, .10) 1px, transparent 1px),
+        linear-gradient(105deg, rgba(8,18,38,0.88) 0%, rgba(12,28,55,0.78) 50%, rgba(18,42,72,0.65) 100%);
+    background-size: 28px 28px, cover;
     pointer-events: none;
 }
 
+/* Warm terracotta glow bottom-right */
 .page-hero::after {
     content: '';
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 200px;
-    height: 100%;
-    background: linear-gradient(270deg, rgba(192, 105, 74, .05) 0%, transparent 100%);
+    bottom: -40px;
+    right: -40px;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(192, 105, 74, .22) 0%, transparent 65%);
     pointer-events: none;
+}
+
+/* Decorative apartment illustration — right side */
+.page-hero-art {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: clamp(220px, 36vw, 420px);
+    pointer-events: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    opacity: .18;
+}
+
+.page-hero-art svg {
+    height: 100%;
+    width: auto;
+}
+
+/* Thin gold rule along bottom */
+.page-hero-rule {
+    position: absolute;
+    bottom: 0;
+    left: 5vw;
+    right: 5vw;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(232, 200, 130, .5) 30%, rgba(232, 200, 130, .5) 70%, transparent);
 }
 
 .page-hero-inner {
@@ -764,7 +804,7 @@ nav a.active {
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
-    padding: 26px 0 22px;
+    padding: 28px 0 26px;
     position: relative;
     z-index: 1;
 }
@@ -773,70 +813,75 @@ nav a.active {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: .7rem;
+    font-size: .68rem;
     font-weight: 500;
-    letter-spacing: .04em;
-    color: var(--ink-faint);
-    margin-bottom: 8px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .4);
+    margin-bottom: 9px;
 }
 
 .breadcrumb a {
-    color: var(--ink-faint);
+    color: rgba(255, 255, 255, .4);
     text-decoration: none;
     transition: color .2s;
 }
 
 .breadcrumb a:hover {
-    color: var(--navy-500);
+    color: var(--sand);
 }
 
 .breadcrumb svg {
     width: 11px;
     height: 11px;
-    stroke: var(--border);
+    stroke: rgba(255, 255, 255, .25);
     fill: none;
     stroke-width: 2;
 }
 
 .page-hero-title {
     font-family: var(--font-display);
-    font-size: clamp(1.6rem, 2.8vw, 2.3rem);
+    font-size: clamp(1.7rem, 3vw, 2.5rem);
     font-weight: 700;
-    color: var(--ink);
-    line-height: 1.1;
+    color: var(--white);
+    line-height: 1.08;
     letter-spacing: -.02em;
 }
 
 .page-hero-title em {
     font-style: italic;
-    color: var(--terra);
+    color: var(--sand);
 }
 
 .page-hero-sub {
-    font-size: .84rem;
-    color: var(--ink-soft);
+    font-size: .83rem;
+    color: rgba(255, 255, 255, .55);
     font-weight: 300;
-    margin-top: 6px;
+    margin-top: 7px;
+    letter-spacing: .01em;
 }
 
+/* Icon badge — gold ring */
 .page-hero-icon {
-    width: 52px;
-    height: 52px;
+    width: 56px;
+    height: 56px;
     border-radius: var(--r-md);
-    background: var(--navy-800);
+    background: rgba(255, 255, 255, .08);
+    border: 1.5px solid rgba(232, 200, 130, .45);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 4px 16px rgba(11, 24, 41, .2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .25), inset 0 1px 0 rgba(255, 255, 255, .1);
+    backdrop-filter: blur(8px);
 }
 
 .page-hero-icon svg {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     stroke: var(--sand);
     fill: none;
-    stroke-width: 1.8;
+    stroke-width: 1.7;
 }
 
 /* ── CONTENT ── */
@@ -1665,16 +1710,48 @@ nav a.active {
 
 /* ── RESPONSIVE ── */
 @media(max-width:1024px) {
-    nav { display: none }
-    .btn-browse { display: none }
-    .hamburger { display: flex }
-    .header-right { gap: 6px }
-    .logo { gap: 9px; min-width: 0; }
-    .logo-icon { width: 36px; height: 36px; }
-    .logo-wordmark strong { font-size: 1.1rem; }
-    .logo-wordmark span { font-size: 0.48rem; letter-spacing: 0.18em; }
-    .logo span > span { display: none !important; }
-    .logo-sub { display: none !important; }
+    nav {
+        display: none
+    }
+
+    .btn-browse {
+        display: none
+    }
+
+    .hamburger {
+        display: flex
+    }
+
+    .header-right {
+        gap: 6px
+    }
+
+    .logo {
+        gap: 9px;
+        min-width: 0;
+    }
+
+    .logo-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .logo-wordmark strong {
+        font-size: 1.1rem;
+    }
+
+    .logo-wordmark span {
+        font-size: 0.48rem;
+        letter-spacing: 0.18em;
+    }
+
+    .logo span>span {
+        display: none !important;
+    }
+
+    .logo-sub {
+        display: none !important;
+    }
 }
 
 @media(max-width:768px) {
@@ -1696,12 +1773,32 @@ nav a.active {
 }
 
 @media(max-width:560px) {
-    .logo { gap: 8px; }
-    .logo-icon { width: 33px; height: 33px; }
-    .logo-wordmark strong { font-size: 0.92rem; }
-    .logo-wordmark span { font-size: 0.44rem; letter-spacing: 0.14em; }
-    .btn-profile { width: 34px; height: 34px; }
-    .hamburger { padding: 4px; }
+    .logo {
+        gap: 8px;
+    }
+
+    .logo-icon {
+        width: 33px;
+        height: 33px;
+    }
+
+    .logo-wordmark strong {
+        font-size: 0.92rem;
+    }
+
+    .logo-wordmark span {
+        font-size: 0.44rem;
+        letter-spacing: 0.14em;
+    }
+
+    .btn-profile {
+        width: 34px;
+        height: 34px;
+    }
+
+    .hamburger {
+        padding: 4px;
+    }
 }
 
 @media(max-width:500px) {

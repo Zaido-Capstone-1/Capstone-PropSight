@@ -9,6 +9,12 @@ if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
     exit;
 }
 
+// If user just registered and hasn't verified email yet, send them back to index
+if (!empty($_SESSION['pending_verification'])) {
+    header("Location: ../../verify.php");
+    exit;
+}
+
 if (
     isset($_SESSION['login'], $_SESSION['user_id'], $_SESSION['role']) &&
     $_SESSION['role'] === 'user'

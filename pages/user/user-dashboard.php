@@ -128,6 +128,12 @@ $initials = strtoupper(mb_substr($first_name, 0, 1) . mb_substr($last_name, 0, 1
 $hour = (int) date('G');
 $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
 $isVerifiedSidebar = (($_SESSION['verification_status'] ?? '') === 'Verified');
+
+// Sync id_verified from DB so session is always fresh
+$_idRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id_verified FROM users WHERE user_id=$_uid LIMIT 1"));
+$_SESSION['id_verified'] = $_idRow['id_verified'] ?? 'none';
+$dashIdVerified = $_SESSION['id_verified'];
+
 $dashboardPhotoRaw = trim((string) ($_SESSION['profile_photo'] ?? ''));
 if ($dashboardPhotoRaw === '') {
     $_photoRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT profile_photo FROM users WHERE user_id=$_uid LIMIT 1"));
@@ -1001,6 +1007,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
             lname: <?php echo json_encode($_SESSION['last_name'] ?? ''); ?>,
             email: <?php echo json_encode($_SESSION['email'] ?? ''); ?>,
             phone: <?php echo json_encode($_SESSION['phone'] ?? ''); ?>,
+            idVerified: <?php echo json_encode($_SESSION['id_verified'] ?? 'none'); ?>,
         };
         window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
         window.psGetCsrfToken = function () {

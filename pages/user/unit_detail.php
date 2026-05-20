@@ -17,6 +17,9 @@ if ($unit_id <= 0) {
 }
 $_uid = (int) $_SESSION['user_id'];
 
+$_idRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id_verified FROM users WHERE user_id=$_uid LIMIT 1"));
+$_SESSION['id_verified'] = $_idRow['id_verified'] ?? 'none';
+
 // ── Review pagination params (needed before queries file) ─────────────────────
 $reviewPage = max(1, (int) ($_GET['rp'] ?? 1));
 $reviewLimit = 4;
@@ -279,6 +282,22 @@ $nav_items = [
                     <i class="ti ti-message-circle"></i> Message the host
                 </a>
             </div>
+        </div>
+    </div>
+
+    <!-- MAP MODAL -->
+    <div class="ud-map-modal" id="udMapModal" role="dialog" aria-modal="true">
+        <div class="ud-map-modal-inner">
+            <div class="ud-map-modal-header">
+                <div class="ud-map-modal-title">
+                    <i class="ti ti-map-pin"></i>
+                    <?php echo ud_esc($addressStr ?: $locationStr); ?>
+                </div>
+                <button class="ud-map-modal-close" id="udMapModalClose">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+            <div class="ud-map-modal-map" id="udMapModalMap"></div>
         </div>
     </div>
 
@@ -705,7 +724,6 @@ $nav_items = [
                         <div class="ud-pb-row ud-pb-muted"><span>Security deposit (50%)</span><span
                                 id="udDeposit">—</span>
                         </div>
-                        <div class="ud-pb-row ud-pb-muted"><span>Cleaning fee</span><span>₱500</span></div>
                         <div class="ud-pb-divider"></div>
                         <div class="ud-pb-total"><span>Total due today</span><span id="udTotalDue">—</span></div>
                         <div class="ud-pb-note" id="udRemainingNote"></div>
@@ -781,8 +799,12 @@ $nav_items = [
                             <?php echo ud_esc($addressStr); ?>
                         </div>
                     <?php endif; ?>
-                    <div class="ud-map-wrap">
+                    <div class="ud-map-wrap" style="position: relative;">
                         <div id="udLeafletMap"></div>
+                        <button class="ud-map-view-btn" onclick="window.openMapModal()">
+                            <i class="ti ti-maximize"></i>
+                            View Map
+                        </button>
                     </div>
                 </div>
             <?php endif; ?>
@@ -982,8 +1004,6 @@ $nav_items = [
                             <div class="bm-review-label">Charges due today</div>
                             <div class="bm-review-row"><span class="bm-review-key">Security deposit (50%)</span><span
                                     class="bm-review-val" id="rv-deposit">—</span></div>
-                            <div class="bm-review-row"><span class="bm-review-key">Cleaning fee</span><span
-                                    class="bm-review-val">₱500</span></div>
                             <div class="bm-review-row" style="padding-top:8px">
                                 <span class="bm-review-key" style="font-weight:700;color:var(--text-dark)">Total due
                                     now</span>
@@ -1132,11 +1152,11 @@ $nav_items = [
                     <div class="bm-summary-title">Booking summary</div>
                     <div class="bm-summary-rows">
                         <div class="bm-summary-row"><span class="bm-summary-key">Price per night</span><span
-                                class="bm-summary-val" id="sb-rent">—</span></div>
+                                class="bm-summary-val" id="sb-rent">—</span>
+                        </div>
                         <div class="bm-summary-row"><span class="bm-summary-key">Security deposit (50%)</span><span
-                                class="bm-summary-val" id="sb-deposit">—</span></div>
-                        <div class="bm-summary-row"><span class="bm-summary-key">Cleaning fee</span><span
-                                class="bm-summary-val">₱500</span></div>
+                                class="bm-summary-val" id="sb-deposit">—</span>
+                        </div>
                     </div>
                     <div class="bm-summary-divider"></div>
                     <div class="bm-total-row"><span class="bm-total-label">Total due now</span><span
@@ -1181,6 +1201,7 @@ $nav_items = [
             lname: <?php echo json_encode($_SESSION['last_name'] ?? ''); ?>,
             email: <?php echo json_encode($_SESSION['email'] ?? ''); ?>,
             phone: <?php echo json_encode($_SESSION['phone'] ?? ''); ?>,
+            idVerified: <?php echo json_encode($_SESSION['id_verified'] ?? 'none'); ?>,
         };
         window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
         window.psGetCsrfToken = () => String(window.PS_CSRF_TOKEN || '');

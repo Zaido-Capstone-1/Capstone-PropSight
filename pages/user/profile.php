@@ -147,16 +147,61 @@ require_once '../../lib/user-queries/profile_queries.php';
                 </svg>
                 Identity Verification
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
-                <div>
-                    <p style="font-size:0.88rem;color:var(--text-mid);margin-bottom:4px;">Government ID ·
-                        <strong>Philippine Passport</strong></p>
-                    <p style="font-size:0.78rem;color:var(--text-soft);">Submitted Jan 10, 2024 · Expires Mar 2029</p>
+
+            <?php if ($idVerified === 'approved'): ?>
+                <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                    <div>
+                        <p style="font-size:.88rem;color:var(--text-mid);margin-bottom:4px;">Government ID submitted</p>
+                        <p style="font-size:.78rem;color:var(--text-soft);">Your identity has been verified. You're cleared
+                            to book.</p>
+                    </div>
+                    <span class="badge badge-green">✓ Verified</span>
                 </div>
-                <span class="badge badge-green">✓ Verified</span>
-            </div>
-            <div class="card-section-divider"></div>
-            <button class="btn-secondary">Upload New ID</button>
+                <div class="card-section-divider"></div>
+                <button class="btn-secondary" id="reuploadIdBtn" onclick="openModal('uploadIdModal')">Re-upload ID</button>
+
+            <?php elseif ($idVerified === 'pending'): ?>
+                <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                    <div>
+                        <p style="font-size:.88rem;color:var(--text-mid);margin-bottom:4px;">ID submitted — processing</p>
+                        <p style="font-size:.78rem;color:var(--text-soft);">This should resolve shortly. Try refreshing the
+                            page.</p>
+                    </div>
+                    <span class="badge" style="background:#fef3c7;color:#92400e;">⏳ Processing</span>
+                </div>
+
+            <?php elseif ($idVerified === 'rejected'): ?>
+                <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                    <div>
+                        <p style="font-size:.88rem;color:#dc2626;font-weight:600;margin-bottom:4px;">ID Verification Failed
+                        </p>
+                        <p style="font-size:.82rem;color:var(--text-soft);">
+                            Reason:
+                            <strong><?php echo htmlspecialchars($idRejectReason ?: 'Document was unclear or invalid.'); ?></strong>
+                        </p>
+                        <p style="font-size:.78rem;color:var(--text-soft);margin-top:4px;">Please upload a clearer copy of a
+                            valid government ID to continue booking.</p>
+                    </div>
+                    <span class="badge" style="background:#fee2e2;color:#dc2626;">✗ Rejected</span>
+                </div>
+                <div class="card-section-divider"></div>
+                <button class="btn-primary" id="reuploadIdBtn" onclick="openModal('uploadIdModal')">Re-upload ID</button>
+
+            <?php else: /* none */ ?>
+                <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                    <div>
+                        <p style="font-size:.88rem;color:var(--text-mid);font-weight:600;margin-bottom:4px;">ID not yet
+                            submitted</p>
+                        <p style="font-size:.78rem;color:var(--text-soft);">A valid government ID is required before you can
+                            book a unit (passport, driver's license, or national ID).</p>
+                    </div>
+                    <span class="badge" style="background:#fee2e2;color:#dc2626;">✗ Required</span>
+                </div>
+                <div class="card-section-divider"></div>
+                <button class="btn-primary" id="reuploadIdBtn" onclick="openModal('uploadIdModal')">Upload Government
+                    ID</button>
+            <?php endif; ?>
+
         </div>
 
         <div class="card reveal rd3" style="border-color:#fecaca;">
@@ -168,7 +213,8 @@ require_once '../../lib/user-queries/profile_queries.php';
                 </svg>
                 Danger Zone
             </div>
-            <p style="font-size:0.85rem;color:var(--text-soft);margin-bottom:16px;">Permanently delete your account and
+            <p style="font-size:0.85rem;color:var(--text-soft);margin-bottom:16px;">Permanently delete your account
+                and
                 all associated data. This action cannot be undone.</p>
             <button class="btn-danger">Delete My Account</button>
         </div>
@@ -195,7 +241,17 @@ require_once '../../lib/user-queries/profile_queries.php';
             </div>
             <div class="mini-stat-row">
                 <span class="mini-stat-label">ID Verified</span>
-                <span class="mini-stat-val">✓ Yes</span>
+                <span
+                    class="mini-stat-val <?php echo $idVerified === 'approved' ? 'text-success' : ($idVerified === 'pending' ? 'text-warn' : 'text-danger'); ?>">
+                    <?php
+                    echo match ($idVerified) {
+                        'approved' => '✓ Verified',
+                        'pending' => '⏳ Under Review',
+                        'rejected' => '✗ Rejected',
+                        default => '✗ Not Submitted',
+                    };
+                    ?>
+                </span>
             </div>
             <div class="mini-stat-row">
                 <span class="mini-stat-label">Member Since</span>
@@ -249,19 +305,23 @@ require_once '../../lib/user-queries/profile_queries.php';
             <div class="form-grid cols-1" style="margin-bottom:18px;">
                 <div class="form-field">
                     <label>Select Photo</label>
-                    <input type="file" name="profile_photo" accept=".jpg,.jpeg,.png,.webp" required>
+                    <input type="file" id="profilePhotoFileInput" name="profile_photo" accept=".jpg,.jpeg,.png,.webp"
+                        required>
                 </div>
             </div>
+            <p id="profilePhotoMsg" style="font-size:.8rem;margin-top:-.5rem;margin-bottom:8px;display:none;"></p>
 
             <div style="display:flex;gap:10px;justify-content:flex-end;">
                 <button type="button" class="btn-secondary" onclick="closeModal('profilePhotoModal')">Cancel</button>
-                <button type="submit" class="btn-primary">
+                <button type="button" class="btn-primary" id="profilePhotoSubmitBtn" onclick="submitProfilePhoto()">
                     <svg viewBox="0 0 24 24">
                         <polyline points="20 6 9 17 4 12" />
                     </svg>
                     Upload Photo
                 </button>
             </div>
+            <input type="hidden" id="profilePhotoCsrf"
+                value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">
         </form>
     </div>
 </div>
@@ -368,7 +428,8 @@ require_once '../../lib/user-queries/profile_queries.php';
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
-            <p style="font-size:0.85rem;font-weight:600;color:var(--text-dark);margin-bottom:4px;">Click to browse or
+            <p style="font-size:0.85rem;font-weight:600;color:var(--text-dark);margin-bottom:4px;">Click to browse
+                or
                 drag & drop</p>
             <p style="font-size:0.74rem;color:var(--text-soft);" id="dropzoneLabel">No file selected</p>
         </div>
@@ -400,7 +461,8 @@ require_once '../../lib/user-queries/profile_queries.php';
                 </svg>
             </div>
             <div class="modal-title" style="color:#dc2626;">Delete Account?</div>
-            <p style="font-size:0.84rem;color:var(--text-soft);margin:8px 0 20px;line-height:1.7;">This will permanently
+            <p style="font-size:0.84rem;color:var(--text-soft);margin:8px 0 20px;line-height:1.7;">This will
+                permanently
                 delete your account, all bookings, and loyalty points. Type <strong>DELETE</strong> to confirm.</p>
             <input type="hidden" id="deleteCsrfToken"
                 value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">

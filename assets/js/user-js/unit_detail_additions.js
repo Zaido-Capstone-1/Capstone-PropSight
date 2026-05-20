@@ -4,22 +4,21 @@
     /* =========================================================================
        HELPERS
     ========================================================================= */
-    const CLEANING = 500;
     const fmt = n => '₱' + Math.round(n).toLocaleString('en-PH');
     const $ = id => document.getElementById(id);
-    const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+    const set = (id, v) => {
+        const e = $(id);
+        if (e) e.textContent = v;
+    };
     const val = id => ($(id)?.value || '').trim();
 
     /* =========================================================================
        SHARED CALENDAR HELPERS
-       Builds booked date utilities used by both the card and the modal.
     ========================================================================= */
     function buildCalendarHelpers() {
         const ranges = window.UD_BOOKED_RANGES || [];
         const blocked = window.UD_BLOCKED_DATES || [];
 
-        // Build a Set of every booked date string YYYY-MM-DD
-        // inclusive of checkin, exclusive of checkout
         const disabledSet = new Set();
         ranges.forEach(r => {
             const d = new Date(r.from + 'T12:00:00');
@@ -29,18 +28,12 @@
                 d.setDate(d.getDate() + 1);
             }
         });
-
-        // Add admin-blocked individual dates directly
         blocked.forEach(date => disabledSet.add(date));
 
-        // Is this date inside a booked range?
         function isBooked(dateObj) {
             return disabledSet.has(dateObj.toISOString().split('T')[0]);
         }
 
-        // Is this date blocked for CHECK-IN?
-        // Blocked if: it is itself booked, OR the very next day is booked
-        // (because you need at least 1 night, and you can't check out on a booked start date)
         function isCheckinBlocked(dateObj) {
             if (isBooked(dateObj)) return true;
             const next = new Date(dateObj);
@@ -48,8 +41,6 @@
             return isBooked(next);
         }
 
-        // Given a check-in date, find the next booked date after it
-        // so we can cap the checkout picker before that date
         function getNextBookedAfter(fromDateObj) {
             const d = new Date(fromDateObj);
             for (let i = 1; i <= 365; i++) {
@@ -60,7 +51,6 @@
             return null;
         }
 
-        // Find the next available check-in date after a given date
         function nextAvailableCheckin(fromDateObj) {
             const d = new Date(fromDateObj);
             for (let i = 1; i <= 365; i++) {
@@ -70,12 +60,17 @@
             return new Date(fromDateObj);
         }
 
-        return { isBooked, isCheckinBlocked, getNextBookedAfter, nextAvailableCheckin };
+        return {
+            isBooked,
+            isCheckinBlocked,
+            getNextBookedAfter,
+            nextAvailableCheckin
+        };
     }
 
 
     /* =========================================================================
-       1. GRID GALLERY — prev/next on main image, side cells update too
+       1. GRID GALLERY
     ========================================================================= */
     (function initGridGallery() {
         const imgs = window.UD_IMAGES || [];
@@ -101,13 +96,19 @@
             if (sideCell1) sideCell1.onclick = () => window.openLb(n2);
         }
 
-        $('udMainPrev')?.addEventListener('click', e => { e.stopPropagation(); go(cur - 1); });
-        $('udMainNext')?.addEventListener('click', e => { e.stopPropagation(); go(cur + 1); });
+        $('udMainPrev')?.addEventListener('click', e => {
+            e.stopPropagation();
+            go(cur - 1);
+        });
+        $('udMainNext')?.addEventListener('click', e => {
+            e.stopPropagation();
+            go(cur + 1);
+        });
     })();
 
 
     /* =========================================================================
-       2. SLIDER GALLERY (single / 2-image fallback)
+       2. SLIDER GALLERY
     ========================================================================= */
     (function initSliderGallery() {
         const track = $('udTrack');
@@ -133,7 +134,11 @@
         });
 
         let tx = 0;
-        track.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+        track.addEventListener('touchstart', e => {
+            tx = e.touches[0].clientX;
+        }, {
+            passive: true
+        });
         track.addEventListener('touchend', e => {
             const dx = e.changedTouches[0].clientX - tx;
             if (Math.abs(dx) > 50) goTo(gCur + (dx < 0 ? 1 : -1));
@@ -178,7 +183,9 @@
         $('udLbClose')?.addEventListener('click', closeLb);
         $('udLbPrev')?.addEventListener('click', () => lbGoTo(lbIdx - 1));
         $('udLbNext')?.addEventListener('click', () => lbGoTo(lbIdx + 1));
-        lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
+        lb.addEventListener('click', e => {
+            if (e.target === lb) closeLb();
+        });
 
         document.addEventListener('keydown', e => {
             if (lb.classList.contains('open')) {
@@ -195,25 +202,82 @@
 
 
     /* =========================================================================
-       4. MAP (Leaflet)
+       4. MAP (Leaflet) — inline card map + fullscreen modal map
     ========================================================================= */
     (function initMap() {
         const u = window.UD_UNIT || {};
         if (!u.lat || !u.lng || typeof L === 'undefined') return;
-        const map = L.map('udLeafletMap', {
-            zoomControl: false, scrollWheelZoom: false, attributionControl: false
-        }).setView([u.lat, u.lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.marker([u.lat, u.lng]).addTo(map);
+
+        // ── Inline card map ──────────────────────────────────────────────────
+        const cardMapEl = $('udLeafletMap');
+        if (cardMapEl) {
+            const cardMap = L.map('udLeafletMap', {
+                zoomControl: true,
+                scrollWheelZoom: false,
+                attributionControl: false,
+                dragging: true, // ← Enable dragging on card
+                doubleClickZoom: true,
+            }).setView([u.lat, u.lng], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(cardMap);
+            L.marker([u.lat, u.lng]).addTo(cardMap);
+
+            // Move zoom control to bottom-right
+            cardMap.zoomControl.setPosition('bottomright');
+        }
+
+        // ── Fullscreen modal map ─────────────────────────────────────────────
+        let modalMap = null;
+
+        window.openMapModal = function () {
+            const modal = $('udMapModal');
+            if (!modal) return;
+            modal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+
+            // Init modal map lazily (only once)
+            if (!modalMap) {
+                modalMap = L.map('udMapModalMap', {
+                    zoomControl: true,
+                    scrollWheelZoom: true,
+                    attributionControl: true,
+                }).setView([u.lat, u.lng], 15);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(modalMap);
+
+                L.marker([u.lat, u.lng]).addTo(modalMap)
+                    .bindPopup(document.title.split('—')[0].trim())
+                    .openPopup();
+            } else {
+                // Invalidate size in case modal was hidden on first render
+                setTimeout(() => modalMap.invalidateSize(), 100);
+            }
+        };
+
+        window.closeMapModal = function () {
+            const modal = $('udMapModal');
+            if (!modal) return;
+            modal.classList.remove('open');
+            document.body.style.overflow = '';
+        };
+
+        $('udMapModal')?.addEventListener('click', e => {
+            if (e.target === $('udMapModal')) window.closeMapModal();
+        });
+        $('udMapModalClose')?.addEventListener('click', () => window.closeMapModal());
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && $('udMapModal')?.classList.contains('open')) {
+                window.closeMapModal();
+            }
+        });
     })();
 
 
     /* =========================================================================
        5. CARD DATE PICKERS + PRICE BREAKDOWN
-       Uses flatpickr on the booking card (udCheckin / udCheckout).
-       - Check-in: blocks booked dates AND dates where next day is booked
-       - Check-out: only blocks actually-booked dates; capped before next booked block
-       - No default date selected — starts empty
     ========================================================================= */
     (function initCardDatePickers() {
         const u = window.UD_UNIT || {};
@@ -223,14 +287,20 @@
         function updateBreakdown() {
             const bd = $('udPriceBreakdown');
             if (!ciEl || !coEl || !bd) return;
-            if (!ciEl.value || !coEl.value) { bd.style.display = 'none'; return; }
+            if (!ciEl.value || !coEl.value) {
+                bd.style.display = 'none';
+                return;
+            }
             const a = new Date(ciEl.value);
             const b = new Date(coEl.value);
-            if (b <= a) { bd.style.display = 'none'; return; }
+            if (b <= a) {
+                bd.style.display = 'none';
+                return;
+            }
             const nights = Math.round((b - a) / 86400000);
             const subtot = nights * (u.priceNum || 0);
             const deposit = subtot * 0.5;
-            const total = deposit + CLEANING;
+            const total = deposit;
             set('udNightsLabel', `${nights} night${nights !== 1 ? 's' : ''} × ${fmt(u.priceNum || 0)}`);
             set('udNightsTotal', fmt(subtot));
             set('udDeposit', fmt(deposit));
@@ -239,7 +309,10 @@
             bd.style.display = 'block';
             const fd = $('udFloatDates');
             if (fd) {
-                const o = { month: 'short', day: 'numeric' };
+                const o = {
+                    month: 'short',
+                    day: 'numeric'
+                };
                 fd.textContent = `${a.toLocaleDateString('en-PH', o)} – ${b.toLocaleDateString('en-PH', o)} · ${nights}n`;
             }
         }
@@ -247,12 +320,15 @@
         function initCardCalendars() {
             if (typeof flatpickr === 'undefined' || !ciEl || !coEl) return;
 
-            const { isBooked, isCheckinBlocked, getNextBookedAfter } = buildCalendarHelpers();
+            const {
+                isBooked,
+                isCheckinBlocked,
+                getNextBookedAfter
+            } = buildCalendarHelpers();
 
             const today = new Date();
             today.setHours(12, 0, 0, 0);
 
-            // Check-in picker — blocks booked + dates where next day is booked
             const fpCi = flatpickr(ciEl, {
                 dateFormat: 'Y-m-d',
                 minDate: today,
@@ -261,22 +337,18 @@
                 onDayCreate(dObj, dStr, fp, dayElem) {
                     if (isCheckinBlocked(dayElem.dateObj)) {
                         dayElem.classList.add('fp-booked');
-                        dayElem.title = isBooked(dayElem.dateObj)
-                            ? 'Already booked'
-                            : 'Not available — next day is booked';
+                        dayElem.title = isBooked(dayElem.dateObj) ?
+                            'Already booked' :
+                            'Not available — next day is booked';
                     }
                 },
                 onChange([date]) {
                     if (!date) return;
-                    // Find next booked date to cap checkout
                     const nextBooked = getNextBookedAfter(date);
-                    // Checkout must be at least tomorrow
                     const minCo = new Date(date);
                     minCo.setDate(minCo.getDate() + 1);
                     fpCo.set('minDate', minCo);
-                    // Cap checkout before the next booked block
                     fpCo.set('maxDate', nextBooked || null);
-                    // Clear checkout if it's now invalid
                     const coVal = fpCo.selectedDates[0];
                     if (!coVal || coVal <= date || (nextBooked && coVal >= nextBooked)) {
                         fpCo.clear();
@@ -285,7 +357,6 @@
                 },
             });
 
-            // Check-out picker — only blocks actually-booked dates
             const fpCo = flatpickr(coEl, {
                 dateFormat: 'Y-m-d',
                 minDate: today,
@@ -313,7 +384,6 @@
             window.addEventListener('load', initCardCalendars);
         }
 
-        // Expose card dates for modal prefill
         window._udGetCheckin = () => ciEl?.value || '';
         window._udGetCheckout = () => coEl?.value || '';
     })();
@@ -333,20 +403,33 @@
             if (gPluralEl) gPluralEl.textContent = gCount === 1 ? '' : 's';
         }
 
-        $('udGMinus')?.addEventListener('click', () => { if (gCount > 1) { gCount--; updateGuests(); } });
-        $('udGPlus')?.addEventListener('click', () => { if (gCount < (u.maxGuests || 6)) { gCount++; updateGuests(); } });
+        $('udGMinus')?.addEventListener('click', () => {
+            if (gCount > 1) {
+                gCount--;
+                updateGuests();
+            }
+        });
+        $('udGPlus')?.addEventListener('click', () => {
+            if (gCount < (u.maxGuests || 6)) {
+                gCount++;
+                updateGuests();
+            }
+        });
 
         window._udGetGuestCount = () => gCount;
     })();
 
 
     /* =========================================================================
-       7. BOOKING MODAL — open/close/steps/submit
+       7. BOOKING MODAL
     ========================================================================= */
     (function initBookingModal() {
 
         window.openBookingModal = window.openBookingModal || function (room) {
-            if (window.hasActiveBooking) { showToast?.('You already have an active booking.'); return; }
+            if (window.hasActiveBooking) {
+                showToast?.('You already have an active booking.');
+                return;
+            }
             set('bmSbName', room.name || '—');
             set('bmSbLoc', room.location || '—');
             set('sb-rent', (room.price || '—') + ' / night');
@@ -354,15 +437,25 @@
             set('sb-total', '—');
 
             const img = $('bmUnitImg');
-            if (img && room.image) { img.src = room.image; img.style.display = 'block'; }
+            if (img && room.image) {
+                img.src = room.image;
+                img.style.display = 'block';
+            }
 
             const s = window._psSessionFields || {};
-            [['bm-fname', s.fname], ['bm-lname', s.lname],
-            ['bm-email', s.email], ['bm-phone', s.phone]]
-                .forEach(([id, v]) => { const el = $(id); if (el) el.value = v || ''; });
+            [
+                ['bm-fname', s.fname],
+                ['bm-lname', s.lname],
+                ['bm-email', s.email],
+                ['bm-phone', s.phone]
+            ]
+            .forEach(([id, v]) => {
+                const el = $(id);
+                if (el) el.value = v || '';
+            });
 
-            // Clear date fields — flatpickr will handle them
-            const ci = $('bm-checkin'), co = $('bm-lease');
+            const ci = $('bm-checkin'),
+                co = $('bm-lease');
             if (ci) ci.value = '';
             if (co) co.value = '';
 
@@ -382,7 +475,9 @@
             if (ov) {
                 ov.classList.add('active');
                 requestAnimationFrame(() => ov.classList.add('open'));
-                ov.onclick = e => { if (e.target === ov) closeBookingModal(); };
+                ov.onclick = e => {
+                    if (e.target === ov) closeBookingModal();
+                };
             }
         };
 
@@ -403,8 +498,10 @@
                 s.classList.toggle('active', i + 1 === step);
                 s.classList.toggle('done', i + 1 < step);
             });
-            const back = $('bmBack'), next = $('bmNext'),
-                conf = $('bmConfirmBtn'), done = $('bmDoneBtn');
+            const back = $('bmBack'),
+                next = $('bmNext'),
+                conf = $('bmConfirmBtn'),
+                done = $('bmDoneBtn');
             if (back) back.style.display = (step > 1 && step < 4) ? '' : 'none';
             if (next) next.style.display = step < 3 ? '' : 'none';
             if (conf) conf.style.display = step === 3 ? '' : 'none';
@@ -412,11 +509,12 @@
 
             if (step === 2) {
                 const room = window._bmRoom || {};
-                const ci = val('bm-checkin'), co = val('bm-lease');
+                const ci = val('bm-checkin'),
+                    co = val('bm-lease');
                 const nights = Math.max(0, Math.round((new Date(co) - new Date(ci)) / 86400000));
                 const subtot = nights * (room.priceNum || 0);
                 const deposit = subtot * 0.5;
-                const total = deposit + CLEANING;
+                const total = deposit;
                 set('rv-name', [val('bm-fname'), val('bm-lname')].join(' '));
                 set('rv-email', val('bm-email'));
                 set('rv-phone', val('bm-phone'));
@@ -435,12 +533,30 @@
         window.bmNextStep = window.bmNextStep || function () {
             const step = window._bmCurrentStep || 1;
             if (step === 1) {
-                if (!val('bm-fname') || !val('bm-lname')) { showToast?.('Please enter your full name.'); return; }
-                if (!val('bm-email')) { showToast?.('Please enter your email.'); return; }
-                if (!val('bm-phone')) { showToast?.('Please enter your contact number.'); return; }
-                if (!val('bm-checkin')) { showToast?.('Please select a check-in date.'); return; }
-                if (!val('bm-lease')) { showToast?.('Please select a check-out date.'); return; }
-                if (val('bm-lease') <= val('bm-checkin')) { showToast?.('Check-out must be after check-in.'); return; }
+                if (!val('bm-fname') || !val('bm-lname')) {
+                    showToast?.('Please enter your full name.');
+                    return;
+                }
+                if (!val('bm-email')) {
+                    showToast?.('Please enter your email.');
+                    return;
+                }
+                if (!val('bm-phone')) {
+                    showToast?.('Please enter your contact number.');
+                    return;
+                }
+                if (!val('bm-checkin')) {
+                    showToast?.('Please select a check-in date.');
+                    return;
+                }
+                if (!val('bm-lease')) {
+                    showToast?.('Please select a check-out date.');
+                    return;
+                }
+                if (val('bm-lease') <= val('bm-checkin')) {
+                    showToast?.('Check-out must be after check-in.');
+                    return;
+                }
             }
             _goTo(step + 1);
         };
@@ -452,11 +568,12 @@
         window.bmSubmitBooking = window.bmSubmitBooking || function () {
             const room = window._bmRoom || {};
             const method = document.querySelector('#bmPayMethods .bm-pay-option.selected')?.dataset.method || 'GCash';
-            const ci = val('bm-checkin'), co = val('bm-lease');
+            const ci = val('bm-checkin'),
+                co = val('bm-lease');
             const nights = Math.max(0, Math.round((new Date(co) - new Date(ci)) / 86400000));
             const subtot = nights * (room.priceNum || 0);
             const deposit = subtot * 0.5;
-            const total = deposit + CLEANING;
+            const total = deposit;
 
             showToast?.('Submitting your booking…');
 
@@ -475,14 +592,25 @@
 
             _goTo(4);
             ['bm-payment-waiting', 'bm-payment-success', 'bm-payment-cash',
-                'bm-payment-failed', 'bm-payment-expired']
-                .forEach((id, i) => { const el = $(id); if (el) el.style.display = i === 0 ? '' : 'none'; });
+                'bm-payment-failed', 'bm-payment-expired'
+            ]
+            .forEach((id, i) => {
+                const el = $(id);
+                if (el) el.style.display = i === 0 ? '' : 'none';
+            });
             $('bmFooter')?.querySelectorAll('button').forEach(b => b.style.display = 'none');
 
-            fetch('../../api/user/book_unit.php', { method: 'POST', body: fd })
+            fetch('../../api/user/book_unit.php', {
+                    method: 'POST',
+                    body: fd
+                })
                 .then(r => r.json())
                 .then(data => {
-                    if (!data.success) { showToast?.(data.message || 'Booking failed.', 'error'); _goTo(3); return; }
+                    if (!data.success) {
+                        showToast?.(data.message || 'Booking failed.', 'error');
+                        _goTo(3);
+                        return;
+                    }
 
                     const bid = data.booking_id;
                     set('bmConfirmRef', `Ref #BK-${String(bid).padStart(4, '0')}`);
@@ -503,7 +631,10 @@
                     if (data.payment_url) {
                         window._bmPayTab = window.open(data.payment_url, '_blank');
                         window._bmPayUrl = data.payment_url;
-                        setTimeout(() => { const b = $('bmReopenPayBtn'); if (b) b.style.display = ''; }, 4000);
+                        setTimeout(() => {
+                            const b = $('bmReopenPayBtn');
+                            if (b) b.style.display = '';
+                        }, 4000);
                     }
 
                     let polls = 0;
@@ -536,10 +667,13 @@
                                     $('bm-payment-failed').style.display = '';
                                     set('bmFailedRef', `Ref #BK-${String(bid).padStart(4, '0')}`);
                                 }
-                            }).catch(() => { });
+                            }).catch(() => {});
                     }, 5000);
                 })
-                .catch(err => { showToast?.(err?.message || 'Network error.', 'error'); _goTo(3); });
+                .catch(err => {
+                    showToast?.(err?.message || 'Network error.', 'error');
+                    _goTo(3);
+                });
         };
 
         window.bmReopenPaymongoTab = window.bmReopenPaymongoTab || function () {
@@ -547,7 +681,6 @@
             else if (window._bmPayUrl) window._bmPayTab = window.open(window._bmPayUrl, '_blank');
         };
 
-        // Payment method selection
         document.querySelectorAll('#bmPayMethods .bm-pay-option').forEach(opt => {
             opt.addEventListener('click', () => {
                 document.querySelectorAll('#bmPayMethods .bm-pay-option')
@@ -556,7 +689,6 @@
             });
         });
 
-        // Open modal from detail page (prefills dates + guest count)
         window.openBookingModalFromDetail = function (roomData) {
             roomData._prefillCheckin = window._udGetCheckin?.() || '';
             roomData._prefillCheckout = window._udGetCheckout?.() || '';
@@ -565,9 +697,6 @@
             requestAnimationFrame(() => _initModalCalendars());
         };
 
-        // ── Modal flatpickr calendars ──────────────────────────────────────
-        // Same rules as card: check-in blocks booked + "next day booked" dates
-        // Check-out only blocks actually-booked dates, capped before next block
         function _initModalCalendars() {
             if (typeof flatpickr === 'undefined') return;
 
@@ -575,16 +704,24 @@
             const coInput = $('bm-lease');
             if (!ciInput || !coInput) return;
 
-            // Destroy previous instances
-            if (ciInput._fp) { ciInput._fp.destroy(); ciInput._fp = null; }
-            if (coInput._fp) { coInput._fp.destroy(); coInput._fp = null; }
+            if (ciInput._fp) {
+                ciInput._fp.destroy();
+                ciInput._fp = null;
+            }
+            if (coInput._fp) {
+                coInput._fp.destroy();
+                coInput._fp = null;
+            }
 
-            const { isBooked, isCheckinBlocked, getNextBookedAfter } = buildCalendarHelpers();
+            const {
+                isBooked,
+                isCheckinBlocked,
+                getNextBookedAfter
+            } = buildCalendarHelpers();
 
             const today = new Date();
             today.setHours(12, 0, 0, 0);
 
-            // Check-in picker
             const fpCi = flatpickr(ciInput, {
                 dateFormat: 'Y-m-d',
                 minDate: today,
@@ -593,9 +730,9 @@
                 onDayCreate(dObj, dStr, fp, dayElem) {
                     if (isCheckinBlocked(dayElem.dateObj)) {
                         dayElem.classList.add('fp-booked');
-                        dayElem.title = isBooked(dayElem.dateObj)
-                            ? 'Already booked'
-                            : 'Not available — next day is booked';
+                        dayElem.title = isBooked(dayElem.dateObj) ?
+                            'Already booked' :
+                            'Not available — next day is booked';
                     }
                 },
                 onChange([date]) {
@@ -613,7 +750,6 @@
                 },
             });
 
-            // Check-out picker
             const fpCo = flatpickr(coInput, {
                 dateFormat: 'Y-m-d',
                 minDate: today,
@@ -635,7 +771,6 @@
             coInput._fp = fpCo;
         }
 
-        // Update the booking summary sidebar in the modal
         function _updateModalSummary() {
             const ci = $('bm-checkin')?.value;
             const co = $('bm-lease')?.value;
@@ -653,12 +788,11 @@
             const room = window._bmRoom || {};
             const subtot = nights * (room.priceNum || 0);
             const deposit = subtot * 0.5;
-            const total = deposit + CLEANING;
+            const total = deposit;
             set('sb-deposit', fmt(deposit));
             set('sb-total', fmt(total));
         }
 
-        // Auto-open if ?book=1
         if (new URLSearchParams(location.search).get('book') === '1') {
             window.addEventListener('load', () => $('udBookBtn')?.click());
         }
@@ -666,14 +800,16 @@
 
 
     /* =========================================================================
-       8. FLOAT BAR — show when booking card scrolls out of view
+       8. FLOAT BAR
     ========================================================================= */
     (function initFloatBar() {
         const card = $('udBookingCard');
         if (!card || !('IntersectionObserver' in window)) return;
         new IntersectionObserver(([e]) => {
             document.body.classList.toggle('ud-card-offscreen', !e.isIntersecting);
-        }, { threshold: 0 }).observe(card);
+        }, {
+            threshold: 0
+        }).observe(card);
     })();
 
 
@@ -726,7 +862,7 @@
             url: location.href,
         };
         if (navigator.share && navigator.canShare?.(shareData)) {
-            navigator.share(shareData).catch(() => { });
+            navigator.share(shareData).catch(() => {});
         } else if (navigator.clipboard?.writeText) {
             navigator.clipboard.writeText(location.href)
                 .then(() => showToast?.('Link copied to clipboard!'))
@@ -744,18 +880,27 @@
         const bars = document.querySelectorAll('.ud-rbar-fill');
         if (!bars.length) return;
         const targets = Array.from(bars).map(b => b.style.width);
-        bars.forEach(b => { b.style.width = '0%'; b.style.transition = 'width 0.6s cubic-bezier(0.4,0,0.2,1)'; });
+        bars.forEach(b => {
+            b.style.width = '0%';
+            b.style.transition = 'width 0.6s cubic-bezier(0.4,0,0.2,1)';
+        });
         const summary = document.querySelector('.ud-rating-summary');
         if (summary && 'IntersectionObserver' in window) {
             new IntersectionObserver((entries, obs) => {
                 entries.forEach(entry => {
                     if (!entry.isIntersecting) return;
-                    bars.forEach((b, i) => setTimeout(() => { b.style.width = targets[i]; }, i * 80));
+                    bars.forEach((b, i) => setTimeout(() => {
+                        b.style.width = targets[i];
+                    }, i * 80));
                     obs.disconnect();
                 });
-            }, { threshold: 0.3 }).observe(summary);
+            }, {
+                threshold: 0.3
+            }).observe(summary);
         } else {
-            bars.forEach((b, i) => { b.style.width = targets[i]; });
+            bars.forEach((b, i) => {
+                b.style.width = targets[i];
+            });
         }
     })();
 
@@ -776,10 +921,15 @@
         new IntersectionObserver((entries, obs) => {
             entries.forEach(entry => {
                 if (!entry.isIntersecting) return;
-                items.forEach(item => { item.style.opacity = '1'; item.style.transform = 'translateX(0)'; });
+                items.forEach(item => {
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateX(0)';
+                });
                 obs.disconnect();
             });
-        }, { threshold: 0.2 }).observe(list);
+        }, {
+            threshold: 0.2
+        }).observe(list);
     })();
 
 
@@ -789,7 +939,9 @@
     document.querySelectorAll('.ud-social-nudge').forEach(el => {
         el.style.opacity = '0';
         el.style.transition = 'opacity 0.5s ease 0.3s';
-        setTimeout(() => { el.style.opacity = '1'; }, 400);
+        setTimeout(() => {
+            el.style.opacity = '1';
+        }, 400);
     });
 
 
@@ -798,6 +950,7 @@
     ========================================================================= */
     (function initMinStay() {
         const MIN = 3;
+
         function bump(ciEl, coEl) {
             if (!ciEl?.value || !coEl?.value) return;
             const nights = Math.round((new Date(coEl.value) - new Date(ciEl.value)) / 86400000);
@@ -809,8 +962,10 @@
                 coEl.dispatchEvent(new Event('change'));
             }
         }
-        const udCi = $('udCheckin'), udCo = $('udCheckout');
-        const bmCi = $('bm-checkin'), bmCo = $('bm-lease');
+        const udCi = $('udCheckin'),
+            udCo = $('udCheckout');
+        const bmCi = $('bm-checkin'),
+            bmCo = $('bm-lease');
         udCi?.addEventListener('change', () => bump(udCi, udCo));
         udCo?.addEventListener('change', () => bump(udCi, udCo));
         bmCi?.addEventListener('change', () => bump(bmCi, bmCo));
