@@ -138,7 +138,7 @@
 
   /* ── 4. Leaflet Map ──────────────────────────────────────── */
   const mapEl = document.getElementById('guestMap');
-  if (mapEl && typeof L !== 'undefined' && D.demographics && D.demographics.length) {
+  if (mapEl && typeof L !== 'undefined') {
     const bookingData = {};
     D.demographics.forEach(d => {
       bookingData[d.nationality] = { bookings: d.bookings, guests: d.guests, revenue: d.revenue };

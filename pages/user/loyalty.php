@@ -24,30 +24,62 @@ require_once '../../lib/user-queries/loyalty_queries.php';
 
 /* ── SVG icon map for tiers ── */
 $tier_svgs = [
-    'Silver' => '<svg class="tier-svg silver"   viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="3" fill="currentColor" opacity=".25"/></svg>',
+    'Silver' => '<svg class="tier-svg silver" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="15" r="6" stroke-width="1.5"/><path d="M10 13c0-1 4-1 4 0s-4 1-4 2 4 1 4 0" stroke-width="1.4" stroke-linecap="round"/><path d="M9 3h6l-1.5 5h-3L9 3z" stroke-width="1.4" stroke-linejoin="round"/></svg>',
     'Gold' => '<svg class="tier-svg gold"     viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.5,8.5 23,9.5 17.5,14.8 19,22 12,18.3 5,22 6.5,14.8 1,9.5 8.5,8.5" stroke-width="1.5" stroke-linejoin="round"/></svg>',
     'Platinum' => '<svg class="tier-svg platinum" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L6 7H2l2 5-2 5h4l6 5 6-5h4l-2-5 2-5h-4L12 2z" stroke-width="1.5" stroke-linejoin="round"/></svg>',
     'Diamond' => '<svg class="tier-svg diamond"  viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 9l3-6h14l3 6-10 12L2 9z" stroke-width="1.5" stroke-linejoin="round"/><path d="M2 9h20M8 3l-3 6 7 12M16 3l3 6-7 12" stroke-width="1.2" stroke-linecap="round"/></svg>',
 ];
 
-/* ── SVG icon map for rewards ── */
-$reward_svgs = [
-    1 => /* house/night */ '<svg viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 21V12h6v9" stroke-width="1.6" stroke-linejoin="round"/></svg>',
-    2 => /* upgrade arrow */ '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="14" width="18" height="7" rx="1.5" stroke-width="1.6"/><rect x="5" y="9"  width="14" height="5"  rx="1"   stroke-width="1.6"/><path d="M12 9V3m-3 3l3-3 3 3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    3 => /* breakfast */ '<svg viewBox="0 0 24 24" fill="none"><path d="M18 8h1a4 4 0 010 8h-1" stroke-width="1.6" stroke-linecap="round"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" stroke-width="1.6" stroke-linejoin="round"/><line x1="6" y1="2" x2="6" y2="4" stroke-width="1.8" stroke-linecap="round"/><line x1="10" y1="2" x2="10" y2="4" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="2" x2="14" y2="4" stroke-width="1.8" stroke-linecap="round"/></svg>',
-    4 => /* clock/checkout */ '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke-width="1.6"/><polyline points="12,7 12,12 16,14" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    5 => /* spa leaf */ '<svg viewBox="0 0 24 24" fill="none"><path d="M12 22V12" stroke-width="1.6" stroke-linecap="round"/><path d="M12 12C12 12 7 10 5 5c3 0 7 2 7 7z" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 12C12 12 17 10 19 5c-3 0-7 2-7 7z" stroke-width="1.5" stroke-linejoin="round"/><path d="M5 19c2-1 4-2 7-2s5 1 7 2" stroke-width="1.5" stroke-linecap="round"/></svg>',
-    6 => /* transfer/bus */ '<svg viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="12" rx="2" stroke-width="1.6"/><path d="M7 19v2M17 19v2" stroke-width="1.8" stroke-linecap="round"/><circle cx="7"  cy="14" r="1.5" fill="currentColor" opacity=".7"/><circle cx="17" cy="14" r="1.5" fill="currentColor" opacity=".7"/><path d="M2 11h20" stroke-width="1.4"/><path d="M12 7V5M8 5h8" stroke-width="1.5" stroke-linecap="round"/></svg>',
+$rewards = [];
+$rwStmt = $conn->query(
+    "SELECT reward_id AS id, name, description AS `desc`, points_cost AS pts
+     FROM loyalty_rewards
+     WHERE is_active = 1
+     ORDER BY points_cost ASC"
+);
+if ($rwStmt) {
+    while ($rw = $rwStmt->fetch_assoc()) {
+        $rewards[] = $rw;
+    }
+}
+
+// Replace $reward_svg_pool with this:
+
+$reward_svg_map = [
+    'night' => '<svg viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 21V12h6v9" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+    'upgrade' => '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="14" width="18" height="7" rx="1.5" stroke-width="1.6"/><rect x="5" y="9" width="14" height="5" rx="1" stroke-width="1.6"/><path d="M12 9V3m-3 3l3-3 3 3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    'breakfast' => '<svg viewBox="0 0 24 24" fill="none"><path d="M18 8h1a4 4 0 010 8h-1" stroke-width="1.6" stroke-linecap="round"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" stroke-width="1.6" stroke-linejoin="round"/><line x1="6" y1="2" x2="6" y2="4" stroke-width="1.8" stroke-linecap="round"/><line x1="10" y1="2" x2="10" y2="4" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="2" x2="14" y2="4" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    'checkout' => '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke-width="1.6"/><polyline points="12,7 12,12 16,14" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    'spa' => '<svg viewBox="0 0 24 24" fill="none"><path d="M12 22V12" stroke-width="1.6" stroke-linecap="round"/><path d="M12 12C12 12 7 10 5 5c3 0 7 2 7 7z" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 12C12 12 17 10 19 5c-3 0-7 2-7 7z" stroke-width="1.5" stroke-linejoin="round"/><path d="M5 19c2-1 4-2 7-2s5 1 7 2" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    'transfer' => '<svg viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="12" rx="2" stroke-width="1.6"/><path d="M7 19v2M17 19v2" stroke-width="1.8" stroke-linecap="round"/><circle cx="7" cy="14" r="1.5" fill="currentColor" opacity=".7"/><circle cx="17" cy="14" r="1.5" fill="currentColor" opacity=".7"/><path d="M2 11h20" stroke-width="1.4"/><path d="M12 7V5M8 5h8" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    'discount' => '<svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="9" r="2" stroke-width="1.6"/><circle cx="15" cy="15" r="2" stroke-width="1.6"/><path d="M5 19L19 5" stroke-width="1.6" stroke-linecap="round"/><rect x="3" y="3" width="18" height="18" rx="3" stroke-width="1.6"/></svg>',
+    'parking' => '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke-width="1.6"/><path d="M9 17V7h4a3 3 0 010 6H9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    'gift' => '<svg viewBox="0 0 24 24" fill="none"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z" stroke-linejoin="round"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>',
 ];
 
-$rewards = [
-    ['id' => 1, 'name' => 'Free Night Stay', 'desc' => 'One complimentary night in any Standard room', 'pts' => 800],
-    ['id' => 2, 'name' => 'Room Upgrade', 'desc' => 'Upgrade to next room tier on your next booking', 'pts' => 400],
-    ['id' => 3, 'name' => 'Free Breakfast', 'desc' => 'Complimentary breakfast for two guests', 'pts' => 150],
-    ['id' => 4, 'name' => 'Late Check-out', 'desc' => 'Check out at 2PM instead of 12PM', 'pts' => 100],
-    ['id' => 5, 'name' => 'Spa Voucher', 'desc' => '₱500 discount at partner spa centers', 'pts' => 300],
-    ['id' => 6, 'name' => 'Airport Transfer', 'desc' => 'Free roundtrip transfer from nearest airport', 'pts' => 600],
-];
+function resolve_reward_icon(string $name, string $desc, array $map): string
+{
+    $haystack = strtolower($name . ' ' . $desc);
+    $rules = [
+        'night' => ['night', 'stay', 'room', 'accommodation'],
+        'upgrade' => ['upgrade', 'tier', 'suite', 'premium'],
+        'breakfast' => ['breakfast', 'meal', 'dining', 'food', 'lunch', 'dinner', 'brunch'],
+        'checkout' => ['check-out', 'checkout', 'late', 'early check-in', 'checkin'],
+        'spa' => ['spa', 'massage', 'wellness', 'relax'],
+        'transfer' => ['transfer', 'airport', 'shuttle', 'transport', 'pickup'],
+        'discount' => ['discount', 'voucher', 'off', 'cashback', 'rebate', 'promo'],
+        'parking' => ['parking', 'garage', 'valet'],
+    ];
+    foreach ($rules as $icon_key => $keywords) {
+        foreach ($keywords as $kw) {
+            if (str_contains($haystack, $kw)) {
+                return $map[$icon_key];
+            }
+        }
+    }
+    return $map['gift']; // fallback
+}
+
 ?>
 
 <link rel="stylesheet" href="../../assets/css/user-css/loyalty.css" />
@@ -174,13 +206,12 @@ $rewards = [
             <p class="card-subtext">Balance: <strong id="rewardsBalanceDisplay"><?php echo number_format($points); ?>
                     pts</strong></p>
             <div class="rewards-grid" id="rewardsGrid">
-                <?php foreach ($rewards as $r):
+                <?php foreach ($rewards as $loop_index => $r):
                     $can = $points >= $r['pts']; ?>
                     <div class="reward-card <?php echo !$can ? 'reward-locked' : ''; ?>"
                         data-reward-id="<?php echo $r['id']; ?>" data-reward-pts="<?php echo $r['pts']; ?>">
-
                         <div class="reward-svg-icon <?php echo $can ? 'unlocked' : 'locked'; ?>">
-                            <?php echo $reward_svgs[$r['id']]; ?>
+                            <?php echo resolve_reward_icon($r['name'], $r['desc'], $reward_svg_map); ?>
                         </div>
                         <div class="reward-lock-icon">
                             <?php if (!$can): ?>
@@ -205,7 +236,7 @@ $rewards = [
                             <button class="btn-redeem" <?php echo !$can ? 'disabled' : ''; ?>
                                 data-id="<?php echo $r['id']; ?>"
                                 data-name="<?php echo htmlspecialchars($r['name'], ENT_QUOTES); ?>"
-                                data-pts="<?php echo $r['pts']; ?>" data-svg-id="<?php echo $r['id']; ?>"
+                                data-pts="<?php echo $r['pts']; ?>" data-svg-id="<?php echo $loop_index; ?>"
                                 data-desc="<?php echo htmlspecialchars($r['desc'], ENT_QUOTES); ?>"
                                 onclick="redeemReward(this)">
                                 <?php if ($can): ?>
@@ -485,11 +516,31 @@ $rewards = [
     </div>
 </div>
 
+<div class="modal-overlay" id="myVouchersModal">
+    <div class="modal-box" style="max-width:480px;">
+        <button class="modal-close-btn" onclick="closeModal('myVouchersModal')">
+            <svg viewBox="0 0 24 24" fill="none" style="width:16px;height:16px;stroke:currentColor;stroke-width:2.5;">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        </button>
+        <div class="modal-title" id="vouchersModalTitle">My Vouchers</div>
+        <div id="vouchersModalList" style="margin-top:16px;"></div>
+    </div>
+</div>
+
 <script>
     window.__PS_LOYALTY__ = {
         currentPoints: <?php echo (int) $points; ?>,
         rewardData: <?php echo json_encode($rewards, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>,
-        progressPct: <?php echo (float) $progress_pct; ?>
+        progressPct: <?php echo (float) $progress_pct; ?>,
+        history: <?php echo json_encode(array_map(fn($h) => [
+            'points' => (int) preg_replace('/[^0-9\-]/', '', $h['pts']),
+            'type' => $h['type'],
+            'description' => $h['desc'],
+            'created_at' => $h['date'],
+        ], $history), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>,
+        vouchers: <?php echo json_encode($vouchers, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>
     };
 </script>
 <script src="../../assets/js/user-js/loyalty.js"></script>

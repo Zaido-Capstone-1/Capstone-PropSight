@@ -473,6 +473,16 @@
     background: #bfdbfe;
 }
 
+.btn-receipt {
+    background: #f3f0ff;
+    color: #5b21b6;
+    text-decoration: none;
+}
+
+.btn-receipt:hover {
+    background: #ede9fe;
+}
+
 /* Footer */
 .res-footer {
     padding: 12px 24px;

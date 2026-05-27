@@ -49,7 +49,7 @@ try {
     $mail->Username = MAIL_USERNAME;
     $mail->Password = MAIL_PASSWORD;
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->SMTPOptions = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+    $mail->SMTPOptions = ['ssl' => ['cafile' => '/etc/ssl/certs/ca-certificates.crt']];
     $mail->setFrom(MAIL_FROM_EMAIL, MAIL_FROM_NAME);
     $mail->addAddress($email);
     $mail->isHTML(true);

@@ -20,60 +20,7 @@ $page_title = 'Guests / Clients';
 $active_page = 'guests_clients';
 include '../../includes/db.php';
 include '../../includes/layout_open.php';
-
-$sql = "
-    SELECT
-        u.user_id, u.first_name, u.last_name, u.email,
-        u.phone, u.created_at, u.profile_photo,
-        COALESCE(u.is_blacklisted, 0) AS is_blacklisted,
-        COALESCE(u.is_active, 0) AS is_active,
-        COUNT(DISTINCT b.booking_id) AS total_stays,
-        (SELECT COALESCE(NULLIF(TRIM(un.unit_name),''), CONCAT(p2.property_name, ' — ', un.unit_number))
-        FROM bookings bx
-        JOIN units un ON un.unit_id = bx.unit_id
-        LEFT JOIN properties p2 ON p2.property_id = un.property_id
-        WHERE bx.user_id = u.user_id
-          AND bx.status IN ('confirmed', 'active', 'completed')
-        ORDER BY bx.checkin_date DESC LIMIT 1
-        ) AS current_unit
-    FROM users u
-    LEFT JOIN bookings b ON b.user_id = u.user_id AND b.status NOT IN ('cancelled')
-    WHERE u.role = 'user'
-    GROUP BY u.user_id
-    ORDER BY u.created_at DESC
-";
-$res = mysqli_query($conn, $sql);
-$guests = [];
-while ($row = mysqli_fetch_assoc($res))
-  $guests[] = $row;
-
-$total_res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM users WHERE role='user'");
-$total = (int) mysqli_fetch_assoc($total_res)['c'];
-
-$active_res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM users WHERE role='user' AND is_active=1");
-$active_tenants = (int) mysqli_fetch_assoc($active_res)['c'];
-
-$month_res = mysqli_query($conn, "
-    SELECT COUNT(*) AS c FROM users
-    WHERE role='user'
-      AND MONTH(created_at) = MONTH(NOW())
-      AND YEAR(created_at)  = YEAR(NOW())
-");
-$new_month = (int) mysqli_fetch_assoc($month_res)['c'];
-
-$black_res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM users WHERE role='user' AND is_blacklisted=1");
-$blacklisted = (int) mysqli_fetch_assoc($black_res)['c'];
-
-function guestStatus($row)
-{
-  if ($row['is_blacklisted'])
-    return ['Blacklisted', 'danger'];
-  if ($row['is_active'])
-    return ['Active', 'success'];
-  if ($row['total_stays'] > 0)
-    return ['Guest', 'info'];
-  return ['New', 'pending'];
-}
+require_once '../../lib/admin-queries/guest_clients_queries.php';
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/guest_client.css">
@@ -144,6 +91,65 @@ function guestStatus($row)
       </div>
     </div>
 
+    <!-- ── Pending ID Verifications ── -->
+    <?php if (!empty($pendingIds)): ?>
+      <div class="card" id="pendingIdCard" style="margin-bottom:24px;">
+        <div class="card-header">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="1.8"
+              style="width:18px;height:18px;flex-shrink:0;">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span class="card-title" style="color:#92400e;">Pending ID Verifications</span>
+            <span
+              style="margin-left:4px;background:#d97706;color:#fff;font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:99px;"><?php echo count($pendingIds); ?></span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Guest</th>
+                <th>Email</th>
+                <th>Submitted</th>
+                <th>ID Document</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pendingIdTbody">
+              <?php foreach ($pendingIds as $u): ?>
+                <tr id="pid-row-<?php echo $u['user_id']; ?>">
+                  <td><strong><?php echo htmlspecialchars($u['first_name'] . ' ' . $u['last_name']); ?></strong></td>
+                  <td style="font-size:.82rem;"><?php echo htmlspecialchars($u['email']); ?></td>
+                  <td style="font-size:.82rem;color:#64748b;"><?php echo date('M j, Y', strtotime($u['created_at'])); ?>
+                  </td>
+                  <td>
+                    <button class="tbl-btn"
+                      onclick="openViewIdModal(<?php echo $u['user_id']; ?>)">
+                      View ID
+                    </button>
+                  </td>
+                  <td>
+                    <div class="action-wrap">
+                      <button class="tbl-btn" style="background:#16a34a;color:#fff;border-color:#16a34a;"
+                        onclick="confirmApprove(<?php echo $u['user_id']; ?>)">
+                        ✓ Approve
+                      </button>
+                      <button class="tbl-btn danger" onclick="openRejectModal(<?php echo $u['user_id']; ?>)">
+                        ✗ Reject
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <?php endif; ?>
+
+    <!-- ── Guest Directory ── -->
     <div class="card">
       <div class="card-header" style="flex-wrap:wrap;gap:10px;">
         <span class="card-title">Guest Directory</span>
@@ -228,8 +234,6 @@ function guestStatus($row)
                   <td><span class="badge badge-<?= $statusCls ?>"><?= $statusLabel ?></span></td>
                   <td>
                     <div class="action-wrap">
-                      <!-- <a href="guest_profile.php?id=<?= $g['user_id'] ?>" class="tbl-btn"
-                        style="text-decoration:none;">View</a> -->
                       <?php if (!$g['is_blacklisted']): ?>
                         <button class="tbl-btn danger" onclick="toggleBlacklist(<?= $g['user_id'] ?>, '<?= $fullName ?>', 1)">
                           Block
@@ -258,31 +262,92 @@ function guestStatus($row)
         guest<?= count($guests) !== 1 ? 's' : '' ?>
       </div>
 
-      <div id="blockModal" class="confirm-modal-overlay">
-        <div class="confirm-modal">
-          <div class="confirm-modal-header">
-            <h3 class="confirm-modal-title" id="blockModalTitle">Block Guest</h3>
+    </div><!-- /Guest Directory card -->
+
+    <!-- ── Block Guest Modal ── -->
+    <div id="blockModal" class="confirm-modal-overlay">
+      <div class="confirm-modal">
+        <div class="confirm-modal-header">
+          <h3 class="confirm-modal-title" id="blockModalTitle">Block Guest</h3>
+        </div>
+        <div class="confirm-modal-body">
+          <p id="blockModalDesc"></p>
+          <div id="blockReasonWrap" style="margin-top:14px;">
+            <label
+              style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;display:block;margin-bottom:6px;">Reason
+              (optional)</label>
+            <input id="blockReasonInput" type="text" placeholder="e.g. Violation of terms, fraud…"
+              style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;">
           </div>
-          <div class="confirm-modal-body">
-            <p id="blockModalDesc"></p>
-            <div id="blockReasonWrap" style="margin-top:14px;">
-              <label
-                style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;display:block;margin-bottom:6px;">Reason
-                (optional)</label>
-              <input id="blockReasonInput" type="text" placeholder="e.g. Violation of terms, fraud…"
-                style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;">
-            </div>
-          </div>
-          <div class="confirm-modal-footer">
-            <button id="blockModalCancelBtn" class="confirm-modal-btn confirm-btn-cancel">Cancel</button>
-            <button id="blockModalConfirmBtn" class="confirm-modal-btn confirm-btn-confirm danger">Block</button>
-          </div>
+        </div>
+        <div class="confirm-modal-footer">
+          <button id="blockModalCancelBtn" class="confirm-modal-btn confirm-btn-cancel">Cancel</button>
+          <button id="blockModalConfirmBtn" class="confirm-modal-btn confirm-btn-confirm danger">Block</button>
         </div>
       </div>
     </div>
 
+    <!-- ── Reject ID Modal ── -->
+    <div id="rejectIdModal" class="confirm-modal-overlay">
+      <div class="confirm-modal">
+        <div class="confirm-modal-header">
+          <h3 class="confirm-modal-title">Reject ID Submission</h3>
+        </div>
+        <div class="confirm-modal-body">
+          <p style="font-size:.84rem;color:#64748b;margin-bottom:12px;">Provide a reason so the guest knows what to fix
+            and can re-upload.</p>
+          <label
+            style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;display:block;margin-bottom:6px;">Reason</label>
+          <input id="rejectReasonInput" type="text" placeholder="e.g. Image is blurry, ID is expired, wrong document…"
+            style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;">
+        </div>
+        <div class="confirm-modal-footer">
+          <button class="confirm-modal-btn confirm-btn-cancel" onclick="closeRejectModal()">Cancel</button>
+          <button class="confirm-modal-btn confirm-btn-confirm danger" onclick="submitReject()">Reject</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /cards-area -->
+
+  <div id="approveIdModal" class="confirm-modal-overlay">
+    <div class="confirm-modal">
+      <div class="confirm-modal-header">
+        <h3 class="confirm-modal-title">Approve ID Document</h3>
+      </div>
+      <div class="confirm-modal-body">
+        <p style="font-size:.84rem;color:#64748b;">Are you sure you want to approve this ID document? The guest will be
+          notified and can proceed with booking.</p>
+      </div>
+      <div class="confirm-modal-footer">
+        <button class="confirm-modal-btn confirm-btn-cancel" onclick="closeApproveModal()">Cancel</button>
+        <button class="confirm-modal-btn confirm-btn-confirm" id="approveModalConfirmBtn"
+          style="background:#16a34a;border-color:#16a34a;color:#fff;" onclick="submitApprove()">
+          ✓ Approve
+        </button>
+      </div>
+    </div>
   </div>
-</div>
+
+  <!-- ── View ID Modal ── -->
+  <div id="viewIdModal" class="confirm-modal-overlay">
+    <div class="confirm-modal" style="max-width:800px;">
+      <div class="confirm-modal-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <h3 class="confirm-modal-title" id="viewIdModalTitle">Identity Document</h3>
+        <button class="modal-close-btn" onclick="closeViewIdModal()">&times;</button>
+      </div>
+      <div class="confirm-modal-body"
+        style="padding:0;display:flex;align-items:center;justify-content:center;background:#f8fafc;min-height:400px;max-height:65vh;">
+        <img id="viewIdImage" src="" alt="ID Document"
+          style="max-width:100%;max-height:65vh;height:auto;width:auto;object-fit:contain;display:block;">
+      </div>
+      <div class="confirm-modal-footer">
+        <button class="confirm-modal-btn confirm-btn-cancel" onclick="closeViewIdModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div><!-- /page-inner -->
+
 
 <script>window.PS_RT_PAGE = 'guests_clients';</script>
 <script src="../../assets/js/admin/guest_client.js"></script>

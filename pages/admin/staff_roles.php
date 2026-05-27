@@ -7,9 +7,8 @@ if ($_SESSION['role'] !== 'admin') {
 <head><meta http-equiv="refresh" content="2;url=javascript:history.back()"></head>
 <body>
 <script src="../../assets/js/toast.js"></script>
+<script src="../../assets/js/responsive.js"></script>
 
-  <script src="../../assets/js/responsive.js"></script>
-<script src="../../assets/js/admin/staff_roles-inline.js"></script>
 </body>
 </html>';
     exit;
@@ -19,72 +18,7 @@ $page_title = 'Staff / Admin Roles';
 $active_page = 'staff_roles';
 include '../../includes/db.php';
 include '../../includes/layout_open.php';
-
-if ($_SESSION['role'] !== 'admin') {
-    header('Location: ../login.php');
-    exit;
-}
-
-$search = trim($_GET['search'] ?? '');
-
-$where = "WHERE u.role != 'user'";
-if ($search !== '') {
-    $s = mysqli_real_escape_string($conn, $search);
-    $where .= " AND (u.first_name LIKE '%$s%' OR u.last_name LIKE '%$s%' OR u.email LIKE '%$s%')";
-}
-
-$sql = "
-    SELECT
-        u.user_id,
-        u.first_name, u.last_name, u.email, u.phone,
-        u.role, u.created_at, u.profile_photo,
-        COALESCE(u.is_active, 1) AS is_active,
-        u.last_login
-    FROM users u
-    $where
-    ORDER BY FIELD(u.role,'admin','manager','frontdesk','accounting','maintenance'), u.first_name
-";
-$res = mysqli_query($conn, $sql);
-$staff = [];
-while ($row = mysqli_fetch_assoc($res))
-    $staff[] = $row;
-
-$counts = ['admin' => 0, 'manager' => 0, 'frontdesk' => 0, 'accounting' => 0, 'maintenance' => 0, 'total' => 0];
-foreach ($staff as $s) {
-    $counts['total']++;
-    $r = strtolower($s['role']);
-    if (isset($counts[$r]))
-        $counts[$r]++;
-}
-
-$role_defs = [
-    'admin' => ['Super Admin', 'Full access to all modules', '#0f2744'],
-    'manager' => ['Property Manager', 'Properties, bookings, reports', '#1d4ed8'],
-    'frontdesk' => ['Front Desk', 'Check-in/out, reservations', '#059669'],
-    'accounting' => ['Accounting', 'Financial, invoices, reports', '#b45309'],
-    'maintenance' => ['Maintenance', 'Units, amenities, maintenance tickets', '#6b7280'],
-];
-
-function roleLabel($role)
-{
-    global $role_defs;
-    return $role_defs[strtolower($role)][0] ?? ucfirst($role);
-}
-function lastActiveLabel($lastLogin)
-{
-    if (!$lastLogin)
-        return 'Never';
-    $diff = time() - strtotime($lastLogin);
-    if ($diff < 60)
-        return 'Just now';
-    if ($diff < 3600)
-        return round($diff / 60) . ' min ago';
-    if ($diff < 86400)
-        return round($diff / 3600) . ' hr' . (round($diff / 3600) > 1 ? 's' : '') . ' ago';
-    if ($diff < 604800)
-        return round($diff / 86400) . ' day' . (round($diff / 86400) > 1 ? 's' : '') . ' ago';
-    return date('M j, Y', strtotime($lastLogin));
-}
+include '../../lib/admin-queries/staff_roles_queries.php';
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/staff_roles.css">
@@ -98,7 +32,8 @@ function lastActiveLabel($lastLogin)
             <p class="dash-subtitle">Manage team members and their access permissions.</p>
         </div>
         <div class="dash-header-actions">
-            <button class="btn btn-primary">
+            <!-- id="open-invite-modal" -->
+            <button class="btn btn-primary" id="open-invite-modal">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
@@ -114,7 +49,7 @@ function lastActiveLabel($lastLogin)
             <div class="stat-card">
                 <div>
                     <div class="stat-label">Total Staff</div>
-                    <div class="stat-value"><?= $counts['total'] ?></div>
+                    <div class="stat-value" id="stat-total"><?= $counts['total'] ?></div>
                 </div>
                 <div class="stat-icon-wrap blue">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -128,7 +63,7 @@ function lastActiveLabel($lastLogin)
             <div class="stat-card">
                 <div>
                     <div class="stat-label">Admins</div>
-                    <div class="stat-value"><?= $counts['admin'] ?></div>
+                    <div class="stat-value" id="role-count-admin"><?= $counts['admin'] ?></div>
                 </div>
                 <div class="stat-icon-wrap gold">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -139,7 +74,7 @@ function lastActiveLabel($lastLogin)
             <div class="stat-card">
                 <div>
                     <div class="stat-label">Managers</div>
-                    <div class="stat-value"><?= $counts['manager'] ?></div>
+                    <div class="stat-value" id="role-count-manager"><?= $counts['manager'] ?></div>
                 </div>
                 <div class="stat-icon-wrap green">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -151,7 +86,7 @@ function lastActiveLabel($lastLogin)
             <div class="stat-card">
                 <div>
                     <div class="stat-label">Field Staff</div>
-                    <div class="stat-value"><?= $counts['frontdesk'] + $counts['maintenance'] ?></div>
+                    <div class="stat-value" id="role-count-field"><?= $counts['frontdesk'] + $counts['maintenance'] ?></div>
                 </div>
                 <div class="stat-icon-wrap red">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -193,7 +128,7 @@ function lastActiveLabel($lastLogin)
                         <tbody id="staffTableBody">
                             <?php if (empty($staff)): ?>
                                 <tr>
-                                    <td colspan="6" style="text-align:center;padding:40px;color:#94a3b8;">No staff found.
+                                    <td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">No staff found.
                                     </td>
                                 </tr>
                             <?php else: ?>
@@ -203,6 +138,7 @@ function lastActiveLabel($lastLogin)
                                     $photo = $s['profile_photo'] ?? '';
                                     $roleCls = 'role-' . strtolower($s['role']);
                                     $isActive = (int) $s['is_active'];
+                                    $isSelf = (int) $s['user_id'] === (int) $_SESSION['user_id'];
                                     ?>
                                     <tr data-user-id="<?= $s['user_id'] ?>" data-active="<?= $isActive ?>">
                                         <td>
@@ -236,7 +172,7 @@ function lastActiveLabel($lastLogin)
                                                     onclick="toggleActive(<?= $s['user_id'] ?>, '<?= $fullName ?>', <?= $isActive ?>)">
                                                     <?= $isActive ? 'Deactivate' : 'Activate' ?>
                                                 </button>
-                                                <?php if ($s['user_id'] != $_SESSION['user_id']): ?>
+                                                <?php if (!$isSelf): ?>
                                                     <button class="tbl-btn danger"
                                                         onclick="removeStaff(<?= $s['user_id'] ?>, '<?= $fullName ?>')">
                                                         Remove
@@ -251,7 +187,8 @@ function lastActiveLabel($lastLogin)
                     </table>
                 </div>
                 <div style="padding:10px 20px;font-size:0.75rem;color:#94a3b8;border-top:1px solid #f1f5f9;">
-                    <span id="staff-count"><?= count($staff) ?></span> team member<?= count($staff) !== 1 ? 's' : '' ?>
+                    <span id="staff-count"><?= count($staff) ?></span>
+                    team member<?= count($staff) !== 1 ? 's' : '' ?>
                     <?= $search ? '· search: <strong>' . htmlspecialchars($search) . '</strong>' : '' ?>
                 </div>
             </div>
@@ -278,11 +215,105 @@ function lastActiveLabel($lastLogin)
     </div>
 </div>
 
+<!-- Invite Modal — id="inviteOverlay" -->
+<div id="inviteOverlay" class="modal-overlay">
+    <div class="modal-box" style="max-width:440px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Invite Staff Member</h3>
+            <button class="modal-close" onclick="closeInvite()">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;">
+            <div style="display:flex;gap:10px;">
+                <div style="flex:1;">
+                    <label class="form-label">First Name</label>
+                    <!-- id="invFirst" -->
+                    <input id="invFirst" type="text" class="form-input" placeholder="Juan">
+                </div>
+                <div style="flex:1;">
+                    <label class="form-label">Last Name</label>
+                    <!-- id="invLast" -->
+                    <input id="invLast" type="text" class="form-input" placeholder="Dela Cruz">
+                </div>
+            </div>
+            <div>
+                <label class="form-label">Email Address</label>
+                <!-- id="invEmail" -->
+                <input id="invEmail" type="email" class="form-input" placeholder="staff@example.com">
+            </div>
+            <div>
+                <label class="form-label">Role</label>
+                <!-- id="invRole" -->
+                <select id="invRole" class="form-input">
+                    <option value="frontdesk">Front Desk</option>
+                    <option value="manager">Property Manager</option>
+                    <option value="accounting">Accounting</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+            <button onclick="submitInvite()" class="btn btn-primary" style="width:100%;margin-top:4px;">
+                Send Invite
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toggle Active/Inactive Confirm Modal -->
+<div id="toggleActiveOverlay" class="modal-overlay">
+    <div class="modal-box" style="max-width:400px;text-align:center;">
+        <div style="padding:28px 24px 0;">
+            <div id="toggleActiveIcon"
+                style="width:56px;height:56px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="26" height="26">
+                    <circle cx="12" cy="12" r="9" />
+                    <polyline points="9 12 11 14 15 10" />
+                </svg>
+            </div>
+            <h3 class="modal-title" id="toggleActiveTitle" style="margin-bottom:8px;">Deactivate Staff?</h3>
+            <p style="color:#64748b;font-size:13.5px;margin:0 0 6px;" id="toggleActiveName"></p>
+            <p style="color:#94a3b8;font-size:12px;margin:0 0 24px;" id="toggleActiveNote"></p>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;padding:0 24px 24px;">
+            <button class="inv-btn-cancel" onclick="closeToggleModal()">Cancel</button>
+            <button id="toggleActiveConfirmBtn"
+                style="padding:9px 20px;border-radius:10px;border:none;font-size:0.83rem;font-weight:600;cursor:pointer;color:#fff;"
+                onclick="confirmToggleActive()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Remove Staff Confirm Modal -->
+<div id="removeStaffOverlay" class="modal-overlay">
+    <div class="modal-box" style="max-width:400px;text-align:center;">
+        <div style="padding:28px 24px 0;">
+            <div
+                style="width:56px;height:56px;margin:0 auto 14px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;">
+                <svg fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24" width="26" height="26">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                    <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+                </svg>
+            </div>
+            <h3 class="modal-title" style="margin-bottom:8px;">Remove Staff Member?</h3>
+            <p style="color:#64748b;font-size:13.5px;margin:0 0 6px;" id="removeStaffName"></p>
+            <p style="color:#94a3b8;font-size:12px;margin:0 0 24px;">This will permanently remove this staff member.
+                This action cannot be undone.</p>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;padding:0 24px 24px;">
+            <button class="inv-btn-cancel" onclick="closeRemoveModal()">Cancel</button>
+            <button id="removeStaffConfirmBtn"
+                style="padding:9px 20px;border-radius:10px;border:none;background:#dc2626;color:#fff;font-size:0.83rem;font-weight:600;cursor:pointer;"
+                onclick="confirmRemoveStaff()">Remove</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    window.PS_RT_PAGE = 'staff';
-    window._currentUserId = <?= (int) $_SESSION['user_id'] ?>;
+    // Pass current user ID to staff_roles.js for isSelf check in buildStaffRow
+    window.__PS_STAFF__ = {
+        currentUserId: <?= (int) $_SESSION['user_id'] ?>,
+    };
 </script>
-<script src="../../assets/js/admin/staff_roles-inline.js"></script>
 <script src="../../assets/js/admin/staff_roles.js"></script>
 
 <?php include '../../includes/layout_close.php'; ?>

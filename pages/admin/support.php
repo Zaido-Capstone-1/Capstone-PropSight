@@ -15,92 +15,7 @@ $active_page = 'support';
 
 include '../../includes/db.php';
 include '../../includes/layout_open.php';
-
-$adminId = (int) $_SESSION['user_id'];
-
-// ── Filters ──────────────────────────────────────────────────────
-$statusFilter = trim($_GET['status'] ?? 'all');
-$search = trim($_GET['search'] ?? '');
-$perPage = 15;
-$page = max(1, (int) ($_GET['p'] ?? 1));
-$offset = ($page - 1) * $perPage;
-
-// ── Support Tickets ───────────────────────────────────────────────
-$ticketWhere = "WHERE 1=1";
-if ($statusFilter !== 'all') {
-    $sf = mysqli_real_escape_string($conn, $statusFilter);
-    $ticketWhere .= " AND t.status = '$sf'";
-}
-if ($search !== '') {
-    $se = mysqli_real_escape_string($conn, $search);
-    $ticketWhere .= " AND (t.subject LIKE '%$se%' OR CONCAT(u.first_name,' ',u.last_name) LIKE '%$se%' OR t.category LIKE '%$se%')";
-}
-
-$ticketCountRes = mysqli_query($conn, "
-    SELECT COUNT(*) AS c
-    FROM support_tickets t
-    JOIN users u ON u.user_id = t.user_id
-    $ticketWhere
-");
-$ticketTotal = ($ticketCountRes && ($r = mysqli_fetch_assoc($ticketCountRes))) ? (int) ($r['c'] ?? 0) : 0;
-$ticketPages = max(1, (int) ceil($ticketTotal / $perPage));
-
-$ticketsRes = mysqli_query($conn, "
-    SELECT
-        t.ticket_id, t.category, t.subject, t.priority, t.status, t.created_at,
-        CONCAT(u.first_name,' ',u.last_name) AS user_name,
-        u.email AS user_email,
-        u.profile_photo AS user_photo,
-        (SELECT COUNT(*) FROM support_messages sm WHERE sm.ticket_id = t.ticket_id) AS msg_count,
-        (SELECT sm2.body FROM support_messages sm2 WHERE sm2.ticket_id = t.ticket_id ORDER BY sm2.created_at DESC LIMIT 1) AS last_message
-    FROM support_tickets t
-    JOIN users u ON u.user_id = t.user_id
-    $ticketWhere
-    ORDER BY t.created_at DESC
-    LIMIT $perPage OFFSET $offset
-");
-$tickets = [];
-if ($ticketsRes)
-    while ($r = mysqli_fetch_assoc($ticketsRes))
-        $tickets[] = $r;
-
-// ── Summary Stats ─────────────────────────────────────────────────
-$ticketStats = mysqli_fetch_assoc(mysqli_query($conn, "
-    SELECT
-        COUNT(*) AS total,
-        SUM(status = 'open') AS open_cnt,
-        SUM(status = 'in_progress') AS in_progress_cnt,
-        SUM(status = 'resolved') AS resolved_cnt,
-        SUM(status = 'closed') AS closed_cnt
-    FROM support_tickets
-")) ?: [];
-
-// ── PHP Helpers ───────────────────────────────────────────────────
-function ticketBadge(string $s): array
-{
-    return match ($s) {
-        'open' => ['label' => 'Open', 'cls' => 'badge-open'],
-        'in_progress' => ['label' => 'In Progress', 'cls' => 'badge-progress'],
-        'resolved' => ['label' => 'Resolved', 'cls' => 'badge-done'],
-        'closed' => ['label' => 'Closed', 'cls' => 'badge-done'],
-        default => ['label' => ucfirst($s), 'cls' => 'badge-pending'],
-    };
-}
-
-function priorityBadge(string $p): array
-{
-    return match (strtolower($p)) {
-        'urgent', 'high' => ['label' => ucfirst($p), 'cls' => 'pri-high'],
-        'medium', 'normal' => ['label' => 'Medium', 'cls' => 'pri-med'],
-        default => ['label' => 'Low', 'cls' => 'pri-low'],
-    };
-}
-
-function buildQS(array $overrides = []): string
-{
-    $base = array_merge($_GET, $overrides);
-    return '?' . htmlspecialchars(http_build_query($base));
-}
+include '../../lib/admin-queries/support_queries.php';
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/support.css">
@@ -120,7 +35,7 @@ function buildQS(array $overrides = []): string
         <div class="sm-stat">
             <div>
                 <div class="sm-stat-label">Total Tickets</div>
-                <div class="sm-stat-value"><?= (int) ($ticketStats['total'] ?? 0) ?></div>
+                <div class="sm-stat-value" id="stat-spt-total"><?= (int) ($ticketStats['total'] ?? 0) ?></div>
             </div>
             <div class="sm-stat-icon ic-slate" style="margin-left:auto;">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -132,7 +47,7 @@ function buildQS(array $overrides = []): string
         <div class="sm-stat">
             <div>
                 <div class="sm-stat-label">Open</div>
-                <div class="sm-stat-value"><?= (int) ($ticketStats['open_cnt'] ?? 0) ?></div>
+                <div class="sm-stat-value" id="stat-spt-open"><?= (int) ($ticketStats['open_cnt'] ?? 0) ?></div>
             </div>
             <div class="sm-stat-icon ic-red" style="margin-left:auto;">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -146,7 +61,7 @@ function buildQS(array $overrides = []): string
         <div class="sm-stat">
             <div>
                 <div class="sm-stat-label">In Progress</div>
-                <div class="sm-stat-value"><?= (int) ($ticketStats['in_progress_cnt'] ?? 0) ?></div>
+                <div class="sm-stat-value" id="stat-spt-progress"><?= (int) ($ticketStats['in_progress_cnt'] ?? 0) ?></div>
             </div>
             <div class="sm-stat-icon ic-blue" style="margin-left:auto;">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -160,7 +75,7 @@ function buildQS(array $overrides = []): string
         <div class="sm-stat">
             <div>
                 <div class="sm-stat-label">Resolved</div>
-                <div class="sm-stat-value"><?= (int) ($ticketStats['resolved_cnt'] ?? 0) ?></div>
+                <div class="sm-stat-value" id="stat-spt-resolved"><?= (int) ($ticketStats['resolved_cnt'] ?? 0) ?></div>
             </div>
             <div class="sm-stat-icon ic-green" style="margin-left:auto;">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

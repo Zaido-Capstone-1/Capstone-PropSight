@@ -40,7 +40,13 @@ while ($sr = $syncRes->fetch_assoc()) {
     );
     $insStmt->bind_param('iisi', $userId, $syncPts, $syncDesc, $syncBookingId);
     $insStmt->execute();
+    $insStmt->store_result();
+    $insStmt->free_result();
     $insStmt->close();
+
+    while ($conn->more_results()) {
+        $conn->next_result();
+    }
 }
 $syncStmt->close();
 
@@ -111,3 +117,38 @@ if (empty($history)) {
         'type' => 'bonus',
     ];
 }
+/* ── 5. Vouchers ── */
+$vouchers = [];
+// Free any lingering result sets before running next query
+while ($conn->more_results()) {
+    $conn->next_result();
+}
+
+$voucherStmt = $conn->prepare("
+    SELECT reward_name, voucher_code, points_used, status, created_at
+    FROM loyalty_redemptions
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+    LIMIT 20
+");
+$voucherStmt->bind_param('i', $userId);
+$voucherStmt->execute();
+$voucherResult = $voucherStmt->get_result();
+while ($row = $voucherResult->fetch_assoc())
+    $vouchers[] = $row;
+$voucherResult->free();
+$voucherStmt->close();
+
+$rewards = [];
+$rwStmt = $conn->prepare(
+    "SELECT reward_id AS id, name, description AS `desc`, points_cost AS pts
+     FROM loyalty_rewards
+     WHERE is_active = 1
+     ORDER BY points_cost ASC"
+);
+$rwStmt->execute();
+$rwResult = $rwStmt->get_result();
+while ($rw = $rwResult->fetch_assoc()) {
+    $rewards[] = $rw;
+}
+$rwStmt->close();

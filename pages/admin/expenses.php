@@ -19,42 +19,7 @@ $active_page = 'expenses';
 
 include '../../includes/db.php';
 include '../../includes/layout_open.php';
-
-function db_query($conn, string $sql, array $params = []): array
-{
-  $st = $conn->prepare($sql);
-  if (!$st)
-    return [];
-  if (!empty($params)) {
-    $types = '';
-    foreach ($params as $p) {
-      $types .= is_int($p) ? 'i' : (is_float($p) ? 'd' : 's');
-    }
-    $st->bind_param($types, ...$params);
-  }
-  $st->execute();
-  $rows = [];
-  $res = $st->get_result();
-  while ($row = $res->fetch_assoc())
-    $rows[] = $row;
-  $st->close();
-  return $rows;
-}
-
-$month_filter = $_GET['month'] ?? date('Y-m');
-[$yr, $mo] = array_pad(explode('-', $month_filter), 2, '01');
-$exp_cur_picker_year = (int) date('Y');
-$exp_cur_picker_month = (int) $mo;
-$date_from = "$yr-$mo-01";
-$date_to = date('Y-m-t', strtotime($date_from));
-
-$prev_month = date('Y-m', strtotime('-1 month', strtotime($date_from)));
-$next_month = date('Y-m', strtotime('+1 month', strtotime($date_from)));
-$next_disabled = $next_month > date('Y-m');
-
-$properties = db_query($conn, "SELECT property_id, property_name FROM properties ORDER BY property_name");
-$units = db_query($conn, "SELECT unit_id, unit_name, unit_number, property_id FROM units ORDER BY unit_name");
-$all_cats = db_query($conn, "SELECT DISTINCT expense_category FROM expenses ORDER BY expense_category");
+require_once '../../lib/admin-queries/expenses_queries.php';
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/expenses.css">

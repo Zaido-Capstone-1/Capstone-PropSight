@@ -1053,4 +1053,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (new URLSearchParams(window.location.search).get('forgot') === '1') {
         openForgotModal();
     }
+
+    // Auto-open login modal if URL has #login (e.g. from staff invite email)
+    if (window.location.hash === '#login') {
+        openModal('login');
+    }
 });

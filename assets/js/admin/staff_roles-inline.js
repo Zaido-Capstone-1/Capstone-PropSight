@@ -41,9 +41,8 @@ function submitInvite() {
     const last = document.getElementById('invLast')?.value.trim();
     const email = document.getElementById('invEmail')?.value.trim();
     const role = document.getElementById('invRole')?.value;
-    const password = document.getElementById('invPassword')?.value;
 
-    if (!first || !last || !email || !password) {
+    if (!first || !last || !email) {
 
         showToast(
             'Please fill in all required fields.',
@@ -54,18 +53,24 @@ function submitInvite() {
         return;
     }
 
-    if (password.length < 8) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
 
         showToast(
-            'Password must be at least 8 characters.',
+            'Please enter a valid email address.',
             'warning',
-            'Weak Password'
+            'Invalid Email'
         );
 
         return;
     }
 
-    showToast('Creating account…', 'info');
+    showToast('Sending invite…', 'info');
+
+    const btn = document.querySelector('#inviteOverlay .btn-primary');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+    }
 
     fetch('../../api/staff.php', {
         method: 'POST',
@@ -80,21 +85,26 @@ function submitInvite() {
             last_name: last,
             email,
             role,
-            password
+            csrf_token: window.PS_CSRF_TOKEN ?? ''
         })
     })
         .then(r => r.json())
 
         .then(data => {
 
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Send Invite';
+            }
+
             closeInvite();
 
             if (data.success) {
 
                 showToast(
-                    data.message || 'Account created!',
+                    data.message || 'Invite sent!',
                     'success',
-                    'Account Created!'
+                    'Invite Sent!'
                 );
 
                 setTimeout(() => {
@@ -104,7 +114,7 @@ function submitInvite() {
             } else {
 
                 showToast(
-                    data.message || 'Failed to create account.',
+                    data.message || 'Failed to send invite.',
                     'error',
                     'Failed'
                 );
@@ -112,6 +122,11 @@ function submitInvite() {
         })
 
         .catch(() => {
+
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Send Invite';
+            }
 
             showToast(
                 'Server unreachable.',
@@ -145,12 +160,18 @@ function toggleActive(userId, name, current) {
 
         body: new URLSearchParams({
             action: 'toggle_active',
-            user_id: userId
+            user_id: userId,
+            csrf_token: window.PS_CSRF_TOKEN ?? ''
         })
     })
         .then(r => r.json())
 
         .then(data => {
+
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Send Invite';
+            }
 
             if (data.success) {
 
@@ -205,12 +226,18 @@ function removeStaff(userId, name) {
 
         body: new URLSearchParams({
             action: 'remove_staff', // FIXED
-            user_id: userId
+            user_id: userId,
+            csrf_token: window.PS_CSRF_TOKEN ?? ''
         })
     })
         .then(r => r.json())
 
         .then(data => {
+
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Send Invite';
+            }
 
             if (data.success) {
 

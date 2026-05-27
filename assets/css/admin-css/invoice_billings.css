@@ -1038,3 +1038,8 @@
 .inv-status-dot.sent {
     background: var(--inv-info, #0891b2);
 }
+
+.table-wrap {
+    overflow-x: auto;
+    padding: 0 24px;
+}

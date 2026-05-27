@@ -35,7 +35,7 @@ if ($idStatus !== 'approved') {
 $user_id = $_SESSION['user_id'];
 
 $check = $conn->prepare("
-    SELECT booking_id 
+    SELECT booking_id, checkin_date, checkout_date, status
     FROM bookings 
     WHERE user_id = ? 
     AND status IN ('pending','confirmed','active')
@@ -43,11 +43,19 @@ $check = $conn->prepare("
 ");
 $check->bind_param("i", $user_id);
 $check->execute();
-$res = $check->get_result();
+$existing = $check->get_result()->fetch_assoc();
+$check->close();
 
-if ($res->num_rows > 0) {
+if ($existing) {
+    $bkRef = 'BK-' . str_pad($existing['booking_id'], 6, '0', STR_PAD_LEFT);
+    $bkIn = date('M j, Y', strtotime($existing['checkin_date']));
+    $bkOut = date('M j, Y', strtotime($existing['checkout_date']));
+    $bkStatus = ucfirst($existing['status']);
     ob_clean();
-    echo json_encode(['success' => false, 'message' => 'You already have an active booking.']);
+    echo json_encode([
+        'success' => false,
+        'message' => "You already have an active booking ($bkRef · $bkStatus: $bkIn – $bkOut). Please complete or cancel it before making a new one.",
+    ]);
     exit;
 }
 

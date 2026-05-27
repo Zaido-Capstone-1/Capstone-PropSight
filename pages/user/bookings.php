@@ -32,7 +32,7 @@ $active_nav = 'bookings';
 require '../../includes/_layout.php';
 
 require_once '../../includes/db.php';
-require_once '../../api/user/bookings_data.php';
+require_once '../../lib/user-queries/bookings_queries.php';
 
 $uid = (int) $_SESSION['user_id'];
 

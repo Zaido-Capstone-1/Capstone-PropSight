@@ -15,17 +15,22 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
     exit;
 }
 
-$userId = (int)$_SESSION['user_id'];
+$userId = (int) $_SESSION['user_id'];
 $method = $_SERVER['REQUEST_METHOD'];
 
-function getTier(int $pts): array {
-    if ($pts >= 5000) return ['name'=>'Diamond','next'=>null,'min'=>5000,'max'=>null,'icon'=>'👑'];
-    if ($pts >= 2000) return ['name'=>'Platinum','next'=>'Diamond','min'=>2000,'max'=>4999,'icon'=>'💎'];
-    if ($pts >= 500)  return ['name'=>'Gold','next'=>'Platinum','min'=>500,'max'=>1999,'icon'=>'🥇'];
-    return ['name'=>'Silver','next'=>'Gold','min'=>0,'max'=>499,'icon'=>'🥈'];
+function getTier(int $pts): array
+{
+    if ($pts >= 5000)
+        return ['name' => 'Diamond', 'next' => null, 'min' => 5000, 'max' => null, 'icon' => '👑'];
+    if ($pts >= 2000)
+        return ['name' => 'Platinum', 'next' => 'Diamond', 'min' => 2000, 'max' => 4999, 'icon' => '💎'];
+    if ($pts >= 500)
+        return ['name' => 'Gold', 'next' => 'Platinum', 'min' => 500, 'max' => 1999, 'icon' => '🥇'];
+    return ['name' => 'Silver', 'next' => 'Gold', 'min' => 0, 'max' => 499, 'icon' => '🥈'];
 }
 
-function syncCompletedBookingPoints(mysqli $conn, int $userId): void {
+function syncCompletedBookingPoints(mysqli $conn, int $userId): void
+{
     $stmt = $conn->prepare("
         SELECT b.booking_id, b.total_amount
         FROM bookings b
@@ -40,14 +45,16 @@ function syncCompletedBookingPoints(mysqli $conn, int $userId): void {
     $stmt->bind_param('i', $userId);
     $stmt->execute();
     $res = $stmt->get_result();
-    if (!$res) return;
+    if (!$res)
+        return;
 
     while ($row = mysqli_fetch_assoc($res)) {
-        $bookingId = (int)($row['booking_id'] ?? 0);
-        $amount = (float)($row['total_amount'] ?? 0);
-        if ($bookingId <= 0) continue;
+        $bookingId = (int) ($row['booking_id'] ?? 0);
+        $amount = (float) ($row['total_amount'] ?? 0);
+        if ($bookingId <= 0)
+            continue;
 
-        $pts = max(1, (int)floor($amount / 10)); // PHP 10 = 1 point
+        $pts = max(1, (int) floor($amount / 10)); // PHP 10 = 1 point
         $desc = "Booking #$bookingId stay completed";
         $ins = $conn->prepare(
             "INSERT INTO loyalty_points (user_id, points, type, description, booking_id)
@@ -70,9 +77,9 @@ if ($method === 'GET') {
     $balStmt->execute();
     $balRes = $balStmt->get_result()->fetch_assoc();
     $balStmt->close();
-    $balance = max(0, (int)$balRes['bal']);
+    $balance = max(0, (int) $balRes['bal']);
 
-    $tier      = getTier($balance);
+    $tier = getTier($balance);
     $ptsToNext = $tier['next'] ? ($tier['max'] + 1 - $balance) : 0;
 
     // History
@@ -93,26 +100,40 @@ if ($method === 'GET') {
     $histStmt->execute();
     $histRes = $histStmt->get_result();
     $history = [];
-    while ($row = mysqli_fetch_assoc($histRes)) $history[] = $row;
+    while ($row = mysqli_fetch_assoc($histRes))
+        $history[] = $row;
     $histStmt->close();
 
-    // Rewards catalogue (static)
-    $rewards = [
-        ['id'=>1,'name'=>'Free Night Stay','desc'=>'One complimentary night in any Standard room','pts'=>800,'img'=>'🏠'],
-        ['id'=>2,'name'=>'Room Upgrade','desc'=>'Upgrade to next room tier on your next booking','pts'=>400,'img'=>'⬆️'],
-        ['id'=>3,'name'=>'Free Breakfast','desc'=>'Complimentary breakfast for two guests','pts'=>150,'img'=>'🍳'],
-        ['id'=>4,'name'=>'Late Check-out','desc'=>'Check out at 2PM instead of 12PM','pts'=>100,'img'=>'🕑'],
-        ['id'=>5,'name'=>'Spa Voucher','desc'=>'₱500 discount at partner spa centers','pts'=>300,'img'=>'💆'],
-        ['id'=>6,'name'=>'Airport Transfer','desc'=>'Free roundtrip transfer from nearest airport','pts'=>600,'img'=>'🚌'],
-    ];
+    // Rewards catalogue from DB (active only)
+    $rwStmt = $conn->query(
+        "SELECT reward_id AS id, name, description AS `desc`, points_cost AS pts FROM loyalty_rewards WHERE is_active = 1 ORDER BY pts ASC"
+    );
+    $rewards = [];
+    while ($rw = $rwStmt->fetch_assoc())
+        $rewards[] = $rw;
+
+    $voucherStmt = $conn->prepare("
+        SELECT reward_name, voucher_code, points_used, status, created_at
+        FROM loyalty_redemptions
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT 20
+    ");
+    $voucherStmt->bind_param('i', $userId);
+    $voucherStmt->execute();
+    $vouchers = [];
+    while ($row = $voucherStmt->get_result()->fetch_assoc())
+        $vouchers[] = $row;
+    $voucherStmt->close();
 
     echo json_encode([
-        'success'    => true,
-        'balance'    => $balance,
-        'tier'       => $tier,
-        'pts_to_next'=> $ptsToNext,
-        'history'    => $history,
-        'rewards'    => $rewards,
+        'success' => true,
+        'balance' => $balance,
+        'tier' => $tier,
+        'pts_to_next' => $ptsToNext,
+        'history' => $history,
+        'rewards' => $rewards,
+        'vouchers' => $vouchers,
     ]);
     exit;
 }
@@ -120,12 +141,15 @@ if ($method === 'GET') {
 if ($method === 'POST') {
     require_verified_user_action(true);
     require_csrf_token(true);
-    $action   = $_POST['action'] ?? 'redeem';
-    $pts      = (int)($_POST['points'] ?? 0);
-    $name     = trim($_POST['reward_name'] ?? 'Reward');
+    $action = $_POST['action'] ?? 'redeem';
+    $pts = (int) ($_POST['points'] ?? 0);
+    $name = trim($_POST['reward_name'] ?? 'Reward');
 
     if ($action === 'redeem') {
-        if ($pts <= 0) { echo json_encode(['success'=>false,'message'=>'Invalid points.']); exit; }
+        if ($pts <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Invalid points.']);
+            exit;
+        }
 
         // Check balance
         $balStmt = $conn->prepare('SELECT COALESCE(SUM(points),0) AS bal FROM loyalty_points WHERE user_id = ?');
@@ -133,14 +157,15 @@ if ($method === 'POST') {
         $balStmt->execute();
         $balRes = $balStmt->get_result()->fetch_assoc();
         $balStmt->close();
-        $balance = max(0, (int)$balRes['bal']);
+        $balance = max(0, (int) $balRes['bal']);
 
         if ($balance < $pts) {
-            echo json_encode(['success'=>false,'message'=>'Insufficient points.']); exit;
+            echo json_encode(['success' => false, 'message' => 'Insufficient points.']);
+            exit;
         }
 
         $deduction = -$pts;
-        $desc      = "Redeemed: $name";
+        $desc = "Redeemed: $name";
         $redeemStmt = $conn->prepare(
             "INSERT INTO loyalty_points (user_id, points, type, description)
              VALUES (?, ?, 'redeem', ?)"
@@ -154,7 +179,7 @@ if ($method === 'POST') {
                 'new_balance' => $newBal,
             ]);
         } else {
-            echo json_encode(['success'=>false,'message'=>mysqli_error($conn)]);
+            echo json_encode(['success' => false, 'message' => mysqli_error($conn)]);
         }
         $redeemStmt->close();
         exit;

@@ -19,40 +19,7 @@ $page_title = 'Units / Rooms';
 $active_page = 'units_rooms';
 include '../../includes/db.php';
 include '../../includes/layout_open.php';
-
-$stats = $conn->query("
-    SELECT COUNT(*) AS total,
-           SUM(status='occupied')    AS occupied,
-           SUM(status='vacant')      AS vacant,
-           SUM(status='maintenance') AS maintenance
-    FROM units
-")->fetch_assoc();
-
-$total = (int) $stats['total'];
-$occupied = (int) $stats['occupied'];
-$vacant = (int) $stats['vacant'];
-$maintenance = (int) $stats['maintenance'];
-
-$properties = [];
-$pr = $conn->query("SELECT property_id, property_name FROM properties ORDER BY property_name ASC");
-while ($p = $pr->fetch_assoc())
-  $properties[] = $p;
-
-$units_result = $conn->query("
-    SELECT u.*, p.property_name,
-        NULLIF(TRIM(CONCAT(usr.first_name, ' ', usr.last_name)), '') AS tenant_name,
-        usr.email AS tenant_email,
-        usr.profile_photo AS tenant_photo,
-        CASE WHEN b.booking_id IS NOT NULL THEN 'occupied' ELSE u.status END AS real_status
-    FROM units u
-    LEFT JOIN properties p ON u.property_id = p.property_id
-    LEFT JOIN bookings b
-        ON u.unit_id = b.unit_id
-        AND b.status IN ('confirmed', 'completed')
-    LEFT JOIN users usr
-        ON b.user_id = usr.user_id
-    ORDER BY u.unit_id DESC
-");
+require_once '../../lib/admin-queries/units_rooms_queries.php';
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/unit_rooms.css">

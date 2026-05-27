@@ -1258,37 +1258,41 @@ textarea {
   border-radius: var(--radius);
   padding: 10px 14px;
   color: white;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   cursor: pointer;
   transition: transform var(--transition), box-shadow var(--transition);
+  letter-spacing: 0.01em;
 }
 
 .event-card:hover {
-  transform: translateX(2px);
-  box-shadow: var(--shadow-md);
+  transform: translateX(3px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
 }
 
 .event-card.coral {
-  background: linear-gradient(135deg, var(--gold), var(--accent-dk));
+  background: linear-gradient(120deg, var(--gold) 0%, var(--accent-dk) 100%);
 }
 
 .event-card.teal {
-  background: var(--success);
+  background: linear-gradient(120deg, #22c55e 0%, #15803d 100%);
 }
 
 .event-card.dark {
-  background: linear-gradient(135deg, var(--blue-600), var(--blue-800));
+  background: linear-gradient(120deg, var(--blue-500) 0%, var(--blue-800) 100%);
 }
 
 .event-card svg {
   width: 14px;
   height: 14px;
-  opacity: .85;
   flex-shrink: 0;
+  background: rgba(255,255,255,0.2);
+  border-radius: 6px;
+  padding: 3px;
+  box-sizing: content-box;
 }
 
 .empty-slot {
@@ -2154,9 +2158,10 @@ textarea {
   color: #166534;
 }
 
+/* Changed completed color */
 .badge-completed {
-  background: #f1f5f9;
-  color: #475569;
+  background: #ede9fe;
+  color: #6d28d9;
 }
 
 .badge-cancelled {

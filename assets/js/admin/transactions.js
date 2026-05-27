@@ -5,10 +5,12 @@ const rowsPerPage = 10;
 
 function paginateTable() {
     const allRows = Array.from(document.querySelectorAll('#tableBody tr'));
-    // Rows passing the filter (not hidden by applyFilters, not already paginated-hidden)
-    const visibleRows = allRows.filter(row =>
-        row.style.display !== 'none' && !row.classList.contains('paginated-hidden')
-    );
+
+    // Clear paginated-hidden so we re-evaluate from a clean state
+    allRows.forEach(row => row.classList.remove('paginated-hidden'));
+
+    // Visible rows = those not hidden by applyFilters (data-filtered="hidden")
+    const visibleRows = allRows.filter(row => row.dataset.filtered !== 'hidden');
 
     const total = visibleRows.length;
     const totalPages = Math.max(1, Math.ceil(total / rowsPerPage));
@@ -86,7 +88,10 @@ function renderPageNumbers(totalPages) {
         btn.type = 'button';
         btn.className = 'txn-pg-num' + (n === cur ? ' active' : '');
         btn.textContent = n;
-        btn.onclick = () => { currentPage = n; paginateTable(); };
+        btn.onclick = () => {
+            currentPage = n;
+            paginateTable();
+        };
         wrap.appendChild(btn);
     });
 }
@@ -139,6 +144,8 @@ if (sessionStorage.getItem('txn_needs_refresh') === '1') {
                 (!cat || row.dataset.category === cat) &&
                 (!month || row.dataset.month === month);
 
+            // Tag each row so paginateTable can tell filter-hidden from page-hidden
+            row.dataset.filtered = show ? '' : 'hidden';
             row.style.display = show ? '' : 'none';
             if (show) n++;
         });
@@ -158,7 +165,7 @@ if (sessionStorage.getItem('txn_needs_refresh') === '1') {
 
     document.getElementById('exportCsvBtn')?.addEventListener('click', function () {
         const visible = Array.from(document.querySelectorAll('#tableBody tr'))
-            .filter(r => r.style.display !== 'none');
+            .filter(r => r.dataset.filtered !== 'hidden');
         const headers = ['Date', 'Reference', 'Description', 'Category', 'Property', 'Type', 'Amount'];
         const lines = [headers.join(',')];
         visible.forEach(function (row) {
@@ -167,9 +174,14 @@ if (sessionStorage.getItem('txn_needs_refresh') === '1') {
             });
             lines.push(cells.join(','));
         });
-        const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+        const blob = new Blob([lines.join('\n')], {
+            type: 'text/csv'
+        });
         const url = URL.createObjectURL(blob);
-        const a = Object.assign(document.createElement('a'), { href: url, download: 'transactions.csv' });
+        const a = Object.assign(document.createElement('a'), {
+            href: url,
+            download: 'transactions.csv'
+        });
         a.click();
         URL.revokeObjectURL(url);
     });
@@ -186,12 +198,18 @@ if (sessionStorage.getItem('txn_needs_refresh') === '1') {
 
 /* ── Table rendering helpers ────────────────────────────────────────────── */
 function fmtPesoTxn(v) {
-    return '₱' + Number(v).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return '₱' + Number(v).toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
 }
 
 function renderTransactionsTable(rows) {
     const tbody = document.querySelector('#tableBody');
-    if (!tbody) { location.reload(); return; }
+    if (!tbody) {
+        location.reload();
+        return;
+    }
 
     if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8;">No transactions found.</td></tr>';
@@ -204,15 +222,15 @@ function renderTransactionsTable(rows) {
         const amtFmt = fmtPesoTxn(parseFloat(t.amount || 0));
         const sign = isIncome ? '+' : '−';
         const monthVal = t.month_val || (t.transaction_date ? t.transaction_date.substring(0, 7) : '');
-        return '<tr data-month="' + monthVal + '" data-type="' + (t.type || '') + '" data-category="' + (t.category || '') + '" data-amount="' + (t.amount || 0) + '">'
-            + '<td style="color:var(--text-soft);font-size:12px;">' + (t.date_label || '—') + '</td>'
-            + '<td><strong>' + (t.reference_no || '—') + '</strong></td>'
-            + '<td>' + (t.description || '—') + '</td>'
-            + '<td><span class="badge badge-blue">' + (t.category || '—') + '</span></td>'
-            + '<td style="font-size:12px;color:var(--text-soft);">' + (t.property_name || '—') + '</td>'
-            + '<td><span class="badge ' + (isIncome ? 'badge-green' : 'badge-red') + '">' + t.type + '</span></td>'
-            + '<td style="font-weight:700;color:' + (isIncome ? '#16a34a' : '#dc2626') + '">' + sign + amtFmt + '</td>'
-            + '</tr>';
+        return '<tr data-month="' + monthVal + '" data-type="' + (t.type || '') + '" data-category="' + (t.category || '') + '" data-amount="' + (t.amount || 0) + '">' +
+            '<td style="color:var(--text-soft);font-size:12px;">' + (t.date_label || '—') + '</td>' +
+            '<td><strong>' + (t.reference_no || '—') + '</strong></td>' +
+            '<td>' + (t.description || '—') + '</td>' +
+            '<td><span class="badge badge-blue">' + (t.category || '—') + '</span></td>' +
+            '<td style="font-size:12px;color:var(--text-soft);">' + (t.property_name || '—') + '</td>' +
+            '<td><span class="badge ' + (isIncome ? 'badge-green' : 'badge-red') + '">' + t.type + '</span></td>' +
+            '<td style="font-weight:700;color:' + (isIncome ? '#16a34a' : '#dc2626') + '">' + sign + amtFmt + '</td>' +
+            '</tr>';
     }).join('');
 
     window.applyFilters();
@@ -232,10 +250,15 @@ function updateTransactionStats(stats) {
 /* ── Real-time refresh ──────────────────────────────────────────────────── */
 function refreshTransactionsTable() {
     const year = new Date().getFullYear();
-    fetch('../../api/transactions.php?year=' + year + '&_=' + Date.now(), { credentials: 'same-origin' })
+    fetch('../../api/transactions.php?year=' + year + '&_=' + Date.now(), {
+            credentials: 'same-origin'
+        })
         .then(r => r.json())
         .then(data => {
-            if (!data || !data.success) { location.reload(); return; }
+            if (!data || !data.success) {
+                location.reload();
+                return;
+            }
             renderTransactionsTable(data.rows || []);
             updateTransactionStats(data.stats || {});
         })

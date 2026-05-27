@@ -1,10 +1,13 @@
 <?php
+if (defined('DB_LOADED')) return;
+define('DB_LOADED', true);
 require_once __DIR__ . '/../config.php';
 
 // Enable comprehensive error reporting
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 // Database connection with retry mechanism and better error handling
+if (!function_exists('createDatabaseConnection')):
 function createDatabaseConnection() {
     $maxRetries = 3;
     $retryDelay = 1; // seconds
@@ -52,6 +55,7 @@ function createDatabaseConnection() {
     http_response_code(503);
     die("Database connection failed after multiple attempts.");
 }
+endif;
 
 // Create the database connection
 try {

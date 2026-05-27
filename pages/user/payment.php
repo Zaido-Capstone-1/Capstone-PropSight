@@ -237,9 +237,32 @@ require_once '../../lib/user-queries/payment_queries.php';
                                     <td>
                                         <?php if ($isPayment): ?>
                                             <button class="btn-secondary" style="font-size:.7rem;padding:5px 12px;"
-                                                onclick="downloadInvoice(<?php echo $row['payment_id']; ?>,this)">
+                                                onclick="downloadInvoice(<?php echo $row['booking_id']; ?>,this)">
                                                 Invoice
                                             </button>
+
+                                            <?php
+                                            /* Show "Refund" only when:
+                                               - paid via PayMongo
+                                               - payment status is paid
+                                               - booking is cancelled */
+                                            $bkChk = $conn->prepare("SELECT status FROM bookings WHERE booking_id = ? LIMIT 1");
+                                            $bkChk->bind_param('i', $row['booking_id']);
+                                            $bkChk->execute();
+                                            $bkChkRow = $bkChk->get_result()->fetch_assoc();
+                                            $bkChk->close();
+
+                                            $canRefund = $row['method'] === 'paymongo'
+                                                && $row['status'] === 'paid'
+                                                && ($bkChkRow['status'] ?? '') === 'cancelled';
+                                            if ($canRefund): ?>
+                                                <button class="btn-secondary"
+                                                    style="font-size:.7rem;padding:5px 12px;margin-left:4px;color:var(--terra);border-color:var(--terra);"
+                                                    onclick="openRefundModal(<?php echo (int) $row['booking_id']; ?>, '<?php echo htmlspecialchars($row['property_name'] . ' · ' . $row['unit_label'], ENT_QUOTES); ?>', '<?php echo number_format($row['amount'], 2); ?>')">
+                                                    Refund
+                                                </button>
+                                            <?php endif; ?>
+
                                         <?php elseif ($row['processed_date']): ?>
                                             <span style="font-size:.72rem;color:var(--ink-faint);">
                                                 <?php echo date('M j, Y', strtotime($row['processed_date'])); ?>
@@ -343,10 +366,37 @@ require_once '../../lib/user-queries/payment_queries.php';
 </div><!-- /page-two-col -->
 
 <style>
-    
+
 </style>
 
 <script src="../../assets/js/user-js/payment.js"></script>
-
+<script src="../../assets/js/user-js/refund.js"></script>
 <script>window.PS_RT_PAGE = 'payment';</script>
+
+<!-- ── Refund Request Modal ─────────────────────────────────────────────── -->
+<div id="refundModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:460px;">
+        <button class="modal-close-btn" onclick="closeRefundModal()">✕</button>
+
+        <div class="modal-title">Request a Refund</div>
+        <div class="modal-sub" id="refundModalDesc"></div>
+
+        <div class="form-field" style="margin-bottom:18px;">
+            <label>Reason for refund <span style="color:var(--terra);">*</span></label>
+            <textarea id="refundReason" placeholder="Please describe why you are requesting a refund…"></textarea>
+        </div>
+
+        <p style="font-size:.72rem;color:var(--ink-faint);line-height:1.6;margin:0 0 20px;">
+            Requests are reviewed within 1–2 business days. You'll be notified by email once a decision is made.
+        </p>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button class="btn-secondary" onclick="closeRefundModal()">Cancel</button>
+            <button class="btn-primary" id="refundSubmitBtn" onclick="submitRefundRequest()">
+                Submit Request
+            </button>
+        </div>
+    </div>
+</div>
+
 <?php require '../../includes/_layout_end.php'; ?>

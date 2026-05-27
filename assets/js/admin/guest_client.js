@@ -63,10 +63,13 @@
         const initials = ((g.first_name || '').charAt(0) + (g.last_name || '').charAt(0)).toUpperCase();
         const photo = g.profile_photo || '';
         const searchIdx = [g.first_name, g.last_name, g.email, g.phone || ''].join(' ').toLowerCase();
-        const memberSince = new Date(g.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        const actionBtn = parseInt(g.is_blacklisted)
-            ? `<button class="tbl-btn" onclick="toggleBlacklist(${g.user_id}, '${fullName}', 0)">Unblock</button>`
-            : `<button class="tbl-btn danger" onclick="toggleBlacklist(${g.user_id}, '${fullName}', 1)">Block</button>`;
+        const memberSince = new Date(g.created_at).toLocaleDateString('en-US', {
+            month: 'short',
+            year: 'numeric'
+        });
+        const actionBtn = parseInt(g.is_blacklisted) ?
+            `<button class="tbl-btn" onclick="toggleBlacklist(${g.user_id}, '${fullName}', 0)">Unblock</button>` :
+            `<button class="tbl-btn danger" onclick="toggleBlacklist(${g.user_id}, '${fullName}', 1)">Block</button>`;
 
         const tr = document.createElement('tr');
         tr.dataset.userId = g.user_id;
@@ -93,7 +96,9 @@
     }
 
     function refreshGuestTable() {
-        fetch('../../api/guests.php', { credentials: 'same-origin' })
+        fetch('../../api/guests.php', {
+                credentials: 'same-origin'
+            })
             .then(r => r.json())
             .then(data => {
                 if (!data.success) return;
@@ -106,7 +111,7 @@
                 updateGuestStats(data.stats);
                 seedRows();
                 applyFilters();
-            }).catch(() => { });
+            }).catch(() => {});
     }
 
     function patchGuestRow(g) {
@@ -117,15 +122,20 @@
             existing.style.background = '#fefce8';
             setTimeout(() => {
                 tbody.replaceChild(newRow, existing);
-                seedRows(); applyFilters();
+                seedRows();
+                applyFilters();
             }, 350);
         } else {
             newRow.style.background = '#f0fdf4';
             const emptyRow = tbody.querySelector('td[colspan]')?.closest('tr');
             if (emptyRow) emptyRow.remove();
             tbody.prepend(newRow);
-            setTimeout(() => { newRow.style.transition = 'background 1.2s'; newRow.style.background = ''; }, 100);
-            seedRows(); applyFilters();
+            setTimeout(() => {
+                newRow.style.transition = 'background 1.2s';
+                newRow.style.background = '';
+            }, 100);
+            seedRows();
+            applyFilters();
             if (typeof showToast === 'function') showToast('New guest registered!', 'success', 'New Guest');
         }
     }
@@ -149,10 +159,15 @@
         if (!confirm(`Are you sure you want to ${action} ${name}?`)) return;
         showToast(`${blacklist ? 'Blocking' : 'Unblocking'} guest…`, 'info');
         fetch('../../api/guests.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ user_id: userId, action: blacklist ? 'blacklist' : 'unblacklist' })
-        })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    user_id: userId,
+                    action: blacklist ? 'blacklist' : 'unblacklist'
+                })
+            })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
@@ -166,7 +181,9 @@
     };
 
     // Real-time event listeners
-    window.addEventListener('ps:new_guests', e => { if (Array.isArray(e.detail)) e.detail.forEach(g => patchGuestRow(g)); });
+    window.addEventListener('ps:new_guests', e => {
+        if (Array.isArray(e.detail)) e.detail.forEach(g => patchGuestRow(g));
+    });
     window.addEventListener('ps:guest_stats', e => updateGuestStats(e.detail));
 
     /* ─── Block / Unblock Modal ─────────────────────────────────────────────── */
@@ -185,9 +202,9 @@
         _blockUserId = userId;
         _blockAction = blacklist;
         blockModalTitle.textContent = blacklist ? 'Block Guest' : 'Unblock Guest';
-        blockModalDesc.innerHTML = blacklist
-            ? `Are you sure you want to block <strong>${esc(name)}</strong>? They will lose access to their account.`
-            : `Are you sure you want to unblock <strong>${esc(name)}</strong>? Their account will be reactivated.`;
+        blockModalDesc.innerHTML = blacklist ?
+            `Are you sure you want to block <strong>${esc(name)}</strong>? They will lose access to their account.` :
+            `Are you sure you want to unblock <strong>${esc(name)}</strong>? Their account will be reactivated.`;
         blockReasonWrap.style.display = blacklist ? 'block' : 'none';
         blockReasonInput.value = '';
         blockConfirmBtn.textContent = blacklist ? 'Block' : 'Unblock';
@@ -203,7 +220,9 @@
     }
 
     blockCancelBtn.addEventListener('click', closeBlockModal);
-    blockModal.addEventListener('click', e => { if (e.target === blockModal) closeBlockModal(); });
+    blockModal.addEventListener('click', e => {
+        if (e.target === blockModal) closeBlockModal();
+    });
 
     blockConfirmBtn.addEventListener('click', function () {
         if (!_blockUserId) return;
@@ -214,10 +233,17 @@
         showToast(_blockAction ? 'Blocking guest…' : 'Unblocking guest…', 'info');
 
         fetch('../../api/guests.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ user_id: _blockUserId, action, reason, csrf_token: window.PS_CSRF_TOKEN ?? '' })
-        })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    user_id: _blockUserId,
+                    action,
+                    reason,
+                    csrf_token: window.PS_CSRF_TOKEN ?? ''
+                })
+            })
             .then(r => r.json())
             .then(data => {
                 closeBlockModal();
@@ -244,3 +270,101 @@
 
 })();
 
+let _rejectTargetId = null;
+
+function openRejectModal(userId) {
+    _rejectTargetId = userId;
+    document.getElementById('rejectReasonInput').value = '';
+    document.getElementById('rejectIdModal').classList.add('open');
+}
+
+function closeRejectModal() {
+    document.getElementById('rejectIdModal').classList.remove('open');
+    _rejectTargetId = null;
+}
+
+function submitReject() {
+    const reason = document.getElementById('rejectReasonInput').value.trim();
+    if (!reason) {
+        alert('Please enter a rejection reason.');
+        return;
+    }
+    reviewId(_rejectTargetId, 'reject', reason);
+    closeRejectModal();
+}
+
+function reviewId(userId, action, reason = '') {
+    const fd = new FormData(); // FIXED: removed 'q'
+    fd.append('user_id', userId);
+    fd.append('action', action);
+    if (reason) fd.append('reject_reason', reason);
+
+    fetch('../../api/admin/review_id.php', {
+            method: 'POST',
+            body: fd
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                alert(data.message);
+                return;
+            }
+            // Show success toast
+            if (typeof showToast === 'function') {
+                showToast(data.message || (action === 'approve' ? 'ID approved successfully!' : 'ID rejected.'), 'success', 'Done!');
+            }
+            document.getElementById('pid-row-' + userId)?.remove();
+            if (!document.querySelector('#pendingIdTbody tr')) {
+                document.getElementById('pendingIdCard')?.remove();
+            }
+        })
+        .catch(() => {
+            if (typeof showToast === 'function') showToast('Network error. Please try again.', 'error');
+            else alert('Network error. Please try again.');
+        });
+}
+
+let _currentViewIdUserId = null;
+
+function openViewIdModal(userId, imagePath) {
+    _currentViewIdUserId = userId;
+    // Use secure proxy instead of direct path
+    document.getElementById('viewIdImage').src = `../../api/view_id_document.php?user_id=${userId}`;
+    document.getElementById('viewIdModal').classList.add('open');
+}
+
+function closeViewIdModal() {
+    document.getElementById('viewIdModal').classList.remove('open');
+    _currentViewIdUserId = null;
+}
+
+function rejectFromModal() {
+    if (!_currentViewIdUserId) return;
+    closeViewIdModal();
+    setTimeout(() => openRejectModal(_currentViewIdUserId), 200);
+}
+
+let _approveTargetId = null;
+
+function confirmApprove(userId) {
+    _approveTargetId = userId;
+    document.getElementById('approveIdModal').classList.add('open');
+}
+
+function closeApproveModal() {
+    document.getElementById('approveIdModal').classList.remove('open');
+    _approveTargetId = null;
+}
+
+function submitApprove() {
+    if (!_approveTargetId) return;
+    reviewId(_approveTargetId, 'approve');
+    closeApproveModal();
+}
+
+function approveFromModal() {
+    if (!_currentViewIdUserId) return;
+    _approveTargetId = _currentViewIdUserId;
+    closeViewIdModal();
+    setTimeout(() => document.getElementById('approveIdModal').classList.add('open'), 200);
+}

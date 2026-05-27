@@ -19,31 +19,9 @@ $page_title = 'Messages';
 $active_page = 'messages';
 include '../../includes/db.php';
 include '../../includes/layout_open.php';
-
-$adminId = (int) $_SESSION['user_id'];
-
-$threadsRes = mysqli_query($conn, "
-    SELECT DISTINCT
-        IF(m.from_user=$adminId, m.to_user, m.from_user) AS other_id,
-        CONCAT(u.first_name,' ',u.last_name) AS other_name,
-        u.email AS other_email,
-        (SELECT body FROM messages WHERE (from_user=$adminId AND to_user=other_id) OR (from_user=other_id AND to_user=$adminId) ORDER BY created_at DESC LIMIT 1) AS last_body,
-        (SELECT created_at FROM messages WHERE (from_user=$adminId AND to_user=other_id) OR (from_user=other_id AND to_user=$adminId) ORDER BY created_at DESC LIMIT 1) AS last_time,
-        (SELECT COUNT(*) FROM messages WHERE from_user=other_id AND to_user=$adminId AND is_read=0) AS unread
-    FROM messages m
-    JOIN users u ON u.user_id = IF(m.from_user=$adminId, m.to_user, m.from_user)
-    WHERE m.from_user=$adminId OR m.to_user=$adminId
-    ORDER BY last_time DESC
-");
-$threads = [];
-while ($t = mysqli_fetch_assoc($threadsRes))
-    $threads[] = $t;
-
-$usersRes = mysqli_query($conn, "SELECT user_id, first_name, last_name, email FROM users WHERE role='user' AND is_active=1 ORDER BY first_name");
-$userList = [];
-while ($u = mysqli_fetch_assoc($usersRes))
-    $userList[] = $u;
+include '../../lib/admin-queries/messages_queries.php';
 ?>
+
 <link rel="stylesheet" href="../../assets/css/admin-css/message.css">
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 

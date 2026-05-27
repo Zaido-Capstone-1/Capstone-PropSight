@@ -318,7 +318,7 @@ window.addEventListener('ps:recent_activity', e => {
       pending: { text: 'Pending', bg: 'var(--pending-light)', color: 'var(--accent-dk)' },
       confirmed: { text: 'Confirmed', bg: 'var(--blue-50)', color: 'var(--blue-500)' },
       active: { text: 'Active', bg: 'var(--success-light)', color: 'var(--success)' },
-      completed: { text: 'Completed', bg: '#e5e7eb', color: '#6b7280' },
+      completed: { text: 'Completed', bg: 'var(--success-light)', color: 'var(--success)' },
       cancelled: { text: 'Cancelled', bg: 'var(--danger-light)', color: 'var(--danger)' }
     };
     const s = map[status] || map.pending;
@@ -357,3 +357,32 @@ window.addEventListener('ps:recent_activity', e => {
     </div>
   `).join('');
 });
+
+(function loadInitialActivity() {
+  const feed = document.getElementById('rt-activity-feed');
+  if (!feed) return;
+ 
+  // Show loading state
+  feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-soft);font-size:13px;">Loading activity...</div>';
+ 
+  // Fetch initial activity data from realtime API
+  // Use timestamp of 1 hour ago to get recent items
+  const oneHourAgo = new Date(Date.now() - 3600000).toISOString().slice(0, 19).replace('T', ' ');
+  
+  fetch('../../api/realtime.php?since=' + encodeURIComponent(oneHourAgo))
+    .then(res => res.json())
+    .then(data => {
+      if (data.recent_activity && data.recent_activity.length) {
+        // Emit the event to trigger the existing handler
+        window.dispatchEvent(new CustomEvent('ps:recent_activity', {
+          detail: data.recent_activity
+        }));
+      } else {
+        feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-soft);font-size:13px;">No recent activity.</div>';
+      }
+    })
+    .catch(err => {
+      console.error('Failed to load initial activity:', err);
+      feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-soft);font-size:13px;">Failed to load activity.</div>';
+    });
+})();

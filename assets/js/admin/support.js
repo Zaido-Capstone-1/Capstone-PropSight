@@ -146,6 +146,12 @@ async function updateTicketStatus() {
     if (!currentTicketId) return;
 
     const status = document.getElementById('ticketStatusSelect').value;
+
+    // Capture the old status from the row before updating
+    const btn = document.querySelector(`button[onclick*="openTicketModal(${currentTicketId},"]`);
+    const row = btn?.closest('tr');
+    const oldStatus = row?.dataset.status || null;
+
     const fd = new FormData();
     fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
     fd.append('action', 'update_status');
@@ -157,21 +163,50 @@ async function updateTicketStatus() {
         const data = await res.json();
 
         if (data.success) {
-            const btn = document.querySelector(`button[onclick*="openTicketModal(${currentTicketId},"]`);
-            const row = btn?.closest('tr');
+
+            // ── 1. Update badge in table row ─────────────────────────────
             if (row) {
                 const badge = row.querySelector('td:nth-child(6) .badge');
                 if (badge) {
                     const map = {
-                        open: 'badge-open',
+                        open:        'badge-open',
                         in_progress: 'badge-progress',
-                        resolved: 'badge-done',
-                        closed: 'badge-done',
+                        resolved:    'badge-done',
+                        closed:      'badge-done',
                     };
                     badge.className = 'badge ' + (map[status] || 'badge-pending');
                     badge.textContent = status.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
                 }
+                // Update data-status so filters still work correctly
+                row.dataset.status = status;
             }
+
+            // ── 2. Update stat cards ─────────────────────────────────────
+            const statMap = {
+                open:        'stat-spt-open',
+                in_progress: 'stat-spt-progress',
+                resolved:    'stat-spt-resolved',
+                closed:      null,   // no dedicated card
+            };
+
+            if (oldStatus && oldStatus !== status) {
+                // Decrement old status card
+                const oldId = statMap[oldStatus];
+                if (oldId) {
+                    const el = document.getElementById(oldId);
+                    if (el) el.textContent = Math.max(0, parseInt(el.textContent, 10) - 1);
+                }
+
+                // Increment new status card
+                const newId = statMap[status];
+                if (newId) {
+                    const el = document.getElementById(newId);
+                    if (el) el.textContent = parseInt(el.textContent, 10) + 1;
+                }
+
+                // Total stays the same (status change, not deletion)
+            }
+
             showToast('Status updated to: ' + status.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()));
         } else {
             showToast(data.message || 'Failed to update status.', 'error');

@@ -242,6 +242,9 @@ if ($_sb_initials === '')
       <a href="expenses.php" class="sub-item<?= sub_active('expenses') ?>">
         <div class="sub-dot"></div>Expenses
       </a>
+      <a href="refunds.php" class="sub-item<?= sub_active('refunds') ?>">
+        <div class="sub-dot"></div>Refunds
+      </a>
     </div>
 
     <div class="nav-item has-sub<?= group_active(['financial_reports', 'occupancy_reports', 'booking_reports']) ?>">
@@ -281,6 +284,16 @@ if ($_sb_initials === '')
       </div>
       <span class="nav-label">Support Tickets</span>
       <span class="nav-badge" data-rt="messages" style="display:none;">0</span>
+    </a>
+
+    <a href="loyalty_rewards.php" class="nav-item<?= nav_active('loyalty_rewards') ?>">
+      <div class="nav-icon">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="15" height="15">
+          <circle cx="12" cy="8" r="5" />
+          <path d="M14.5 11.9L16 21l-4-2.4-4 2.4 1.5-9.1" />
+        </svg>
+      </div>
+      <span class="nav-label">Loyalty Rewards</span>
     </a>
 
     <div class="nav-divider"></div>

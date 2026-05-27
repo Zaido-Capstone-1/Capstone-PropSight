@@ -1010,3 +1010,116 @@
     font-size: .82rem;
     padding: 0 4px;
 }
+
+#pageNumbers {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.reward-redeemed-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #e6f4ea;
+    color: #2e7d32;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: .02em;
+}
+
+.voucher-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-lt);
+}
+.voucher-item:last-child { border-bottom: none; }
+
+.voucher-name {
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+.voucher-code {
+    font-family: monospace;
+    font-size: .82rem;
+    color: var(--navy-700, #1e3a5f);
+    background: var(--navy-50, #f0f4ff);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin: 4px 0;
+    display: inline-block;
+    letter-spacing: .05em;
+}
+.voucher-date {
+    font-size: .72rem;
+    color: var(--ink-faint);
+}
+.voucher-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
+.voucher-status-badge {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.voucher-active  .voucher-status-badge { background: #e6f4ea; color: #2e7d32; }
+.voucher-used    .voucher-status-badge { background: #f0f0f0; color: #888; }
+.voucher-expired .voucher-status-badge { background: #fff0f0; color: #c62828; }
+.voucher-used, .voucher-expired { opacity: .7; }
+
+.reward-voucher-btn-wrap {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-lt);
+    display: flex;
+    justify-content: center;
+}
+
+.reward-voucher-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--navy-700);
+    background: var(--navy-50, #f0f4ff);
+    border: 1.5px solid var(--border-lt);
+    border-radius: 99px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all .15s;
+}
+
+.reward-voucher-btn:hover {
+    background: var(--navy-100, #e0e8ff);
+    border-color: var(--navy-300);
+}
+
+.reward-voucher-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: var(--navy-800);
+    color: #e8c882;
+    font-size: .6rem;
+    font-weight: 700;
+    border-radius: 99px;
+}

@@ -4,10 +4,9 @@ include '../../includes/session.php';
 if ($_SESSION['role'] !== 'admin') {
   echo '<!DOCTYPE html>
 <html>
-
 <body>
   <script src="../../assets/js/responsive.js"></script>
-<script src="../../assets/js/admin/index-inline.js"></script>
+  <script src="../../assets/js/admin/index-inline.js"></script>
 </body></html>';
   exit;
 }
@@ -34,180 +33,7 @@ $active_page = 'dashboard';
   <?php
   include '../../includes/sidebar.php';
   include '../../includes/db.php';
-
-  $year = (int) date('Y');
-  $thisMonth = date('Y-m-01');
-  $lastMonthFrom = date('Y-m-01', strtotime('-1 month'));
-  $lastMonthTo = date('Y-m-t', strtotime('-1 month'));
-
-  $totalRevenue = (float) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COALESCE(SUM(amount),0) AS v FROM transactions
-     WHERE type='Income' AND YEAR(transaction_date)=$year"
-  ))['v'] ?? 0);
-
-  $lastYearRevenue = (float) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COALESCE(SUM(amount),0) AS v FROM transactions
-     WHERE type='Income' AND YEAR(transaction_date)=" . ($year - 1)
-  ))['v'] ?? 0);
-
-  $revGrowth = $lastYearRevenue > 0
-    ? round((($totalRevenue - $lastYearRevenue) / $lastYearRevenue) * 100, 1)
-    : 0;
-
-  $totalUnits = max(1, (int) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COUNT(*) AS c FROM units"
-  ))['c'] ?? 1));
-  $occupiedUnits = (int) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COUNT(*) AS c FROM units WHERE status='occupied'"
-  ))['c'] ?? 0);
-  $vacantUnits = (int) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COUNT(*) AS c FROM units WHERE status='vacant'"
-  ))['c'] ?? 0);
-  $maintenanceUnits = (int) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COUNT(*) AS c FROM units WHERE status='maintenance'"
-  ))['c'] ?? 0);
-  $occupancyRate = round(($occupiedUnits / $totalUnits) * 100);
-
-  $totalBookings = (int) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COUNT(*) AS c FROM bookings WHERE YEAR(created_at)=$year"
-  ))['c'] ?? 0);
-  $pendingBookings = (int) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COUNT(*) AS c FROM bookings WHERE status='pending'"
-  ))['c'] ?? 0);
-  $lastYearBookings = (int) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COUNT(*) AS c FROM bookings WHERE YEAR(created_at)=" . ($year - 1)
-  ))['c'] ?? 0);
-  $bookingGrowth = $lastYearBookings > 0
-    ? round((($totalBookings - $lastYearBookings) / $lastYearBookings) * 100, 1)
-    : 0;
-
-  $cancelledThisMonth = (int) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COUNT(*) AS c FROM bookings
-     WHERE status='cancelled' AND created_at >= DATE_FORMAT(NOW(),'%Y-%m-01')"
-  ))['c'] ?? 0);
-  $totalThisMonth = max(1, (int) (mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COUNT(*) AS c FROM bookings
-     WHERE created_at >= DATE_FORMAT(NOW(),'%Y-%m-01')"
-  ))['c'] ?? 1));
-  $cancelRate = round(($cancelledThisMonth / $totalThisMonth) * 100, 1);
-
-  $revData = [];
-  $expData = [];
-  $chartLabels = [];
-  for ($i = 7; $i >= 0; $i--) {
-    $ts = strtotime("-$i months");
-    $ty = (int) date('Y', $ts);
-    $tm = (int) date('n', $ts);
-    $chartLabels[] = date('M', $ts);
-
-    $rv = (float) (mysqli_fetch_assoc(mysqli_query(
-      $conn,
-      "SELECT COALESCE(SUM(amount),0) AS v FROM transactions
-         WHERE type='Income' AND YEAR(transaction_date)=$ty AND MONTH(transaction_date)=$tm"
-    ))['v'] ?? 0);
-
-    $ex = (float) (mysqli_fetch_assoc(mysqli_query(
-      $conn,
-      "SELECT COALESCE(SUM(amount),0) AS v FROM expenses
-         WHERE YEAR(expense_date)=$ty AND MONTH(expense_date)=$tm"
-    ))['v'] ?? 0);
-
-    $revData[] = round($rv / 1000, 1);
-    $expData[] = round($ex / 1000, 1);
-  }
-
-  $propRes = mysqli_query(
-    $conn,
-    "SELECT p.property_id, p.property_name, p.address,
-            COUNT(u.unit_id) AS total_units,
-            SUM(u.status='occupied') AS occupied
-     FROM properties p
-     LEFT JOIN units u ON u.property_id = p.property_id
-     GROUP BY p.property_id
-     ORDER BY occupied DESC
-     LIMIT 4"
-  );
-  $properties = [];
-  while ($r = mysqli_fetch_assoc($propRes))
-    $properties[] = $r;
-
-  $taskRes = mysqli_query(
-    $conn,
-    "SELECT 
-         m.issue_description AS title, 
-         p.property_name, 
-         m.priority, 
-         m.request_status AS status
-     FROM maintenance_requests m
-     LEFT JOIN units u ON u.unit_id = m.unit_id
-     LEFT JOIN properties p ON p.property_id = u.property_id
-     ORDER BY m.request_date DESC
-     LIMIT 5"
-  );
-  $tasks = [];
-  while ($r = mysqli_fetch_assoc($taskRes))
-    $tasks[] = $r;
-
-  $taskOpenCount = 0;
-  $taskInProgressCount = 0;
-  foreach ($tasks as $t) {
-    $taskStatus = strtolower(trim((string) ($t['status'] ?? '')));
-    if ($taskStatus === 'open')
-      $taskOpenCount++;
-    if ($taskStatus === 'in_progress')
-      $taskInProgressCount++;
-  }
-
-  $taskStatusMap = [
-    'open' => ['bg' => 'var(--danger-light)', 'color' => 'var(--danger)', 'label' => 'Urgent'],
-    'in_progress' => ['bg' => 'var(--blue-50)', 'color' => 'var(--blue-500)', 'label' => 'In Progress'],
-    'pending' => ['bg' => 'var(--pending-light)', 'color' => 'var(--accent-dk)', 'label' => 'Pending'],
-    'completed' => ['bg' => 'var(--success-light)', 'color' => 'var(--success)', 'label' => 'Done'],
-    'closed' => ['bg' => 'var(--success-light)', 'color' => 'var(--success)', 'label' => 'Closed'],
-  ];
-  $taskDotColor = [
-    'open' => 'var(--danger)',
-    'in_progress' => 'var(--blue-400)',
-    'pending' => 'var(--gold)',
-    'completed' => 'var(--success)',
-    'closed' => 'var(--success)',
-  ];
-
-  $taskPriorityMap = [
-    'high' => ['bg' => 'var(--danger-light)', 'color' => 'var(--danger)', 'label' => 'High'],
-    'medium' => ['bg' => 'var(--pending-light)', 'color' => 'var(--accent-dk)', 'label' => 'Medium'],
-    'low' => ['bg' => 'var(--blue-50)', 'color' => 'var(--blue-500)', 'label' => 'Low'],
-  ];
-
-  $years = [];
-  $yrRes = mysqli_query(
-    $conn,
-    "SELECT y FROM (
-      SELECT DISTINCT YEAR(transaction_date) AS y FROM transactions
-      UNION
-      SELECT DISTINCT YEAR(expense_date) AS y FROM expenses
-    ) z
-    WHERE y IS NOT NULL
-    ORDER BY y DESC"
-  );
-  while ($yrRes && ($r = mysqli_fetch_assoc($yrRes))) {
-    $years[] = (int) $r['y'];
-  }
-  $currentYear = (int) date('Y');
-  if (!in_array($currentYear, $years, true)) {
-    array_unshift($years, $currentYear);
-  }
+  require_once '../../lib/admin-queries/index_queries.php';  // ← all SQL lives here
   ?>
 
   <div class="main">
@@ -218,7 +44,8 @@ $active_page = 'dashboard';
             <h1 class="dash-title">Dashboard</h1>
             <p class="dash-subtitle">Welcome back,
               <strong><?= htmlspecialchars($_SESSION['first_name'] ?? $_SESSION['name'] ?? 'Admin') ?></strong> — here's
-              what's happening with your properties today.</p>
+              what's happening with your properties today.
+            </p>
           </div>
         </div>
         <div class="cards-area">
@@ -363,8 +190,7 @@ $active_page = 'dashboard';
               </div>
               <div class="prop-list" id="rt-properties-list">
                 <?php if (empty($properties)): ?>
-                  <div class="dashboard-empty">No properties found.
-                  </div>
+                  <div class="dashboard-empty">No properties found.</div>
                 <?php else: ?>
                   <?php foreach ($properties as $prop):
                     $propOcc = $prop['total_units'] > 0 ? round($prop['occupied'] / $prop['total_units'] * 100) : 0;
@@ -414,8 +240,8 @@ $active_page = 'dashboard';
                     $st = $task['status'] ?? 'pending';
                     $style = $taskStatusMap[$st] ?? $taskStatusMap['pending'];
                     $dot = $taskDotColor[$st] ?? 'var(--gold)';
-                    $priorityKey = strtolower(trim((string) ($task['priority'] ?? 'medium')));
-                    $priorityStyle = $taskPriorityMap[$priorityKey] ?? $taskPriorityMap['medium'];
+                    $pk = strtolower(trim((string) ($task['priority'] ?? 'medium')));
+                    $pSty = $taskPriorityMap[$pk] ?? $taskPriorityMap['medium'];
                     ?>
                     <div class="task-item">
                       <div class="task-dot" style="background:<?= $dot ?>;"></div>
@@ -423,9 +249,8 @@ $active_page = 'dashboard';
                         <div class="tname"><?= htmlspecialchars($task['title']) ?></div>
                         <div class="tmeta">
                           <span class="tprop"><?= htmlspecialchars($task['property_name'] ?? '—') ?></span>
-                          <span class="task-priority"
-                            style="background:<?= $priorityStyle['bg'] ?>;color:<?= $priorityStyle['color'] ?>;">
-                            <?= $priorityStyle['label'] ?>
+                          <span class="task-priority" style="background:<?= $pSty['bg'] ?>;color:<?= $pSty['color'] ?>;">
+                            <?= $pSty['label'] ?>
                           </span>
                         </div>
                       </div>
@@ -438,18 +263,14 @@ $active_page = 'dashboard';
               </div>
             </div>
 
-            <!-- ── Live Booking Activity Feed ── -->
             <div class="card" style="flex:1; display:flex; flex-direction:column;">
               <div class="task-header">
                 <div class="card-head-main">
-                  <span class="card-title">
-                    Live Activity
-                  </span>
+                  <span class="card-title">Live Activity</span>
                   <span class="card-head-meta">New bookings appear here in real time</span>
                 </div>
               </div>
-              <div id="rt-activity-feed" class="rt-activity-feed" style="min-height:60px;">
-              </div>
+              <div id="rt-activity-feed" class="rt-activity-feed" style="min-height:60px;"></div>
             </div>
           </div>
 
@@ -473,9 +294,5 @@ $active_page = 'dashboard';
   </script>
   <script>window.PS_RT_PAGE = 'dashboard';</script>
   <script src="../../assets/js/admin/dashboard.js"></script>
-
-  <?php if (isset($_GET['error']) && $_GET['error'] === 'unauthorized'): ?>
-
-  <?php endif; ?>
 
   <?php include '../../includes/layout_close_noclose.php'; ?>

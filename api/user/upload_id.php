@@ -98,19 +98,19 @@ if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
 
 $refPath = 'uploads/id_documents/' . $safeName;
 
-// ── Auto-approve immediately ─────────────────────────────────
+// ── Set as pending — awaiting admin review ───────────────────
 $updateStmt = $conn->prepare(
-    "UPDATE users SET id_verified = 'approved', id_document_path = ?, id_verified_at = NOW(), id_reject_reason = NULL WHERE user_id = ?"
+    "UPDATE users SET id_verified = 'pending', id_document_path = ?, id_verified_at = NULL, id_reject_reason = NULL WHERE user_id = ?"
 );
 $updateStmt->bind_param('si', $refPath, $userId);
 $updateStmt->execute();
 $updateStmt->close();
 
-$_SESSION['id_verified'] = 'approved';
+$_SESSION['id_verified'] = 'pending';
 
-// Notify the user
-$notifTitle = 'Identity Verified ✓';
-$notifBody = 'Your government ID has been accepted. You can now book a unit!';
+// Notify the user that submission was received
+$notifTitle = 'ID Submitted for Review';
+$notifBody = 'Your government ID has been submitted. We\'ll notify you once it\'s reviewed (usually within 24 hours).';
 $notifLink = 'pages/user/profile.php';
 $notifStmt = $conn->prepare(
     "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'support', ?, ?, ?)"
@@ -121,6 +121,6 @@ $notifStmt->close();
 
 echo json_encode([
     'success' => true,
-    'id_verified' => 'approved',
-    'message' => 'ID verified! You can now book a unit.',
+    'id_verified' => 'pending',
+    'message' => 'ID submitted! We\'ll review it and notify you within 24 hours.',
 ]);

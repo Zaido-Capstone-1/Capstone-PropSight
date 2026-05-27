@@ -245,7 +245,7 @@ function downloadInvoice(paymentId, btn) {
     btn.disabled = true;
     btn.textContent = '…';
     const a = document.createElement('a');
-    a.href = '../../api/admin/invoice.php?payment_id=' + paymentId;
+    a.href = '../../api/user/booking_receipt.php?booking_id=' + paymentId;
     a.target = '_blank';
     a.click();
     setTimeout(() => { btn.disabled = false; btn.textContent = orig; showToast('Invoice opened.'); }, 800);

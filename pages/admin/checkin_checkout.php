@@ -19,142 +19,7 @@ $page_title = 'Check-in / Check-out';
 $active_page = 'checkin_checkout';
 include '../../includes/db.php';
 include '../../includes/layout_open.php';
-
-if (isset($_GET['ajax_activity'])) {
-    include '../../includes/db.php';
-    header('Content-Type: application/json');
-    $y = (int) ($_GET['year'] ?? date('Y'));
-    $m = (int) ($_GET['month'] ?? date('m'));
-    $start = sprintf('%04d-%02d-01', $y, $m);
-    $end = date('Y-m-t', strtotime($start));
-    $res = mysqli_query($conn, "
-        SELECT DATE(checkin_date) AS ci, DATE(checkout_date) AS co
-        FROM bookings WHERE status NOT IN ('cancelled')
-        AND (checkin_date BETWEEN '$start' AND '$end'
-          OR checkout_date BETWEEN '$start' AND '$end')
-    ");
-    $ci = [];
-    $co = [];
-    while ($r = mysqli_fetch_assoc($res)) {
-        if ($r['ci'] >= $start && $r['ci'] <= $end)
-            $ci[] = (int) date('j', strtotime($r['ci']));
-        if ($r['co'] >= $start && $r['co'] <= $end)
-            $co[] = (int) date('j', strtotime($r['co']));
-    }
-    echo json_encode(['ci' => array_values(array_unique($ci)), 'co' => array_values(array_unique($co))]);
-    exit;
-}
-
-$selected_date = $_GET['date'] ?? date('Y-m-d');
-if (!strtotime($selected_date))
-    $selected_date = date('Y-m-d');
-$dateEsc = mysqli_real_escape_string($conn, $selected_date);
-$dateLabel = date('F j, Y', strtotime($selected_date));
-$isToday = ($selected_date === date('Y-m-d'));
-
-$ci_sql = "
-    SELECT b.booking_id, b.checkin_date, b.checkout_date, b.status, b.guests,
-           CONCAT(u.first_name,' ',u.last_name) AS guest_name,
-           u.email,
-           COALESCE(un.unit_name, CONCAT(p.property_name,' — ',un.unit_number)) AS unit_label,
-           p.property_name,
-           b.checkin_status
-    FROM   bookings b
-    JOIN   users u  ON u.user_id  = b.user_id
-    JOIN   units un ON un.unit_id = b.unit_id
-    LEFT JOIN properties p ON p.property_id = un.property_id
-    WHERE  b.checkin_date = '$dateEsc'
-      AND  b.status NOT IN ('cancelled')
-    ORDER  BY b.checkin_date ASC
-";
-$ci_res = mysqli_query($conn, $ci_sql);
-$checkins = [];
-while ($row = mysqli_fetch_assoc($ci_res))
-    $checkins[] = $row;
-
-$co_sql = "
-    SELECT b.booking_id, b.checkin_date, b.checkout_date, b.status, b.guests,
-           CONCAT(u.first_name,' ',u.last_name) AS guest_name,
-           u.email,
-           COALESCE(un.unit_name, CONCAT(p.property_name,' — ',un.unit_number)) AS unit_label,
-           p.property_name,
-           b.checkout_status
-    FROM   bookings b
-    JOIN   users u  ON u.user_id  = b.user_id
-    JOIN   units un ON un.unit_id = b.unit_id
-    LEFT JOIN properties p ON p.property_id = un.property_id
-    WHERE  b.checkout_date = '$dateEsc'
-      AND  b.status NOT IN ('cancelled')
-    ORDER  BY b.checkout_date ASC
-";
-$co_res = mysqli_query($conn, $co_sql);
-$checkouts = [];
-while ($row = mysqli_fetch_assoc($co_res))
-    $checkouts[] = $row;
-
-$stay_res = mysqli_query($conn, "
-    SELECT COUNT(*) AS cnt FROM bookings
-    WHERE  status NOT IN ('cancelled','completed')
-      AND  checkin_date  <= '$dateEsc'
-      AND  checkout_date >= '$dateEsc'
-");
-$staying = (int) mysqli_fetch_assoc($stay_res)['cnt'];
-
-$ci_done = count(array_filter($checkins, fn($r) => ($r['checkin_status'] ?? '') === 'done'));
-$co_done = count(array_filter($checkouts, fn($r) => ($r['checkout_status'] ?? '') === 'done'));
-$overdue = count(array_filter($checkouts, fn($r) => ($r['checkout_status'] ?? '') !== 'done' && $selected_date > date('Y-m-d')));
-
-$today_str = date('Y-m-d');
-$overdue = count(array_filter(
-    $checkouts,
-    fn($r) =>
-    ($r['checkout_status'] ?? '') !== 'done' && $selected_date < $today_str
-));
-
-$cal_year = date('Y', strtotime($selected_date));
-$cal_month = date('m', strtotime($selected_date));
-$cal_start = "$cal_year-$cal_month-01";
-$cal_end = date('Y-m-t', strtotime($selected_date));
-
-$act_sql = "
-    SELECT
-        DATE(checkin_date)  AS ci_date,
-        DATE(checkout_date) AS co_date
-    FROM bookings
-    WHERE status NOT IN ('cancelled')
-      AND (
-          (checkin_date  BETWEEN '$cal_start' AND '$cal_end') OR
-          (checkout_date BETWEEN '$cal_start' AND '$cal_end')
-      )
-";
-$act_res = mysqli_query($conn, $act_sql);
-$ci_days = [];
-$co_days = [];
-while ($row = mysqli_fetch_assoc($act_res)) {
-    if ($row['ci_date'] >= $cal_start && $row['ci_date'] <= $cal_end)
-        $ci_days[] = (int) date('j', strtotime($row['ci_date']));
-    if ($row['co_date'] >= $cal_start && $row['co_date'] <= $cal_end)
-        $co_days[] = (int) date('j', strtotime($row['co_date']));
-}
-$ci_days = array_unique($ci_days);
-$co_days = array_unique($co_days);
-function ciStatusLabel($row)
-{
-    $s = $row['checkin_status'] ?? '';
-    return match ($s) {
-        'done' => ['Done', 'success'],
-        default => ['Expected', 'pending'],
-    };
-}
-function coStatusLabel($row, $selectedDate)
-{
-    $s = $row['checkout_status'] ?? '';
-    if ($s === 'done')
-        return ['Done', 'success'];
-    if ($selectedDate < date('Y-m-d'))
-        return ['Overdue', 'danger'];
-    return ['Pending', 'pending'];
-}
+require_once '../../lib/admin-queries/checkin_checkout_queries.php';
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/checkin_checkout.css">
@@ -262,6 +127,80 @@ function coStatusLabel($row, $selectedDate)
                         <circle cx="12" cy="12" r="10" />
                         <polyline points="12 6 12 12 16 14" />
                     </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Voucher Lookup Trigger ── -->
+        <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
+            <button onclick="openVoucherModal()"
+                style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:8px;border:1.5px solid #e5e7eb;background:#fff;font-size:.84rem;font-weight:600;color:#1e2533;cursor:pointer;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.06);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                    style="width:16px;height:16px;">
+                    <rect x="2" y="7" width="20" height="12" rx="2" />
+                    <path d="M2 11h20" stroke-width="1.4" />
+                    <circle cx="7" cy="14" r="1.5" fill="currentColor" opacity=".7" />
+                    <circle cx="17" cy="14" r="1.5" fill="currentColor" opacity=".7" />
+                </svg>
+                Voucher Lookup
+            </button>
+        </div>
+
+        <!-- ── Voucher Lookup Modal ── -->
+        <div id="voucherModal"
+            style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;">
+            <div
+                style="background:#fff;border-radius:14px;width:100%;max-width:460px;margin:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;">
+
+                <!-- Header -->
+                <div
+                    style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #f3f4f6;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                            style="width:18px;height:18px;color:#6b7280;">
+                            <rect x="2" y="7" width="20" height="12" rx="2" />
+                            <path d="M2 11h20" stroke-width="1.4" />
+                            <circle cx="7" cy="14" r="1.5" fill="currentColor" opacity=".7" />
+                            <circle cx="17" cy="14" r="1.5" fill="currentColor" opacity=".7" />
+                        </svg>
+                        <span style="font-weight:700;font-size:.95rem;color:#1e2533;">Voucher Lookup</span>
+                    </div>
+                    <button onclick="closeVoucherModal()"
+                        style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;color:#9ca3af;border-radius:6px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            style="width:16px;height:16px;">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div style="padding:20px 22px;">
+                    <p style="font-size:.8rem;color:#8a94a6;margin:0 0 14px;">Enter the guest's voucher code to validate
+                        and mark it as used.</p>
+                    <div style="display:flex;gap:8px;">
+                        <input type="text" id="voucherLookupInput" placeholder="e.g. PS-R03-CSZYA428"
+                            style="flex:1;padding:9px 13px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:.84rem;font-family:monospace;text-transform:uppercase;outline:none;transition:border-color .15s;"
+                            onfocus="this.style.borderColor='#1e2533'" onblur="this.style.borderColor='#e5e7eb'"
+                            onkeydown="if(event.key==='Enter') lookupVoucher()">
+                        <button onclick="lookupVoucher()"
+                            style="padding:9px 20px;border-radius:7px;border:none;background:#1e2533;color:#fff;font-size:.84rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .15s;"
+                            onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                            Validate
+                        </button>
+                    </div>
+
+                    <!-- Result -->
+                    <div id="voucherLookupResult" style="display:none;margin-top:14px;"></div>
+                </div>
+
+                <!-- Footer -->
+                <div style="padding:12px 22px 18px;display:flex;justify-content:flex-end;">
+                    <button onclick="closeVoucherModal()"
+                        style="padding:8px 18px;border-radius:7px;border:1.5px solid #e5e7eb;background:#fff;font-size:.82rem;font-weight:600;color:#6b7280;cursor:pointer;">
+                        Close
+                    </button>
                 </div>
             </div>
         </div>

@@ -273,11 +273,12 @@ if ($role === 'admin') {
                 m.priority, 
                 m.request_status AS status,
                 m.request_date
-             FROM maintenance_requests m
-             LEFT JOIN units u ON u.unit_id = m.unit_id
-             LEFT JOIN properties p ON p.property_id = u.property_id
-             ORDER BY m.request_date DESC
-             LIMIT 5"
+            FROM maintenance_requests m
+            LEFT JOIN units u ON u.unit_id = m.unit_id
+            LEFT JOIN properties p ON p.property_id = u.property_id
+            WHERE 1
+            ORDER BY m.request_date DESC
+            LIMIT 5"
         );
         $tasks = [];
         while ($taskRes && ($r = mysqli_fetch_assoc($taskRes)))

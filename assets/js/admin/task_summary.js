@@ -58,12 +58,18 @@ function renderTsFoot(total, totalPages, start, end) {
     const nextBtn = document.getElementById('tsNextBtn');
     if (!foot) return;
 
-    if (total === 0) { foot.style.display = 'none'; return; }
+    if (total === 0) {
+        foot.style.display = 'none';
+        return;
+    }
     foot.style.display = '';
 
     info.innerHTML = `Showing <strong>${start + 1}–${Math.min(end, total)}</strong> of <strong>${total}</strong> maintenance request${total !== 1 ? 's' : ''}`;
 
-    if (totalPages <= 1) { if (controls) controls.style.display = 'none'; return; }
+    if (totalPages <= 1) {
+        if (controls) controls.style.display = 'none';
+        return;
+    }
     if (controls) controls.style.display = 'flex';
     if (prevBtn) prevBtn.disabled = tsCurrentPage <= 1;
     if (nextBtn) nextBtn.disabled = tsCurrentPage >= totalPages;
@@ -84,12 +90,18 @@ function renderTsFoot(total, totalPages, start, end) {
         btn.type = 'button';
         btn.className = 'txn-pg-num' + (n === cur ? ' active' : '');
         btn.textContent = n;
-        btn.onclick = () => { tsCurrentPage = n; paginateTs(); };
+        btn.onclick = () => {
+            tsCurrentPage = n;
+            paginateTs();
+        };
         wrap.appendChild(btn);
     });
 }
 
-window.tsChangePage = function (dir) { tsCurrentPage += dir; paginateTs(); };
+window.tsChangePage = function (dir) {
+    tsCurrentPage += dir;
+    paginateTs();
+};
 
 document.getElementById('tsSearch')?.addEventListener('input', applyTsFilters);
 applyTsFilters();
@@ -104,7 +116,10 @@ function toggleUrDrop(wrapId) {
         w.querySelector('.ur-drop-menu').style.display = 'none';
         w.classList.remove('open');
     });
-    if (!isOpen) { menu.style.display = 'block'; wrap.classList.add('open'); }
+    if (!isOpen) {
+        menu.style.display = 'block';
+        wrap.classList.add('open');
+    }
 }
 
 function selectTsStatus(btn) {
@@ -134,11 +149,29 @@ function openTaskModal(taskId, data) {
     document.getElementById('taskModalTitle').textContent = 'Task #' + String(taskId).padStart(4, '0');
     document.getElementById('taskModalSub').textContent = data.issue_description || '';
 
-    const priorityColors = { urgent: '#ef4444', high: '#ef4444', medium: '#d97706', normal: '#d97706', low: '#16a34a' };
+    const priorityColors = {
+        urgent: '#ef4444',
+        high: '#ef4444',
+        medium: '#d97706',
+        normal: '#d97706',
+        low: '#16a34a'
+    };
     const priColor = priorityColors[(data.priority || 'normal').toLowerCase()] || '#d97706';
 
-    const statusLabels = { open: 'Open', in_progress: 'In Progress', pending: 'Pending', completed: 'Done', closed: 'Closed' };
-    const statusColors = { open: '#ef4444', in_progress: '#3b82f6', pending: '#d97706', completed: '#16a34a', closed: '#6b7280' };
+    const statusLabels = {
+        open: 'Open',
+        in_progress: 'In Progress',
+        pending: 'Pending',
+        completed: 'Done',
+        closed: 'Closed'
+    };
+    const statusColors = {
+        open: '#ef4444',
+        in_progress: '#3b82f6',
+        pending: '#d97706',
+        completed: '#16a34a',
+        closed: '#6b7280'
+    };
     const sv = data.request_status || 'pending';
 
     document.getElementById('taskDetailGrid').innerHTML = `
@@ -182,6 +215,11 @@ document.addEventListener('keydown', e => {
 async function updateTaskStatus() {
     if (!currentTaskId) return;
     const status = document.getElementById('taskStatusSelect').value;
+
+    // Capture old status from the row before the API call
+    const row = document.querySelector(`#tsTableBody tr[data-id="${currentTaskId}"]`);
+    const oldStatus = row?.dataset.status || null;
+
     const fd = new FormData();
     fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
     fd.append('action', 'update_status');
@@ -189,19 +227,60 @@ async function updateTaskStatus() {
     fd.append('status', status);
 
     try {
-        const res = await fetch('../../api/admin/update_maintenance.php', { method: 'POST', body: fd });
+        const res = await fetch('../../api/admin/update_maintenance.php', {
+            method: 'POST',
+            body: fd
+        });
         const data = await res.json();
         if (data.success) {
-            // Update badge in row
-            const row = document.querySelector(`#tsTableBody tr[data-id="${currentTaskId}"]`);
+
+            // ── 1. Update badge in row ───────────────────────────────────
             const badge = document.getElementById('badge-' + currentTaskId);
-            const clsMap = { open: 'tbadge-open', in_progress: 'tbadge-progress', pending: 'tbadge-pending', completed: 'tbadge-done', closed: 'tbadge-done' };
-            const lblMap = { open: 'Open', in_progress: 'In Progress', pending: 'Pending', completed: 'Done', closed: 'Closed' };
+            const clsMap = {
+                open: 'tbadge-open',
+                in_progress: 'tbadge-progress',
+                pending: 'tbadge-pending',
+                completed: 'tbadge-done',
+                closed: 'tbadge-done'
+            };
+            const lblMap = {
+                open: 'Open',
+                in_progress: 'In Progress',
+                pending: 'Pending',
+                completed: 'Done',
+                closed: 'Closed'
+            };
             if (badge) {
                 badge.className = 'badge ' + (clsMap[status] || 'tbadge-pending');
                 badge.textContent = lblMap[status] || status;
             }
             if (row) row.dataset.status = status;
+
+            // ── 2. Update stat cards ─────────────────────────────────────
+            const statMap = {
+                open: 'rt-task-open',
+                in_progress: 'rt-task-progress',
+                completed: 'rt-task-done',
+                closed: 'rt-task-done',
+                pending: null, // no dedicated card
+            };
+
+            if (oldStatus && oldStatus !== status) {
+                // Decrement old card
+                const oldId = statMap[oldStatus];
+                if (oldId) {
+                    const el = document.getElementById(oldId);
+                    if (el) el.textContent = Math.max(0, parseInt(el.textContent, 10) - 1);
+                }
+                // Increment new card
+                const newId = statMap[status];
+                if (newId) {
+                    const el = document.getElementById(newId);
+                    if (el) el.textContent = parseInt(el.textContent, 10) + 1;
+                }
+                // Total stays unchanged
+            }
+
             showToast('Status updated successfully.');
             closeTaskModal();
             applyTsFilters();
@@ -221,14 +300,37 @@ async function deleteTask(taskId) {
     fd.append('request_id', taskId);
 
     try {
-        const res = await fetch('../../api/admin/update_maintenance.php', { method: 'POST', body: fd });
+        const res = await fetch('../../api/admin/update_maintenance.php', {
+            method: 'POST',
+            body: fd
+        });
         const data = await res.json();
         if (data.success) {
             const row = document.querySelector(`#tsTableBody tr[data-id="${taskId}"]`);
             if (row) {
+                // Decrement the relevant stat card before removing the row
+                const deletedStatus = row.dataset.status || null;
+                const statMap = {
+                    open: 'rt-task-open',
+                    in_progress: 'rt-task-progress',
+                    completed: 'rt-task-done',
+                    closed: 'rt-task-done'
+                };
+                const cardId = statMap[deletedStatus];
+                if (cardId) {
+                    const el = document.getElementById(cardId);
+                    if (el) el.textContent = Math.max(0, parseInt(el.textContent, 10) - 1);
+                }
+                // Always decrement total
+                const totalEl = document.getElementById('rt-task-total');
+                if (totalEl) totalEl.textContent = Math.max(0, parseInt(totalEl.textContent, 10) - 1);
+
                 row.style.transition = 'opacity .3s';
                 row.style.opacity = '0';
-                setTimeout(() => { row.remove(); applyTsFilters(); }, 300);
+                setTimeout(() => {
+                    row.remove();
+                    applyTsFilters();
+                }, 300);
             }
             showToast('Request deleted.');
         } else {

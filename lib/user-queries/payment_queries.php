@@ -6,9 +6,10 @@ $userId = (int) $_SESSION['user_id'];
 /* ── Payment logs ── */
 $bRes = mysqli_query($conn, "
     SELECT py.payment_id, py.payment_date, py.amount_paid, py.payment_method, py.payment_status,
-           COALESCE(u.unit_name, u.unit_number, '—') AS unit_label,
-           DATEDIFF(b.checkout_date, b.checkin_date)  AS nights,
-           p.property_name
+       b.booking_id,
+       COALESCE(u.unit_name, u.unit_number, '—') AS unit_label,
+       DATEDIFF(b.checkout_date, b.checkin_date)  AS nights,
+       p.property_name
     FROM payments py
     JOIN bookings    b  ON b.booking_id  = py.booking_id
     JOIN units       u  ON u.unit_id     = b.unit_id
@@ -74,6 +75,7 @@ foreach ($bills as $b) {
         'amount' => $b['amount_paid'],
         'status' => $b['payment_status'],
         'payment_id' => $b['payment_id'],
+        'booking_id' => $b['booking_id'],
         'reason' => null,
         'processed_date' => null,
     ];

@@ -18,183 +18,10 @@ $page_title = 'Booking Reports';
 $active_page = 'booking_reports';
 include '../../includes/db.php';
 include '../../includes/layout_open.php';
+include '../../lib/admin-queries/booking_reports_queries.php';
 ?>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-<?php
-
-$range = $_GET['range'] ?? '30';
-$range = in_array($range, ['30', '60', '365', 'all']) ? $range : '30';
-$rangeLbl = ['30' => 'Last 30 days', '60' => 'Last 60 days', '365' => 'This year', 'all' => 'All time'][$range];
-$dateFilter = $range === 'all' ? '1=1' : "b.created_at >= DATE_SUB(NOW(), INTERVAL {$range} DAY)";
-
-$stats = mysqli_fetch_assoc(mysqli_query(
-  $conn,
-  "SELECT
-        COUNT(*) AS total,
-        SUM(status='confirmed')  AS confirmed,
-        SUM(status='active')     AS active_cnt,
-        SUM(status='completed')  AS completed,
-        SUM(status='cancelled')  AS cancelled,
-        SUM(status='pending')    AS pending,
-        COALESCE(AVG(DATEDIFF(checkout_date, checkin_date)), 0) AS avg_nights,
-        COALESCE(SUM(total_amount), 0) AS total_revenue
-     FROM bookings b WHERE $dateFilter"
-));
-
-$total = max(1, (int) $stats['total']);
-$cancelRate = round($stats['cancelled'] / $total * 100, 1);
-$confirmRate = round(($stats['confirmed'] + $stats['completed'] + $stats['active_cnt']) / $total * 100, 1);
-$avgNights = round((float) $stats['avg_nights'], 1);
-
-$monthlyLabels = [];
-$monthlyTotal = [];
-$monthlyCancelled = [];
-$monthlyConfirmed = [];
-
-for ($i = 11; $i >= 0; $i--) {
-  $ts = mktime(0, 0, 0, date('n') - $i, 1, date('Y'));
-  $ty = (int) date('Y', $ts);
-  $tm = (int) date('n', $ts);
-  $r = mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT COUNT(*) AS total,
-                SUM(status='cancelled') AS cancelled,
-                SUM(status IN('confirmed','active','completed')) AS confirmed
-         FROM bookings
-         WHERE YEAR(created_at)=$ty AND MONTH(created_at)=$tm"
-  ));
-  $monthlyLabels[] = date('M Y', $ts);
-  $monthlyTotal[] = (int) ($r['total'] ?? 0);
-  $monthlyCancelled[] = (int) ($r['cancelled'] ?? 0);
-  $monthlyConfirmed[] = (int) ($r['confirmed'] ?? 0);
-}
-
-$byPropRes = mysqli_query(
-  $conn,
-  "SELECT p.property_name, COUNT(b.booking_id) AS total,
-            COALESCE(SUM(b.total_amount), 0) AS revenue
-     FROM bookings b
-     JOIN units      u ON u.unit_id      = b.unit_id
-     JOIN properties p ON p.property_id  = u.property_id
-     WHERE $dateFilter AND b.status NOT IN('cancelled','pending')
-     GROUP BY p.property_id
-     ORDER BY total DESC"
-);
-$byProperty = [];
-while ($r = mysqli_fetch_assoc($byPropRes))
-  $byProperty[] = $r;
-
-$payRes = mysqli_query(
-  $conn,
-  "SELECT COALESCE(NULLIF(payment_method,''), 'Unknown') AS method,
-            COUNT(*) AS total
-     FROM bookings b WHERE $dateFilter
-     GROUP BY payment_method ORDER BY total DESC"
-);
-$byPayment = [];
-$payLabels = [];
-$payData = [];
-while ($r = mysqli_fetch_assoc($payRes)) {
-  $byPayment[] = $r;
-  $payLabels[] = ucfirst(strtolower($r['method']));
-  $payData[] = (int) $r['total'];
-}
-
-$topRes = mysqli_query(
-  $conn,
-  "SELECT
-            CASE
-              WHEN u.unit_name IS NOT NULL AND u.unit_name != '' THEN u.unit_name
-              WHEN u.unit_number IS NOT NULL AND u.unit_number != '' THEN u.unit_number
-              ELSE CONCAT('Unit #', u.unit_id)
-            END AS unit_label,
-            p.property_name,
-            COUNT(b.booking_id) AS total_bookings,
-            COALESCE(SUM(b.total_amount), 0) AS revenue
-     FROM bookings b
-     JOIN units      u ON u.unit_id      = b.unit_id
-     JOIN properties p ON p.property_id  = u.property_id
-     WHERE $dateFilter AND b.status NOT IN('cancelled')
-     GROUP BY u.unit_id
-     ORDER BY total_bookings DESC
-     LIMIT 8"
-);
-$topUnits = [];
-while ($r = mysqli_fetch_assoc($topRes))
-  $topUnits[] = $r;
-
-// ── Guest Demographics by Country ─────────────────
-$demoRes = mysqli_query(
-  $conn,
-  "SELECT
-      COALESCE(NULLIF(TRIM(u.nationality), ''), 'Unknown') AS nationality,
-      COUNT(DISTINCT b.user_id) AS guests,
-      COUNT(b.booking_id)       AS bookings,
-      COALESCE(SUM(b.total_amount), 0) AS revenue
-   FROM bookings b
-   JOIN users u ON u.user_id = b.user_id
-   WHERE $dateFilter AND b.status NOT IN('cancelled')
-   GROUP BY nationality
-   ORDER BY bookings DESC
-   LIMIT 10"
-);
-$demographics = [];
-while ($r = mysqli_fetch_assoc($demoRes))
-  $demographics[] = $r;
-
-$avgLead = round((float) (mysqli_fetch_assoc(mysqli_query(
-  $conn,
-  "SELECT AVG(DATEDIFF(checkin_date, DATE(created_at))) AS v
-     FROM bookings b WHERE $dateFilter AND status NOT IN('cancelled')"
-))['v'] ?? 0), 1);
-
-$donutLabels = ['Confirmed', 'Active', 'Completed', 'Cancelled', 'Pending'];
-$donutData = [
-  (int) $stats['confirmed'],
-  (int) $stats['active_cnt'],
-  (int) $stats['completed'],
-  (int) $stats['cancelled'],
-  (int) $stats['pending'],
-];
-$donutColors = ['#2ECC71', '#2563c4', '#93c5fd', '#E74C3C', '#deaf37'];
-
-// ── Monthly Pending ────────────────────────────────
-$monthlyPending = [];
-for ($i = 11; $i >= 0; $i--) {
-  $ts = mktime(0, 0, 0, date('n') - $i, 1, date('Y'));
-  $ty = (int) date('Y', $ts);
-  $tm = (int) date('n', $ts);
-  $r2 = mysqli_fetch_assoc(mysqli_query(
-    $conn,
-    "SELECT SUM(status='pending') AS pending FROM bookings
-     WHERE YEAR(created_at)=$ty AND MONTH(created_at)=$tm"
-  ));
-  $monthlyPending[] = (int) ($r2['pending'] ?? 0);
-}
-
-// ── Booking Source (channel) ───────────────────────
-$srcRes = mysqli_query(
-  $conn,
-  "SELECT COALESCE(NULLIF(booking_source,''), 'Direct') AS src, COUNT(*) AS cnt
-   FROM bookings b WHERE $dateFilter
-   GROUP BY src ORDER BY cnt DESC LIMIT 8"
-);
-$sourceLabels = [];
-$sourceCounts = [];
-while ($sr = mysqli_fetch_assoc($srcRes)) {
-  $sourceLabels[] = $sr['src'];
-  $sourceCounts[] = (int) $sr['cnt'];
-}
-
-// ── Unit-level booking counts ──────────────────────
-$unitLabels = [];
-$unitBookingCounts = [];
-foreach ($topUnits as $u) {
-  $unitLabels[] = $u['unit_label'];
-  $unitBookingCounts[] = (int) $u['total_bookings'];
-}
-?>
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
@@ -320,12 +147,12 @@ foreach ($topUnits as $u) {
       </div>
     </div>
 
-    <?php if (!empty($byProperty)): ?>
-      <div class="two-col">
-        <div class="card" style="flex:1;">
-          <div class="card-header"><span class="card-title">Bookings by Property <small
-                style="font-weight:400;color:var(--text-muted,#64748b);font-size:12px;">(excl. cancelled)</small></span>
-          </div>
+    <div class="two-col">
+      <div class="card" style="flex:1;">
+        <div class="card-header"><span class="card-title">Bookings by Property <small
+              style="font-weight:400;color:var(--text-muted,#64748b);font-size:12px;">(excl. cancelled)</small></span>
+        </div>
+        <?php if (!empty($byProperty)): ?>
           <div class="table-wrap">
             <table>
               <thead>
@@ -346,17 +173,23 @@ foreach ($topUnits as $u) {
               </tbody>
             </table>
           </div>
-        </div>
-        <div class="card" style="flex:1;">
-          <div class="card-header"><span class="card-title">Payment Methods</span></div>
-          <div class="chart-wrap" style="height:200px;"><canvas id="paymentChart"></canvas></div>
-        </div>
+        <?php else: ?>
+          <div style="padding:32px;text-align:center;color:#94a3b8;font-size:13px;">No property data available.</div>
+        <?php endif; ?>
       </div>
-    <?php endif; ?>
+      <div class="card" style="flex:1;">
+        <div class="card-header"><span class="card-title">Payment Methods</span></div>
+        <?php if (!empty($payLabels)): ?>
+          <div class="chart-wrap" style="height:200px;"><canvas id="paymentChart"></canvas></div>
+        <?php else: ?>
+          <div style="padding:32px;text-align:center;color:#94a3b8;font-size:13px;">No payment data available.</div>
+        <?php endif; ?>
+      </div>
+    </div>
 
-    <?php if (!empty($topUnits)): ?>
-      <div class="card">
-        <div class="card-header"><span class="card-title">Top Booked Units</span></div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Top Booked Units</span></div>
+      <?php if (!empty($topUnits)): ?>
         <div class="table-wrap">
           <table>
             <thead>
@@ -379,17 +212,19 @@ foreach ($topUnits as $u) {
             </tbody>
           </table>
         </div>
-      </div>
-    <?php endif; ?>
+      <?php else: ?>
+        <div style="padding:32px;text-align:center;color:#94a3b8;font-size:13px;">No unit booking data available.</div>
+      <?php endif; ?>
+    </div>
 
-    <?php if (!empty($demographics)): ?>
-      <div class="two-col">
-        <div class="card" style="flex:1;">
-          <div class="card-header">
-            <span class="card-title">Guest Demographics
-              <small style="font-weight:400;color:var(--text-muted,#64748b);font-size:12px;">(by country)</small>
-            </span>
-          </div>
+    <div class="two-col">
+      <div class="card" style="flex:1;">
+        <div class="card-header">
+          <span class="card-title">Guest Demographics
+            <small style="font-weight:400;color:var(--text-muted,#64748b);font-size:12px;">(by country)</small>
+          </span>
+        </div>
+        <?php if (!empty($demographics)): ?>
           <div class="table-wrap">
             <table>
               <thead>
@@ -428,31 +263,34 @@ foreach ($topUnits as $u) {
               </tbody>
             </table>
           </div>
-        </div>
-        <div class="card" style="flex:1.4;">
-          <div class="card-header">
-            <span class="card-title">Country Breakdown</span>
-            <span style="font-size:11px;color:var(--text-muted,#64748b);font-weight:400;">Hover a country to see
-              details</span>
+        <?php else: ?>
+          <div style="padding:32px;text-align:center;color:#94a3b8;font-size:13px;">No guest demographic data available.
           </div>
-          <div style="position:relative;">
-            <div id="guestMap" style="height:280px;border-radius:0 0 var(--radius,10px) var(--radius,10px);z-index:1;">
-            </div>
-            <div id="guestMapLegend"
-              style="position:absolute;bottom:12px;left:12px;background:rgba(255,255,255,.92);border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:11px;z-index:999;pointer-events:none;">
-              <div style="font-weight:700;margin-bottom:5px;color:#1e293b;">Bookings</div>
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
-                <div
-                  style="width:80px;height:10px;border-radius:3px;background:linear-gradient(to right,#bfdbfe,#1d4ed8);">
-                </div>
-                <span style="color:#475569;">Low → High</span>
+        <?php endif; ?>
+      </div>
+      <div class="card" style="flex:1.4;">
+        <div class="card-header">
+          <span class="card-title">Country Breakdown</span>
+          <span style="font-size:11px;color:var(--text-muted,#64748b);font-weight:400;">Hover a country to see
+            details</span>
+        </div>
+        <div style="position:relative;">
+          <div id="guestMap" style="height:280px;border-radius:0 0 var(--radius,10px) var(--radius,10px);z-index:1;">
+          </div>
+          <div id="guestMapLegend"
+            style="position:absolute;bottom:12px;left:12px;background:rgba(255,255,255,.92);border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:11px;z-index:999;pointer-events:none;">
+            <div style="font-weight:700;margin-bottom:5px;color:#1e293b;">Bookings</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+              <div
+                style="width:80px;height:10px;border-radius:3px;background:linear-gradient(to right,#bfdbfe,#1d4ed8);">
               </div>
-              <div style="color:#94a3b8;font-size:10px;">Grey = no bookings</div>
+              <span style="color:#475569;">Low → High</span>
             </div>
+            <div style="color:#94a3b8;font-size:10px;">Grey = no bookings</div>
           </div>
         </div>
       </div>
-    <?php endif; ?>
+    </div>
 
     <?php if ($total <= 1 && empty($byProperty)): ?>
       <div class="card" style="text-align:center;padding:40px;">

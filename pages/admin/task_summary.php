@@ -14,56 +14,7 @@ $active_page = 'task_summary';
 
 include '../../includes/db.php';
 include '../../includes/layout_open.php';
-
-$tasksRes = mysqli_query($conn, "
-  SELECT
-    m.request_id,
-    m.issue_description,
-    m.priority,
-    m.request_status,
-    m.request_date,
-    p.property_name
-  FROM maintenance_requests m
-  LEFT JOIN units u ON u.unit_id = m.unit_id
-  LEFT JOIN properties p ON p.property_id = u.property_id
-  ORDER BY m.request_date DESC
-");
-
-$tasks = [];
-while ($tasksRes && ($r = mysqli_fetch_assoc($tasksRes))) {
-  $tasks[] = $r;
-}
-
-$statsRes = mysqli_query($conn, "
-  SELECT
-    COUNT(*) AS total,
-    SUM(request_status='open') AS open_cnt,
-    SUM(request_status='in_progress') AS in_progress_cnt,
-    SUM(request_status='pending') AS pending_cnt,
-    SUM(request_status IN ('completed','closed')) AS done_cnt
-  FROM maintenance_requests
-");
-$stats = mysqli_fetch_assoc($statsRes) ?: ['total' => 0, 'open_cnt' => 0, 'in_progress_cnt' => 0, 'pending_cnt' => 0, 'done_cnt' => 0];
-
-function taskBadge(string $status): array
-{
-  return match ($status) {
-    'open' => ['label' => 'Open', 'cls' => 'tbadge-open'],
-    'in_progress' => ['label' => 'In Progress', 'cls' => 'tbadge-progress'],
-    'completed' => ['label' => 'Done', 'cls' => 'tbadge-done'],
-    'closed' => ['label' => 'Closed', 'cls' => 'tbadge-done'],
-    default => ['label' => 'Pending', 'cls' => 'tbadge-pending'],
-  };
-}
-
-function priorityBadge(string $p): array
-{
-  return match (strtolower($p)) {
-    'urgent', 'high' => ['label' => ucfirst($p), 'cls' => 'pri-high'],
-    'medium', 'normal' => ['label' => 'Medium', 'cls' => 'pri-med'],
-    default => ['label' => 'Low', 'cls' => 'pri-low'],
-  };
-}
+require_once '../../lib/admin-queries/task_summary_queries.php';
 ?>
 <link rel="stylesheet" href="../../assets/css/admin-css/task_summary.css">
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">

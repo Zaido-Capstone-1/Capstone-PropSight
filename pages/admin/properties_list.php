@@ -24,6 +24,7 @@ $page_title = 'Properties List';
 $active_page = 'properties_list';
 include '../../includes/layout_open.php';
 include '../../includes/properties.php';
+include '../../lib/admin-queries/properties_list_queries.php';
 
 ?>
 
@@ -151,14 +152,9 @@ include '../../includes/properties.php';
               <?php while ($row = mysqli_fetch_assoc($result)): ?>
                 <?php
                 $pid = (int) $row['property_id'];
-                $unit_q = mysqli_query($conn, "
-                    SELECT
-                        COUNT(*) AS total_units,
-                        COALESCE(SUM(status = 'occupied'), 0) AS occupied_units
-                    FROM units
-                    WHERE property_id = $pid
-                ");
-                $unit_data = mysqli_fetch_assoc($unit_q) ?? [];
+                $unitStmt->bind_param('i', $pid);
+                $unitStmt->execute();
+                $unit_data = $unitStmt->get_result()->fetch_assoc() ?? [];
                 $total_units = (int) ($unit_data['total_units'] ?? 0);
                 $occupied_units = (int) ($unit_data['occupied_units'] ?? 0);
                 $row_pct = $total_units > 0 ? round(($occupied_units / $total_units) * 100) : 0;
@@ -200,6 +196,7 @@ include '../../includes/properties.php';
                   </td>
                 </tr>
               <?php endwhile; ?>
+              <?php $unitStmt->close(); ?>
             <?php endif; ?>
 
           </tbody>

@@ -116,23 +116,78 @@ function renderMsgs(msgs, clearFirst) {
         }
         const bub = document.createElement('div');
         bub.className = `msg-bubble ${mine ? 'me' : 'them'}`;
-        bub.innerHTML = `<div class="bubble">${escHtml(m.body)}</div>${m.attachment_url ? renderAdminAttachment(m.attachment_url) : ''}<div class="btime">${timeStr}</div>`;
+        bub.innerHTML = `<div class="bubble">${escHtml(m.body)}</div>${m.attachment_url ? renderAdminAttachment(m.attachment_url, m.message_id) : ''}<div class="btime">${timeStr}</div>`;
         body.appendChild(bub);
     });
     body.dataset.lastDate = lastDate;
     body.scrollTop = body.scrollHeight;
 }
 
-function renderAdminAttachment(url) {
+function renderAdminAttachment(url, messageId) {
     const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-    const base = '../../';
+    const proxyUrl = `../../api/view_message_attachment.php?message_id=${messageId}`;
     if (isImage) {
-        return `<a href="${base}${escHtml(url)}" target="_blank"><img src="${base}${escHtml(url)}" style="max-width:220px;max-height:200px;border-radius:8px;margin-top:6px;display:block;cursor:pointer;"></a>`;
+        return `<img src="${proxyUrl}" style="max-width:220px;max-height:200px;border-radius:8px;margin-top:6px;display:block;cursor:pointer;" onclick="openImageModal('${proxyUrl}')" title="Click to enlarge">`;
     }
     const fname = url.split('/').pop();
-    return `<a href="${base}${escHtml(url)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:6px 10px;background:rgba(0,0,0,.06);border-radius:8px;font-size:12px;color:inherit;text-decoration:none;">
+    return `<a href="${proxyUrl}" download style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:6px 10px;background:rgba(0,0,0,.06);border-radius:8px;font-size:12px;color:inherit;text-decoration:none;">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         ${escHtml(fname)}</a>`;
+}
+
+function openImageModal(src) {
+    let modal = document.getElementById('ps-img-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'ps-img-modal';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);cursor:zoom-out;';
+        modal.innerHTML = `
+            <button onclick="event.stopPropagation();document.getElementById('ps-img-modal').style.display='none'"
+                style="position:absolute;top:18px;right:22px;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:24px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;">&times;</button>
+            <div id="ps-img-modal-wrap" style="position:relative;display:inline-flex;cursor:default;" onclick="event.stopPropagation()">
+                <img id="ps-img-modal-img" src="" style="max-width:90vw;max-height:88vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.6);object-fit:contain;display:block;">
+                <div id="ps-img-modal-overlay" style="position:absolute;inset:0;border-radius:10px;background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 45%);opacity:0;transition:opacity .22s ease;display:flex;align-items:flex-end;justify-content:flex-end;padding:14px;">
+                    <button onclick="event.stopPropagation();psDownloadImage()"
+                        style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.2);color:#fff;padding:9px 18px;border-radius:9px;border:1.5px solid rgba(255,255,255,0.35);font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(6px);transition:background .18s;"
+                        onmouseenter="this.style.background='rgba(255,255,255,0.32)'"
+                        onmouseleave="this.style.background='rgba(255,255,255,0.2)'">
+                        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download
+                    </button>
+                </div>
+            </div>`;
+
+        const wrap = modal.querySelector('#ps-img-modal-wrap');
+        const overlay = modal.querySelector('#ps-img-modal-overlay');
+        const isTouchDevice = () => window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+        if (isTouchDevice()) {
+            // Always show overlay on touch devices
+            overlay.style.opacity = '1';
+        } else {
+            // Hover show/hide on desktop
+            wrap.addEventListener('mouseenter', () => overlay.style.opacity = '1');
+            wrap.addEventListener('mouseleave', () => overlay.style.opacity = '0');
+        }
+
+        modal.addEventListener('click', () => { modal.style.display = 'none'; });
+        document.body.appendChild(modal);
+    }
+    document.getElementById('ps-img-modal-img').src = src;
+    modal.dataset.src = src;
+    modal.style.display = 'flex';
+}
+
+function psDownloadImage() {
+    const src = document.getElementById('ps-img-modal').dataset.src;
+    if (!src) return;
+    const a = document.createElement('a');
+    a.href = src;
+    a.download = src.split('/').pop() || 'image';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
 function handleAdminAttach(input) {

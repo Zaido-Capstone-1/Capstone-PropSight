@@ -11,7 +11,16 @@ include '../../includes/db.php';
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(403);
-    echo '<p>Unauthorized.</p>'; exit;
+    // Return JSON if called via fetch (XHR), plain HTML otherwise
+    $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) ||
+               str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'message' => 'Session expired. Please log in again.']);
+    } else {
+        header('Location: ../../index.php');
+    }
+    exit;
 }
 
 $userId    = (int)$_SESSION['user_id'];

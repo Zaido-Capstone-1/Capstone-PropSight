@@ -34,23 +34,23 @@ if ($pts <= 0 || $rewardId <= 0 || $name === '') {
     exit;
 }
 
-/* ── Validate reward exists in catalogue ── */
-$catalogue = [
-    1 => ['name' => 'Free Night Stay', 'pts' => 800],
-    2 => ['name' => 'Room Upgrade', 'pts' => 400],
-    3 => ['name' => 'Free Breakfast', 'pts' => 150],
-    4 => ['name' => 'Late Check-out', 'pts' => 100],
-    5 => ['name' => 'Spa Voucher', 'pts' => 300],
-    6 => ['name' => 'Airport Transfer', 'pts' => 600],
-];
+/* ── Validate reward exists in DB catalogue ── */
+$catStmt = $conn->prepare(
+    "SELECT reward_id, name, points_cost FROM loyalty_rewards WHERE reward_id = ? AND is_active = 1 LIMIT 1"
+);
+$catStmt->bind_param('i', $rewardId);
+$catStmt->execute();
+$reward = $catStmt->get_result()->fetch_assoc();
+$catStmt->close();
 
-if (!isset($catalogue[$rewardId])) {
-    echo json_encode(['success' => false, 'message' => 'Invalid reward.']);
+if (!$reward) {
+    echo json_encode(['success' => false, 'message' => 'Invalid or inactive reward.']);
     exit;
 }
 
-// Authoritative points cost from server, ignore client-supplied value to prevent tampering
-$authoritative_pts = $catalogue[$rewardId]['pts'];
+// Authoritative points cost from DB — ignore client-supplied value to prevent tampering
+$authoritative_pts = (int) $reward['points_cost'];
+$name = $reward['name']; // use DB name, not client-supplied
 if ($pts !== $authoritative_pts) {
     echo json_encode(['success' => false, 'message' => 'Points mismatch. Please refresh and try again.']);
     exit;
