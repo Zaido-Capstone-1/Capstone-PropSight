@@ -15,7 +15,7 @@
     align-items: center;
     justify-content: center;
     padding: 16px;
-    overflow-y: auto;
+    overflow-y: hidden;
 }
 
 .bm-overlay.active {
@@ -1079,4 +1079,15 @@
 .room-avail.avail-no {
     background: rgba(185, 28, 28, 0.85);
     color: #fecaca;
+}
+
+.room-avail.avail-maintenance {
+    background: rgba(180, 83, 9, 0.88);
+    color: #fef3c7;
+}
+
+body.bm-open {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
 }

@@ -53,7 +53,13 @@ class EmailService
         $mail->SMTPSecure = strtolower($cfg['encryption'] ?? 'tls') === 'ssl'
             ? PHPMailer::ENCRYPTION_SMTPS
             : PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->SMTPOptions = ['ssl' => ['cafile' => '/etc/ssl/certs/ca-certificates.crt']];
+        $mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true,
+            ],
+        ];
 
         $mail->setFrom($cfg['from_email'], $cfg['from_name']);
         $mail->addAddress($to);
@@ -68,7 +74,7 @@ class EmailService
         }
         return $mail->send();
     }
-    
+
     private function storeFailedEmail(string $to, string $subject, string $htmlBody, string $textBody, array $errors): void
     {
         $logFile = __DIR__ . '/../logs/failed_emails.log';

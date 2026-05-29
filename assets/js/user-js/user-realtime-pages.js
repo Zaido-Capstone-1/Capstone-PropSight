@@ -29,26 +29,56 @@
             .replace(/&/g, '&amp;').replace(/</g, '&lt;')
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+
     function _setText(sel, val) {
-        document.querySelectorAll(sel).forEach(el => { el.textContent = val; });
+        document.querySelectorAll(sel).forEach(el => {
+            el.textContent = val;
+        });
     }
+
     function _fmtDate(iso) {
         if (!iso) return '';
         const d = new Date(iso + 'T00:00:00');
-        return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+        return d.toLocaleDateString('en-US', {
+            month: 'short',
+            day: '2-digit',
+            year: 'numeric'
+        });
     }
+
     function _fmtCurrency(val) {
-        return '₱' + Number(val).toLocaleString('en-PH', { minimumFractionDigits: 0 });
+        return '₱' + Number(val).toLocaleString('en-PH', {
+            minimumFractionDigits: 0
+        });
     }
+
     function _stBadge(status) {
         const m = {
-            pending: { text: 'Pending', cls: 'badge-pending' },
-            confirmed: { text: 'Confirmed', cls: 'badge-confirmed' },
-            active: { text: 'Active', cls: 'badge-active' },
-            completed: { text: 'Completed', cls: 'badge-completed' },
-            cancelled: { text: 'Cancelled', cls: 'badge-cancelled' },
+            pending: {
+                text: 'Pending',
+                cls: 'badge-pending'
+            },
+            confirmed: {
+                text: 'Confirmed',
+                cls: 'badge-confirmed'
+            },
+            active: {
+                text: 'Active',
+                cls: 'badge-active'
+            },
+            completed: {
+                text: 'Completed',
+                cls: 'badge-completed'
+            },
+            cancelled: {
+                text: 'Cancelled',
+                cls: 'badge-cancelled'
+            },
         };
-        return m[status] || { text: status, cls: '' };
+        return m[status] || {
+            text: status,
+            cls: ''
+        };
     }
     // Status → css class used by .mm-status and .bb-status
     const _mmStMap = {
@@ -149,7 +179,9 @@
                         banner.style.paddingTop = '0';
                         banner.style.paddingBottom = '0';
                     }, 520);
-                    setTimeout(function () { banner.style.display = 'none'; }, 1300);
+                    setTimeout(function () {
+                        banner.style.display = 'none';
+                    }, 1300);
 
                     if (typeof showToast === 'function') {
                         showToast(
@@ -198,7 +230,9 @@
                     var totEl = document.getElementById('manageTotal');
                     if (totEl) {
                         totEl.textContent = '₱' + Number(b.total_amount)
-                            .toLocaleString('en-PH', { minimumFractionDigits: 0 });
+                            .toLocaleString('en-PH', {
+                                minimumFractionDigits: 0
+                            });
                     }
                 }
 
@@ -221,8 +255,7 @@
                 // Cancel button visibility
                 var cancelBtn = document.getElementById('manageCancelBtn');
                 if (cancelBtn) {
-                    cancelBtn.style.display =
-                        ['completed', 'cancelled'].includes(b.status) ? 'none' : '';
+                    cancelBtn.style.display = ['completed', 'cancelled'].includes(b.status) ? 'none' : '';
                 }
 
                 // Flash modal header subtly
@@ -230,7 +263,9 @@
                 if (hero) {
                     hero.style.transition = 'background 0.4s';
                     hero.style.background = 'rgba(59,130,246,0.07)';
-                    setTimeout(function () { hero.style.background = ''; }, 1200);
+                    setTimeout(function () {
+                        hero.style.background = '';
+                    }, 1200);
                 }
 
                 // Toast
@@ -248,11 +283,15 @@
                 var roomCard = document.querySelector('.room-card[data-unit-id="' + String(b.unit_id) + '"]');
                 if (roomCard) {
                     if (['cancelled', 'completed'].includes(b.status)) {
-                        roomCard.dataset.status = 'vacant';
+                        if (roomCard.dataset.status !== 'maintenance') {
+                            roomCard.dataset.status = 'vacant';
+                        }
                         var availBadge = roomCard.querySelector('[data-avail-status]');
                         if (availBadge) {
-                            availBadge.className = 'room-avail avail-yes';
-                            availBadge.textContent = '✓ Available';
+                            if (roomCard.dataset.status !== 'maintenance') {
+                                availBadge.className = 'room-avail avail-yes';
+                                availBadge.textContent = '✓ Available';
+                            }
                         }
                         var bookBtn = roomCard.querySelector('[data-book-btn]');
                         if (bookBtn) {
@@ -260,10 +299,8 @@
                             bookBtn.textContent = 'Book Now';
                             bookBtn.onclick = function (ev) {
                                 if (ev) ev.stopPropagation();
-                                if (typeof openBookingModal !== 'function') return;
-                                try {
-                                    openBookingModal(JSON.parse(roomCard.dataset.roomPayload || '{}'));
-                                } catch (err) { }
+                                var unitId = roomCard.dataset.unitId;
+                                if (unitId) window.location.href = 'unit_detail.php?id=' + unitId + '&book=1';
                             };
                         }
                     } else if (['confirmed', 'active', 'pending'].includes(b.status)) {
@@ -315,7 +352,9 @@
                         bookingCountEl.textContent = currentCount + 1;
                         bookingCountEl.style.transition = 'transform 0.3s ease';
                         bookingCountEl.style.transform = 'scale(1.15)';
-                        setTimeout(function () { bookingCountEl.style.transform = ''; }, 300);
+                        setTimeout(function () {
+                            bookingCountEl.style.transform = '';
+                        }, 300);
                     }
                 }
             }
@@ -327,11 +366,15 @@
             if (!roomCard) return;
 
             if (['cancelled', 'completed'].includes(status)) {
-                roomCard.dataset.status = 'vacant';
+                if (roomCard.dataset.status !== 'maintenance') {
+                    roomCard.dataset.status = 'vacant';
+                }
                 var availBadge = roomCard.querySelector('[data-avail-status]');
                 if (availBadge) {
-                    availBadge.className = 'room-avail avail-yes';
-                    availBadge.textContent = '✓ Available';
+                    if (roomCard.dataset.status !== 'maintenance') {
+                        availBadge.className = 'room-avail avail-yes';
+                        availBadge.textContent = '✓ Available';
+                    }
                 }
                 var bookBtn = roomCard.querySelector('[data-book-btn]');
                 if (bookBtn) {
@@ -339,10 +382,8 @@
                     bookBtn.textContent = 'Book Now';
                     bookBtn.onclick = function (ev) {
                         if (ev) ev.stopPropagation();
-                        if (typeof openBookingModal !== 'function') return;
-                        try {
-                            openBookingModal(JSON.parse(roomCard.dataset.roomPayload || '{}'));
-                        } catch (err) { }
+                        var unitId = roomCard.dataset.unitId;
+                        if (unitId) window.location.href = 'unit_detail.php?id=' + unitId + '&book=1';
                     };
                 }
             } else if (['confirmed', 'active', 'pending'].includes(status)) {
@@ -377,7 +418,9 @@
                 if (newCount !== oldCount) {
                     bookCountEl.style.transition = 'transform 0.3s ease';
                     bookCountEl.style.transform = 'scale(1.15)';
-                    setTimeout(function () { bookCountEl.style.transform = ''; }, 300);
+                    setTimeout(function () {
+                        bookCountEl.style.transform = '';
+                    }, 300);
                 }
             }
         }
@@ -429,11 +472,22 @@
             }
 
             // Sub-label — recalculate pts to next tier
-            var tierDefs = [
-                { name: 'Silver', min: 0 },
-                { name: 'Gold', min: 500 },
-                { name: 'Platinum', min: 2000 },
-                { name: 'Diamond', min: 5000 },
+            var tierDefs = [{
+                    name: 'Silver',
+                    min: 0
+                },
+                {
+                    name: 'Gold',
+                    min: 500
+                },
+                {
+                    name: 'Platinum',
+                    min: 2000
+                },
+                {
+                    name: 'Diamond',
+                    min: 5000
+                },
             ];
             var curIdx = 0;
             tierDefs.forEach(function (t, i) {
@@ -496,8 +550,11 @@
 
     // Track seen reply IDs so we don't double-toast
     var _seenReplyIds = (function () {
-        try { return new Set(JSON.parse(sessionStorage.getItem('ps_seen_reply_ids') || '[]')); }
-        catch (e) { return new Set(); }
+        try {
+            return new Set(JSON.parse(sessionStorage.getItem('ps_seen_reply_ids') || '[]'));
+        } catch (e) {
+            return new Set();
+        }
     })();
 
     window.addEventListener('ps:new_messages', function (e) {
@@ -510,7 +567,9 @@
             var key = 'reply_' + msg.message_id;
             if (_seenReplyIds.has(key)) return;
             _seenReplyIds.add(key);
-            try { sessionStorage.setItem('ps_seen_reply_ids', JSON.stringify([..._seenReplyIds].slice(-200))); } catch (e) { }
+            try {
+                sessionStorage.setItem('ps_seen_reply_ids', JSON.stringify([..._seenReplyIds].slice(-200)));
+            } catch (e) {}
 
             // Toast notification
             if (typeof showToast === 'function') {
@@ -632,24 +691,28 @@
      *      snapshot (or null when there's no active booking).
      * ═══════════════════════════════════════════════════════ */
     window.addEventListener('ps:manage_stay_booking', function (e) {
-        var bk = e.detail;            // null = no active booking
+        var bk = e.detail; // null = no active booking
         var banner = document.getElementById('rt-active-booking-wrap');
-        if (!banner) return;              // not on dashboard
+        if (!banner) return; // not on dashboard
 
         // ── No active booking → collapse banner ────────────
         if (!bk) {
-            if (banner.style.display === 'none') return;  // already hidden
+            if (banner.style.display === 'none') return; // already hidden
 
             // Reset the room card before collapsing
             var unitId = banner.dataset.unitId;
             if (unitId) {
                 var roomCard = document.querySelector('.room-card[data-unit-id="' + unitId + '"]');
                 if (roomCard) {
-                    roomCard.dataset.status = 'vacant';
+                    if (roomCard.dataset.status !== 'maintenance') {
+                        roomCard.dataset.status = 'vacant';
+                    }
                     var availBadge = roomCard.querySelector('[data-avail-status]');
                     if (availBadge) {
-                        availBadge.className = 'room-avail avail-yes';
-                        availBadge.textContent = '✓ Available';
+                        if (roomCard.dataset.status !== 'maintenance') {
+                            availBadge.className = 'room-avail avail-yes';
+                            availBadge.textContent = '✓ Available';
+                        }
                     }
                     var bookBtn = roomCard.querySelector('[data-book-btn]');
                     if (bookBtn) {
@@ -657,8 +720,8 @@
                         bookBtn.textContent = 'Book Now';
                         bookBtn.onclick = function (ev) {
                             if (ev) ev.stopPropagation();
-                            if (typeof openBookingModal !== 'function') return;
-                            try { openBookingModal(JSON.parse(roomCard.dataset.roomPayload || '{}')); } catch (err) { }
+                            var unitId = roomCard.dataset.unitId;
+                            if (unitId) window.location.href = 'unit_detail.php?id=' + unitId + '&book=1';
                         };
                     }
                 }
@@ -675,7 +738,9 @@
                 banner.style.paddingTop = '0';
                 banner.style.paddingBottom = '0';
             }, 520);
-            setTimeout(function () { banner.style.display = 'none'; }, 1300);
+            setTimeout(function () {
+                banner.style.display = 'none';
+            }, 1300);
             return;
         }
 
@@ -744,13 +809,13 @@
         // Keep the Manage Stay button's onclick payload fresh
         var manageBtn = banner.querySelector('.btn-manage');
         if (manageBtn) {
-            var nights = bk.nights !== undefined ? bk.nights
-                : (bk.checkin_date && bk.checkout_date
-                    ? Math.max(0, Math.round(
-                        (new Date(bk.checkout_date) - new Date(bk.checkin_date)) / 86400000))
-                    : 0);
-            var imgSrc = bk.image_path
-                ? '../../' + String(bk.image_path).replace(/^\/+/, '') : '';
+            var nights = bk.nights !== undefined ? bk.nights :
+                (bk.checkin_date && bk.checkout_date ?
+                    Math.max(0, Math.round(
+                        (new Date(bk.checkout_date) - new Date(bk.checkin_date)) / 86400000)) :
+                    0);
+            var imgSrc = bk.image_path ?
+                '../../' + String(bk.image_path).replace(/^\/+/, '') : '';
             var modalPayload = {
                 booking_id: bk.booking_id,
                 unit_name: bk.unit_name || bk.unit_number || 'Unit',
@@ -763,14 +828,16 @@
                 nights: nights,
                 status: _stBadge(bk.status).text,
                 total_amount: 'PHP ' + Number(bk.total_amount || 0)
-                    .toLocaleString('en-PH', { minimumFractionDigits: 0 }),
+                    .toLocaleString('en-PH', {
+                        minimumFractionDigits: 0
+                    }),
                 guests: parseInt(bk.guests || 2, 10),
                 image: imgSrc,
             };
             manageBtn.setAttribute('onclick',
                 'openManageModal(' + JSON.stringify(modalPayload)
-                    .replace(/\\/g, '\\\\')
-                    .replace(/'/g, "\\'") + ')');
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'") + ')');
         }
 
         // If the manage modal is already open for this booking, refresh it too

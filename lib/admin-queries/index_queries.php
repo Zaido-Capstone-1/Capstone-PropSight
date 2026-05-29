@@ -83,36 +83,37 @@ $totalThisMonth = max(1, (int) $conn->query(
 
 $cancelRate = round($cancelledThisMonth / $totalThisMonth * 100, 1);
 
-// ── 8-month chart data ─────────────────────────────────────────────────────
-$revData = [];
-$expData = [];
-$chartLabels = [];
+// ── Full-year chart data (Jan–Dec, current year) ───────────────────────────
+$chartLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+$revData = array_fill(0, 12, 0.0);
+$expData = array_fill(0, 12, 0.0);
 
 $stmtRev = $conn->prepare(
-    "SELECT COALESCE(SUM(amount),0) AS v FROM transactions
-     WHERE type='Income' AND YEAR(transaction_date)=? AND MONTH(transaction_date)=?"
+    "SELECT MONTH(transaction_date)-1 AS m, COALESCE(SUM(amount),0) AS v
+     FROM transactions WHERE type='Income' AND YEAR(transaction_date)=?
+     GROUP BY m"
 );
-$stmtExp = $conn->prepare(
-    "SELECT COALESCE(SUM(amount),0) AS v FROM expenses
-     WHERE YEAR(expense_date)=? AND MONTH(expense_date)=?"
-);
-
-for ($i = 7; $i >= 0; $i--) {
-    $ts = strtotime("-$i months");
-    $ty = (int) date('Y', $ts);
-    $tm = (int) date('n', $ts);
-    $chartLabels[] = date('M', $ts);
-
-    $stmtRev->bind_param('ii', $ty, $tm);
-    $stmtRev->execute();
-    $revData[] = round((float) ($stmtRev->get_result()->fetch_assoc()['v'] ?? 0) / 1000, 1);
-
-    $stmtExp->bind_param('ii', $ty, $tm);
-    $stmtExp->execute();
-    $expData[] = round((float) ($stmtExp->get_result()->fetch_assoc()['v'] ?? 0) / 1000, 1);
-}
+$stmtRev->bind_param('i', $year);
+$stmtRev->execute();
+$res = $stmtRev->get_result();
+while ($r = $res->fetch_assoc())
+    $revData[(int) $r['m']] = round((float) $r['v'] / 1000, 1);
 $stmtRev->close();
+
+$stmtExp = $conn->prepare(
+    "SELECT MONTH(expense_date)-1 AS m, COALESCE(SUM(amount),0) AS v
+     FROM expenses WHERE YEAR(expense_date)=?
+     GROUP BY m"
+);
+$stmtExp->bind_param('i', $year);
+$stmtExp->execute();
+$res = $stmtExp->get_result();
+while ($r = $res->fetch_assoc())
+    $expData[(int) $r['m']] = round((float) $r['v'] / 1000, 1);
 $stmtExp->close();
+
+$revData = array_values($revData);
+$expData = array_values($expData);
 
 // ── Properties list ────────────────────────────────────────────────────────
 $propRes = $conn->query(

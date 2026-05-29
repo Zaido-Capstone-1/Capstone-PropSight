@@ -159,7 +159,17 @@ const roomPreviewClose = document.getElementById('roomPreviewClose');
 
 function openRoomPreview(room) {
     if (!roomPreviewModal) return;
-    document.getElementById('roomPreviewImage').src = room.image || 'assets/images/placeholder.jpg';
+    const imgEl = document.getElementById('roomPreviewImage');
+    const mediaEl = imgEl?.closest('.room-preview-media');
+    if (room.image && room.image.trim() !== '') {
+        imgEl.src = room.image;
+        imgEl.style.display = 'block';
+        if (mediaEl) mediaEl.style.display = 'block';
+    } else {
+        imgEl.src = '';
+        imgEl.style.display = 'none';
+        if (mediaEl) mediaEl.style.display = 'none';
+    }
     document.getElementById('roomPreviewName').textContent = room.name || 'Room';
     document.getElementById('roomPreviewType').textContent = room.type || '';
     document.getElementById('roomPreviewLocation').textContent = room.location || '';

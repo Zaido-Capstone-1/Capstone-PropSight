@@ -30,11 +30,16 @@ if ($method === 'GET') {
             COUNT(*)                                              AS total_cnt,
             COUNT(CASE WHEN payment_status='paid'    THEN 1 END) AS paid_cnt
         FROM payments
-        WHERE YEAR(payment_date)=$y AND MONTH(payment_date)=$m
+        WHERE " . ($month !== 'all' ? "YEAR(payment_date)=$y AND MONTH(payment_date)=$m" : "1") . "
     "));
 
     // Build WHERE
-    $where = ["YEAR(p.payment_date)=$y", "MONTH(p.payment_date)=$m"];
+    $where = [];
+    if ($month !== 'all') {
+        $where[] = "YEAR(p.payment_date)=$y";
+        $where[] = "MONTH(p.payment_date)=$m";
+    }
+    $whereSQL = $where ? implode(' AND ', $where) : '1';
     if ($status !== 'all') {
         $se = mysqli_real_escape_string($conn, $status);
         $where[] = "p.payment_status='$se'";

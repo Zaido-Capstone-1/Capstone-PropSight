@@ -273,7 +273,8 @@ if (burger && mob) {
         today.setDate(today.getDate() + 1);
         const dayAfter = new Date();
         dayAfter.setDate(dayAfter.getDate() + 2);
-        if (noteEl) noteEl.textContent = `Unit is available from ${today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Security deposit is 50% of total stay.`;
+        // FIX: removed "Security deposit is 50% of total stay."
+        if (noteEl) noteEl.textContent = `Unit is available from ${today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.`;
 
         document.getElementById('modalCheckin').value = today.toISOString().split('T')[0];
         const coEl = document.getElementById('modalGuests');
@@ -391,6 +392,7 @@ if (burger && mob) {
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    // FIX: show full price, no deposit
     function updateModalTotal() {
         const ci = document.getElementById('modalCheckin')?.value;
         const co = document.getElementById('modalGuests')?.value;
@@ -400,8 +402,7 @@ if (burger && mob) {
         if (ci && co && co > ci && pricePerNight > 0) {
             const nights = Math.round((new Date(co) - new Date(ci)) / 86400000);
             const stayTotal = pricePerNight * nights;
-            const deposit = stayTotal * 0.5;
-            totalEl.innerHTML = `<strong>${nights} night${nights !== 1 ? 's' : ''}</strong> × ₱${pricePerNight.toLocaleString()} = ₱${stayTotal.toLocaleString()} &nbsp;·&nbsp; <strong style="color:#1a7a4a">Deposit: ₱${deposit.toLocaleString()}</strong>`;
+            totalEl.innerHTML = `<strong>${nights} night${nights !== 1 ? 's' : ''}</strong> × ₱${pricePerNight.toLocaleString()} = <strong style="color:#1a7a4a">₱${stayTotal.toLocaleString()}</strong>`;
         } else {
             totalEl.innerHTML = '';
         }
@@ -580,7 +581,7 @@ if (burger && mob) {
         const availBadge = roomCard.querySelector('[data-avail-status]');
         if (availBadge) {
             availBadge.className = 'room-avail avail-no';
-            availBadge.textContent = 'Booked'; // was 'BOOKED'
+            availBadge.textContent = 'Booked';
         }
         const bookBtn = roomCard.querySelector('[data-book-btn]');
         if (bookBtn) {
@@ -707,11 +708,11 @@ if (burger && mob) {
                     bookBtn.textContent = 'Book Now';
                     bookBtn.disabled = false;
                     bookBtn.removeAttribute('aria-disabled');
+                    // FIX: navigate instead of calling openBookingModal (modal HTML not on dashboard)
                     bookBtn.onclick = function (ev) {
                         if (ev) ev.stopPropagation();
-                        try {
-                            openBookingModal(JSON.parse(roomCard.dataset.roomPayload || '{}'));
-                        } catch (err) {}
+                        var uid = roomCard.dataset.unitId;
+                        if (uid) window.location.href = 'unit_detail.php?id=' + uid + '&book=1';
                     };
                 }
             }
@@ -1135,7 +1136,6 @@ if (burger && mob) {
                 none: 'You need to verify your identity before booking. Please upload a valid government ID on your profile.',
             };
             showToast(msgs[idStatus] || msgs.none, 'warning', 'Identity Verification Required', 7000);
-            // Show a more prominent inline nudge if the ID wall element exists
             const wall = document.getElementById('id-verify-wall');
             if (wall) {
                 wall.style.display = 'flex';
@@ -1147,14 +1147,15 @@ if (burger && mob) {
             return;
         }
 
+        // FIX: expose to window so unit_detail_additions.js can read it
         _bmRoom = room;
+        window._bmRoom = room;
 
         document.getElementById('bmSbName').textContent = room.name || '—';
         document.getElementById('bmSbLoc').textContent = room.location || '—';
         document.getElementById('sb-rent').textContent = room.price + ' / night';
-        const dep = (room.priceNum || 0) * 0.5;
-        document.getElementById('sb-deposit').textContent = '₱' + dep.toLocaleString();
-        document.getElementById('sb-total').textContent = '₱' + dep.toLocaleString();
+        // FIX: show dash until dates are selected, not ₱0
+        document.getElementById('sb-total').textContent = '—';
 
         const img = document.getElementById('bmUnitImg');
         if (img && room.image) {
@@ -1174,6 +1175,9 @@ if (burger && mob) {
 
         bmGoToStep(1);
         const bmOverlay = document.getElementById('bmOverlay');
+        window._bmSavedScroll = window.scrollY || document.documentElement.scrollTop;
+        document.body.style.top = `-${window._bmSavedScroll}px`;
+        document.body.classList.add('bm-open');
         bmOverlay.classList.add('active');
         requestAnimationFrame(() => bmOverlay.classList.add('open'));
 
@@ -1192,7 +1196,6 @@ if (burger && mob) {
         const bmOverlay = document.getElementById('bmOverlay');
         const bmBox = document.getElementById('bmBox');
 
-        // If on step 4 waiting for payment, cancel the booking
         if (_bmCurrentStep === 4) {
             const waitingEl = document.getElementById('bm-payment-waiting');
             const isWaiting = waitingEl && waitingEl.style.display !== 'none';
@@ -1241,7 +1244,10 @@ if (burger && mob) {
             bmBox.style.opacity = '';
         }, 380);
 
-        document.body.style.overflow = '';
+        const savedY = window._bmSavedScroll || 0;
+        document.body.classList.remove('bm-open');
+        document.body.style.top = '';
+        window.scrollTo(0, savedY);
     }
 
     function bmGoToStep(step) {
@@ -1270,7 +1276,6 @@ if (burger && mob) {
         document.getElementById('bmBox').classList.toggle('bm-step-final', step === 4);
         document.getElementById('bmNext').style.display = step < 3 ? '' : 'none';
         document.getElementById('bmConfirmBtn').style.display = step === 3 ? '' : 'none';
-        // Done button is always hidden by default on step 4 — payment flow shows it when appropriate
         document.getElementById('bmDoneBtn').style.display = 'none';
         if (step === 2) bmPopulateReview();
         if (step === 3) bmSetupPayment();
@@ -1327,7 +1332,8 @@ if (burger && mob) {
         const checkin = document.getElementById('bm-checkin').value;
         const lease = document.getElementById('bm-lease').value;
         const nights = Math.round((new Date(lease) - new Date(checkin)) / 86400000) || 0;
-        const deposit = (_bmRoom?.priceNum || 0) * nights * 0.5;
+        // FIX: full price, no deposit
+        const total = (_bmRoom?.priceNum || 0) * nights;
 
         document.getElementById('rv-name').textContent = fname + ' ' + lname;
         document.getElementById('rv-email').textContent = email;
@@ -1337,18 +1343,17 @@ if (burger && mob) {
         document.getElementById('rv-checkout').textContent = lease;
         document.getElementById('rv-nights').textContent = nights + ' night' + (nights !== 1 ? 's' : '');
         document.getElementById('rv-rent').textContent = _bmRoom?.price || '—';
-        document.getElementById('rv-deposit').textContent = '₱' + deposit.toLocaleString();
-        document.getElementById('rv-total').textContent = '₱' + deposit.toLocaleString();
-        document.getElementById('sb-deposit').textContent = '₱' + deposit.toLocaleString();
-        document.getElementById('sb-total').textContent = '₱' + deposit.toLocaleString();
+        document.getElementById('rv-total').textContent = '₱' + total.toLocaleString();
+        document.getElementById('sb-total').textContent = '₱' + total.toLocaleString();
     }
 
     function bmSetupPayment() {
         const checkin = document.getElementById('bm-checkin').value;
         const lease = document.getElementById('bm-lease').value;
         const nights = Math.round((new Date(lease) - new Date(checkin)) / 86400000) || 0;
-        const deposit = (_bmRoom?.priceNum || 0) * nights * 0.5;
-        const amountFmt = '₱' + deposit.toLocaleString();
+        // FIX: full price, no deposit
+        const total = (_bmRoom?.priceNum || 0) * nights;
+        const amountFmt = '₱' + total.toLocaleString();
 
         const qrAmountEl = document.getElementById('bmQrAmount');
         const cashAmountEl = document.getElementById('bmCashAmount');
@@ -1360,11 +1365,6 @@ if (burger && mob) {
                 document.querySelectorAll('#bmPayMethods .bm-pay-option').forEach(o => o.classList.remove('selected'));
                 el.classList.add('selected');
                 selectedPaymentMethod = el.dataset.method;
-                const titles = {
-                    GCash: 'Pay via GCash',
-                    Maya: 'Pay via Maya',
-                    Bank: 'Pay via Bank Transfer'
-                };
             };
         });
 
@@ -1409,7 +1409,6 @@ if (burger && mob) {
                             document.getElementById('bm-payment-success').style.display = '';
                             showToast('Payment confirmed! Click Done to continue.', 'success');
                             document.getElementById('bmDoneBtn').style.display = '';
-
                         } else if (res.payment_status === 'failed') {
                             clearInterval(_bmPollInterval);
                             _bmPollInterval = null;
@@ -1420,10 +1419,9 @@ if (burger && mob) {
                             document.getElementById('bm-payment-waiting').style.display = 'none';
                             document.getElementById('bm-payment-failed').style.display = '';
                             document.getElementById('bmFailedRef').textContent = document.getElementById('bmConfirmRef').textContent;
-                            window._lastBmBookingData = null; // booking cancelled, discard
+                            window._lastBmBookingData = null;
                             showToast('Payment failed. Please try again.', 'error');
                             document.getElementById('bmDoneBtn').style.display = '';
-
                         } else if (res.payment_status === 'expired') {
                             clearInterval(_bmPollInterval);
                             _bmPollInterval = null;
@@ -1434,7 +1432,7 @@ if (burger && mob) {
                             document.getElementById('bm-payment-waiting').style.display = 'none';
                             document.getElementById('bm-payment-expired').style.display = '';
                             document.getElementById('bmExpiredRef').textContent = document.getElementById('bmConfirmRef').textContent;
-                            window._lastBmBookingData = null; // booking cancelled, discard
+                            window._lastBmBookingData = null;
                             showToast('Payment link expired. Please book again.', 'warning');
                             document.getElementById('bmDoneBtn').style.display = '';
                         }
@@ -1455,10 +1453,10 @@ if (burger && mob) {
         const checkin = document.getElementById('bm-checkin').value;
         const lease = document.getElementById('bm-lease').value;
         const nights = Math.round((new Date(lease) - new Date(checkin)) / 86400000) || 0;
-        const deposit = (_bmRoom?.priceNum || 0) * nights * 0.5;
+        // FIX: full price, no deposit
+        const total = (_bmRoom?.priceNum || 0) * nights;
         const isOnline = ['GCash', 'Maya', 'Bank'].includes(selectedPaymentMethod);
 
-        // Open blank tab NOW (synchronous, in click handler) to avoid popup blocker
         const payTab = isOnline ? window.open('', '_blank') : null;
 
         showToast('Submitting your booking…');
@@ -1501,25 +1499,26 @@ if (burger && mob) {
                         checkin,
                         checkout: lease,
                         nights,
-                        total_amount: 'PHP ' + deposit.toLocaleString()
+                        // FIX: full price in receipt
+                        total_amount: 'PHP ' + total.toLocaleString()
                     };
 
                     const ref = '#BK-' + String(data.booking_id || '').padStart(4, '0');
                     document.getElementById('bmConfirmRef').textContent = ref;
 
-                    // Online payment success fields
                     document.getElementById('cf-unit').textContent = _bmRoom?.name || '—';
                     document.getElementById('cf-movein').textContent = checkin;
                     document.getElementById('cf-checkout').textContent = lease;
                     document.getElementById('cf-method').textContent = selectedPaymentMethod;
-                    document.getElementById('cf-total').textContent = '₱' + deposit.toLocaleString();
+                    // FIX: full price on confirm screen
+                    document.getElementById('cf-total').textContent = '₱' + total.toLocaleString();
 
-                    // Cash success fields
                     document.getElementById('cf-unit-cash').textContent = _bmRoom?.name || '—';
                     document.getElementById('cf-movein-cash').textContent = checkin;
                     document.getElementById('cf-checkout-cash').textContent = lease;
                     document.getElementById('cf-method-cash').textContent = selectedPaymentMethod;
-                    document.getElementById('cf-total-cash').textContent = '₱' + deposit.toLocaleString();
+                    // FIX: full price on cash confirm screen
+                    document.getElementById('cf-total-cash').textContent = '₱' + total.toLocaleString();
 
                     if (isOnline) {
                         document.getElementById('bm-payment-waiting').style.display = '';
@@ -1547,7 +1546,6 @@ if (burger && mob) {
                                         window.open(pm.checkout_url, '_blank');
                                     }
 
-                                    // Poll the tab URL to capture the QRPH source ID once the tab redirects
                                     if (payTab) {
                                         const srcPoller = setInterval(() => {
                                             try {
@@ -1567,9 +1565,7 @@ if (burger && mob) {
                                                         })
                                                     }).catch(() => {});
                                                 }
-                                            } catch (e) {
-                                                // clearInterval(srcPoller);
-                                            }
+                                            } catch (e) {}
                                         }, 500);
                                     }
 
@@ -1590,7 +1586,6 @@ if (burger && mob) {
                                 document.getElementById('bmDoneBtn').style.display = '';
                             });
                     } else {
-                        // Cash — show cash success screen, Done button appears immediately
                         document.getElementById('bm-payment-waiting').style.display = 'none';
                         document.getElementById('bm-payment-success').style.display = 'none';
                         document.getElementById('bm-payment-cash').style.display = '';
@@ -1630,7 +1625,6 @@ if (burger && mob) {
 
     function _onBookingDoneFromDashboard() {
         if (window._lastBmBookingData) {
-            // Only show banner if booking wasn't cancelled (failed/expired clears _lastBmBookingData)
             _markDashboardUnitBooked(window._lastBmBookingData.unit_id);
             window.hasActiveBooking = true;
             if (typeof _onBookingSuccess === 'function') {

@@ -35,6 +35,12 @@ try {
         if ($booking['checkin_status'] === 'done') {
             throw new Exception('Guest has already checked in.');
         }
+        // Block check-in if the scheduled check-in date is in the past
+        $today = date('Y-m-d');
+        $checkinDate = date('Y-m-d', strtotime($booking['checkin_date']));
+        if ($checkinDate < $today) {
+            throw new Exception('Cannot check in: the check-in date (' . date('M j, Y', strtotime($checkinDate)) . ') has already passed.');
+        }
         if (
             !mysqli_query($conn, "UPDATE bookings SET
             checkin_status='done', checkin_actual=NOW(), status='active'
@@ -53,7 +59,7 @@ try {
         if ($booking['checkin_status'] !== 'done') {
             throw new Exception('Guest must be checked in before checking out.');
         }
-        
+
         if (
             !mysqli_query($conn, "UPDATE bookings SET
             checkout_status='done', checkout_actual=NOW(), status='completed'

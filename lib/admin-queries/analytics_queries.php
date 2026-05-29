@@ -116,7 +116,7 @@ $activeMonthLabels = array_slice($monthLabels, 0, $currentMonth);
 $activeMonthBookings = array_slice($monthBookings, 0, $currentMonth);
 
 // ── Revenue trend ──────────────────────────────────────────────────────────
-$revTrendData = array_fill(0, 12, null);
+$revTrendData = array_fill(0, 12, 0);
 
 $stmt = $conn->prepare(
     "SELECT MONTH(transaction_date)-1 AS m, SUM(amount) AS v
@@ -132,7 +132,7 @@ $stmt->close();
 
 $revActual = [];
 for ($i = 0; $i < 12; $i++)
-    $revActual[] = $i < $currentMonth ? $revTrendData[$i] : null;
+    $revActual[] = $i < $currentMonth ? ($revTrendData[$i] ?? 0) : null;
 
 // ── Booking status breakdown ───────────────────────────────────────────────
 $stmt = $conn->prepare(
@@ -169,3 +169,69 @@ if (empty($sourceLabels)) {
 }
 
 $sourceTotal = array_sum($sourceData) ?: 1;
+
+// ── Seasonality weights (1.0 = baseline) ──────────────────────────────────
+$seasonality = [
+    0 => 1.30,  // Jan   - Peak
+    1 => 1.30,  // Feb   - Peak
+    2 => 1.10,  // Mar   - (buffer between peak/high)
+    3 => 1.15,  // Apr   - High
+    4 => 1.15,  // May   - High
+    5 => 0.80,  // Jun   - Low
+    6 => 0.80,  // Jul   - Low
+    7 => 0.80,  // Aug   - Low
+    8 => 0.80,  // Sep   - Low
+    9 => 0.80,  // Oct   - Low
+    10 => 1.15,  // Nov   - High
+    11 => 1.30,  // Dec   - Peak
+];
+
+// ── Revenue forecast (linear regression + seasonality) ────────────────────
+$forecastRev = array_fill(0, 12, null);
+$actualPoints = [];
+for ($i = 0; $i < $currentMonth; $i++)
+    if ($revActual[$i] !== null && $revActual[$i] > 0)  // ← added > 0
+        $actualPoints[] = ['x' => $i, 'y' => $revActual[$i] / $seasonality[$i]];
+
+if (count($actualPoints) >= 2) {
+    $n = count($actualPoints);
+    $sumX = $sumY = $sumXY = $sumX2 = 0;
+    foreach ($actualPoints as $p) {
+        $sumX += $p['x'];
+        $sumY += $p['y'];
+        $sumXY += $p['x'] * $p['y'];
+        $sumX2 += $p['x'] * $p['x'];
+    }
+    $slope = ($n * $sumXY - $sumX * $sumY) / max(1, $n * $sumX2 - $sumX * $sumX);
+    $intercept = ($sumY - $slope * $sumX) / $n;
+
+    for ($i = $currentMonth - 1; $i < 12; $i++) {
+        $baseline = $intercept + $slope * $i;
+        $forecastRev[$i] = max(0, round($baseline * $seasonality[$i])); // re-apply season
+    }
+}
+
+// ── Booking forecast (linear regression + seasonality) ────────────────────
+$forecastBookings = array_fill(0, 12, null);
+if ($currentMonth >= 2) {
+    $n = $currentMonth;
+    $sumX = $sumY = $sumXY = $sumX2 = 0;
+    for ($i = 0; $i < $n; $i++) {
+        $deseasonedY = $monthBookings[$i] / $seasonality[$i]; // de-seasonalise
+        $sumX += $i;
+        $sumY += $deseasonedY;
+        $sumXY += $i * $deseasonedY;
+        $sumX2 += $i * $i;
+    }
+    $slope = ($n * $sumXY - $sumX * $sumY) / max(1, $n * $sumX2 - $sumX * $sumX);
+    $intercept = ($sumY - $slope * $sumX) / $n;
+
+    for ($i = $currentMonth - 1; $i < 12; $i++) {
+        $baseline = $intercept + $slope * $i;
+        $forecastBookings[$i] = max(0, round($baseline * $seasonality[$i])); // re-apply season
+    }
+}
+
+// ── Revenue by property as percentage ─────────────────────────────────────
+$revByPropTotal = array_sum($revByPropData) ?: 1;
+$revByPropPct = array_map(fn($v) => round($v / $revByPropTotal * 100, 1), $revByPropData);

@@ -102,7 +102,7 @@ if ($action === 'approve') {
     // Update refund record
     $upd = $conn->prepare("
         UPDATE refunds
-        SET    refund_status  = 'completed',
+        SET    refund_status  = 'processing',
                processed_date = ?,
                processed_by   = ?,
                admin_notes    = 'Approved by admin',
@@ -115,7 +115,7 @@ if ($action === 'approve') {
 
     // In-app notification to user
     $ntTitle = "Refund Approved — $bkRef";
-    $ntBody = "Your refund of $amtFmt for booking $bkRef has been approved and will be processed shortly.";
+    $ntBody = "Your refund of $amtFmt for booking $bkRef has been approved and is now being processed. You will be notified once it is completed..";
     $ntLink = 'pages/user/payment.php';
     $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
     $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
@@ -134,7 +134,7 @@ if ($action === 'approve') {
                 <div style='padding:28px 32px;'>
                     <p style='color:#374151;font-size:15px;margin:0 0 20px;'>Hi {$userName},</p>
                     <p style='color:#374151;font-size:15px;margin:0 0 20px;'>
-                        Great news! Your refund request has been approved. The amount will be returned to your original payment method within 5–10 business days.
+                        Great news! Your refund request has been approved. Your refund is now being processed. The amount will be returned to your original payment method within 5–10 business days.
                     </p>
                     <div style='background:#f1f5f9;border-radius:8px;padding:18px 20px;margin-bottom:20px;'>
                         <table style='width:100%;border-collapse:collapse;font-size:14px;color:#374151;'>
@@ -155,7 +155,7 @@ if ($action === 'approve') {
         }
     }
 
-    echo json_encode(['success' => true, 'message' => "Refund of $amtFmt approved for $bkRef."]);
+    echo json_encode(['success' => true, 'message' => "Refund of $amtFmt for $bkRef is now processing.."]);
     exit;
 }
 

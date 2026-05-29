@@ -42,3 +42,16 @@
     gap: 8px;
     flex-shrink: 0;
 }
+
+.brand-sub {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: transparent;
+  background: linear-gradient(90deg, var(--blue-300), var(--blue-200));
+  -webkit-background-clip: text;
+  background-clip: text;
+  margin-top: 2px;
+  line-height: 1.3;
+}

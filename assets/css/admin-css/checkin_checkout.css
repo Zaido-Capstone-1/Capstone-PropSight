@@ -400,8 +400,13 @@
     background: #b45309;
 }
 
-.cico-green  { background: #16a34a; }
-.cico-amber  { background: #b45309; }
+.cico-green {
+    background: #16a34a;
+}
+
+.cico-amber {
+    background: #b45309;
+}
 
 @media (max-width: 768px) {
     .date-nav {
@@ -422,5 +427,231 @@
 
     .cal-dropdown.open {
         transform: translateX(-50%) translateY(-50%) scale(1);
+    }
+}
+
+/* ══════════════════════════════════════════════════════
+   CALENDAR DATE INDICATORS — Count Badges
+══════════════════════════════════════════════════════ */
+
+/* Override aspect-ratio so cells can accommodate badges below the number */
+.cal-drop-day {
+    aspect-ratio: unset !important;
+    min-height: 42px;
+    height: auto;
+    padding: 6px 2px 4px;
+    justify-content: flex-start !important;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Tinted background for days with activity */
+.cal-drop-day.has-ci {
+    background: rgba(22, 163, 74, 0.07);
+}
+
+.cal-drop-day.has-co {
+    background: rgba(180, 83, 9, 0.07);
+}
+
+.cal-drop-day.has-ci.has-co {
+    background: linear-gradient(135deg, rgba(22, 163, 74, 0.08) 50%, rgba(180, 83, 9, 0.08) 50%);
+}
+
+.cal-drop-day.has-ci:not(.selected):hover {
+    background: rgba(22, 163, 74, 0.15);
+}
+
+.cal-drop-day.has-co:not(.selected):hover {
+    background: rgba(180, 83, 9, 0.15);
+}
+
+/* Badge row — sits in normal flex flow below the day number */
+.cal-drop-badges {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+}
+
+/* Individual count badge */
+.cal-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 14px;
+    height: 13px;
+    padding: 0 3px;
+    border-radius: 3px;
+    font-size: 0.58rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.cal-badge.ci {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.cal-badge.co {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* On selected day, invert badge so it stays readable */
+.cal-drop-day.selected .cal-badge.ci {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+.cal-drop-day.selected .cal-badge.co {
+    background: rgba(255, 255, 255, 0.20);
+    color: #fff;
+}
+
+/* Legend row inside calendar dropdown */
+.cal-drop-legend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 14px 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.cal-drop-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.cal-drop-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.cal-drop-legend-dot.ci {
+    background: #16a34a;
+}
+
+.cal-drop-legend-dot.co {
+    background: #d97706;
+}
+
+
+/* ══════════════════════════════════════════════════════
+   MOBILE FIXES — Guest rows & actions
+══════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+
+    /* Stack guest row vertically */
+    .guest-row {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px 14px;
+    }
+
+    .guest-info {
+        flex: 1 1 calc(100% - 56px);
+        /* next to avatar */
+    }
+
+    /* Actions go full-width below */
+    .guest-actions {
+        flex: 0 0 100%;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding-left: 54px;
+        /* align under name, past avatar */
+    }
+
+    .act-btn {
+        font-size: 0.74rem;
+        padding: 7px 12px;
+    }
+
+    /* Stat row: 2-col layout */
+    .stat-row {
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+    }
+
+    .stat-row .stat-card,
+    .stat-card {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 0 !important;
+        padding: 12px 14px !important;
+    }
+
+    .stat-value {
+        font-size: 1.5rem !important;
+    }
+
+    /* Two-col cards → single column */
+    .two-col {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    /* Date nav wrap neatly */
+    .date-nav {
+        gap: 6px;
+    }
+
+    .cal-picker-trigger {
+        font-size: 0.8rem;
+        padding: 7px 11px;
+        gap: 6px;
+    }
+
+    .date-today-btn {
+        font-size: 0.76rem;
+        padding: 6px 11px;
+    }
+
+    .date-nav-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 0.88rem;
+    }
+
+    /* Page header stacks */
+    .dash-page-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    .dash-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 400px) {
+    .guest-actions {
+        padding-left: 0;
+    }
+
+    .act-btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+
+    /* Keep stat cards in 2-col even on very small screens */
+    .stat-row {
+        flex-wrap: wrap !important;
+    }
+
+    .stat-row .stat-card,
+    .stat-card {
+        flex: 1 1 calc(50% - 6px) !important;
     }
 }

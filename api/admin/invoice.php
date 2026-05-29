@@ -82,17 +82,28 @@ function handle_create(mysqli $conn): void
     $status = in_array($_POST['status'] ?? '', ['Pending', 'Paid', 'Overdue'], true)
         ? $_POST['status'] : 'Pending';
 
-    $year = date('Y');
-    $month = date('m');
+    $issued_year  = date('Y', strtotime($issued_date));
+    $issued_month = date('m', strtotime($issued_date));
 
+    // Count ALL invoices ever for this month to avoid reuse after deletions
     $cnt = $conn->prepare("SELECT COUNT(*) FROM invoices WHERE YEAR(issued_date) = ? AND MONTH(issued_date) = ?");
-    $cnt->bind_param('ii', $year, $month);
+    $cnt->bind_param('ii', $issued_year, $issued_month);
     $cnt->execute();
     $cnt->bind_result($count);
     $cnt->fetch();
     $cnt->close();
 
-    $invoice_no = 'INV-' . $year . $month . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+    // Keep incrementing until we find a unique invoice_no
+    do {
+        $count++;
+        $invoice_no = 'INV-' . $issued_year . $issued_month . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+        $chk = $conn->prepare("SELECT id FROM invoices WHERE invoice_no = ?");
+        $chk->bind_param('s', $invoice_no);
+        $chk->execute();
+        $chk->store_result();
+        $exists = $chk->num_rows > 0;
+        $chk->close();
+    } while ($exists);
 
     $stmt = $conn->prepare("
         INSERT INTO invoices (invoice_no, tenant_id, unit, issued_date, due_date, items, total, status)
@@ -161,6 +172,7 @@ function handle_get_invoice(mysqli $conn): void
             i.items,
             i.total,
             i.status,
+            i.issued_date,
             DATE_FORMAT(i.issued_date, '%b %d, %Y') AS issued_label,
             DATE_FORMAT(i.due_date,    '%b %d, %Y') AS due_label,
             t.full_name,

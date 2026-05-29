@@ -93,16 +93,16 @@ if ($_sb_initials === '')
       <img src="../../assets/images/final logo.png" alt="PropSight Logo"
         style="width:50px; height:50px; object-fit:contain;" />
     </div>
-    <div>
+    <div style="display:flex; flex-direction:column; gap:2px;">
       <div class="brand-name">PropSight</div>
-      <!-- <div class="brand-sub">Property Suite</div> -->
+      <div class="brand-sub">Boracay Accommodation</div>
     </div>
     <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">✕</button>
   </div>
 
   <div class="sidebar-nav">
 
-    <div class="nav-section-label">Overview</div>
+    <div class="nav-section-label" >Overview</div>
 
     <a href="index.php" class="nav-item<?= nav_active('dashboard') ?>">
       <div class="nav-icon">
@@ -215,7 +215,8 @@ if ($_sb_initials === '')
       </a>
     </div>
 
-    <div class="nav-item has-sub<?= group_active(['payments', 'transactions', 'invoices_billing', 'expenses']) ?>">
+    <div
+      class="nav-item has-sub<?= group_active(['payments', 'transactions', 'invoices_billing', 'expenses', 'refunds']) ?>">
       <div class="nav-icon">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <line x1="12" y1="1" x2="12" y2="23" />
@@ -229,7 +230,7 @@ if ($_sb_initials === '')
         </svg>
       </span>
     </div>
-    <div class="nav-sub<?= group_sub_open(['payments', 'transactions', 'invoices_billing', 'expenses']) ?>">
+    <div class="nav-sub<?= group_sub_open(['payments', 'transactions', 'invoices_billing', 'expenses', 'refunds']) ?>">
       <a href="payments.php" class="sub-item<?= sub_active('payments') ?>">
         <div class="sub-dot"></div>Payments
       </a>

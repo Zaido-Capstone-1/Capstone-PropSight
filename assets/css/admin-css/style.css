@@ -81,9 +81,9 @@ body {
 }
 
 .dash-page-header {
-  padding: 8px 0 20px;
+  padding: 8px 0 15px;
   flex-shrink: 0;
-  margin-top: 22px;
+  margin-top: 10px;
 }
 
 .dash-header-left {
@@ -127,41 +127,50 @@ body {
 .sidebar-top {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 22px 16px 18px;
+  gap: 12px;
+  padding: 20px 16px 18px;
   flex-shrink: 0;
   border-bottom: 1px solid var(--sidebar-divider);
+  background: linear-gradient(135deg, rgba(37, 99, 196, 0.12), transparent);
 }
 
 .sidebar-logo {
-  width: 45px;
-  height: 45px;
+  width: 46px;
+  height: 46px;
   background: white;
-  border-radius: 11px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.brand-name {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--sidebar-text-bright);
+  letter-spacing: -0.4px;
+  line-height: 1.1;
+}
+
+.brand-sub {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: transparent;
+  background: linear-gradient(90deg, var(--blue-300), var(--blue-200));
+  -webkit-background-clip: text;
+  background-clip: text;
+  margin-top: 2px;
+  line-height: 1.3;
 }
 
 .sidebar-logo svg {
   width: 20px;
   height: 20px;
   fill: white;
-}
-
-.brand-name {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--sidebar-text-bright);
-  letter-spacing: -.3px;
-  line-height: 1.1;
-}
-
-.brand-sub {
-  font-size: 12px;
-  color: var(--sidebar-label);
-  font-weight: 500;
 }
 
 .sidebar-close {
@@ -1289,7 +1298,7 @@ textarea {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 6px;
   padding: 3px;
   box-sizing: content-box;

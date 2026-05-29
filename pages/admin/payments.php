@@ -25,15 +25,6 @@ function fmt_peso(float $v): string
     return '₱ ' . number_format($v, 2);
 }
 
-function mqi_fetch(mysqli $conn, string $sql, string $types = '', array $params = []): array
-{
-    $stmt = $conn->prepare($sql);
-    if ($types && $params) {
-        $stmt->bind_param($types, ...$params);
-    }
-    $stmt->execute();
-    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-}
 
 $filter_status = $_GET['status'] ?? 'all';
 $filter_month = $_GET['month'] ?? ($_SESSION['payments_filter_month'] ?? date('Y-m'));
@@ -51,102 +42,7 @@ $search = trim($_GET['q'] ?? '');
 $y = (int) $y;
 $m = (int) $m;
 
-$stat_sql = "
-    SELECT
-        COALESCE(SUM(CASE WHEN payment_status = 'paid'    THEN amount_paid END), 0) AS collected,
-        COALESCE(SUM(CASE WHEN payment_status = 'pending' THEN amount_paid END), 0) AS pending_amt,
-        COALESCE(SUM(CASE WHEN payment_status = 'late'    THEN amount_paid END), 0) AS overdue_amt,
-        COUNT(CASE WHEN payment_status = 'pending' THEN 1 END) AS pending_cnt,
-        COUNT(CASE WHEN payment_status = 'late'    THEN 1 END) AS overdue_cnt,
-        COUNT(*)                                                AS total_cnt,
-        COUNT(CASE WHEN payment_status = 'paid'    THEN 1 END) AS paid_cnt
-    FROM payments
-    WHERE YEAR(payment_date) = ? AND MONTH(payment_date) = ?
-";
-
-$stats = mqi_fetch($conn, $stat_sql, 'ii', [$y, $m])[0] ?? [
-    'collected' => 0,
-    'pending_amt' => 0,
-    'overdue_amt' => 0,
-    'pending_cnt' => 0,
-    'overdue_cnt' => 0,
-    'total_cnt' => 0,
-    'paid_cnt' => 0
-];
-
-$collection_rate = $stats['total_cnt'] > 0
-    ? round(($stats['paid_cnt'] / $stats['total_cnt']) * 100)
-    : 0;
-
-$trend_sql = "
-    SELECT
-        DATE_FORMAT(payment_date, '%b') AS mo,
-        YEAR(payment_date)  AS yr,
-        MONTH(payment_date) AS mn,
-        COALESCE(SUM(CASE WHEN payment_status = 'paid'               THEN amount_paid END), 0) AS collected,
-        COALESCE(SUM(CASE WHEN payment_status IN ('pending', 'late') THEN amount_paid END), 0) AS outstanding
-    FROM payments
-    WHERE payment_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01')
-    GROUP BY yr, mn, mo
-    ORDER BY yr, mn
-";
-
-$trend_rows = mqi_fetch($conn, $trend_sql);
-$trend_labels = array_column($trend_rows, 'mo');
-$trend_collected = array_map('floatval', array_column($trend_rows, 'collected'));
-$trend_outstanding = array_map('floatval', array_column($trend_rows, 'outstanding'));
-
-$where = ['YEAR(p.payment_date) = ?', 'MONTH(p.payment_date) = ?'];
-$types = 'ii';
-$params = [$y, $m];
-
-if ($filter_status !== 'all') {
-    $where[] = 'p.payment_status = ?';
-    $types .= 's';
-    $params[] = $filter_status;
-}
-if ($search !== '') {
-    $where[] = '(t.full_name LIKE ? OR u.unit_number LIKE ? OR CAST(p.payment_id AS CHAR) LIKE ?)';
-    $types .= 'sss';
-    $like = '%' . $search . '%';
-    $params[] = $like;
-    $params[] = $like;
-    $params[] = $like;
-}
-
-$where_sql = implode(' AND ', $where);
-
-$records_sql = "
-    SELECT
-        p.payment_id, p.booking_id, p.payment_date, p.amount_paid,
-        p.payment_method, p.payment_status, p.notes, p.created_at,
-        COALESCE(NULLIF(t.full_name,''), CONCAT(u2.first_name,' ',u2.last_name)) AS full_name,
-        t.tenant_id,
-        u.unit_number, u.unit_id,
-        u2.profile_photo
-    FROM payments p
-    LEFT JOIN bookings b  ON b.booking_id = p.booking_id
-    LEFT JOIN tenants  t  ON t.tenant_id  = b.tenant_id
-    LEFT JOIN units    u  ON u.unit_id    = b.unit_id
-    LEFT JOIN users    u2 ON u2.user_id   = b.user_id
-    WHERE $where_sql
-    ORDER BY p.created_at DESC
-";
-$records = mqi_fetch($conn, $records_sql, $types, $params);
-
-$booking_options_sql = "
-    SELECT 
-        b.booking_id,
-        COALESCE(NULLIF(t.full_name,''), CONCAT(u.first_name,' ',u.last_name)) AS full_name,
-        un.unit_number
-    FROM bookings b
-    LEFT JOIN tenants t  ON t.tenant_id = b.tenant_id
-    LEFT JOIN users   u  ON u.user_id   = b.user_id
-    JOIN  units   un ON un.unit_id  = b.unit_id
-    WHERE b.status NOT IN ('cancelled','completed')
-    ORDER BY full_name
-";
-$booking_options = mqi_fetch($conn, $booking_options_sql);
+require_once '../../lib/admin-queries/payment_queries.php';
 
 $pay_per_page = 10;
 $pay_total_records = count($records);
@@ -166,7 +62,7 @@ $pay_base_url = '?' . http_build_query($pay_url_params) . (empty($pay_url_params
 <?php if (!empty($_SESSION['flash'])): ?>
 
     <?php unset($_SESSION['flash']);
-endif; 
+endif;
 ?>
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
@@ -432,7 +328,7 @@ endif;
                                         </div>
                                     </td>
                                     <td><?= htmlspecialchars($p['unit_number'] ?? '—') ?></td>
-                                    <td><?= $pay_date ?></td>
+                                    <td><?= $p['payment_date'] ? date('M j, Y', strtotime($p['payment_date'])) : '—' ?></td>
                                     <td style="font-weight:700;">
                                         <?= $p['amount_paid'] ? fmt_peso((float) $p['amount_paid']) : '—' ?>
                                     </td>

@@ -205,6 +205,7 @@ require_once '../../lib/admin-queries/units_rooms_queries.php';
             'tenant_name' => $unit['tenant_name'] ?? '',
             'tenant_email' => $unit['tenant_email'] ?? '',
             'tenant_photo' => $unit['tenant_photo'] ?? '',
+            'description'  => $unit['description'] ?? '',
             'images' => $imgs,
           ]), ENT_QUOTES);
 

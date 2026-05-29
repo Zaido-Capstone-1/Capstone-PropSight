@@ -25,7 +25,7 @@ $stmt = $conn->prepare(
      JOIN   users u  ON u.user_id  = b.user_id
      JOIN   units un ON un.unit_id = b.unit_id
      LEFT JOIN properties p ON p.property_id = un.property_id
-     WHERE  b.checkin_date = ? AND b.status NOT IN ('cancelled')
+     WHERE  b.checkin_date = ? AND b.status NOT IN ('cancelled','completed')
      ORDER  BY b.checkin_date ASC"
 );
 $stmt->bind_param('s', $selected_date);
@@ -43,7 +43,7 @@ $stmt = $conn->prepare(
      JOIN   users u  ON u.user_id  = b.user_id
      JOIN   units un ON un.unit_id = b.unit_id
      LEFT JOIN properties p ON p.property_id = un.property_id
-     WHERE  b.checkout_date = ? AND b.status NOT IN ('cancelled')
+     WHERE  b.checkout_date = ? AND b.status NOT IN ('cancelled','completed')
      ORDER  BY b.checkout_date ASC"
 );
 $stmt->bind_param('s', $selected_date);
@@ -77,7 +77,7 @@ $cal_end = date('Y-m-t', strtotime($selected_date));
 $stmt = $conn->prepare(
     "SELECT DATE(checkin_date) AS ci_date, DATE(checkout_date) AS co_date
      FROM bookings
-     WHERE status NOT IN ('cancelled')
+     WHERE status NOT IN ('cancelled','completed')
        AND (checkin_date BETWEEN ? AND ? OR checkout_date BETWEEN ? AND ?)"
 );
 $stmt->bind_param('ssss', $cal_start, $cal_end, $cal_start, $cal_end);
@@ -86,14 +86,17 @@ $actRes = $stmt->get_result();
 $ci_days = [];
 $co_days = [];
 while ($row = $actRes->fetch_assoc()) {
-    if ($row['ci_date'] >= $cal_start && $row['ci_date'] <= $cal_end)
-        $ci_days[] = (int) date('j', strtotime($row['ci_date']));
-    if ($row['co_date'] >= $cal_start && $row['co_date'] <= $cal_end)
-        $co_days[] = (int) date('j', strtotime($row['co_date']));
+    if ($row['ci_date'] >= $cal_start && $row['ci_date'] <= $cal_end) {
+        $d = (int) date('j', strtotime($row['ci_date']));
+        $ci_days[$d] = ($ci_days[$d] ?? 0) + 1;
+    }
+    if ($row['co_date'] >= $cal_start && $row['co_date'] <= $cal_end) {
+        $d = (int) date('j', strtotime($row['co_date']));
+        $co_days[$d] = ($co_days[$d] ?? 0) + 1;
+    }
 }
 $stmt->close();
-$ci_days = array_unique($ci_days);
-$co_days = array_unique($co_days);
+// $ci_days and $co_days are now associative: { day => count }
 
 function ciStatusLabel($row): array
 {

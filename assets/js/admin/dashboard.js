@@ -92,8 +92,8 @@ function loadRevenueYear(year) {
       const exp = Array.isArray(fd.expenses) ? fd.expenses : [];
 
       chart.data.labels = MONTH_LABELS_FULL;
-      chart.data.datasets[0].data = MONTH_LABELS_FULL.map((_, i) => Number(rev[i] || 0));
-      chart.data.datasets[1].data = MONTH_LABELS_FULL.map((_, i) => Number(exp[i] || 0));
+      chart.data.datasets[0].data = MONTH_LABELS_FULL.map((_, i) => Number(rev[i] || 0) / 1000);
+      chart.data.datasets[1].data = MONTH_LABELS_FULL.map((_, i) => Number(exp[i] || 0) / 1000);
       chart.update();
     })
     .catch(() => { });
@@ -224,8 +224,9 @@ window.addEventListener('ps:top_properties', e => {
   }).join('');
 });
 
-window.addEventListener('ps:task_summary', e => {
-  const tasks = Array.isArray(e.detail) ? e.detail : [];
+window.addEventListener('ps:tasks', e => {
+  const tasks = (Array.isArray(e.detail) ? e.detail : [])
+    .filter(t => !['completed', 'closed', 'done'].includes((t.status || '').toLowerCase()));
   const list = document.getElementById('rt-task-list');
   if (!list) return;
   if (!tasks.length) {
@@ -304,7 +305,12 @@ window.addEventListener('ps:task_summary', e => {
 
 // ── Live Recent Activity Feed Updates ──────────────────────────────────────
 window.addEventListener('ps:recent_activity', e => {
-  const activities = Array.isArray(e.detail) ? e.detail : [];
+  const activities = (Array.isArray(e.detail) ? e.detail : [])
+    .filter(act => {
+      if (!act.created_at) return true;
+      const sec = Math.floor((Date.now() - new Date(act.created_at).getTime()) / 1000);
+      return sec < 7200;
+    });
   const feed = document.getElementById('rt-activity-feed');
   if (!feed) return;
 
@@ -364,10 +370,8 @@ window.addEventListener('ps:recent_activity', e => {
  
   // Show loading state
   feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-soft);font-size:13px;">Loading activity...</div>';
- 
-  // Fetch initial activity data from realtime API
-  // Use timestamp of 1 hour ago to get recent items
-  const oneHourAgo = new Date(Date.now() - 3600000).toISOString().slice(0, 19).replace('T', ' ');
+
+  const since = new Date(Date.now() - 7200000).toISOString().slice(0, 19).replace('T', ' ');
   
   fetch('../../api/realtime.php?since=' + encodeURIComponent(oneHourAgo))
     .then(res => res.json())

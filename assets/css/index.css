@@ -76,7 +76,8 @@ body {
     font-family: 'Jost', sans-serif;
     background: var(--blue-50);
     color: var(--text-dark);
-    overflow-x: hidden; /* add this */
+    overflow-x: hidden;
+    /* add this */
     overflow-y: auto;
 }
 
@@ -525,7 +526,8 @@ nav a:hover::after {
 
 /* Mobile Nav */
 .mobile-nav {
-    display: flex;  /* keep flex, remove display:none toggle */
+    display: flex;
+    /* keep flex, remove display:none toggle */
     position: fixed;
     top: 70px;
     left: 0;
@@ -538,14 +540,16 @@ nav a:hover::after {
     z-index: 199;
     transform: translateY(-8px);
     opacity: 0;
-    pointer-events: none;  /* ADD THIS */
+    pointer-events: none;
+    /* ADD THIS */
     transition: transform 0.3s, opacity 0.3s;
 }
 
 .mobile-nav.open {
     transform: translateY(0);
     opacity: 1;
-    pointer-events: auto;  /* ADD THIS */
+    pointer-events: auto;
+    /* ADD THIS */
 }
 
 .mobile-nav a {
@@ -842,8 +846,9 @@ nav a:hover::after {
 }
 
 .thumb {
-    flex: 0 0 auto;
-    width: 100px;
+    flex: 1 1 100px;
+    min-width: 80px;
+    max-width: 160px;
     height: 64px;
     border-radius: 10px;
     overflow: hidden;
@@ -2179,7 +2184,7 @@ footer {
         width: 80px;
         height: 52px;
     }
-    
+
     .about-inner {
         grid-template-columns: 1fr;
         gap: 2.5rem;
@@ -2195,64 +2200,64 @@ footer {
     .about-badge {
         left: -10px;
     }
-    
+
     .about-pillars {
         grid-template-columns: 1fr 1fr;
     }
 }
- 
+
 @media (max-width: 768px) {
     nav {
         display: none;
     }
- 
+
     .hamburger {
         display: flex;
     }
- 
+
     .mobile-nav {
         display: flex;
     }
- 
+
     .btn-book-header {
         display: none;
     }
- 
+
     .btn-login-header {
         display: none;
     }
- 
+
     .hero {
         padding-top: 100px;
         padding-bottom: 30px;
         gap: 2rem;
     }
- 
+
     .hero h1 {
         font-size: clamp(2rem, 8vw, 2.6rem);
         margin-bottom: 1rem;
     }
- 
+
     .hero-desc {
         font-size: 0.95rem;
         max-width: 100%;
         padding: 0 1rem;
     }
- 
+
     .rooms-grid {
         grid-template-columns: 1fr;
         max-width: 420px;
         margin: 0 auto;
     }
- 
+
     .testi-grid {
         display: none;
     }
- 
+
     .testi-swiper-wrap {
         display: block;
     }
- 
+
     .about-pillars {
         grid-template-columns: 1fr 1fr;
         gap: 0.75rem;
@@ -2284,114 +2289,114 @@ footer {
     .pillar-desc {
         font-size: 0.72rem;
     }
-    
+
     .testi-swiper-wrap {
         display: block;
     }
- 
+
     .footer-grid {
         grid-template-columns: 1fr;
     }
- 
+
     .footer-bottom {
         flex-direction: column;
         text-align: center;
     }
 }
- 
+
 /* ── Small mobile devices (phones) ── */
 @media (max-width: 500px) {
     .hero {
         padding: 90px 5vw 30px;
         gap: 1.5rem;
     }
- 
+
     .hero h1 {
         font-size: clamp(1.75rem, 7vw, 2.2rem);
         line-height: 1.2;
         margin-bottom: 0.8rem;
     }
- 
+
     .hero-eyebrow {
         font-size: 0.65rem;
         margin-bottom: 1rem;
     }
- 
+
     .hero-desc {
         font-size: 0.88rem;
         line-height: 1.7;
         margin-bottom: 1.5rem;
         padding: 0;
     }
- 
+
     .hero-stats {
         gap: 1.2rem;
         flex-wrap: wrap;
     }
- 
+
     .hero-stat-num {
         font-size: 1.5rem;
     }
- 
+
     .hero-stat-lbl {
         font-size: 0.68rem;
     }
- 
+
     .hero-carousel {
         max-width: 100%;
     }
- 
+
     .carousel-frame {
         border-radius: 16px;
     }
- 
+
     .about-img-accent {
         display: none;
     }
- 
+
     .about-visual {
         padding-right: 0;
         padding-bottom: 0;
     }
- 
+
     .modal-box {
         padding: 28px 20px;
         max-height: 92vh;
     }
 }
- 
+
 /* ── Extra small devices (iPhone SE, smaller phones) ── */
 @media (max-width: 380px) {
     .hero {
         padding: 85px 4vw 25px;
     }
- 
+
     .hero h1 {
         font-size: 1.6rem;
         line-height: 1.15;
     }
- 
+
     .hero-desc {
         font-size: 0.85rem;
         line-height: 1.65;
     }
- 
+
     .hero-stats {
         gap: 1rem;
     }
- 
+
     .hero-stat-num {
         font-size: 1.3rem;
     }
- 
+
     .hero-stat-lbl {
         font-size: 0.65rem;
     }
- 
+
     .carousel-label-name {
         font-size: 1rem;
     }
- 
+
     .carousel-label-type {
         font-size: 0.7rem;
     }

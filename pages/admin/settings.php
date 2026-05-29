@@ -26,11 +26,6 @@ $adminRow = mysqli_fetch_assoc(mysqli_query(
     "SELECT * FROM users WHERE user_id=$adminId LIMIT 1"
 ));
 
-$sysSettingsRes = mysqli_query($conn, "SELECT setting_key, value FROM admin_settings");
-$sysCfg = [];
-while ($r = mysqli_fetch_assoc($sysSettingsRes))
-    $sysCfg[$r['setting_key']] = $r['value'];
-
 $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adminRow['last_name'], 0, 1));
 ?>
 <style>
@@ -164,25 +159,32 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
         </div>
 
         <div class="card">
-            <div class="card-header"><span class="card-title">System Preferences</span></div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">
-                <?php
-                $prefs = [
-                    ['Default Currency', 'PHP (₱ Philippine Peso)', 'select', ['PHP (₱)', 'USD ($)', 'EUR (€)']],
-                    ['Date Format', 'MM/DD/YYYY', 'select', ['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD']],
-                    ['Time Zone', 'Asia/Manila (UTC+8)', 'select', ['Asia/Manila', 'Asia/Singapore', 'UTC']],
-                    ['Language', 'English', 'select', ['English', 'Filipino', 'Español']],
-                ];
-                foreach ($prefs as $pref): ?>
-                    <div class="form-group">
-                        <label><?= $pref[0] ?></label>
-                        <select>
-                            <?php foreach ($pref[3] as $opt): ?>
-                                <option <?= $opt === $pref[1] ? 'selected' : '' ?>><?= $opt ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                <?php endforeach; ?>
+            <div class="card-header"><span class="card-title">Contact Information</span></div>
+            <p style="font-size:12px;color:var(--text-soft);margin-bottom:16px;">
+                These details appear in the public-facing footer of the landing page.
+            </p>
+            <div style="display:grid;gap:14px;">
+                <div class="form-group">
+                    <label>Address</label>
+                    <input id="contact_address" type="text"
+                        value="<?php echo htmlspecialchars($sysCfg['contact_address'] ?? 'Station 3, Barangay Manoc-Manoc, Boracay Island, Aklan 5608'); ?>"
+                        placeholder="Full address" />
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input id="contact_phone" type="text"
+                        value="<?php echo htmlspecialchars($sysCfg['contact_phone'] ?? '+63 33 123 4567'); ?>"
+                        placeholder="+63 33 123 4567" />
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input id="contact_email" type="email"
+                        value="<?php echo htmlspecialchars($sysCfg['contact_email'] ?? 'hello@filipinohomes.ph'); ?>"
+                        placeholder="hello@example.com" />
+                </div>
+            </div>
+            <div class="form-actions" style="margin-top:16px;">
+                <button class="btn btn-primary" onclick="saveContactInfo(event)">Save Contact Info</button>
             </div>
         </div>
 

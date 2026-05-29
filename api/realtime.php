@@ -219,30 +219,32 @@ if ($role === 'admin') {
             'total_units' => max(1, (int) ($unitRow['total'] ?? 1)),
         ];
 
-        // Last 8 months trend for revenue and expenses
-        $labels = [];
-        $revenueSeries = [];
-        $expenseSeries = [];
-        for ($i = 7; $i >= 0; $i--) {
-            $ts = strtotime("-$i months");
-            $ty = (int) date('Y', $ts);
-            $tm = (int) date('n', $ts);
-            $labels[] = date('M', $ts);
+        // Full-year chart data (Jan–Dec, current year)
+        $labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        $revenueSeries = array_fill(0, 12, 0.0);
+        $expenseSeries = array_fill(0, 12, 0.0);
+        $chartYear = (int) date('Y');
 
-            $rv = mysqli_fetch_assoc(mysqli_query(
-                $conn,
-                "SELECT COALESCE(SUM(amount),0) AS v FROM transactions
-                 WHERE type='Income' AND YEAR(transaction_date)=$ty AND MONTH(transaction_date)=$tm"
-            ));
-            $ex = mysqli_fetch_assoc(mysqli_query(
-                $conn,
-                "SELECT COALESCE(SUM(amount),0) AS v FROM expenses
-                 WHERE YEAR(expense_date)=$ty AND MONTH(expense_date)=$tm"
-            ));
+        $rvRes = mysqli_query(
+            $conn,
+            "SELECT MONTH(transaction_date)-1 AS m, COALESCE(SUM(amount),0) AS v
+            FROM transactions WHERE type='Income' AND YEAR(transaction_date)=$chartYear
+            GROUP BY m"
+        );
+        while ($rvRes && ($r = mysqli_fetch_assoc($rvRes)))
+            $revenueSeries[(int) $r['m']] = round((float) $r['v'] / 1000, 1);
 
-            $revenueSeries[] = round(((float) ($rv['v'] ?? 0)) / 1000, 1);
-            $expenseSeries[] = round(((float) ($ex['v'] ?? 0)) / 1000, 1);
-        }
+        $exRes = mysqli_query(
+            $conn,
+            "SELECT MONTH(expense_date)-1 AS m, COALESCE(SUM(amount),0) AS v
+            FROM expenses WHERE YEAR(expense_date)=$chartYear
+            GROUP BY m"
+        );
+        while ($exRes && ($r = mysqli_fetch_assoc($exRes)))
+            $expenseSeries[(int) $r['m']] = round((float) $r['v'] / 1000, 1);
+
+        $revenueSeries = array_values($revenueSeries);
+        $expenseSeries = array_values($expenseSeries);
         $payload['financial_series'] = [
             'labels' => $labels,
             'revenue_k' => $revenueSeries,
@@ -276,7 +278,7 @@ if ($role === 'admin') {
             FROM maintenance_requests m
             LEFT JOIN units u ON u.unit_id = m.unit_id
             LEFT JOIN properties p ON p.property_id = u.property_id
-            WHERE 1
+            WHERE m.request_status NOT IN ('completed', 'closed')
             ORDER BY m.request_date DESC
             LIMIT 5"
         );

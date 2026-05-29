@@ -142,6 +142,7 @@
        FILTER  (search + status + month)
     ══════════════════════════════════════════════════════════════════════ */
     function applyFilters() {
+        const noDataRow = $('noDataRow');
         const q = ($('searchFilter')?.value ?? '').toLowerCase().trim();
         const status = $('statusFilter')?.value ?? '';
         const month = $('invMonthFilter')?.value ?? '';
@@ -159,9 +160,23 @@
         });
 
         const empty = $('emptyState');
-        if (empty) empty.style.display = count === 0 && rows.length > 0 ? 'block' : 'none';
 
-        // Reset to page 1 on every filter change, then paginate
+        if (rows.length === 0) {
+            // Truly no invoices at all — show "No invoices yet"
+            if (noDataRow) noDataRow.style.display = '';
+            if (empty) empty.style.display = 'none';
+        } else if (count === 0) {
+            // Invoices exist but hidden by filters — show "No match"
+            if (noDataRow) noDataRow.style.display = 'none';
+            if (empty) empty.style.display = 'block';
+        } else {
+            if (noDataRow) noDataRow.style.display = 'none';
+            if (empty) empty.style.display = 'none';
+        }
+
+        const foot = $('invTableFoot');
+        if (foot) foot.style.display = count === 0 ? 'none' : '';
+
         invCurrentPage = 1;
         paginateInvoices();
     }
@@ -260,7 +275,12 @@
     const newForm = $('newInvoiceForm');
 
     function openNewModal() { newModal?.classList.add('open'); }
-    function closeNewModal() { newModal?.classList.remove('open'); newForm?.reset(); }
+    function closeNewModal() {
+        newModal?.classList.remove('open');
+        newForm?.reset();
+        newForm?.querySelectorAll('.inv-field-error').forEach(el => el.remove());
+        newForm?.querySelectorAll('.inv-input-error').forEach(el => el.classList.remove('inv-input-error'));
+    }
 
     $('openNewInvoiceBtn')?.addEventListener('click', openNewModal);
     $('closeNewInvoice')?.addEventListener('click', closeNewModal);
@@ -274,43 +294,76 @@
     });
 
     newForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = $('submitNewInvoice');
-        setBtnState(btn, true, 'Creating…');
+    e.preventDefault();
 
-        try {
-            const data = await post({
-                action: 'create',
-                tenant_id: newForm.tenant_id.value,
-                unit: newForm.unit.value,
-                issued_date: newForm.issued_date.value,
-                due_date: newForm.due_date.value,
-                items: newForm.items.value,
-                total: newForm.total.value,
-                status: newForm.status.value,
-            });
+    // Clear previous errors
+    newForm.querySelectorAll('.inv-field-error').forEach(el => el.remove());
+    newForm.querySelectorAll('.inv-input-error').forEach(el => el.classList.remove('inv-input-error'));
 
-            if (data.success) {
-                toast(`Invoice ${data.invoice_no} created!`, 'success');
-                closeNewModal();
-                await refreshStats();
-                try {
-                    const invData = await post({ action: 'get_invoice', id: data.invoice_id || data.id });
-                    if (invData.success && invData.invoice) {
-                        prependInvoiceRow(invData.invoice);
-                    } else {
-                        setTimeout(() => location.reload(), 900);
-                    }
-                } catch { setTimeout(() => location.reload(), 900); }
-            } else {
-                toast(data.message || 'Failed to create invoice.', 'error');
+    // Validate
+    const fields = [
+        { name: 'tenant_id',   label: 'Tenant' },
+        { name: 'unit',        label: 'Unit' },
+        { name: 'issued_date', label: 'Issued Date' },
+        { name: 'due_date',    label: 'Due Date' },
+        { name: 'items',       label: 'Items / Description' },
+        { name: 'total',       label: 'Total Amount' },
+    ];
+
+    let hasError = false;
+    fields.forEach(({ name, label }) => {
+        const el = newForm.elements[name];
+        if (!el || !el.value.trim()) {
+            hasError = true;
+            const wrap = el?.closest('.inv-form-group');
+            if (wrap) {
+                el.classList.add('inv-input-error');
+                const msg = document.createElement('span');
+                msg.className = 'inv-field-error';
+                msg.textContent = `${label} is required.`;
+                wrap.appendChild(msg);
             }
-        } catch {
-            toast('Network error. Please try again.', 'error');
-        } finally {
-            setBtnState(btn, false, 'Create Invoice');
         }
     });
+
+    if (hasError) return;
+
+    const btn = $('submitNewInvoice');
+    setBtnState(btn, true, 'Creating…');
+
+    try {
+        const data = await post({
+            action: 'create',
+            tenant_id: newForm.tenant_id.value,
+            unit: newForm.unit.value,
+            issued_date: newForm.issued_date.value,
+            due_date: newForm.due_date.value,
+            items: newForm.items.value,
+            total: newForm.total.value,
+            status: newForm.status.value,
+        });
+
+        if (data.success) {
+            toast(`Invoice ${data.invoice_no} created!`, 'success');
+            closeNewModal();
+            await refreshStats();
+            try {
+                const invData = await post({ action: 'get_invoice', id: data.invoice_id || data.id });
+                if (invData.success && invData.invoice) {
+                    prependInvoiceRow(invData.invoice);
+                } else {
+                    setTimeout(() => location.reload(), 900);
+                }
+            } catch { setTimeout(() => location.reload(), 900); }
+        } else {
+            toast(data.message || 'Failed to create invoice.', 'error');
+        }
+    } catch {
+        toast('Network error. Please try again.', 'error');
+    } finally {
+        setBtnState(btn, false, 'Create Invoice');
+    }
+});
 
     /* ══════════════════════════════════════════════════════════════════════
        VIEW INVOICE MODAL
@@ -474,10 +527,31 @@
         } catch { toast('Network error. Please try again.', 'error'); }
     }
 
-    $('deleteInvoiceBtn')?.addEventListener('click', async () => {
+    const deleteInvModal = $('deleteInvoiceModal');
+    const deleteInvRef = $('deleteInvoiceRef');
+    const confirmDelBtn = $('confirmDeleteInvoice');
+
+    function openDeleteInvModal() {
         if (!activeId) return;
         dropdown.style.display = 'none';
-        if (!confirm('Delete this invoice? This cannot be undone.')) return;
+        const row = document.querySelector(`tr[data-id="${activeId}"]`);
+        const inv = row ? (() => { try { return JSON.parse(row.dataset.inv); } catch { return {}; } })() : {};
+        if (deleteInvRef) deleteInvRef.textContent = `"${inv.invoice_no || '#' + activeId}"`;
+        deleteInvModal?.classList.add('open');
+    }
+
+    function closeDeleteInvModal() {
+        deleteInvModal?.classList.remove('open');
+    }
+
+    $('deleteInvoiceBtn')?.addEventListener('click', openDeleteInvModal);
+    $('cancelDeleteInvoice')?.addEventListener('click', closeDeleteInvModal);
+    deleteInvModal?.addEventListener('click', e => { if (e.target === deleteInvModal) closeDeleteInvModal(); });
+
+    confirmDelBtn?.addEventListener('click', async () => {
+        if (!activeId) return;
+        confirmDelBtn.disabled = true;
+        confirmDelBtn.textContent = 'Deleting…';
         try {
             const data = await post({ action: 'delete', id: activeId });
             if (data.success) {
@@ -489,15 +563,32 @@
                     setTimeout(() => {
                         row.remove();
                         rows = $$('#invoiceTableBody tr[data-id]');
+                        // If no invoices left, re-inject the "no invoices yet" row
+                        if (rows.length === 0) {
+                            const tbody = $('invoiceTableBody');
+                            if (tbody && !$('noDataRow')) {
+                                const emptyTr = document.createElement('tr');
+                                emptyTr.id = 'noDataRow';
+                                emptyTr.innerHTML = `<td colspan="9" style="text-align:center;padding:48px;color:#aab;">
+                No invoices yet. Create your first one!
+            </td>`;
+                                tbody.appendChild(emptyTr);
+                            }
+                        }
                         applyFilters();
                     }, 220);
                 }
                 await refreshStats();
+                closeDeleteInvModal();
                 toast('Invoice deleted.', 'info');
             } else {
                 toast(data.message || 'Failed to delete.', 'error');
             }
         } catch { toast('Network error. Please try again.', 'error'); }
+        finally {
+            confirmDelBtn.disabled = false;
+            confirmDelBtn.textContent = 'Delete';
+        }
     });
 
     /* ══════════════════════════════════════════════════════════════════════
@@ -567,7 +658,24 @@
         bindViewBtns();
         bindSendBtns();
         bindMoreBtns();
-        applyFilters();
+
+        // AFTER
+        // AFTER
+        const monthInput = $('invMonthFilter');
+        const monthLabel = $('invMonthPickerLabel');
+        if (monthInput && monthVal) {
+            monthInput.value = monthVal;
+            if (monthLabel) {
+                const [yr, mn] = monthVal.split('-');
+                const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                monthLabel.textContent = names[parseInt(mn) - 1] + ' ' + yr;
+            }
+            window._invSyncPickerState && window._invSyncPickerState(monthVal);
+            // dispatch AFTER updating value so applyFilters reads the new month
+            monthInput.dispatchEvent(new Event('change'));
+        } else {
+            applyFilters();
+        }
 
         tr.style.background = '#f0fdf4';
         setTimeout(() => { tr.style.transition = 'background 1.2s'; tr.style.background = ''; }, 100);

@@ -20,6 +20,7 @@ include '../../lib/admin-queries/analytics_queries.php';
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
+<link rel="stylesheet" href="../../assets/css/admin-css/analytics.css">
 
 <div class="page-inner">
 
@@ -129,6 +130,104 @@ include '../../lib/admin-queries/analytics_queries.php';
       </div>
     </div>
 
+    <div class="two-col" style="margin-top:24px;">
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Monthly Bookings (
+            <?= $year ?>)
+          </span>
+        </div>
+        <table class="analytics-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Bookings</th>
+              <th>Forecast</th>
+              <th>Δ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($monthLabels as $i => $mon):
+              $actual = $monthBookings[$i] ?? 0;
+              $forecast = $forecastBookings[$i] ?? null;
+              $delta = ($forecast !== null && $i < $currentMonth) ? $actual - round($forecast) : null;
+              ?>
+              <tr>
+                <td>
+                  <?= $mon ?>
+                </td>
+                <td>
+                  <?= $i < $currentMonth ? $actual : '<span class="muted">—</span>' ?>
+                </td>
+                <td>
+                  <?= $forecast !== null ? round($forecast) : '<span class="muted">—</span>' ?>
+                </td>
+                <td>
+                  <?php if ($delta !== null): ?>
+                    <span class="trend-badge <?= $delta >= 0 ? 'up' : 'down' ?>">
+                      <?= $delta >= 0 ? '+' : '' ?>
+                      <?= $delta ?>
+                    </span>
+                  <?php else: ?>
+                    <span class="muted">—</span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Revenue Trend (
+            <?= $year ?>)
+          </span>
+        </div>
+        <table class="analytics-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Actual</th>
+              <th>Forecast</th>
+              <th>Δ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($monthLabels as $i => $mon):
+              $actual = $revActual[$i];
+              $forecast = $forecastRev[$i] ?? null;
+              $delta = ($actual !== null && $forecast !== null) ? $actual - $forecast : null;
+              ?>
+              <tr>
+                <td>
+                  <?= $mon ?>
+                </td>
+                <td>
+                  <?= $actual !== null ? '₱' . number_format($actual, 0) : '<span class="muted">—</span>' ?>
+                </td>
+                <td>
+                  <?= $forecast !== null ? '₱' . number_format($forecast, 0) : '<span class="muted">—</span>' ?>
+                </td>
+                <td>
+                  <?php if ($delta !== null): ?>
+                    <span class="trend-badge <?= $delta >= 0 ? 'up' : 'down' ?>">
+                      <?= $delta >= 0 ? '+' : '' ?>₱
+                      <?= number_format(abs($delta), 0) ?>
+                    </span>
+                  <?php else: ?>
+                    <span class="muted">—</span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
   </div>
 </div>
 
@@ -137,12 +236,16 @@ include '../../lib/admin-queries/analytics_queries.php';
   window.__PS_ANALYTICS__ = {
     revByPropLabels: <?= json_encode($revByPropLabels) ?>,
     revByPropData: <?= json_encode($revByPropData) ?>,
-    activeMonthLabels: <?= json_encode($activeMonthLabels) ?>,
-    activeMonthBookings: <?= json_encode($activeMonthBookings) ?>,
+    revByPropPct: <?= json_encode($revByPropPct) ?>,
+    activeMonthLabels: <?= json_encode($monthLabels) ?>,
+    activeMonthBookings: <?= json_encode($monthBookings) ?>,
+    forecastBookings: <?= json_encode(array_values($forecastBookings)) ?>,
     srcLabels: <?= json_encode($sourceLabels) ?>,
     srcData: <?= json_encode($sourceData) ?>,
     monthLabels: <?= json_encode($monthLabels) ?>,
-    revActual: <?= json_encode(array_values($revActual)) ?>
+    revActual: <?= json_encode(array_values($revActual)) ?>,
+    forecastRev: <?= json_encode(array_values($forecastRev)) ?>,
+    currentMonth: <?= $currentMonth ?>
   };
 </script>
 <script src="../../assets/js/admin/analytics.js"></script>

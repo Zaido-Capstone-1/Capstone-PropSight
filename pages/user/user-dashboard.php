@@ -566,7 +566,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         $amenities = $amenitiesMap[$unit['unit_id']] ?? [];
                         $imgSrc = $unit['image_path']
                             ? '../../' . ltrim($unit['image_path'], '/')
-                            : '../../assets/images/placeholder.jpg';
+                            : '';
 
                         $unitImages = $imagesMap[$unit['unit_id']] ?? [];
                         if (empty($unitImages) && $imgSrc)
@@ -608,11 +608,23 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
 
                             <div class="room-card-img">
                                 <img src="<?php echo $imgSrc; ?>" alt="<?php echo $unitName; ?>" class="room-img-placeholder"
-                                    onerror="this.src='../../assets/images/placeholder.jpg'">
+                                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                <div
+                                    style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6);color:#fff;">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="1.5">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                                        <circle cx="8.5" cy="8.5" r="1.5" />
+                                        <path d="M21 15l-5-5L5 21" />
+                                    </svg>
+                                </div>
                                 <span class="room-badge-img badge-blue">
                                     <?php echo htmlspecialchars(strtoupper($unit['unit_type'] ?? 'UNIT')); ?>
                                 </span>
-                                <span class="room-avail <?php echo $isVacant ? 'avail-yes' : 'avail-no'; ?>" data-avail-status>
+                                <?php
+                                $availClass = $isVacant ? 'avail-yes' : ($unit['status'] === 'maintenance' ? 'avail-maintenance' : 'avail-no');
+                                ?>
+                                <span class="room-avail <?php echo $availClass; ?>" data-avail-status>
                                     <?php echo $isVacant ? '✓ Available' : ($unit['status'] === 'maintenance' ? 'Maintenance' : 'Booked'); ?>
                                 </span>
                                 <button class="btn-save-room<?php echo $isSaved ? ' saved' : ''; ?>"
@@ -741,7 +753,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                     <?php else: ?>
                         <?php foreach ($bookingHistory as $bi => $bk):
                             $nights = nightsBetween($bk['checkin_date'], $bk['checkout_date']);
-                            $bkImgSrc = $bk['image_path'] ? '../../' . ltrim($bk['image_path'], '/') : '../../assets/images/placeholder.jpg';
+                            $bkImgSrc = $bk['image_path'] ? '../../' . ltrim($bk['image_path'], '/') : '';
                             $rawBkNum = trim(preg_replace('/^unit\s*/i', '', $bk['unit_number'] ?? ''));
                             if (!empty($bk['unit_name']))
                                 $bkUnitName = $bk['unit_name'];
@@ -761,7 +773,17 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                 data-checkout="<?php echo $bk['checkout_date']; ?>">
                                 <div class="history-img">
                                     <img src="<?php echo $bkImgSrc; ?>" alt="<?php echo htmlspecialchars($bkUnitName); ?>"
-                                        class="history-img-bg" onerror="this.src='../../assets/images/placeholder.jpg'">
+                                        class="history-img-bg"
+                                        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                    <div
+                                        style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6);color:#fff;">
+                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="1.5">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                                            <circle cx="8.5" cy="8.5" r="1.5" />
+                                            <path d="M21 15l-5-5L5 21" />
+                                        </svg>
+                                    </div>
                                 </div>
                                 <div class="history-info">
                                     <div class="history-room"><?php echo htmlspecialchars($bkUnitName); ?></div>

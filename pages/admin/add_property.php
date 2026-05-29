@@ -74,9 +74,9 @@ function errClass($key)
     <?php endif; ?>
 
     <?php if (isset($errors['db'])): ?>
-      <div class="alert alert-danger">⚠️ <?= htmlspecialchars($errors['db']) ?></div>
+      <div class="alert alert-danger"><?= htmlspecialchars($errors['db']) ?></div>
     <?php elseif (!empty($errors)): ?>
-      <div class="alert alert-danger">⚠️ Please fix the highlighted fields before saving.</div>
+      <div class="alert alert-danger">Please fix the highlighted fields before saving.</div>
     <?php endif; ?>
 
     <div class="card">

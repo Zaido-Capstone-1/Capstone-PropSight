@@ -135,36 +135,23 @@ if ($method === 'POST') {
         exit;
     }
 
-    // ── Update system settings ────────────────────────────
-    if ($action === 'update_system') {
-        $allowed = [
-            'site_name',
-            'site_email',
-            'currency',
-            'currency_symbol',
-            'checkout_time',
-            'checkin_time',
-            'min_nights',
-            'max_nights',
-            'loyalty_points_per_peso',
-            'booking_cancellation_hours',
-            'tax_rate',
-        ];
-        $updated = 0;
-        foreach ($allowed as $key) {
-            if (isset($_POST[$key])) {
-                $val = mysqli_real_escape_string($conn, trim($_POST[$key]));
-                $keyEsc = mysqli_real_escape_string($conn, $key);
-                $by = $adminId;
-                mysqli_query(
-                    $conn,
-                    "INSERT INTO admin_settings (setting_key,value,updated_by) VALUES ('$keyEsc','$val',$by)
-                     ON DUPLICATE KEY UPDATE value='$val', updated_by=$by"
-                );
-                $updated++;
-            }
+    if ($action === 'update_contact') {
+        $token = $_POST['csrf_token'] ?? '';
+        if (!hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid request token.']);
+            exit;
         }
-        echo json_encode(['success' => true, 'message' => "$updated setting(s) saved."]);
+        $fields = ['contact_address', 'contact_phone', 'contact_email'];
+        foreach ($fields as $key) {
+            $val = mysqli_real_escape_string($conn, trim($_POST[$key] ?? ''));
+            $keyEsc = mysqli_real_escape_string($conn, $key);
+            mysqli_query(
+                $conn,
+                "INSERT INTO admin_settings (setting_key, value, updated_by) VALUES ('$keyEsc', '$val', $adminId)
+             ON DUPLICATE KEY UPDATE value='$val', updated_by=$adminId"
+            );
+        }
+        echo json_encode(['success' => true, 'message' => 'Contact info updated.']);
         exit;
     }
 

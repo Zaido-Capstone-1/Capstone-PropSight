@@ -1,12 +1,8 @@
 <?php
 /**
  * lib/admin/invoices_billing_data.php
- * Data layer for pages/admin/invoices_billing.php
- * Requires: $conn (mysqli)
- * All three queries have no user input — static queries, safe as-is.
  */
 
-// Summary stats
 $statsResult = $conn->query(
     "SELECT COUNT(*) AS total,
             SUM(status='Paid')    AS paid,
@@ -16,7 +12,6 @@ $statsResult = $conn->query(
 );
 $stats = $statsResult->fetch_assoc();
 
-// All invoices
 $allResult = $conn->query(
     "SELECT i.id, i.invoice_no,
             t.full_name                              AS tenant_name,
@@ -32,7 +27,6 @@ $allResult = $conn->query(
 );
 $invoices = $allResult->fetch_all(MYSQLI_ASSOC);
 
-// Tenants dropdown
 $tenantsResult = $conn->query(
     "SELECT t.tenant_id, t.full_name, u.unit_number, u.unit_name
      FROM tenants t
@@ -54,3 +48,4 @@ function badge_class(string $status): string
 
 $inv_cur_picker_month = (int) date('m');
 $inv_cur_picker_year = (int) date('Y');
+$inv_default_month_val = date('Y-m');

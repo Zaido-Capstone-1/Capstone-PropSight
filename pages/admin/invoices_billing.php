@@ -117,12 +117,30 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            <span id="invMonthPickerLabel"><?= date('F Y') ?></span>
+            <?php
+            [$dy, $dm] = explode('-', $inv_default_month_val);
+            $month_names = [
+              'January',
+              'February',
+              'March',
+              'April',
+              'May',
+              'June',
+              'July',
+              'August',
+              'September',
+              'October',
+              'November',
+              'December'
+            ];
+            $inv_default_label = $month_names[(int) $dm - 1] . ' ' . $dy;
+            ?>
+            <span id="invMonthPickerLabel"><?= htmlspecialchars($inv_default_label) ?></span>
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="11" height="11">
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
-          <input type="hidden" id="invMonthFilter" value="<?= date('Y-m') ?>">
+          <input type="hidden" id="invMonthFilter" value="<?= htmlspecialchars($inv_default_month_val) ?>">
 
           <!-- Dropdown Calendar -->
           <div id="invMonthPickerDropdown"
@@ -493,6 +511,35 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
     </div>
   </div>
 
+  <div class="inv-overlay" id="deleteInvoiceModal">
+    <div class="inv-modal" style="max-width:400px;text-align:center;">
+      <div style="padding:28px 24px 8px;">
+        <div
+          style="width:56px;height:56px;margin:0 auto 14px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;">
+          <svg fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24" width="26" height="26">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            <path d="M10 11v6M14 11v6" />
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+          </svg>
+        </div>
+        <div class="inv-modal-title" style="margin-bottom:10px;">Delete Invoice?</div>
+        <p style="color:#64748b;font-size:13.5px;margin:0 0 6px;font-weight:600;"><span id="deleteInvoiceRef"></span>
+          will be permanently removed.</p>
+        <p style="color:#94a3b8;font-size:12px;margin:0 0 24px;">This cannot be undone. The invoice record will not be
+          affected.</p>
+      </div>
+      <div class="inv-modal-foot" style="justify-content:center;gap:12px;padding:0px 24px 24px;border-top:none;">
+        <button type="button" class="inv-btn secondary" id="cancelDeleteInvoice"
+          style="padding:11px 20px;font-size:14px;font-weight:600;border-radius:10px;">Cancel</button>
+        <button type="button" class="inv-btn" id="confirmDeleteInvoice"
+          style="background:#dc2626;color:#fff;border-color:#dc2626;box-shadow:0 2px 8px rgba(220,38,38,.25);padding:11px 20px;font-size:14px;font-weight:600;border-radius:10px;">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="statusDropdown" class="inv-dropdown" role="menu">
     <button role="menuitem" data-status="Paid">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -531,8 +578,8 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
   <!-- Month picker — needs PHP-baked values -->
   <script>
     (function () {
-      let invPickerYear = <?= $inv_cur_picker_year ?>;
-      let invSelectedMonth = '<?= date('m') ?>'; // Default to current month
+      let invPickerYear = <?= (int) explode('-', $inv_default_month_val)[0] ?>;
+      let invSelectedMonth = '<?= explode('-', $inv_default_month_val)[1] ?>';
 
       // Single source of truth — loops ALL buttons so only one can ever be active
       function _highlightActive() {
@@ -544,6 +591,15 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
           b.style.fontWeight = isActive ? '700' : '500';
         });
       }
+
+      window._invSyncPickerState = function (monthVal) {
+        if (!monthVal) return;
+        const [yr, mn] = monthVal.split('-');
+        invPickerYear = parseInt(yr);
+        invSelectedMonth = mn;
+        document.getElementById('invPickerYear').textContent = invPickerYear;
+        _highlightActive();
+      };
 
       window.toggleInvMonthPicker = function () {
         const d = document.getElementById('invMonthPickerDropdown');
@@ -564,16 +620,9 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
         invSelectedMonth = btn.dataset.month;
         _highlightActive(); // update all buttons — dual-highlight impossible
       };
-      window.clearInvMonthPicker = function () {
-        invSelectedMonth = null;
-        _highlightActive();
-        document.getElementById('invMonthFilter').value = '';
-        document.getElementById('invMonthPickerLabel').textContent = 'All Months';
-        closeInvMonthPicker();
-        document.getElementById('invMonthFilter').dispatchEvent(new Event('change'));
-      };
+
       window.applyInvMonthPicker = function () {
-        if (!invSelectedMonth) { clearInvMonthPicker(); return; }
+        if (!invSelectedMonth) return; // just do nothing if nothing selected
         const val = invPickerYear + '-' + invSelectedMonth;
         document.getElementById('invMonthFilter').value = val;
         const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];

@@ -533,7 +533,7 @@ $nav_items = [
                         Guest Reviews
                         <?php if ($totalReviews > 0): ?>
                             <span style="background:rgba(76,175,133,0.15);color:#4caf85;font-size:0.58rem;
-                                 padding:1px 7px;border-radius:99px;margin-left:6px;font-weight:700">
+                                    padding:1px 7px;border-radius:99px;margin-left:6px;font-weight:700">
                                 <?php echo $totalReviews; ?>
                             </span>
                         <?php endif; ?>
@@ -721,12 +721,8 @@ $nav_items = [
 
                     <div class="ud-price-breakdown" id="udPriceBreakdown" style="display:none">
                         <div class="ud-pb-row"><span id="udNightsLabel">—</span><span id="udNightsTotal">—</span></div>
-                        <div class="ud-pb-row ud-pb-muted"><span>Security deposit (50%)</span><span
-                                id="udDeposit">—</span>
-                        </div>
                         <div class="ud-pb-divider"></div>
-                        <div class="ud-pb-total"><span>Total due today</span><span id="udTotalDue">—</span></div>
-                        <div class="ud-pb-note" id="udRemainingNote"></div>
+                        <div class="ud-pb-total"><span>Total</span><span id="udTotalDue">—</span></div>
                     </div>
 
                     <!-- Social proof nudge -->
@@ -879,11 +875,11 @@ $nav_items = [
 
     <!-- TOAST -->
     <div id="toast" role="status" aria-live="polite" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);
-            background:#282c35;border:1px solid rgba(255,255,255,0.1);color:#e8eaf0;
-            padding:10px 20px;border-radius:40px;font-family:'DM Sans',sans-serif;
-            font-size:.8rem;font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,.4);z-index:600;
-            transition:transform .38s cubic-bezier(.4,0,.2,1),opacity .38s;
-            opacity:0;white-space:nowrap;display:flex;align-items:center;gap:8px;">
+                background:#282c35;border:1px solid rgba(255,255,255,0.1);color:#e8eaf0;
+                padding:10px 20px;border-radius:40px;font-family:'DM Sans',sans-serif;
+                font-size:.8rem;font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,.4);z-index:600;
+                transition:transform .38s cubic-bezier(.4,0,.2,1),opacity .38s;
+                opacity:0;white-space:nowrap;display:flex;align-items:center;gap:8px;">
         <i class="ti ti-check" style="font-size:13px;color:#4caf85"></i>
         <span id="toastMsg"></span>
     </div>
@@ -1002,8 +998,6 @@ $nav_items = [
                         </div>
                         <div class="bm-review-block">
                             <div class="bm-review-label">Charges due today</div>
-                            <div class="bm-review-row"><span class="bm-review-key">Security deposit (50%)</span><span
-                                    class="bm-review-val" id="rv-deposit">—</span></div>
                             <div class="bm-review-row" style="padding-top:8px">
                                 <span class="bm-review-key" style="font-weight:700;color:var(--text-dark)">Total due
                                     now</span>
@@ -1154,9 +1148,6 @@ $nav_items = [
                         <div class="bm-summary-row"><span class="bm-summary-key">Price per night</span><span
                                 class="bm-summary-val" id="sb-rent">—</span>
                         </div>
-                        <div class="bm-summary-row"><span class="bm-summary-key">Security deposit (50%)</span><span
-                                class="bm-summary-val" id="sb-deposit">—</span>
-                        </div>
                     </div>
                     <div class="bm-summary-divider"></div>
                     <div class="bm-total-row"><span class="bm-total-label">Total due now</span><span
@@ -1193,7 +1184,7 @@ $nav_items = [
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         window.PS_POPULAR_PAYMENT = <?php echo json_encode($popularPaymentMethod); ?>;
-        window.hasActiveBooking = <?php echo json_encode($hasActiveBooking); ?>;
+        window.UD_ROOM_DATA = <?php echo $roomJs; ?>;
         window.UD_BOOKED_RANGES = <?php echo json_encode($bookedRanges, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
         window.UD_BLOCKED_DATES = <?php echo json_encode($adminBlockedDates, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
         window._psSessionFields = {

@@ -88,9 +88,28 @@ function calNavMonth(dir) {
 }
 
 const activityCache = {};
-activityCache[window.__PS_CHECKIN__.calKey] = {
-    ci: ciDays,
-    co: coDays
+
+// Normalize: old format was an array of day numbers [3,7,14],
+// new format is an object map {3: count, 7: count}.
+// This ensures both PHP versions work without breaking.
+function normalizeActivity(raw) {
+    if (!raw) return {};
+    if (Array.isArray(raw)) {
+        // Old format: convert [3, 7, 14] → {3:1, 7:1, 14:1}
+        const map = {};
+        raw.forEach(d => { map[d] = (map[d] || 0) + 1; });
+        return map;
+    }
+    // New format: already {day: count}
+    return raw;
+}
+
+// IMPORTANT: use calYear + calMonth (both integers) to build the key,
+// NOT window.__PS_CHECKIN__.calKey which has a leading-zero month ("2026-05")
+// while renderCalDrop builds its key without one ("2026-5"). They must match.
+activityCache[`${calYear}-${calMonth}`] = {
+    ci: normalizeActivity(window.__PS_CHECKIN__.ciDays),
+    co: normalizeActivity(window.__PS_CHECKIN__.coDays)
 };
 
 function fetchMonthActivity(year, month, cb) {
@@ -102,24 +121,22 @@ function fetchMonthActivity(year, month, cb) {
     fetch(`?ajax_activity=1&year=${year}&month=${month}`)
         .then(r => r.json())
         .then(data => {
-            activityCache[key] = data;
+            activityCache[key] = {
+                ci: normalizeActivity(data.ci),
+                co: normalizeActivity(data.co)
+            };
             cb();
         })
         .catch(() => {
-            activityCache[key] = {
-                ci: [],
-                co: []
-            };
+            activityCache[key] = { ci: {}, co: {} };
             cb();
         });
 }
 
 function renderCalDrop(year, month) {
     const key = `${year}-${month}`;
-    const activity = activityCache[key] || {
-        ci: [],
-        co: []
-    };
+    const activity = activityCache[key] || { ci: {}, co: {} };
+
     const months = ['January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
@@ -139,26 +156,54 @@ function renderCalDrop(year, month) {
         const padD = String(d).padStart(2, '0');
         const dateStr = `${year}-${padM}-${padD}`;
         const isToday = dateStr === todayStr;
-        const isSel = dateStr === selectedDate;
-        const hasCi = activity.ci.includes(d);
-        const hasCo = activity.co.includes(d);
+        const isSel  = dateStr === selectedDate;
+
+        const ciCount = activity.ci[d] || 0;
+        const coCount = activity.co[d] || 0;
+        const hasCi = ciCount > 0;
+        const hasCo = coCount > 0;
 
         let cls = 'cal-drop-day';
         if (isToday) cls += ' today';
-        if (isSel) cls += ' selected';
+        if (isSel)   cls += ' selected';
+        if (hasCi)   cls += ' has-ci';
+        if (hasCo)   cls += ' has-co';
 
-        let dots = '';
+        // Tooltip
+        const tipParts = [];
+        if (hasCi) tipParts.push(`${ciCount} Check-in${ciCount > 1 ? 's' : ''}`);
+        if (hasCo) tipParts.push(`${coCount} Check-out${coCount > 1 ? 's' : ''}`);
+        const titleAttr = tipParts.length ? ` title="${tipParts.join(' · ')}"` : '';
+
+        // Count badges (bottom of cell)
+        let badges = '';
         if (hasCi || hasCo) {
-            dots = `<div class="cal-drop-dots">
-                ${hasCi ? '<span class="cal-drop-dot ci"></span>' : ''}
-                ${hasCo ? '<span class="cal-drop-dot co"></span>' : ''}
+            badges = `<div class="cal-drop-badges">
+                ${hasCi ? `<span class="cal-badge ci" title="${ciCount} check-in${ciCount>1?'s':''}">${ciCount}</span>` : ''}
+                ${hasCo ? `<span class="cal-badge co" title="${coCount} check-out${coCount>1?'s':''}">${coCount}</span>` : ''}
             </div>`;
         }
 
-        html += `<div class="${cls}" onclick="pickDate('${dateStr}')">${d}${dots}</div>`;
+        html += `<div class="${cls}"${titleAttr} onclick="pickDate('${dateStr}')">${d}${badges}</div>`;
     }
 
     grid.innerHTML = html;
+
+    // Legend
+    const dropdown = document.getElementById('calDropdown');
+    let legend = dropdown.querySelector('.cal-drop-legend');
+    if (!legend) {
+        legend = document.createElement('div');
+        legend.className = 'cal-drop-legend';
+        dropdown.appendChild(legend);
+    }
+    legend.innerHTML = `
+        <div class="cal-drop-legend-item">
+            <span class="cal-drop-legend-dot ci"></span> Check-in
+        </div>
+        <div class="cal-drop-legend-item">
+            <span class="cal-drop-legend-dot co"></span> Check-out
+        </div>`;
 }
 
 function pickDate(dateStr) {

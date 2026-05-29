@@ -130,15 +130,6 @@ function changePassword(e) {
             if (d.success) { document.getElementById('cur_pw').value = ''; document.getElementById('new_pw').value = ''; document.getElementById('conf_pw').value = ''; }
         }).catch(() => showToast('An error occurred.', 'error'));
 }
-function saveSystemPrefs() {
-    const fd = new FormData(); fd.append('action', 'update_system');
-    fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
-    document.querySelectorAll('[data-setting]').forEach(el => fd.append(el.dataset.setting, el.value));
-    fetch('../../api/settings.php', { method: 'POST', body: fd })
-        .then(r => r.json()).then(d => {
-            showToast(d.message, d.success ? 'success' : 'error');
-        }).catch(() => showToast('An error occurred.', 'error'));
-}
 
 async function toggleAdmin2FA(toggleEl) {
     const enabled = toggleEl.checked ? '1' : '0';
@@ -167,4 +158,17 @@ async function toggleAdmin2FA(toggleEl) {
     } finally {
         toggleEl.disabled = false;
     }
+}
+
+function saveContactInfo(e) {
+    e.preventDefault();
+    const fd = new FormData();
+    fd.append('action', 'update_contact');
+    fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
+    fd.append('contact_address', document.getElementById('contact_address').value.trim());
+    fd.append('contact_phone', document.getElementById('contact_phone').value.trim());
+    fd.append('contact_email', document.getElementById('contact_email').value.trim());
+    fetch('../../api/settings.php', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(d => showToast(d.message || 'Contact info saved.', d.success ? 'success' : 'error'));
 }

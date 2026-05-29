@@ -1,13 +1,17 @@
 <?php
 require_once __DIR__ . '/includes/session_params.php';
 session_start();
-// if (isset($_SESSION['user_id'])) {
-//     echo "";
-//     exit;
-// }
 
 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 include_once __DIR__ . '/includes/fetch_units.php';
+
+$sysRes = mysqli_query($conn, "SELECT setting_key, value FROM admin_settings");
+$sysCfg = [];
+while ($sr = mysqli_fetch_assoc($sysRes)) $sysCfg[$sr['setting_key']] = $sr['value'];
+
+$contactAddress = htmlspecialchars($sysCfg['contact_address'] ?? 'Station 3, Barangay Manoc-Manoc, Boracay Island, Aklan 5608');
+$contactPhone   = htmlspecialchars($sysCfg['contact_phone']   ?? '+63 33 123 4567');
+$contactEmail   = htmlspecialchars($sysCfg['contact_email']   ?? 'hello@filipinohomes.ph');
 
 function landing_unit_name(array $unit): string
 {
@@ -24,37 +28,51 @@ function landing_unit_name(array $unit): string
     return 'Unit #' . ($unit['unit_id'] ?? '');
 }
 
-$landingUnits = array_slice($units ?? [], 0, 6);
-$heroUnits = array_slice($landingUnits, 0, 5);
+function hero_img_path(?string $raw): string {
+    if (empty($raw)) return '';
+    return preg_replace('#^(\.\./)+#', '', ltrim($raw, '/'));
+}
+
+$landingUnits = $units ?? [];
+$heroUnits = array_slice($landingUnits, 0, 8);
+
+// ── Dynamic hero stats ───────────────────────────────────────────────────────
+$statRooms = count($units ?? []);
+
+$statRating = null;
+if (isset($conn) && $conn) {
+    $rRes = mysqli_query($conn, "SELECT ROUND(AVG(rating), 1) AS avg_rating FROM booking_reviews");
+    if ($rRes && ($rRow = mysqli_fetch_assoc($rRes))) {
+        $statRating = $rRow['avg_rating'];
+    }
+}
+$statRatingDisplay = $statRating ? number_format($statRating, 1) . '★' : '4.9★';
+
+$foundingYear = 2012;
+$statYears = (int) date('Y') - $foundingYear;
+// ─────────────────────────────────────────────────────────────────────────────
 
 $landingReviews = [];
 if (isset($conn) && $conn) {
     $reviewsRes = mysqli_query($conn, "
-        SELECT br.rating, br.comment, br.created_at,
-               u.first_name, u.last_name, u.profile_photo,
-               COALESCE(un.unit_name, un.unit_number, 'Room') AS room_name,
-               p.property_name
-        FROM booking_reviews br
-        JOIN users u ON u.user_id = br.user_id
-        LEFT JOIN units un ON un.unit_id = br.unit_id
-        LEFT JOIN properties p ON p.property_id = un.property_id
-        LEFT JOIN bookings b ON b.booking_id = br.booking_id
-        WHERE b.status = 'completed'
-        ORDER BY RAND()
-        LIMIT 6
-    ");
+    SELECT br.rating, br.comment, br.created_at,
+           u.first_name, u.last_name, u.profile_photo,
+           COALESCE(un.unit_name, un.unit_number, 'Room') AS room_name,
+           p.property_name
+    FROM booking_reviews br
+    JOIN users u ON u.user_id = br.user_id
+    LEFT JOIN units un ON un.unit_id = br.unit_id
+    LEFT JOIN properties p ON p.property_id = un.property_id
+    LEFT JOIN bookings b ON b.booking_id = br.booking_id
+    WHERE br.comment IS NOT NULL AND br.comment != ''
+    ORDER BY RAND()
+    LIMIT 6
+");
     while ($reviewsRes && ($rr = mysqli_fetch_assoc($reviewsRes))) {
         $landingReviews[] = $rr;
     }
 }
 
-$allUnits = $units ?? [];
-$perPage = 1;
-$totalUnits = count($allUnits);
-$totalPages = ceil($totalUnits / $perPage);
-$currentPage = max(1, min((int) ($_GET['page'] ?? 1), $totalPages));
-$offset = ($currentPage - 1) * $perPage;
-$pagedUnits = array_slice($allUnits, $offset, $perPage);
 ?>
 
 <!DOCTYPE html>
@@ -306,22 +324,21 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
             <h1>Experience the<br>Warmth of<br><em>Filipino Hospitality</em></h1>
             <p class="hero-desc">
                 Located on the vibrant shores of Boracay, Boracay Accommodation offers stylish apartment accommodations
-                where
-                modern comfort meets Filipino hospitality. From sunlit balconies with ocean views to thoughtfully
+                where modern comfort meets Filipino hospitality. From sunlit balconies with ocean views to thoughtfully
                 furnished interiors, every space is designed for relaxation and a true sense of <em
                     style="font-style:normal;color:var(--terra)">home</em>.
             </p>
             <div class="hero-stats">
                 <div>
-                    <div class="hero-stat-num">48+</div>
+                    <div class="hero-stat-num"><?php echo $statRooms; ?>+</div>
                     <div class="hero-stat-lbl">Unique Rooms</div>
                 </div>
                 <div>
-                    <div class="hero-stat-num">4.9★</div>
+                    <div class="hero-stat-num"><?php echo $statRatingDisplay; ?></div>
                     <div class="hero-stat-lbl">Guest Rating</div>
                 </div>
                 <div>
-                    <div class="hero-stat-num">12yr</div>
+                    <div class="hero-stat-num"><?php echo $statYears; ?>yr</div>
                     <div class="hero-stat-lbl">of Hospitality</div>
                 </div>
             </div>
@@ -335,13 +352,21 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
                         <?php foreach ($heroUnits as $idx => $unit):
                             $heroName = landing_unit_name($unit);
                             $heroType = $unit['unit_type'] ?: 'Room';
-                            $heroImg = !empty($unit['image_path']) ? ltrim($unit['image_path'], '/') : 'assets/images/placeholder.jpg';
+                            $heroImg = hero_img_path($unit['image_path']);
                             ?>
                             <div class="carousel-slide <?php echo $idx === 0 ? 'active' : ''; ?> room-<?php echo ($idx % 5) + 1; ?>"
                                 data-label="<?php echo htmlspecialchars($heroName); ?>"
                                 data-type="<?php echo htmlspecialchars($heroType); ?>">
                                 <img src="<?php echo htmlspecialchars($heroImg); ?>"
-                                    alt="<?php echo htmlspecialchars($heroName); ?>">
+                                    alt="<?php echo htmlspecialchars($heroName); ?>"
+                                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                <div style="display:<?php echo $heroImg ? 'none' : 'flex' ?>;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6,#1a3d7c);color:#fff;position:absolute;top:0;left:0;">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6">
+                                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                                        <path d="M21 15l-5-5L5 21"/>
+                                    </svg>
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -381,11 +406,18 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
             <div class="carousel-thumbs" id="carouselThumbs">
                 <?php foreach ($heroUnits as $idx => $unit):
                     $heroName = landing_unit_name($unit);
-                    $heroImg = !empty($unit['image_path']) ? ltrim($unit['image_path'], '/') : 'assets/images/placeholder.jpg';
+                    $heroImg = hero_img_path($unit['image_path']);
                     ?>
                     <div class="thumb <?php echo $idx === 0 ? 'active' : ''; ?>" data-idx="<?php echo $idx; ?>">
-                        <img src="<?php echo htmlspecialchars($heroImg); ?>"
-                            alt="<?php echo htmlspecialchars($heroName); ?>">
+                        <?php if ($heroImg): ?>
+                            <img src="<?php echo htmlspecialchars($heroImg); ?>" alt="<?php echo htmlspecialchars($heroName); ?>"
+                                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                        <?php endif; ?>
+                        <div style="display:<?php echo $heroImg ? 'none' : 'flex' ?>;position:absolute;inset:0;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6);color:#fff;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+                            </svg>
+                        </div>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -403,7 +435,7 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
                     <img src="assets/images/hero-img.jpg" alt="Image of Boracay Accommodation">
                 </div>
                 <div class="about-badge">
-                    <div class="badge-num">12+</div>
+                    <div class="badge-num"><?php echo $statYears; ?>+</div>
                     <div class="badge-lbl">Years of<br>Hospitality</div>
                 </div>
             </div>
@@ -460,7 +492,7 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
                             </svg></div>
                         <div>
                             <div class="pillar-title">Prime Location</div>
-                            <div class="pillar-desc">Steps from Boracay’s beach and attractions</div>
+                            <div class="pillar-desc">Steps from Boracay's beach and attractions</div>
                         </div>
                     </div>
                 </div>
@@ -484,7 +516,7 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
             <?php else: ?>
                 <?php foreach ($landingUnits as $idx => $unit):
                     $name = landing_unit_name($unit);
-                    $image = !empty($unit['image_path']) ? ltrim($unit['image_path'], '/') : 'assets/images/placeholder.jpg';
+                    $image = hero_img_path($unit['image_path']);
                     $amenities = $amenitiesMap[$unit['unit_id']] ?? [];
                     $location = trim(($unit['property_name'] ?? '') . (!empty($unit['city']) ? ', ' . $unit['city'] : ''));
                     $roomData = [
@@ -545,8 +577,8 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
             <div class="testi-empty reveal" style="position:relative;z-index:1;max-width:1100px;margin:0 auto;">
                 Guest reviews will appear here once our first visitors share their stay experience.
             </div>
+        <?php else: ?>
             <div class="testi-grid">
-            <?php else: ?>
                 <?php foreach ($landingReviews as $ri => $rv):
                     $fullName = trim(($rv['first_name'] ?? '') . ' ' . ($rv['last_name'] ?? ''));
                     $initials = strtoupper(substr($rv['first_name'] ?? 'G', 0, 1) . substr($rv['last_name'] ?? 'U', 0, 1));
@@ -567,7 +599,7 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
                         </div>
                         <div class="testi-text"><?php echo htmlspecialchars($rv['comment'] ?? 'Great stay!'); ?></div>
                         <div class="testi-author">
-                            <div class="testi-avatar <?php echo $avatarClass; ?>">
+                            <div class="testi-avatar <?php echo $reviewPhoto ? '' : $avatarClass; ?>" <?php echo $reviewPhoto ? 'style="background:none;"' : ''; ?>>
                                 <?php if ($reviewPhoto): ?>
                                     <img src="<?php echo htmlspecialchars($reviewPhoto); ?>"
                                         alt="<?php echo htmlspecialchars($fullName ?: 'Guest'); ?>"
@@ -591,11 +623,8 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
                         </div>
                     </div>
                 <?php endforeach; ?>
-            <?php endif; ?>
+            </div>
 
-        </div>
-
-        <?php if (!empty($landingReviews)): ?>
             <!-- Mobile-only swiper (shown via CSS at <=768px) -->
             <div class="testi-swiper-wrap" id="testiSwiper">
                 <div class="testi-swiper-track">
@@ -625,7 +654,7 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
                                 </div>
                                 <div class="testi-text"><?php echo htmlspecialchars($rv['comment'] ?? 'Great stay!'); ?></div>
                                 <div class="testi-author">
-                                    <div class="testi-avatar <?php echo $avatarClass; ?>">
+                                    <div class="testi-avatar <?php echo $reviewPhoto ? '' : $avatarClass; ?>" <?php echo $reviewPhoto ? 'style="background:none;"' : ''; ?>>
                                         <?php if ($reviewPhoto): ?>
                                             <img src="<?php echo htmlspecialchars($reviewPhoto); ?>"
                                                 alt="<?php echo htmlspecialchars($fullName ?: 'Guest'); ?>"
@@ -677,7 +706,7 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
             Where Every Stay<br>Feels Like <em>Coming Home</em>
         </h2>
         <p class="cta-sub reveal">
-            From the gentle sea breeze at dawn to the glow of Boracay’s sunsets, your most memorable Filipino experience
+            From the gentle sea breeze at dawn to the glow of Boracay's sunsets, your most memorable Filipino experience
             awaits. Book your stay at Boracay Accommodation in Boracay today.
         </p>
         <button class="btn-book-big reveal">
@@ -739,21 +768,21 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
                         <circle cx="12" cy="10" r="3" />
                     </svg>
-                    Station 3, Barangay Manoc-Manoc,<br>Boracay Island, Aklan 5608
+                    <?php echo $contactAddress; ?>
                 </div>
                 <div class="contact-row">
                     <svg viewBox="0 0 24 24">
                         <path
                             d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
                     </svg>
-                    +63 33 123 4567
+                    <?php echo $contactPhone; ?>
                 </div>
                 <div class="contact-row">
                     <svg viewBox="0 0 24 24">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                         <polyline points="22,6 12,13 2,6" />
                     </svg>
-                    hello@filipinohomes.ph
+                    <?php echo $contactEmail; ?>
                 </div>
             </div>
         </div>
@@ -772,11 +801,13 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
 
     <script src="assets/js/toast.js"></script>
 
+    <!-- ── Room Preview Modal ── -->
     <div class="room-preview-overlay" id="roomPreviewModal">
         <div class="room-preview-box">
             <button class="room-preview-close" id="roomPreviewClose">&times;</button>
-            <div class="room-preview-media">
-                <img id="roomPreviewImage" src="assets/images/placeholder.jpg" alt="Room image">
+            <div class="room-preview-media" id="roomPreviewMedia" style="display:none;">
+                <img id="roomPreviewImage" src="" alt="Room image" style="display:none;"
+                    onerror="this.style.display='none';document.getElementById('roomPreviewMedia').style.display='none';">
             </div>
             <div class="room-preview-body">
                 <h3 id="roomPreviewName">Room</h3>
@@ -790,6 +821,7 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
             </div>
         </div>
     </div>
+
     <!-- ── Forgot Password Modal ── -->
     <div class="modal-overlay" id="forgotModal">
         <div class="modal-box" style="max-width:420px;">
@@ -818,6 +850,7 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
         </div>
     </div>
 
+    <!-- ── Policy Modal ── -->
     <div class="policy-modal-overlay" id="policyModal">
         <div class="policy-modal-box">
             <button class="policy-modal-close" id="policyModalClose" aria-label="Close policy modal">&times;</button>
@@ -838,7 +871,6 @@ $pagedUnits = array_slice($allUnits, $offset, $perPage);
     }
     ?>
 
-    <!-- <script src="assets/js/index-inline.js"></script> -->
 </body>
 
 </html>

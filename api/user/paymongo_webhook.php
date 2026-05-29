@@ -203,5 +203,113 @@ if ($type === 'payment.failed') {
     }
 }
 
+
+// ── Handle refund.updated ─────────────────────────────────────────────────────
+if ($type === 'refund.updated') {
+    $refundStatus = $data['attributes']['status'] ?? '';
+    $pmRefundId = $data['id'] ?? '';
+    $pmPaymentId = $data['attributes']['payment_id'] ?? '';
+
+    error_log("[webhook] refund.updated — pm_refund_id: $pmRefundId, status: $refundStatus, payment_id: $pmPaymentId");
+
+    // Only act when PayMongo confirms the refund succeeded
+    if ($refundStatus === 'succeeded' && $pmPaymentId) {
+
+        // Find the matching refund record by paymongo_payment_id
+        $rStmt = $conn->prepare("
+            SELECT r.refund_id, r.user_id, r.booking_id, r.refund_amount
+            FROM   refunds r
+            JOIN   paymongo_payments pp ON pp.booking_id = r.booking_id
+            WHERE  pp.paymongo_payment_id = ?
+              AND  r.refund_status = 'processing'
+            LIMIT  1
+        ");
+        $rStmt->bind_param('s', $pmPaymentId);
+        $rStmt->execute();
+        $refundRow = $rStmt->get_result()->fetch_assoc();
+        $rStmt->close();
+
+        if ($refundRow) {
+            $refundId = (int) $refundRow['refund_id'];
+            $userId = (int) $refundRow['user_id'];
+            $bookingId = (int) $refundRow['booking_id'];
+            $amount = (float) $refundRow['refund_amount'];
+            $amtFmt = '₱' . number_format($amount, 2);
+            $bkRef = 'BK-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
+            $today = date('Y-m-d');
+
+            // Mark refund as completed
+            $upd = $conn->prepare("
+                UPDATE refunds
+                SET    refund_status  = 'completed',
+                       processed_date = ?,
+                       updated_at     = NOW()
+                WHERE  refund_id = ?
+            ");
+            $upd->bind_param('si', $today, $refundId);
+            $upd->execute();
+            $upd->close();
+
+            // In-app notification to user
+            $ntTitle = "Refund Completed — $bkRef";
+            $ntBody = "Your refund of $amtFmt for booking $bkRef has been completed successfully.";
+            $ntLink = 'pages/user/payment.php';
+            $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
+            $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
+            $n->execute();
+            $n->close();
+
+            // Email to user
+            try {
+                require_once '../../includes/email_service.php';
+
+                $uStmt = $conn->prepare("SELECT first_name, last_name, email FROM users WHERE user_id = ? LIMIT 1");
+                $uStmt->bind_param('i', $userId);
+                $uStmt->execute();
+                $uInfo = $uStmt->get_result()->fetch_assoc();
+                $uStmt->close();
+
+                $userName = htmlspecialchars(trim(($uInfo['first_name'] ?? '') . ' ' . ($uInfo['last_name'] ?? '')));
+                $userEmail = $uInfo['email'] ?? '';
+
+                if ($userEmail) {
+                    $html = "
+                    <div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;padding:32px 16px;'>
+                        <div style='background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);'>
+                            <div style='background:#16a34a;padding:28px 32px;'>
+                                <h1 style='color:#fff;margin:0;font-size:22px;font-weight:700;'>✅ Refund Completed</h1>
+                            </div>
+                            <div style='padding:28px 32px;'>
+                                <p style='color:#374151;font-size:15px;margin:0 0 20px;'>Hi {$userName},</p>
+                                <p style='color:#374151;font-size:15px;margin:0 0 20px;'>
+                                    Your refund has been successfully processed and returned to your original payment method.
+                                </p>
+                                <div style='background:#f1f5f9;border-radius:8px;padding:18px 20px;margin-bottom:20px;'>
+                                    <table style='width:100%;border-collapse:collapse;font-size:14px;color:#374151;'>
+                                        <tr><td style='padding:5px 0;color:#6b7280;'>Booking Ref</td><td style='text-align:right;font-weight:700;'>{$bkRef}</td></tr>
+                                        <tr><td style='padding:5px 0;color:#6b7280;'>Refund Amount</td><td style='text-align:right;font-weight:700;color:#16a34a;'>{$amtFmt}</td></tr>
+                                        <tr><td style='padding:5px 0;color:#6b7280;'>Status</td><td style='text-align:right;font-weight:700;color:#16a34a;'>Completed</td></tr>
+                                    </table>
+                                </div>
+                                <p style='color:#6b7280;font-size:13px;margin:0;'>
+                                    Please allow 3–5 business days for the amount to reflect on your statement depending on your bank.
+                                </p>
+                            </div>
+                        </div>
+                    </div>";
+
+                    $emailService->sendEmail($userEmail, "Refund Completed — $bkRef", $html);
+                }
+            } catch (Throwable $e) {
+                error_log('[webhook] Refund completed email failed: ' . $e->getMessage());
+            }
+
+            error_log("[webhook] Refund $refundId marked completed for booking $bkRef");
+        } else {
+            error_log("[webhook] refund.updated: no matching processing refund found for payment_id $pmPaymentId");
+        }
+    }
+}
+
 http_response_code(200);
 echo 'ok';

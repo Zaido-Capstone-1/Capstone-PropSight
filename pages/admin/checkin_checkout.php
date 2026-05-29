@@ -15,6 +15,44 @@ if ($_SESSION['role'] !== 'admin') {
     exit;
 }
 
+// ── AJAX: calendar activity counts ───────────────────────────────────────────
+if (isset($_GET['ajax_activity'])) {
+    include '../../includes/db.php';
+    $year = (int) ($_GET['year'] ?? date('Y'));
+    $month = (int) ($_GET['month'] ?? date('n'));
+    $start = sprintf('%04d-%02d-01', $year, $month);
+    $end = date('Y-m-t', strtotime($start));
+
+    $stmt = $conn->prepare(
+        "SELECT DATE(checkin_date) AS ci_date, DATE(checkout_date) AS co_date
+         FROM bookings
+         WHERE status NOT IN ('cancelled')
+           AND (checkin_date BETWEEN ? AND ? OR checkout_date BETWEEN ? AND ?)"
+    );
+    $stmt->bind_param('ssss', $start, $end, $start, $end);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    $ci = [];
+    $co = [];
+    while ($row = $res->fetch_assoc()) {
+        if ($row['ci_date'] >= $start && $row['ci_date'] <= $end) {
+            $d = (int) date('j', strtotime($row['ci_date']));
+            $ci[$d] = ($ci[$d] ?? 0) + 1;
+        }
+        if ($row['co_date'] >= $start && $row['co_date'] <= $end) {
+            $d = (int) date('j', strtotime($row['co_date']));
+            $co[$d] = ($co[$d] ?? 0) + 1;
+        }
+    }
+    $stmt->close();
+
+    header('Content-Type: application/json');
+    echo json_encode(['ci' => (object) $ci, 'co' => (object) $co]);
+    exit;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 $page_title = 'Check-in / Check-out';
 $active_page = 'checkin_checkout';
 include '../../includes/db.php';
@@ -244,14 +282,25 @@ require_once '../../lib/admin-queries/checkin_checkout_queries.php';
                                 </div>
                                 <div class="guest-actions">
                                     <?php if (!$isDone): ?>
-                                        <button class="act-btn act-btn-checkin"
-                                            onclick="processAction(<?= $row['booking_id'] ?>, 'checkin')"
-                                            id="ci-btn-<?= $row['booking_id'] ?>">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                                <polyline points="20 6 9 17 4 12" />
-                                            </svg>
-                                            Check In
-                                        </button>
+                                        <?php if ($isPast): ?>
+                                            <button class="act-btn act-btn-checkin" disabled
+                                                title="Cannot check in: this date has already passed."
+                                                style="opacity:0.45;cursor:not-allowed;">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                                    <polyline points="20 6 9 17 4 12" />
+                                                </svg>
+                                                Check In
+                                            </button>
+                                        <?php else: ?>
+                                            <button class="act-btn act-btn-checkin"
+                                                onclick="processAction(<?= $row['booking_id'] ?>, 'checkin')"
+                                                id="ci-btn-<?= $row['booking_id'] ?>">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                                    <polyline points="20 6 9 17 4 12" />
+                                                </svg>
+                                                Check In
+                                            </button>
+                                        <?php endif; ?>
                                     <?php else: ?>
                                         <span class="badge badge-success">✓ Done</span>
                                     <?php endif; ?>
@@ -300,18 +349,23 @@ require_once '../../lib/admin-queries/checkin_checkout_queries.php';
                                 <div class="guest-actions">
                                     <?php if (!$isDone): ?>
                                         <span class="badge badge-<?= $cls ?>"><?= $label ?></span>
-                                        <button class="act-btn act-btn-extend"
-                                            onclick="openExtendModal(<?= $row['booking_id'] ?>, '<?= htmlspecialchars($row['guest_name'], ENT_QUOTES) ?>', '<?= $row['checkout_date'] ?>')"
-                                            id="ext-btn-<?= $row['booking_id'] ?>">
+                                        <?php $notCheckedIn = ($row['checkin_status'] ?? '') !== 'done'; ?>
+                                        <button class="act-btn act-btn-extend" <?php if ($notCheckedIn): ?> disabled
+                                                title="Guest must be checked in before extending."
+                                                style="opacity:0.45;cursor:not-allowed;" <?php else: ?>
+                                                onclick="openExtendModal(<?= $row['booking_id'] ?>, '<?= htmlspecialchars($row['guest_name'], ENT_QUOTES) ?>', '<?= $row['checkout_date'] ?>')"
+                                                id="ext-btn-<?= $row['booking_id'] ?>" <?php endif; ?>>
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                                 <line x1="12" y1="5" x2="12" y2="19" />
                                                 <line x1="5" y1="12" x2="19" y2="12" />
                                             </svg>
                                             Extend
                                         </button>
-                                        <button class="act-btn act-btn-checkout"
-                                            onclick="processAction(<?= $row['booking_id'] ?>, 'checkout')"
-                                            id="co-btn-<?= $row['booking_id'] ?>">
+                                        <button class="act-btn act-btn-checkout" <?php if ($notCheckedIn): ?> disabled
+                                                title="Guest must be checked in before checking out."
+                                                style="opacity:0.45;cursor:not-allowed;" <?php else: ?>
+                                                onclick="processAction(<?= $row['booking_id'] ?>, 'checkout')"
+                                                id="co-btn-<?= $row['booking_id'] ?>" <?php endif; ?>>
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                                 <polyline points="20 6 9 17 4 12" />
                                             </svg>
@@ -400,8 +454,8 @@ require_once '../../lib/admin-queries/checkin_checkout_queries.php';
 <script>
     window.__PS_CHECKIN__ = {
         selectedDate: '<?= $selected_date ?>',
-        ciDays: <?= json_encode(array_values($ci_days)) ?>,
-        coDays: <?= json_encode(array_values($co_days)) ?>,
+        ciDays: <?= json_encode((object) $ci_days) ?>,
+        coDays: <?= json_encode((object) $co_days) ?>,
         todayStr: '<?= date('Y-m-d') ?>',
         calYear: <?= $cal_year ?>,
         calMonth: <?= (int) $cal_month ?>,

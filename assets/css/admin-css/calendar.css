@@ -587,7 +587,6 @@
    border-radius: var(--radius);
    background: var(--gray-light);
    margin-bottom: 9px;
-   border-left: 3px solid transparent;
    transition: background .15s, transform .15s;
    cursor: pointer;
  }

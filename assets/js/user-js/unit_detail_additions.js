@@ -68,6 +68,50 @@
         };
     }
 
+    /* =========================================================================
+       FLATPICKR YEAR DROPDOWN HELPER
+       Call this in onReady for every flatpickr instance
+    ========================================================================= */
+    function injectYearDropdown(fp) {
+        function tryInject() {
+            const container = fp.calendarContainer;
+            if (!container) { setTimeout(tryInject, 50); return; }
+
+            // Don't inject twice
+            if (container.querySelector('.fp-year-select')) return;
+
+            // Hide numInputWrapper via inline style (CSS may not have fired yet)
+            const wrapper = container.querySelector('.numInputWrapper');
+            if (wrapper) wrapper.style.display = 'none';
+
+            const currentYear = new Date().getFullYear();
+            const sel = document.createElement('select');
+            sel.className = 'fp-year-select';
+
+            for (let y = currentYear; y <= currentYear + 5; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                if (y === fp.currentYear) opt.selected = true;
+                sel.appendChild(opt);
+            }
+
+            sel.addEventListener('change', () => fp.changeYear(parseInt(sel.value)));
+
+            // Insert after the month dropdown inside .flatpickr-current-month
+            const currentMonth = container.querySelector('.flatpickr-current-month');
+            if (currentMonth) {
+                currentMonth.appendChild(sel);
+            }
+
+            // Keep in sync on navigation
+            fp.config.onMonthChange.push(() => { sel.value = fp.currentYear; });
+            fp.config.onYearChange.push(() => { sel.value = fp.currentYear; });
+        }
+
+        setTimeout(tryInject, 0);
+    }
+
 
     /* =========================================================================
        1. GRID GALLERY
@@ -208,25 +252,20 @@
         const u = window.UD_UNIT || {};
         if (!u.lat || !u.lng || typeof L === 'undefined') return;
 
-        // ── Inline card map ──────────────────────────────────────────────────
         const cardMapEl = $('udLeafletMap');
         if (cardMapEl) {
             const cardMap = L.map('udLeafletMap', {
                 zoomControl: true,
                 scrollWheelZoom: false,
                 attributionControl: false,
-                dragging: true, // ← Enable dragging on card
+                dragging: true,
                 doubleClickZoom: true,
             }).setView([u.lat, u.lng], 15);
-
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(cardMap);
             L.marker([u.lat, u.lng]).addTo(cardMap);
-
-            // Move zoom control to bottom-right
             cardMap.zoomControl.setPosition('bottomright');
         }
 
-        // ── Fullscreen modal map ─────────────────────────────────────────────
         let modalMap = null;
 
         window.openMapModal = function () {
@@ -234,24 +273,19 @@
             if (!modal) return;
             modal.classList.add('open');
             document.body.style.overflow = 'hidden';
-
-            // Init modal map lazily (only once)
             if (!modalMap) {
                 modalMap = L.map('udMapModalMap', {
                     zoomControl: true,
                     scrollWheelZoom: true,
                     attributionControl: true,
                 }).setView([u.lat, u.lng], 15);
-
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 }).addTo(modalMap);
-
                 L.marker([u.lat, u.lng]).addTo(modalMap)
                     .bindPopup(document.title.split('—')[0].trim())
                     .openPopup();
             } else {
-                // Invalidate size in case modal was hidden on first render
                 setTimeout(() => modalMap.invalidateSize(), 100);
             }
         };
@@ -299,13 +333,9 @@
             }
             const nights = Math.round((b - a) / 86400000);
             const subtot = nights * (u.priceNum || 0);
-            const deposit = subtot * 0.5;
-            const total = deposit;
             set('udNightsLabel', `${nights} night${nights !== 1 ? 's' : ''} × ${fmt(u.priceNum || 0)}`);
             set('udNightsTotal', fmt(subtot));
-            set('udDeposit', fmt(deposit));
-            set('udTotalDue', fmt(total));
-            set('udRemainingNote', `Remaining ${fmt(subtot - deposit)} balance due at check-out`);
+            set('udTotalDue', fmt(subtot));
             bd.style.display = 'block';
             const fd = $('udFloatDates');
             if (fd) {
@@ -325,7 +355,6 @@
                 isCheckinBlocked,
                 getNextBookedAfter
             } = buildCalendarHelpers();
-
             const today = new Date();
             today.setHours(12, 0, 0, 0);
 
@@ -334,6 +363,9 @@
                 minDate: today,
                 disableMobile: false,
                 disable: [date => isCheckinBlocked(date)],
+                onReady(_, __, fp) {
+                    setTimeout(() => injectYearDropdown(fp), 0);
+                },
                 onDayCreate(dObj, dStr, fp, dayElem) {
                     if (isCheckinBlocked(dayElem.dateObj)) {
                         dayElem.classList.add('fp-booked');
@@ -350,9 +382,7 @@
                     fpCo.set('minDate', minCo);
                     fpCo.set('maxDate', nextBooked || null);
                     const coVal = fpCo.selectedDates[0];
-                    if (!coVal || coVal <= date || (nextBooked && coVal >= nextBooked)) {
-                        fpCo.clear();
-                    }
+                    if (!coVal || coVal <= date || (nextBooked && coVal >= nextBooked)) fpCo.clear();
                     updateBreakdown();
                 },
             });
@@ -362,6 +392,9 @@
                 minDate: today,
                 disableMobile: false,
                 disable: [date => isBooked(date)],
+                onReady(_, __, fp) {
+                    setTimeout(() => injectYearDropdown(fp), 0);
+                },
                 onDayCreate(dObj, dStr, fp, dayElem) {
                     if (isBooked(dayElem.dateObj)) {
                         dayElem.classList.add('fp-booked');
@@ -449,10 +482,10 @@
                 ['bm-email', s.email],
                 ['bm-phone', s.phone]
             ]
-            .forEach(([id, v]) => {
-                const el = $(id);
-                if (el) el.value = v || '';
-            });
+                .forEach(([id, v]) => {
+                    const el = $(id);
+                    if (el) el.value = v || '';
+                });
 
             const ci = $('bm-checkin'),
                 co = $('bm-lease');
@@ -471,8 +504,12 @@
 
             window._bmRoom = room;
             _goTo(1);
+
             const ov = $('bmOverlay');
             if (ov) {
+                window._bmSavedScroll = window.scrollY || document.documentElement.scrollTop;
+                document.body.style.top = `-${window._bmSavedScroll}px`;
+                document.body.classList.add('bm-open');
                 ov.classList.add('active');
                 requestAnimationFrame(() => ov.classList.add('open'));
                 ov.onclick = e => {
@@ -485,6 +522,10 @@
             const ov = $('bmOverlay');
             if (!ov) return;
             ov.classList.remove('open');
+            const savedY = window._bmSavedScroll || 0;
+            document.body.classList.remove('bm-open');
+            document.body.style.top = '';
+            window.scrollTo(0, savedY);
             setTimeout(() => ov.classList.remove('active'), 350);
             clearInterval(window._bmPollInterval);
         };
@@ -513,8 +554,6 @@
                     co = val('bm-lease');
                 const nights = Math.max(0, Math.round((new Date(co) - new Date(ci)) / 86400000));
                 const subtot = nights * (room.priceNum || 0);
-                const deposit = subtot * 0.5;
-                const total = deposit;
                 set('rv-name', [val('bm-fname'), val('bm-lname')].join(' '));
                 set('rv-email', val('bm-email'));
                 set('rv-phone', val('bm-phone'));
@@ -523,10 +562,8 @@
                 set('rv-checkout', co);
                 set('rv-nights', nights);
                 set('rv-rent', fmt(room.priceNum || 0));
-                set('rv-deposit', fmt(deposit));
-                set('rv-total', fmt(total));
-                set('sb-deposit', fmt(deposit));
-                set('sb-total', fmt(total));
+                set('rv-total', fmt(subtot));
+                set('sb-total', fmt(subtot));
             }
         }
 
@@ -572,8 +609,7 @@
                 co = val('bm-lease');
             const nights = Math.max(0, Math.round((new Date(co) - new Date(ci)) / 86400000));
             const subtot = nights * (room.priceNum || 0);
-            const deposit = subtot * 0.5;
-            const total = deposit;
+            const total = subtot;
 
             showToast?.('Submitting your booking…');
 
@@ -591,19 +627,17 @@
             window.psAppendCsrf?.(fd);
 
             _goTo(4);
-            ['bm-payment-waiting', 'bm-payment-success', 'bm-payment-cash',
-                'bm-payment-failed', 'bm-payment-expired'
-            ]
-            .forEach((id, i) => {
-                const el = $(id);
-                if (el) el.style.display = i === 0 ? '' : 'none';
-            });
+            ['bm-payment-waiting', 'bm-payment-success', 'bm-payment-cash', 'bm-payment-failed', 'bm-payment-expired']
+                .forEach((id, i) => {
+                    const el = $(id);
+                    if (el) el.style.display = i === 0 ? '' : 'none';
+                });
             $('bmFooter')?.querySelectorAll('button').forEach(b => b.style.display = 'none');
 
             fetch('../../api/user/book_unit.php', {
-                    method: 'POST',
-                    body: fd
-                })
+                method: 'POST',
+                body: fd
+            })
                 .then(r => r.json())
                 .then(data => {
                     if (!data.success) {
@@ -667,7 +701,7 @@
                                     $('bm-payment-failed').style.display = '';
                                     set('bmFailedRef', `Ref #BK-${String(bid).padStart(4, '0')}`);
                                 }
-                            }).catch(() => {});
+                            }).catch(() => { });
                     }, 5000);
                 })
                 .catch(err => {
@@ -683,8 +717,7 @@
 
         document.querySelectorAll('#bmPayMethods .bm-pay-option').forEach(opt => {
             opt.addEventListener('click', () => {
-                document.querySelectorAll('#bmPayMethods .bm-pay-option')
-                    .forEach(o => o.classList.remove('selected'));
+                document.querySelectorAll('#bmPayMethods .bm-pay-option').forEach(o => o.classList.remove('selected'));
                 opt.classList.add('selected');
             });
         });
@@ -718,7 +751,6 @@
                 isCheckinBlocked,
                 getNextBookedAfter
             } = buildCalendarHelpers();
-
             const today = new Date();
             today.setHours(12, 0, 0, 0);
 
@@ -727,6 +759,9 @@
                 minDate: today,
                 disableMobile: false,
                 disable: [date => isCheckinBlocked(date)],
+                onReady(_, __, fp) {
+                    setTimeout(() => injectYearDropdown(fp), 0);
+                },
                 onDayCreate(dObj, dStr, fp, dayElem) {
                     if (isCheckinBlocked(dayElem.dateObj)) {
                         dayElem.classList.add('fp-booked');
@@ -743,9 +778,7 @@
                     fpCo.set('minDate', minCo);
                     fpCo.set('maxDate', nextBooked || null);
                     const coVal = fpCo.selectedDates[0];
-                    if (!coVal || coVal <= date || (nextBooked && coVal >= nextBooked)) {
-                        fpCo.clear();
-                    }
+                    if (!coVal || coVal <= date || (nextBooked && coVal >= nextBooked)) fpCo.clear();
                     _updateModalSummary();
                 },
             });
@@ -755,6 +788,9 @@
                 minDate: today,
                 disableMobile: false,
                 disable: [date => isBooked(date)],
+                onReady(_, __, fp) {
+                    setTimeout(() => injectYearDropdown(fp), 0);
+                },
                 onDayCreate(dObj, dStr, fp, dayElem) {
                     if (isBooked(dayElem.dateObj)) {
                         dayElem.classList.add('fp-booked');
@@ -787,14 +823,36 @@
             }
             const room = window._bmRoom || {};
             const subtot = nights * (room.priceNum || 0);
-            const deposit = subtot * 0.5;
-            const total = deposit;
-            set('sb-deposit', fmt(deposit));
-            set('sb-total', fmt(total));
+            set('sb-total', fmt(subtot));
         }
 
         if (new URLSearchParams(location.search).get('book') === '1') {
-            window.addEventListener('load', () => $('udBookBtn')?.click());
+            function _autoOpenBookingModal() {
+                if (typeof window.openBookingModalFromDetail === 'function' && window.UD_ROOM_DATA) {
+                    window.openBookingModalFromDetail(window.UD_ROOM_DATA);
+                    return;
+                }
+                const btn = $('udBookBtn');
+                if (btn && !btn.disabled) {
+                    btn.click();
+                    return;
+                }
+                let attempts = 0;
+                const poll = setInterval(function () {
+                    attempts++;
+                    const b = $('udBookBtn');
+                    if (b && !b.disabled) {
+                        clearInterval(poll);
+                        b.click();
+                    } else if (attempts > 20) clearInterval(poll);
+                }, 100);
+            }
+
+            if (document.readyState === 'complete') {
+                _autoOpenBookingModal();
+            } else {
+                window.addEventListener('load', _autoOpenBookingModal);
+            }
         }
     })();
 
@@ -823,8 +881,7 @@
             if (i >= 8) c.classList.add('ud-am-hidden');
         });
         showMoreBtn.addEventListener('click', () => {
-            document.querySelectorAll('.ud-amenity-chip.ud-am-hidden')
-                .forEach(c => c.classList.remove('ud-am-hidden'));
+            document.querySelectorAll('.ud-amenity-chip.ud-am-hidden').forEach(c => c.classList.remove('ud-am-hidden'));
             showMoreBtn.style.display = 'none';
         });
     })();
@@ -862,7 +919,7 @@
             url: location.href,
         };
         if (navigator.share && navigator.canShare?.(shareData)) {
-            navigator.share(shareData).catch(() => {});
+            navigator.share(shareData).catch(() => { });
         } else if (navigator.clipboard?.writeText) {
             navigator.clipboard.writeText(location.href)
                 .then(() => showToast?.('Link copied to clipboard!'))
@@ -962,6 +1019,7 @@
                 coEl.dispatchEvent(new Event('change'));
             }
         }
+
         const udCi = $('udCheckin'),
             udCo = $('udCheckout');
         const bmCi = $('bm-checkin'),

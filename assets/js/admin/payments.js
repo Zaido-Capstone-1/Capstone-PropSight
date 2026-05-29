@@ -54,7 +54,7 @@ function applyPayFilters() {
         const show =
             (!q || (row.dataset.search || '').includes(q)) &&
             (!status || status === 'all' || row.dataset.status === status) &&
-            (!month || row.dataset.month === month);
+            (!month || month === 'all' || row.dataset.month === month);
         row.style.display = show ? '' : 'none';
         if (show) count++;
     });
@@ -302,11 +302,15 @@ function fmtPeso(v) {
 }
 
 function refreshPaymentsTable() {
+    // Reset month filter to 'all' so deleted records don't leave an empty view
+    document.getElementById('monthPickerValue').value = 'all';
+    document.getElementById('monthPickerLabel').textContent = 'All Time';
+
     fetch('../../api/payments.php?status=all&month=all&_=' + Date.now(), { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
             if (!data || !data.success) { location.reload(); return; }
-            renderPaymentsTable(data.rows || []);
+            renderPaymentsTable(data.records || []);
             applyPayFilters();
         })
         .catch(() => location.reload());

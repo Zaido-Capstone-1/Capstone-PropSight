@@ -84,13 +84,18 @@ require_once '../../lib/user-queries/saved_queries.php';
                         <div class="sc-img">
                             <?php if ($imgSrc): ?>
                                 <img src="<?php echo htmlspecialchars($imgSrc); ?>" alt="<?php echo $unitName; ?>"
-                                    onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                             <?php endif; ?>
                             <div class="sc-img-fallback"
-                                style="<?php echo $imgSrc ? 'display:none;' : '' ?>background:linear-gradient(145deg,#dbeafe,#3b82f6,#1a3d7c);">
+                                style="<?php echo $imgSrc ? 'display:none;' : '' ?>background:linear-gradient(145deg,#dbeafe,#3b82f6,#1a3d7c);display:<?php echo $imgSrc ? 'none' : 'flex' ?>;align-items:center;justify-content:center;color:#fff;">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                    <circle cx="8.5" cy="8.5" r="1.5" />
+                                    <path d="M21 15l-5-5L5 21" />
+                                </svg>
                             </div>
-                            <span
-                                class="sc-badge <?php echo $avail ? 'badge-gold' : 'badge-blue'; ?>"><?php echo $unitType; ?></span>
+                            <span class="sc-badge badge-gold"><?php echo $unitType; ?></span>
                             <span
                                 class="sc-avail <?php echo $avail ? 'avail-yes' : 'avail-no'; ?>"><?php echo $avail ? '✓ Available' : 'Booked'; ?></span>
                             <button class="sc-heart active"
