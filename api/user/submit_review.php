@@ -12,10 +12,14 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'user') {
 require_verified_user_action(true);
 require_csrf_token(true);
 
-$userId = (int)$_SESSION['user_id'];
-$bookingId = (int)($_POST['booking_id'] ?? 0);
-$rating = (int)($_POST['rating'] ?? 0);
-$comment = trim((string)($_POST['comment'] ?? ''));
+$userId = (int) $_SESSION['user_id'];
+$bookingId = (int) ($_POST['booking_id'] ?? 0);
+$rating = (int) ($_POST['rating'] ?? 0);
+$comment = trim((string) ($_POST['comment'] ?? ''));
+$cleanliness = min(5, max(1, (float) ($_POST['cleanliness'] ?? 3)));
+$locationRating = min(5, max(1, (float) ($_POST['location_rating'] ?? 3)));
+$valueRating = min(5, max(1, (float) ($_POST['value_rating'] ?? 3)));
+$comfort = min(5, max(1, (float) ($_POST['comfort'] ?? 3)));
 
 if ($bookingId <= 0) {
     echo json_encode(['success' => false, 'message' => 'Invalid booking.']);
@@ -38,16 +42,16 @@ $bookingStmt->execute();
 $booking = $bookingStmt->get_result()->fetch_assoc();
 $bookingStmt->close();
 
-if (!$booking || (int)$booking['user_id'] !== $userId) {
+if (!$booking || (int) $booking['user_id'] !== $userId) {
     echo json_encode(['success' => false, 'message' => 'Booking not found.']);
     exit;
 }
-if (strtolower((string)$booking['status']) !== 'completed') {
+if (strtolower((string) $booking['status']) !== 'completed') {
     echo json_encode(['success' => false, 'message' => 'You can review completed bookings only.']);
     exit;
 }
 
-$unitId = (int)$booking['unit_id'];
+$unitId = (int) $booking['unit_id'];
 
 mysqli_begin_transaction($conn);
 try {
@@ -64,7 +68,17 @@ try {
     if (!$upsertStmt) {
         throw new Exception('Could not prepare review statement.');
     }
-    $upsertStmt->bind_param('iiiis', $bookingId, $unitId, $userId, $rating, $comment);
+    $upsertSql = "
+        INSERT INTO booking_reviews (booking_id, unit_id, user_id, rating, comment, cleanliness, location_rating, value_rating, comfort)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            rating=VALUES(rating), comment=VALUES(comment),
+            cleanliness=VALUES(cleanliness), location_rating=VALUES(location_rating),
+            value_rating=VALUES(value_rating), comfort=VALUES(comfort),
+            updated_at=CURRENT_TIMESTAMP
+    ";
+    $upsertStmt = $conn->prepare($upsertSql);
+    $upsertStmt->bind_param('iiiisdddd', $bookingId, $unitId, $userId, $rating, $comment, $cleanliness, $locationRating, $valueRating, $comfort);
     if (!$upsertStmt->execute()) {
         $upsertStmt->close();
         throw new Exception('Could not save review: ' . mysqli_error($conn));

@@ -148,7 +148,12 @@ try {
         exit;
     }
 
-    $totalAmount = $nights * (float) $unit['rent_amount'];
+    $clientTotal = (float) ($_POST['total_amount'] ?? 0);
+    $baseTotal = $nights * (float) $unit['rent_amount'];
+    // Accept client total if within 2x of base (covers Peak season), else fall back
+    $totalAmount = ($clientTotal > 0 && $clientTotal <= $baseTotal * 2.5)
+        ? $clientTotal
+        : $baseTotal;
     $email = trim((string) ($_SESSION['email'] ?? ''));
     $fullName = trim((string) ($_SESSION['name'] ?? ''));
 

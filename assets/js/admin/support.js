@@ -223,8 +223,10 @@ function applySptFilters() {
     const q = (document.getElementById('sptSearch')?.value || '').toLowerCase().trim();
     const status = document.getElementById('sptStatusVal')?.value || '';
 
-    let count = 0;
+    let total = 0, count = 0;
     document.querySelectorAll('#sptTableBody tr').forEach(row => {
+        if (row.querySelector('td[colspan]')) return;
+        total++;
         row.classList.remove('spt-pg-hidden');
         const show =
             (!q || (row.dataset.search || '').includes(q)) &&
@@ -233,8 +235,17 @@ function applySptFilters() {
         if (show) count++;
     });
 
+    const staticEmpty = document.querySelector('#sptTableBody tr td[colspan]');
+    if (staticEmpty) staticEmpty.closest('tr').style.display = 'none';
+
     const empty = document.getElementById('sptEmptyState');
+    const emptyText = document.getElementById('sptEmptyText');
     if (empty) empty.style.display = count === 0 ? 'block' : 'none';
+    if (emptyText) {
+        emptyText.textContent = total === 0
+            ? 'No tickets yet.'
+            : 'No tickets match your filters.';
+    }
 
     const countEl = document.getElementById('sptTicketCount');
     if (countEl) countEl.textContent = count;
@@ -245,7 +256,7 @@ function applySptFilters() {
 
 function paginateSpt() {
     const visible = Array.from(document.querySelectorAll('#sptTableBody tr'))
-        .filter(r => r.style.display !== 'none' && !r.classList.contains('spt-pg-hidden'));
+        .filter(r => !r.querySelector('td[colspan]') && r.style.display !== 'none' && !r.classList.contains('spt-pg-hidden'));
     const total = visible.length;
     const totalPages = Math.max(1, Math.ceil(total / sptRowsPerPage));
     sptCurrentPage = Math.min(sptCurrentPage, totalPages);
@@ -259,7 +270,7 @@ function paginateSpt() {
     });
 
     renderSptFoot(total, totalPages, start, end);
-}
+}   
 
 function renderSptFoot(total, totalPages, start, end) {
     const foot = document.getElementById('sptTableFoot');

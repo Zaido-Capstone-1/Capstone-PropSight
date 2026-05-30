@@ -6,16 +6,18 @@ $userId = (int) $_SESSION['user_id'];
 /* ── Payment logs ── */
 $bRes = mysqli_query($conn, "
     SELECT py.payment_id, py.payment_date, py.amount_paid, py.payment_method, py.payment_status,
-       b.booking_id,
-       COALESCE(u.unit_name, u.unit_number, '—') AS unit_label,
-       DATEDIFF(b.checkout_date, b.checkin_date)  AS nights,
-       p.property_name
+        b.booking_id,
+        COALESCE(u.unit_name, u.unit_number, '—') AS unit_label,
+        DATEDIFF(b.checkout_date, b.checkin_date)  AS nights,
+        p.property_name,
+    COALESCE(pp.paid_at, py.payment_date) AS sort_datetime
     FROM payments py
     JOIN bookings    b  ON b.booking_id  = py.booking_id
     JOIN units       u  ON u.unit_id     = b.unit_id
     LEFT JOIN properties p ON p.property_id = u.property_id
+    LEFT JOIN paymongo_payments pp ON pp.booking_id = py.booking_id AND pp.status = 'paid'
     WHERE b.user_id = $userId
-    ORDER BY py.payment_date DESC
+    ORDER BY sort_datetime DESC
     LIMIT 100
 ");
 $bills = [];
@@ -66,7 +68,7 @@ $unified = [];
 foreach ($bills as $b) {
     $unified[] = [
         'type' => 'payment',
-        'sort_date' => $b['payment_date'],
+        'sort_date' => $b['sort_datetime'],
         'date' => $b['payment_date'],
         'property_name' => $b['property_name'] ?? '—',
         'unit_label' => $b['unit_label'] ?? '',

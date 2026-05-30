@@ -59,7 +59,8 @@ try {
     $mail->setFrom(MAIL_FROM_EMAIL, MAIL_FROM_NAME);
     $mail->addAddress($email);
     $mail->isHTML(true);
-    $mail->Subject = 'Your verification code — ' . MAIL_FROM_NAME;
+    $mail->Subject = 'Your verification code - ' . MAIL_FROM_NAME;
+    $mail->CharSet = 'UTF-8';
 
     $otp_safe = htmlspecialchars($otp, ENT_QUOTES, 'UTF-8');
     $name_safe = htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8');

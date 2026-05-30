@@ -1,4 +1,4 @@
-tags so html2canvas can render
+/* tags so html2canvas can render
         const styleEl = document.createElement('style');
         doc.querySelectorAll('style').forEach(s => { styleEl.textContent += s.textContent; });
 
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<style>
+<style> */
 /* Receipt button */
 .bc-btn-receipt {
     display: inline-flex;
@@ -122,9 +122,27 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 .pg-btn:disabled { opacity: .35; cursor: default; }
 .pg-info {
+    display: block;
+    text-align: center;
     font-size: .68rem;
     color: var(--ink-faint);
-    margin-left: 8px;
+    margin-top: 6px;
     letter-spacing: .03em;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+@media(max-width:600px) {
+    .pg-bar {
+        gap: 4px;
+        padding: 14px 0 4px;
+    }
+    .pg-btn {
+        min-width: 30px;
+        height: 30px;
+        font-size: .68rem;
+        padding: 0 7px;
+    }
+    .col-side {
+        display: none !important;
+    }
+}

@@ -242,19 +242,24 @@ require_once '../../lib/user-queries/payment_queries.php';
                                             </button>
 
                                             <?php
-                                            /* Show "Refund" only when:
-                                               - paid via PayMongo
-                                               - payment status is paid
-                                               - booking is cancelled */
+                                            // AFTER
                                             $bkChk = $conn->prepare("SELECT status FROM bookings WHERE booking_id = ? LIMIT 1");
                                             $bkChk->bind_param('i', $row['booking_id']);
                                             $bkChk->execute();
                                             $bkChkRow = $bkChk->get_result()->fetch_assoc();
                                             $bkChk->close();
 
-                                            $canRefund = $row['method'] === 'paymongo'
+                                            $refChk = $conn->prepare("SELECT refund_id FROM refunds WHERE booking_id = ? AND refund_status IN ('pending','processing','completed') LIMIT 1");
+                                            $refChk->bind_param('i', $row['booking_id']);
+                                            $refChk->execute();
+                                            $alreadyRefunded = $refChk->get_result()->fetch_assoc();
+                                            $refChk->close();
+
+                                            $paymongoMethods = ['GCash', 'Maya', 'Bank Transfer'];
+                                            $canRefund = in_array($row['method'], $paymongoMethods)
                                                 && $row['status'] === 'paid'
-                                                && ($bkChkRow['status'] ?? '') === 'cancelled';
+                                                && ($bkChkRow['status'] ?? '') === 'cancelled'
+                                                && !$alreadyRefunded;
                                             if ($canRefund): ?>
                                                 <button class="btn-secondary"
                                                     style="font-size:.7rem;padding:5px 12px;margin-left:4px;color:var(--terra);border-color:var(--terra);"

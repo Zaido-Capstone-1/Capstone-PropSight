@@ -48,17 +48,16 @@ function applyPayFilters() {
     const status = document.getElementById('payStatusInput')?.value || '';
     const month = document.getElementById('monthPickerValue')?.value || '';
 
-    let count = 0;
     document.querySelectorAll('.table-wrap tbody tr').forEach(row => {
-        row.classList.remove('pay-pg-hidden');
         const show =
             (!q || (row.dataset.search || '').includes(q)) &&
             (!status || status === 'all' || row.dataset.status === status) &&
             (!month || month === 'all' || row.dataset.month === month);
-        row.style.display = show ? '' : 'none';
-        if (show) count++;
+        row.dataset.payVisible = show ? '1' : '0';
+        if (!show) row.style.display = 'none';
     });
 
+    const count = document.querySelectorAll('.table-wrap tbody tr[data-pay-visible="1"]').length;
     const empty = document.getElementById('payEmptyState');
     if (empty) empty.style.display = count === 0 ? 'block' : 'none';
 
@@ -68,7 +67,7 @@ function applyPayFilters() {
 
 function paginatePay() {
     const visible = Array.from(document.querySelectorAll('.table-wrap tbody tr'))
-        .filter(r => r.style.display !== 'none' && !r.classList.contains('pay-pg-hidden'));
+        .filter(r => r.dataset.payVisible !== '0');
     const total = visible.length;
     const totalPages = Math.max(1, Math.ceil(total / payRowsPerPage));
     payCurrentPage = Math.min(payCurrentPage, totalPages);
@@ -76,14 +75,15 @@ function paginatePay() {
     const start = (payCurrentPage - 1) * payRowsPerPage;
     const end = start + payRowsPerPage;
 
-    visible.forEach((row, i) => {
-        if (i >= start && i < end) {
-            row.style.display = '';
-            row.classList.remove('pay-pg-hidden');
-        } else {
-            row.classList.add('pay-pg-hidden');
+    // Show/hide all rows based on filter + page
+    document.querySelectorAll('.table-wrap tbody tr').forEach(row => {
+        if (row.dataset.payVisible === '0') {
             row.style.display = 'none';
         }
+    });
+
+    visible.forEach((row, i) => {
+        row.style.display = (i >= start && i < end) ? '' : 'none';
     });
 
     renderPayFoot(total, totalPages, start, end);

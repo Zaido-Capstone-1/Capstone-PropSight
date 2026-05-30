@@ -763,29 +763,61 @@ async function openViewModal(unit) {
           else if (typeof PS !== 'undefined' && PS.toast) PS.toast('Unit updated successfully.', 'success');
 
           const updatedUnit = data.unit;
+          const freshImgs = updatedUnit.images || unit.images || [];
+          const mergedUnit = Object.assign({}, unit, {
+            unit_number: updatedUnit.unit_number  || unit.unit_number,
+            unit_name:   updatedUnit.unit_name    || unit.unit_name,
+            unit_type:   updatedUnit.unit_type    || unit.unit_type,
+            floor:       updatedUnit.floor        ?? unit.floor,
+            rent_amount: updatedUnit.rent_amount  ?? unit.rent_amount,
+            status:      updatedUnit.status       || unit.status,
+            tenant_name: updatedUnit.tenant_name  || '',
+            description: updatedUnit.description  || '',
+            images:      freshImgs,
+          });
+
+          // ── Update card on grid immediately ─────────────────────────────
           const card = document.querySelector(`.view-unit-btn[data-unit*='"unit_id":${unit.unit_id}']`)?.closest('.unit-listing-card');
-          if (card && updatedUnit) {
-            const mergedUnit = Object.assign({}, unit, {
-              unit_number: updatedUnit.unit_number  || unit.unit_number,
-              unit_name:   updatedUnit.unit_name    || unit.unit_name,
-              unit_type:   updatedUnit.unit_type    || unit.unit_type,
-              floor:       updatedUnit.floor        ?? unit.floor,
-              rent_amount: updatedUnit.rent_amount  ?? unit.rent_amount,
-              status:      updatedUnit.status       || unit.status,
-              tenant_name: updatedUnit.tenant_name  || '',
-              description: updatedUnit.description  || '',
-              images:      updatedUnit.images       || unit.images,
-            });
+          if (card) {
             const viewBtn = card.querySelector('.view-unit-btn');
             if (viewBtn) viewBtn.dataset.unit = JSON.stringify(mergedUnit);
-            const newStatus = (updatedUnit.status || '').toLowerCase();
+            const newStatus = mergedUnit.status.toLowerCase();
             card.dataset.status = newStatus;
             const pill = card.querySelector('.status-pill');
             if (pill) { pill.className = `status-pill ${newStatus}`; pill.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1); }
             const titleEl = card.querySelector('.unit-title');
-            if (titleEl) titleEl.textContent = updatedUnit.unit_number || unit.unit_number || '—';
+            if (titleEl) titleEl.textContent = mergedUnit.unit_number || '—';
             const priceEl = card.querySelector('.price-value');
-            if (priceEl) priceEl.textContent = '₱' + Number(updatedUnit.rent_amount).toLocaleString('en-US', { minimumFractionDigits: 0 });
+            if (priceEl) priceEl.textContent = '₱' + Number(mergedUnit.rent_amount).toLocaleString('en-US', { minimumFractionDigits: 0 });
+
+            // Update card thumbnail immediately
+            // Update card thumbnail — handle removed photos
+            const photoWrap = card.querySelector('.photo-wrap');
+            if (photoWrap) {
+              const BASE = window.APP_BASE || '';
+              if (freshImgs.length) {
+                const existingImg = photoWrap.querySelector('img');
+                if (existingImg) {
+                  existingImg.src = `${BASE}/${freshImgs[0]}`;
+                } else {
+                  photoWrap.innerHTML = `
+                    <img src="${BASE}/${freshImgs[0]}" alt="unit photo" style="width:100%;height:100%;object-fit:cover;display:block;">
+                    <div class="overlay"></div>
+                    ${freshImgs.length > 1 ? `<span class="photo-count-pill">${freshImgs.length} photos</span>` : ''}
+                    ${statusPillHtml(mergedUnit.status.toLowerCase())}
+                  `;
+                }
+              } else {
+                // All photos removed — show placeholder
+                photoWrap.innerHTML = `
+                  <div class="no-photo">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:36px;height:36px;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <span style="font-size:12px;">No photos added</span>
+                  </div>
+                  ${statusPillHtml(mergedUnit.status.toLowerCase())}
+                `;
+              }
+            }
           }
 
           modal.close();

@@ -16,7 +16,19 @@ body {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse 70% 80% at 100% 50%, rgba(37, 99, 196, .07) 0%, transparent 70%);
+    background:
+        radial-gradient(ellipse 60% 100% at 100% 50%, rgba(37,99,196,.06) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 80% at 0% 100%, rgba(232,200,130,.04) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+/* Thin gold accent line at top */
+.user-hero::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(232,200,130,.4) 30%, rgba(232,200,130,.6) 50%, rgba(232,200,130,.4) 70%, transparent 100%);
     pointer-events: none;
 }
 
@@ -34,12 +46,12 @@ body {
 }
 
 .user-hero-greeting {
-    font-size: .72rem;
+    font-size: .68rem;
     font-weight: 700;
-    letter-spacing: .1em;
+    letter-spacing: .12em;
     text-transform: uppercase;
-    color: var(--ink-faint);
-    margin-bottom: 8px;
+    color: var(--sand-dk);
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -52,7 +64,7 @@ body {
     color: var(--ink);
     line-height: 1.1;
     letter-spacing: -.02em;
-    margin: 0 0 6px;
+    margin: 0 0 8px;
 }
 
 .user-hero h1 em {
@@ -61,9 +73,10 @@ body {
 }
 
 .user-hero-sub {
-    font-size: .88rem;
+    font-size: .86rem;
     color: var(--ink-soft);
     font-weight: 300;
+    letter-spacing: .01em;
 }
 
 /* Keep dashboard sidebar consistent with shared layout */
@@ -82,7 +95,7 @@ body {
 .user-stats-strip {
     display: grid;
     grid-template-columns: repeat(4, minmax(120px, 1fr));
-    gap: 12px;
+    gap: 10px;
     background: transparent;
     border: none;
     min-width: min(640px, 100%);
@@ -91,18 +104,29 @@ body {
 .ustat {
     padding: 20px 18px;
     text-align: center;
-    background: #f8fbff;
+    background: linear-gradient(145deg, #f4f8ff, #eef4fb);
     border: 1px solid #dbe8f6;
     border-radius: 16px;
     transition: border-color .2s, box-shadow .2s, transform .2s;
     min-width: 0;
+    position: relative;
+    overflow: hidden;
 }
 
-/* .ustat:hover {
+.ustat::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(37,99,196,.25), transparent);
+    border-radius: 0 0 16px 16px;
+}
+
+.ustat:hover {
     border-color: #c3d8ef;
-    box-shadow: 0 10px 20px rgba(11, 24, 41, .08);
-    transform: translateY(-2px);
-} */
+    box-shadow: 0 8px 24px rgba(11,24,41,.10);
+    
+}
 
 .ustat-num {
     font-family: var(--font-display);
@@ -114,9 +138,9 @@ body {
 }
 
 .ustat-lbl {
-    font-size: .66rem;
+    font-size: .62rem;
     font-weight: 700;
-    letter-spacing: .12em;
+    letter-spacing: .13em;
     text-transform: uppercase;
     color: #7d93ab;
     margin-top: 6px;
@@ -221,7 +245,7 @@ body {
 
 /* Active booking banner */
 .booking-banner {
-    padding: 0 2.5vw 32px;
+    padding: 32px 2.5vw 32px;
     background: var(--white);
 }
 
@@ -230,29 +254,44 @@ body {
     max-width: none;
     margin: 0;
     background:
-        linear-gradient(135deg, rgba(6,14,26,.78) 0%, rgba(26,58,92,.68) 100%),
+        linear-gradient(105deg, rgba(4,10,22,.92) 0%, rgba(10,28,58,.80) 55%, rgba(18,48,82,.65) 100%),
         url("../../images/header.jpg") center/cover no-repeat;
     border-radius: var(--r-xl);
-    padding: 24px 28px;
+    padding: 28px 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
     flex-wrap: wrap;
-    box-shadow: var(--sh-md);
+    box-shadow: 0 8px 32px rgba(4,10,22,.35), 0 2px 8px rgba(4,10,22,.2);
     position: relative;
     overflow: hidden;
+    border: 1px solid rgba(255,255,255,.07);
 }
 
+/* Soft gold bloom — left */
+.booking-banner-inner::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    left: -40px;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(232,200,130,.10) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* Gold orb — top right */
 .booking-banner-inner::before {
     content: '';
     position: absolute;
-    top: -40px;
-    right: -40px;
-    width: 200px;
-    height: 200px;
+    top: -50px;
+    right: -50px;
+    width: 220px;
+    height: 220px;
     border-radius: 50%;
-    background: rgba(232, 200, 130, .08);
+    background: radial-gradient(circle, rgba(232,200,130,.10) 0%, transparent 70%);
     pointer-events: none;
 }
 
@@ -265,11 +304,12 @@ body {
 }
 
 .bb-icon {
-    width: 46px;
-    height: 46px;
+    width: 50px;
+    height: 50px;
     border-radius: var(--r-md);
-    background: rgba(232, 200, 130, .15);
-    border: 1px solid rgba(232, 200, 130, .25);
+    background: rgba(232, 200, 130, .12);
+    border: 1px solid rgba(232, 200, 130, .30);
+    box-shadow: 0 0 18px rgba(232,200,130,.10);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -277,34 +317,51 @@ body {
 }
 
 .bb-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     stroke: var(--sand);
     fill: none;
     stroke-width: 1.8;
 }
 
 .bb-label {
-    font-size: .62rem;
+    font-size: .60rem;
     font-weight: 700;
-    letter-spacing: .1em;
+    letter-spacing: .12em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, .5);
-    margin-bottom: 3px;
+    color: var(--sand);
+    opacity: .7;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bb-label::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34,197,94,.7);
+    flex-shrink: 0;
 }
 
 .bb-room {
     font-family: var(--font-display);
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--white);
     line-height: 1.2;
+    text-shadow: 0 1px 8px rgba(0,0,0,.3);
 }
 
 .bb-dates {
-    font-size: .76rem;
-    color: rgba(255, 255, 255, .6);
-    margin-top: 3px;
+    font-size: .74rem;
+    color: rgba(255, 255, 255, .55);
+    margin-top: 4px;
+    letter-spacing: .01em;
 }
 
 .bb-right {
@@ -312,10 +369,11 @@ body {
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+    padding-left: 24px;
 }
 
 .bb-status {
-    font-size: .7rem;
+    font-size: .68rem;
     font-weight: 700;
     letter-spacing: .06em;
     text-transform: uppercase;
@@ -327,6 +385,7 @@ body {
     background: rgba(34, 197, 94, .15);
     color: #86efac;
     border: 1px solid rgba(34, 197, 94, .3);
+    box-shadow: 0 0 12px rgba(34,197,94,.12);
 }
 
 .st-pending {
@@ -351,20 +410,22 @@ body {
     font-family: var(--font-body);
     font-size: .78rem;
     font-weight: 700;
-    padding: 10px 22px;
+    padding: 11px 24px;
     border-radius: var(--r-pill);
-    background: var(--sand);
+    background: linear-gradient(135deg, var(--sand) 0%, var(--sand-dk) 100%);
     color: var(--navy-900);
     border: none;
     cursor: pointer;
     letter-spacing: .03em;
-    transition: all .2s;
+    transition: all .22s;
     white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(232,200,130,.25);
 }
 
 .btn-manage:hover {
-    background: var(--sand-dk);
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, #f0d898 0%, var(--sand) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(232,200,130,.35);
 }
 
 /* Rooms section */

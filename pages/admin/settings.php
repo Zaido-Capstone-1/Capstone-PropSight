@@ -179,7 +179,7 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
                 <div class="form-group">
                     <label>Email</label>
                     <input id="contact_email" type="email"
-                        value="<?php echo htmlspecialchars($sysCfg['contact_email'] ?? 'hello@filipinohomes.ph'); ?>"
+                        value="<?php echo htmlspecialchars($sysCfg['contact_email'] ?? 'hello@boracayaccommodation.ph'); ?>"
                         placeholder="hello@example.com" />
                 </div>
             </div>

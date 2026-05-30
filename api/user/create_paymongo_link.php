@@ -14,6 +14,10 @@ require_csrf_token(true);
 
 $bookingId = (int) ($_POST['booking_id'] ?? 0);
 $userId = (int) $_SESSION['user_id'];
+$allowedMethods = ['GCash', 'Maya', 'Bank Transfer', 'Cash'];
+$paymentMethod = in_array($_POST['payment_method'] ?? '', $allowedMethods)
+    ? $_POST['payment_method']
+    : '';
 
 if (!$bookingId) {
     echo json_encode(['success' => false, 'message' => 'Missing booking_id.']);
@@ -51,8 +55,8 @@ $existing->execute();
 $existingRow = $existing->get_result()->fetch_assoc();
 $existing->close();
 
+// AFTER
 if ($existingRow) {
-    // Return the existing checkout URL instead of erroring
     $existingLink = $conn->prepare("SELECT checkout_url FROM paymongo_payments WHERE paymongo_link_id = ? LIMIT 1");
     $existingLink->bind_param('s', $existingRow['paymongo_link_id']);
     $existingLink->execute();
@@ -60,17 +64,24 @@ if ($existingRow) {
     $existingLink->close();
 
     if ($existingLinkRow && !empty($existingLinkRow['checkout_url'])) {
+        // Update payment_method in case it wasn't saved on first attempt
+        if (!empty($paymentMethod)) {
+            $updMethod = $conn->prepare("UPDATE paymongo_payments SET payment_method = ? WHERE paymongo_link_id = ?");
+            $updMethod->bind_param('ss', $paymentMethod, $existingRow['paymongo_link_id']);
+            $updMethod->execute();
+            $updMethod->close();
+        }
         echo json_encode([
             'success' => true,
             'checkout_url' => $existingLinkRow['checkout_url'],
             'link_id' => $existingRow['paymongo_link_id'],
+            'payment_method' => $paymentMethod,
         ]);
         exit;
     }
 }
 
-// Deposit = 50% of total
-$depositAmount = (int) round((float) $booking['total_amount'] * 0.5);
+$depositAmount = (int) round((float) $booking['total_amount']);
 
 if ($depositAmount < 100) {
     echo json_encode(['success' => false, 'message' => 'Amount too small for PayMongo (minimum ₱1.00).']);
@@ -108,19 +119,18 @@ try {
     $amount = (float) $depositAmount;
 
     $ins = $conn->prepare("
-        INSERT INTO paymongo_payments (booking_id, user_id, paymongo_link_id, checkout_url, amount, status, created_at, expires_at)
-        VALUES (?, ?, ?, ?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 30 MINUTE))
+        INSERT INTO paymongo_payments (booking_id, user_id, paymongo_link_id, checkout_url, amount, status, payment_method, created_at, expires_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 30 MINUTE))
     ");
-    $ins->bind_param('iissds', $bookingId, $userId, $linkId, $checkoutUrl, $amount, $status);
+    $ins->bind_param('iissdss', $bookingId, $userId, $linkId, $checkoutUrl, $amount, $status, $paymentMethod);
     $ins->execute();
     $ins->close();
-
-    $conn->query("UPDATE bookings SET payment_method='paymongo' WHERE booking_id=$bookingId");
 
     echo json_encode([
         'success' => true,
         'checkout_url' => $checkoutUrl,
         'link_id' => $linkId,
+        'payment_method' => $paymentMethod,
     ]);
 
 } catch (Exception $e) {

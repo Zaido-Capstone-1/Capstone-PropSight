@@ -180,7 +180,7 @@
      width: 40px;
      height: 40px;
      border-radius: 50%;
-     border: 2px solid var(--blue-200);
+     border: none;
      background: var(--navy-800, var(--blue-700));
      display: flex;
      align-items: center;
@@ -192,7 +192,6 @@
  }
 
  .btn-profile:hover {
-     border-color: var(--sand);
      transform: scale(1.05);
      box-shadow: 0 4px 14px rgba(10, 22, 40, .2);
  }

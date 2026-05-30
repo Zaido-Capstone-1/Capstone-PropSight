@@ -243,7 +243,7 @@ nav a.active {
     height: 38px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--navy-700), var(--navy-500));
-    border: 2px solid var(--sand);
+    border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -430,7 +430,7 @@ nav a.active {
     min-height: 72px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--sand-dk), var(--sand));
-    border: 3px solid rgba(255, 255, 255, .38);
+    border: none;
     box-shadow: 0 12px 26px rgba(6, 14, 26, .28);
     display: flex;
     align-items: center;
@@ -750,10 +750,8 @@ nav a.active {
     content: '';
     position: absolute;
     inset: 0;
-    background: 
-        radial-gradient(circle, rgba(232, 200, 130, .10) 1px, transparent 1px),
-        linear-gradient(105deg, rgba(8,18,38,0.88) 0%, rgba(12,28,55,0.78) 50%, rgba(18,42,72,0.65) 100%);
-    background-size: 28px 28px, cover;
+    background: linear-gradient(105deg, rgba(8,18,38,0.88) 0%, rgba(12,28,55,0.78) 50%, rgba(18,42,72,0.65) 100%);
+    background-size: cover;
     pointer-events: none;
 }
 

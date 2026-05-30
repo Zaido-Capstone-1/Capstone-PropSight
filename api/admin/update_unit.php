@@ -107,6 +107,74 @@ try {
         $ins->close();
     }
 
+    $remove_images = (array) ($_POST['remove_images'] ?? []);
+    foreach ($remove_images as $rpath) {
+        $rpath = trim($rpath);
+        if (!$rpath)
+            continue;
+        $rpath = ltrim($rpath, '/');
+        // Delete from DB
+        $del = $conn->prepare("DELETE FROM unit_images WHERE unit_id=? AND image_path=?");
+        $del->bind_param('is', $unit_id, $rpath);
+        $del->execute();
+        $del->close();
+        // Delete file from disk
+        $fullPath = __DIR__ . '/../../' . $rpath;
+        if (file_exists($fullPath))
+            @unlink($fullPath);
+    }
+
+    // Handle new image uploads
+    if (!empty($_FILES['unit_images']['name'][0])) {
+        $upload_dir = __DIR__ . '/../../uploads/units/' . $unit_id . '/';
+        if (!is_dir($upload_dir))
+            mkdir($upload_dir, 0755, true);
+
+        $allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $max_size = 5 * 1024 * 1024;
+        $file_count = count($_FILES['unit_images']['name']);
+
+        // Get current max sort_order
+        $sortRes = $conn->query("SELECT COALESCE(MAX(sort_order), -1) AS max_sort FROM unit_images WHERE unit_id=$unit_id");
+        $sortRow = $sortRes->fetch_assoc();
+        $sort_start = (int) $sortRow['max_sort'] + 1;
+
+        $img_stmt = $conn->prepare("INSERT INTO unit_images (unit_id, image_path, sort_order) VALUES (?, ?, ?)");
+
+        for ($i = 0; $i < $file_count; $i++) {
+            $tmp = $_FILES['unit_images']['tmp_name'][$i];
+            $mime = mime_content_type($tmp);
+            $size = $_FILES['unit_images']['size'][$i];
+            $error = $_FILES['unit_images']['error'][$i];
+
+            if ($error !== UPLOAD_ERR_OK)
+                continue;
+            if ($size > $max_size)
+                continue;
+            if (!in_array($mime, $allowed_types))
+                continue;
+
+            $ext = match ($mime) {
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/webp' => 'webp',
+                'image/gif' => 'gif',
+            };
+            $filename = uniqid('unit_', true) . '.' . $ext;
+            $dest = $upload_dir . $filename;
+
+            if (!move_uploaded_file($tmp, $dest))
+                continue;
+
+            $web_path = 'uploads/units/' . $unit_id . '/' . $filename;
+            $sort_order = $sort_start + $i;
+            $img_stmt->bind_param('isi', $unit_id, $web_path, $sort_order);
+            $img_stmt->execute();
+        }
+
+        $img_stmt->close();
+    }
+
     $conn->commit();
 
     // Return updated unit data for card refresh

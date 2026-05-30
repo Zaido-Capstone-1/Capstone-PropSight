@@ -27,12 +27,13 @@ if (!$bookingId || !$reason) {
 // ── 1. Verify booking belongs to user and was paid via PayMongo ──────────────
 $stmt = $conn->prepare("
     SELECT pp.id          AS pm_id,
-           pp.amount,
-           py.payment_id,
-           b.status       AS booking_status
+       pp.amount,
+       py.payment_id,
+       py.payment_method,
+       b.status       AS booking_status
     FROM   paymongo_payments pp
     JOIN   bookings b  ON b.booking_id = pp.booking_id
-    JOIN   payments py ON py.booking_id = pp.booking_id AND py.payment_method = 'paymongo'
+    JOIN   payments py ON py.booking_id = pp.booking_id AND py.payment_method IN ('GCash', 'Maya', 'Bank Transfer')
     WHERE  pp.booking_id = ?
       AND  b.user_id     = ?
       AND  pp.status     = 'paid'
@@ -91,7 +92,7 @@ if ($dupRow) {
 // ── 3. Insert refund request ──────────────────────────────────────────────────
 $amount = (float) $row['amount'];
 $paymentId = (int) $row['payment_id'];
-$method = 'paymongo';
+$method = $row['payment_method'] ?? '';
 $today = date('Y-m-d');
 
 $ins = $conn->prepare("

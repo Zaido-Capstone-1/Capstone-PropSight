@@ -36,7 +36,7 @@ $_pmRow = mysqli_fetch_assoc(mysqli_query(
      ORDER BY cnt DESC
      LIMIT 1"
 ));
-$popularPaymentMethod = $_pmRow['payment_method'] ?? 'GCash';
+$popularPaymentMethod = $_pmRow['payment_method'] ?? null;
 
 $bookingCount = $bookingCount ?? 0;
 $activeBooking = $activeBooking ?? null;
@@ -562,7 +562,16 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         $unitName = htmlspecialchars($rawName);
                         $propName = htmlspecialchars($unit['property_name'] ?? '');
                         $cityPart = !empty($unit['city']) ? ', ' . $unit['city'] : '';
-                        $price = '₱' . number_format((float) $unit['rent_amount'], 0);
+                        $baseRate = (float) $unit['rent_amount'];
+                        $seasonality = [0 => 1.30, 1 => 1.30, 2 => 1.10, 3 => 1.15, 4 => 1.15, 5 => 0.80, 6 => 0.80, 7 => 0.80, 8 => 0.80, 9 => 0.80, 10 => 1.15, 11 => 1.30];
+                        $seasonLabel = [0 => 'Peak', 1 => 'Peak', 2 => 'High', 3 => 'High', 4 => 'High', 5 => 'Low', 6 => 'Low', 7 => 'Low', 8 => 'Low', 9 => 'Low', 10 => 'High', 11 => 'Peak'];
+                        $seasonColor = ['Peak' => '#E74C3C', 'High' => '#deaf37', 'Low' => '#2ECC71'];
+                        $curMonth = (int) date('n') - 1; // 0-indexed
+                        $multiplier = $seasonality[$curMonth];
+                        $adjRate = (int) round($baseRate * $multiplier);
+                        $price = '₱' . number_format($adjRate);
+                        $curLabel = $seasonLabel[$curMonth];
+                        $curColor = $seasonColor[$curLabel];
                         $amenities = $amenitiesMap[$unit['unit_id']] ?? [];
                         $imgSrc = $unit['image_path']
                             ? '../../' . ltrim($unit['image_path'], '/')
@@ -584,8 +593,8 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                             'location' => ($unit['property_name'] ?? '') . $cityPart,
                             'address' => trim(($unit['address'] ?? '') . $cityPart),
                             'city' => $unit['city'] ?? '',
-                            'price' => $price,
-                            'priceNum' => (float) $unit['rent_amount'],
+                            'price' => '₱' . number_format($adjRate),
+                            'priceNum' => $baseRate, // keep base for seasonal calc in JS
                             'rating' => $ratingValue,
                             'guests' => 2,
                             'view' => $unit['unit_type'] ?? 'Standard',
@@ -682,7 +691,13 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                 <div class="room-divider"></div>
 
                                 <div class="room-price-row">
-                                    <div class="room-price"><?php echo $price; ?> <sub>/ night</sub></div>
+                                    <div class="room-price">
+                                        <?php echo $price; ?> <sub>/ night</sub>
+                                        <span
+                                            style="background:<?php echo $curColor; ?>20;color:<?php echo $curColor; ?>;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;">
+                                            <?php echo $curLabel; ?>
+                                        </span>
+                                    </div>
                                     <div style="display:flex;gap:8px;align-items:center;" data-action-buttons>
                                         <button class="btn-view-details"
                                             onclick="window.location.href='unit_detail.php?id=<?php echo (int) $unit['unit_id']; ?>'">

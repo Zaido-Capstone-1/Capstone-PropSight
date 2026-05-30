@@ -96,7 +96,6 @@ $status_map = [
 
         <div class="tab-bar reveal rd1" id="tabBar">
             <button class="tab-btn active" onclick="filterBookings('all',this)">All</button>
-            <button class="tab-btn" onclick="filterBookings('upcoming',this)">Upcoming</button>
             <button class="tab-btn" onclick="filterBookings('completed',this)">Completed</button>
             <button class="tab-btn" onclick="filterBookings('cancelled',this)">Cancelled</button>
         </div>
@@ -379,37 +378,104 @@ $status_map = [
 <div class="modal-overlay" id="reviewModal">
     <div class="modal-box" style="max-width:480px;">
         <button class="modal-close-btn" onclick="closeModal('reviewModal')">✕</button>
-        <div class="modal-title">Leave a Review</div>
-        <div class="modal-sub" id="reviewRoomName"></div>
-        <div style="margin-bottom:18px;">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+            <div
+                style="width:42px;height:42px;border-radius:12px;background:var(--teal-lt, #edf7f2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#e8c882;stroke:#c9a84c;stroke-width:1.5;">
+                    <polygon
+                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+            </div>
+            <div>
+                <div class="modal-title" style="margin-bottom:0;">Leave a Review</div>
+                <div class="modal-sub" id="reviewRoomName" style="margin-bottom:0;"></div>
+            </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border, #e2e8f0);margin:16px 0;">
+
+        <!-- Star Rating -->
+        <div style="margin-bottom:20px;">
             <div
                 style="font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-mid);margin-bottom:10px;">
                 Your Rating</div>
-            <div id="starRating" style="display:flex;gap:6px;">
+            <div id="starRating" style="display:flex;gap:8px;align-items:center;">
                 <?php for ($s = 1; $s <= 5; $s++): ?>
                     <svg data-val="<?= $s ?>" onclick="setRating(<?= $s ?>)" viewBox="0 0 24 24"
-                        style="width:32px;height:32px;fill:var(--blue-100);stroke:var(--blue-200);stroke-width:1.5;cursor:pointer;transition:fill 0.15s,transform 0.15s;"
+                        style="width:36px;height:36px;fill:#e2e8f0;stroke:#cbd5e1;stroke-width:1.5;cursor:pointer;transition:fill 0.15s,transform 0.15s,filter 0.15s;"
                         onmouseover="hoverRating(<?= $s ?>)" onmouseout="resetHover()">
                         <polygon
                             points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
                 <?php endfor; ?>
             </div>
+            <div id="ratingLabel"
+                style="font-size:0.78rem;color:var(--ink-soft,#64748b);margin-top:8px;min-height:18px;font-style:italic;">
+            </div>
         </div>
+
+        <div style="margin-bottom:20px;">
+            <div
+                style="font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-mid);margin-bottom:14px;">
+                Rate by Category
+            </div>
+            <?php foreach ([
+                ['cleanliness', 'Cleanliness'],
+                ['location_rating', 'Location'],
+                ['value_rating', 'Value'],
+                ['comfort', 'Comfort'],
+            ] as [$key, $label, $icon]): ?>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;" id="catrow-<?= $key ?>">
+                    <span
+                        style="width:100px;font-size:0.8rem;color:var(--ink-soft);flex-shrink:0;display:flex;align-items:center;gap:6px;">
+                        <span style="font-size:1rem;"><?= $icon ?></span><?= $label ?>
+                    </span>
+                    <div style="display:flex;gap:5px;" id="catstars-<?= $key ?>">
+                        <?php for ($s = 1; $s <= 5; $s++): ?>
+                            <svg data-key="<?= $key ?>" data-val="<?= $s ?>" onclick="setCatRating('<?= $key ?>', <?= $s ?>)"
+                                onmouseover="hoverCatRating('<?= $key ?>', <?= $s ?>)" onmouseout="resetCatHover('<?= $key ?>')"
+                                viewBox="0 0 24 24"
+                                style="width:26px;height:26px;fill:#e2e8f0;stroke:#cbd5e1;stroke-width:1.5;cursor:pointer;transition:fill 0.12s,transform 0.12s;border-radius:4px;">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                        <?php endfor; ?>
+                    </div>
+                    <input type="hidden" id="cat-<?= $key ?>" value="3">
+                    <span id="cat-<?= $key ?>-val"
+                        style="font-size:0.8rem;font-weight:700;color:var(--teal);width:22px;text-align:right;">3</span>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- Review Text -->
         <div class="form-field" style="margin-bottom:18px;">
-            <label>Your Review</label>
-            <textarea id="reviewText" placeholder="Share your experience…"></textarea>
+            <label
+                style="font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-mid);">Your
+                Review</label>
+            <textarea id="reviewText" placeholder="Share your experience — what did you love? Any suggestions?"
+                style="min-height:110px;resize:vertical;"></textarea>
+            <div style="text-align:right;font-size:0.7rem;color:var(--ink-faint,#94a3b8);margin-top:4px;">
+                <span id="reviewCharCount">0</span> / 500
+            </div>
         </div>
+
+        <!-- Error -->
         <div id="reviewError"
             style="display:none;color:#ef4444;font-size:0.78rem;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;margin-bottom:12px;">
         </div>
+
+        <!-- Actions -->
         <div style="display:flex;gap:10px;justify-content:flex-end;">
             <button class="btn-secondary" onclick="closeModal('reviewModal')">Cancel</button>
-            <button class="btn-primary" id="submitReviewBtn" onclick="submitReview()">
-                <!-- <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5;">
-                    <polygon
-                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                </svg> -->
+            <button class="btn-primary" id="submitReviewBtn" onclick="submitReview()"
+                style="display:flex;align-items:center;gap:6px;">
+                <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5;">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
                 Submit Review
             </button>
         </div>
@@ -497,8 +563,8 @@ $status_map = [
             html += `<button class="pg-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
         }
         html += `<button class="pg-btn" onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>&#8594;</button>`;
-        html += `<span class="pg-info">Showing ${Math.min(start + 1, total)}–${Math.min(start + ITEMS_PER_PAGE, total)} of ${total}</span>`;
         html += '</div>';
+        html += `<div class="pg-info">Showing ${Math.min(start + 1, total)}–${Math.min(start + ITEMS_PER_PAGE, total)} of ${total}</div>`;
         bar.innerHTML = html;
     }
 

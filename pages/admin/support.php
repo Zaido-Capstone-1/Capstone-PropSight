@@ -61,7 +61,8 @@ include '../../lib/admin-queries/support_queries.php';
         <div class="sm-stat">
             <div>
                 <div class="sm-stat-label">In Progress</div>
-                <div class="sm-stat-value" id="stat-spt-progress"><?= (int) ($ticketStats['in_progress_cnt'] ?? 0) ?></div>
+                <div class="sm-stat-value" id="stat-spt-progress"><?= (int) ($ticketStats['in_progress_cnt'] ?? 0) ?>
+                </div>
             </div>
             <div class="sm-stat-icon ic-blue" style="margin-left:auto;">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -256,7 +257,7 @@ include '../../lib/admin-queries/support_queries.php';
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
-            <div style="color:#aaa;font-size:14px;">No tickets match your filters.</div>
+            <div style="color:#aaa;font-size:14px;" id="sptEmptyText">No tickets yet.</div>
         </div>
     </div>
 

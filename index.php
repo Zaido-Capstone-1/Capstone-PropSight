@@ -11,7 +11,7 @@ while ($sr = mysqli_fetch_assoc($sysRes)) $sysCfg[$sr['setting_key']] = $sr['val
 
 $contactAddress = htmlspecialchars($sysCfg['contact_address'] ?? 'Station 3, Barangay Manoc-Manoc, Boracay Island, Aklan 5608');
 $contactPhone   = htmlspecialchars($sysCfg['contact_phone']   ?? '+63 33 123 4567');
-$contactEmail   = htmlspecialchars($sysCfg['contact_email']   ?? 'hello@filipinohomes.ph');
+$contactEmail   = htmlspecialchars($sysCfg['contact_email']   ?? 'hello@boracayaccommodation.ph');
 
 function landing_unit_name(array $unit): string
 {
@@ -30,7 +30,9 @@ function landing_unit_name(array $unit): string
 
 function hero_img_path(?string $raw): string {
     if (empty($raw)) return '';
-    return preg_replace('#^(\.\./)+#', '', ltrim($raw, '/'));
+    // Strip leading ../ or / so path is always relative to site root
+    $clean = preg_replace('#^(\\.\\./)+#', '', ltrim($raw, '/'));
+    return $clean;
 }
 
 $landingUnits = $units ?? [];
@@ -46,7 +48,7 @@ if (isset($conn) && $conn) {
         $statRating = $rRow['avg_rating'];
     }
 }
-$statRatingDisplay = $statRating ? number_format($statRating, 1) . '★' : '4.9★';
+$statRatingDisplay = $statRating ? number_format($statRating, 1) . '★' : 'N/A';
 
 $foundingYear = 2012;
 $statYears = (int) date('Y') - $foundingYear;
@@ -113,8 +115,7 @@ if (isset($conn) && $conn) {
 
         <div style="display:flex;align-items:center;gap:0.75rem;">
             <button class="btn-login-header">Log In</button>
-            <button class="btn-book-header"
-                onclick="document.querySelector('#cta').scrollIntoView({behavior:'smooth'})">Book Now</button>
+            <button class="btn-book-header" onclick="openModal('signup')">Sign Up</button>
             <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
         </div>
     </header>
@@ -125,7 +126,7 @@ if (isset($conn) && $conn) {
         <a href="#rooms" onclick="closeMob()">Rooms</a>
         <a href="#reviews" onclick="closeMob()">Reviews</a>
         <a href="#contact" onclick="closeMob()">Contact</a>
-        <a href="#cta" onclick="closeMob()" style="color:var(--gold);font-weight:600;">Book Now</a>
+        <a href="#" onclick="closeMob();openModal('signup');return false;" style="color:var(--gold);font-weight:600;">Sign Up</a>
         <button class="btn-login-header">Log In</button>
     </div>
 
@@ -204,34 +205,38 @@ if (isset($conn) && $conn) {
                         <input type="email" name="email" placeholder="Email Address" required>
                     </div>
 
-                    <div class="field-phone-row">
-                        <div class="modal-field">
-                            <label>Country Code</label>
-                            <select id="signupCountryCode" name="country_code" required autocomplete="tel-country-code">
-                                <option value="">Select code</option>
-                                <option value="+63" selected>🇵🇭 +63</option>
-                                <option value="+1">🇺🇸 +1</option>
-                                <option value="+44">🇬🇧 +44</option>
-                                <option value="+61">🇦🇺 +61</option>
-                                <option value="+65">🇸🇬 +65</option>
-                                <option value="+81">🇯🇵 +81</option>
-                                <option value="+82">🇰🇷 +82</option>
-                                <option value="+91">🇮🇳 +91</option>
-                                <option value="+971">🇦🇪 +971</option>
-                                <option value="+966">🇸🇦 +966</option>
-                                <option value="+974">🇶🇦 +974</option>
-                                <option value="+973">🇧🇭 +973</option>
-                                <option value="+965">🇰🇼 +965</option>
-                            </select>
-                            <small id="countryCodeHint"
-                                style="display:block;margin-top:6px;color:var(--text-soft);font-size:.72rem;">Use your
-                                local number without leading 0.</small>
-                        </div>
-                        <div class="modal-field">
-                            <label>Phone Number</label>
+                    <div class="modal-field">
+                        <label>Phone Number</label>
+                        <div class="phone-input-wrap">
+                            <div class="phone-flag-select" id="phoneFlagSelect">
+                                <span class="phone-flag-icon" id="phoneFlagIcon">🇵🇭</span>
+                                <span class="phone-dial-code" id="phoneDialCode">+63</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11" class="phone-chevron">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                                <select id="signupCountryCode" name="country_code" required autocomplete="tel-country-code" class="phone-select-hidden">
+                                    <option value="+63" data-flag="🇵🇭" selected>🇵🇭 Philippines +63</option>
+                                    <option value="+1"  data-flag="🇺🇸">🇺🇸 United States +1</option>
+                                    <option value="+44" data-flag="🇬🇧">🇬🇧 United Kingdom +44</option>
+                                    <option value="+61" data-flag="🇦🇺">🇦🇺 Australia +61</option>
+                                    <option value="+65" data-flag="🇸🇬">🇸🇬 Singapore +65</option>
+                                    <option value="+81" data-flag="🇯🇵">🇯🇵 Japan +81</option>
+                                    <option value="+82" data-flag="🇰🇷">🇰🇷 South Korea +82</option>
+                                    <option value="+91" data-flag="🇮🇳">🇮🇳 India +91</option>
+                                    <option value="+971" data-flag="🇦🇪">🇦🇪 UAE +971</option>
+                                    <option value="+966" data-flag="🇸🇦">🇸🇦 Saudi Arabia +966</option>
+                                    <option value="+974" data-flag="🇶🇦">🇶🇦 Qatar +974</option>
+                                    <option value="+973" data-flag="🇧🇭">🇧🇭 Bahrain +973</option>
+                                    <option value="+965" data-flag="🇰🇼">🇰🇼 Kuwait +965</option>
+                                </select>
+                            </div>
+                            <div class="phone-divider"></div>
                             <input id="signupPhoneNumber" type="tel" name="phone" placeholder="9123456789"
-                                inputmode="numeric" maxlength="10" required>
+                                inputmode="numeric" maxlength="10" required class="phone-number-input">
                         </div>
+                        <small style="display:block;margin-top:6px;color:var(--text-soft);font-size:.72rem;">
+                            Use your local number without leading 0.
+                        </small>
                     </div>
 
                     <div class="modal-field">
@@ -335,7 +340,7 @@ if (isset($conn) && $conn) {
                 </div>
                 <div>
                     <div class="hero-stat-num"><?php echo $statRatingDisplay; ?></div>
-                    <div class="hero-stat-lbl">Guest Rating</div>
+                    <div class="hero-stat-lbl"><?php echo $statRating ? 'Guest Rating' : 'No Reviews Yet'; ?></div>
                 </div>
                 <div>
                     <div class="hero-stat-num"><?php echo $statYears; ?>yr</div>
@@ -348,19 +353,33 @@ if (isset($conn) && $conn) {
             <div class="carousel-frame" id="carouselFrame">
                 <div class="carousel-slides" id="carouselSlides">
 
-                    <?php if (!empty($heroUnits)): ?>
+                    <?php if (empty($heroUnits)): ?>
+                        <div class="carousel-slide active room-1" data-label="Featured Room" data-type="No units available yet">
+                            <div style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#93c5fd,#1a3d7c);flex-direction:column;gap:12px;">
+                                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <path d="M21 15l-5-5L5 21"/>
+                                </svg>
+                                <span style="color:rgba(255,255,255,0.6);font-size:13px;letter-spacing:0.05em;">No rooms listed yet</span>
+                            </div>
+                        </div>
+                    <?php else: ?>
                         <?php foreach ($heroUnits as $idx => $unit):
                             $heroName = landing_unit_name($unit);
                             $heroType = $unit['unit_type'] ?: 'Room';
-                            $heroImg = hero_img_path($unit['image_path']);
-                            ?>
+                            $heroImg  = hero_img_path($unit['image_path']);
+                            if ($heroImg && !file_exists(__DIR__ . '/' . $heroImg)) $heroImg = '';
+                        ?>
                             <div class="carousel-slide <?php echo $idx === 0 ? 'active' : ''; ?> room-<?php echo ($idx % 5) + 1; ?>"
                                 data-label="<?php echo htmlspecialchars($heroName); ?>"
                                 data-type="<?php echo htmlspecialchars($heroType); ?>">
-                                <img src="<?php echo htmlspecialchars($heroImg); ?>"
-                                    alt="<?php echo htmlspecialchars($heroName); ?>"
-                                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                                <div style="display:<?php echo $heroImg ? 'none' : 'flex' ?>;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6,#1a3d7c);color:#fff;position:absolute;top:0;left:0;">
+                                <?php if ($heroImg): ?>
+                                    <img src="<?php echo htmlspecialchars($heroImg); ?>"
+                                        alt="<?php echo htmlspecialchars($heroName); ?>"
+                                        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                                <?php endif; ?>
+                                <div style="display:<?php echo $heroImg ? 'none' : 'flex'; ?>;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6,#1a3d7c);color:#fff;position:absolute;top:0;left:0;">
                                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6">
                                         <rect x="3" y="3" width="18" height="18" rx="2"/>
                                         <circle cx="8.5" cy="8.5" r="1.5"/>
@@ -376,10 +395,10 @@ if (isset($conn) && $conn) {
                 <div class="carousel-overlay"></div>
                 <div class="carousel-label">
                     <div class="carousel-label-name" id="slideLabel">
-                        <?php echo !empty($heroUnits) ? htmlspecialchars(landing_unit_name($heroUnits[0])) : 'Featured Room'; ?>
+                        <?php echo !empty($heroUnits) ? htmlspecialchars(landing_unit_name($heroUnits[0])) : 'No Rooms Yet'; ?>
                     </div>
                     <div class="carousel-label-type" id="slideType">
-                        <?php echo !empty($heroUnits) ? htmlspecialchars($heroUnits[0]['unit_type'] ?: 'Room') : 'View details'; ?>
+                        <?php echo !empty($heroUnits) ? htmlspecialchars($heroUnits[0]['unit_type'] ?: 'Room') : 'Check back soon'; ?>
                     </div>
                 </div>
 
@@ -407,11 +426,13 @@ if (isset($conn) && $conn) {
                 <?php foreach ($heroUnits as $idx => $unit):
                     $heroName = landing_unit_name($unit);
                     $heroImg = hero_img_path($unit['image_path']);
+                    if ($heroImg && !file_exists(__DIR__ . '/' . $heroImg)) $heroImg = '';
                     ?>
                     <div class="thumb <?php echo $idx === 0 ? 'active' : ''; ?>" data-idx="<?php echo $idx; ?>">
                         <?php if ($heroImg): ?>
-                            <img src="<?php echo htmlspecialchars($heroImg); ?>" alt="<?php echo htmlspecialchars($heroName); ?>"
-                                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                           <img src="<?php echo htmlspecialchars($heroImg); ?>"
+    alt="<?php echo htmlspecialchars($heroName); ?>"
+    onerror="console.log('Failed to load:', this.src); this.style.display='none';this.nextElementSibling.style.display='flex'">
                         <?php endif; ?>
                         <div style="display:<?php echo $heroImg ? 'none' : 'flex' ?>;position:absolute;inset:0;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6);color:#fff;">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

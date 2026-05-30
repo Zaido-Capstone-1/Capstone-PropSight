@@ -92,30 +92,35 @@ try {
     if ($isPaid) {
         // Check if payment record already exists
         $existingPayment = $conn->query("SELECT payment_id FROM payments WHERE booking_id=$bookingId LIMIT 1")->fetch_assoc();
-        
+
         if (!$existingPayment) {
             // Get the actual amount paid from paymongo_payments (this is the deposit amount, not full booking amount)
             $pmPaymentData = $conn->query("SELECT amount FROM paymongo_payments WHERE paymongo_link_id='" . $conn->real_escape_string($row['paymongo_link_id']) . "' LIMIT 1")->fetch_assoc();
             $amount = (float) ($pmPaymentData['amount'] ?? 0);
-            
+
             // Create payment record
+            $paymentDatetime = date('Y-m-d H:i:s');
             $date = date('Y-m-d');
-            $ins = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (?, ?, ?, 'paymongo', 'paid', ?)");
+            // AFTER
+            $bkMethodRow = $conn->query("SELECT payment_method FROM bookings WHERE booking_id=$bookingId LIMIT 1")->fetch_assoc();
+            $paymentMethod = $bkMethodRow['payment_method'] ?? '';
+
+            $ins = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (?, ?, ?, ?, 'paid', ?)");
             $notes = 'PayMongo payment via link check (auto-synced)';
-            $ins->bind_param('isds', $bookingId, $date, $amount, $notes);
+            $ins->bind_param('isdss', $bookingId, $paymentDatetime, $amount, $paymentMethod, $notes);
             $ins->execute();
             $newPaymentId = $ins->insert_id;
             $ins->close();
-            
+
             // Create transaction record
             $ref = 'PMT-' . $newPaymentId;
             $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, booking_id) VALUES ('$ref', 'PayMongo payment for Booking #$bookingId', 'Room Revenue', 'Income', $amount, '$date', $bookingId)");
-            
+
             error_log("check_payment_status: Created payment record for booking $bookingId, amount: $amount");
         }
-        
+
         $conn->query("UPDATE paymongo_payments SET status='paid' WHERE paymongo_link_id='" . $conn->real_escape_string($row['paymongo_link_id']) . "'");
-        $conn->query("UPDATE bookings SET status='confirmed' WHERE booking_id=$bookingId AND status IN ('pending','confirmed')");
+        $conn->query("UPDATE bookings SET status='confirmed', paid_at=NOW() WHERE booking_id=$bookingId AND status IN ('pending','confirmed')");
         $unitRow = $conn->query("SELECT unit_id FROM bookings WHERE booking_id=$bookingId LIMIT 1")->fetch_assoc();
         if ($unitRow)
             $conn->query("UPDATE units SET status='occupied' WHERE unit_id=" . (int) $unitRow['unit_id'] . " AND status!='maintenance'");

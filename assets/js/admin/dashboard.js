@@ -305,12 +305,7 @@ window.addEventListener('ps:tasks', e => {
 
 // ── Live Recent Activity Feed Updates ──────────────────────────────────────
 window.addEventListener('ps:recent_activity', e => {
-  const activities = (Array.isArray(e.detail) ? e.detail : [])
-    .filter(act => {
-      if (!act.created_at) return true;
-      const sec = Math.floor((Date.now() - new Date(act.created_at).getTime()) / 1000);
-      return sec < 7200;
-    });
+  const activities = (Array.isArray(e.detail) ? e.detail : []);
   const feed = document.getElementById('rt-activity-feed');
   if (!feed) return;
 
@@ -342,7 +337,19 @@ window.addEventListener('ps:recent_activity', e => {
     return `${Math.floor(sec / 86400)}d ago`;
   }
 
-  feed.innerHTML = activities.slice(0, 5).map(act => `
+  const oneHourAgo = Date.now() - (60 * 60 * 1000);
+  const recentActivities = activities.filter(act => {
+    if (!act.created_at) return false;
+    const d = new Date(act.created_at);
+    return !Number.isNaN(d.getTime()) && d.getTime() >= oneHourAgo;
+  });
+
+  if (!recentActivities.length) {
+    feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-soft);font-size:13px;">No recent activity.</div>';
+    return;
+  }
+
+  feed.innerHTML = recentActivities.slice(0, 5).map(act => `
     <div class="activity-row" style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f1f5f9;">
       <div class="activity-icon" style="width:36px;height:36px;border-radius:50%;background:var(--blue-50);color:var(--blue-500);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -365,28 +372,26 @@ window.addEventListener('ps:recent_activity', e => {
 });
 
 (function loadInitialActivity() {
-  const feed = document.getElementById('rt-activity-feed');
-  if (!feed) return;
- 
-  // Show loading state
-  feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-soft);font-size:13px;">Loading activity...</div>';
+    const feed = document.getElementById('rt-activity-feed');
+    if (!feed) return;
 
-  const since = new Date(Date.now() - 7200000).toISOString().slice(0, 19).replace('T', ' ');
-  
-  fetch('../../api/realtime.php?since=' + encodeURIComponent(oneHourAgo))
-    .then(res => res.json())
-    .then(data => {
-      if (data.recent_activity && data.recent_activity.length) {
-        // Emit the event to trigger the existing handler
-        window.dispatchEvent(new CustomEvent('ps:recent_activity', {
-          detail: data.recent_activity
-        }));
-      } else {
-        feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-soft);font-size:13px;">No recent activity.</div>';
-      }
-    })
-    .catch(err => {
-      console.error('Failed to load initial activity:', err);
-      feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-soft);font-size:13px;">Failed to load activity.</div>';
-    });
+    feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-soft);font-size:13px;">Loading activity...</div>';
+
+    const sinceDate = new Date(Date.now() - 60 * 60 * 1000);
+    const sinceParam = encodeURIComponent(sinceDate.toISOString().slice(0, 19).replace('T', ' '));
+
+    fetch('../../api/realtime.php?since=' + sinceParam + '&page=dashboard&role=admin&_=' + Date.now(), { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.recent_activity && data.recent_activity.length) {
+                window.dispatchEvent(new CustomEvent('ps:recent_activity', {
+                    detail: data.recent_activity
+                }));
+            } else {
+                feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-soft);font-size:13px;">No recent activity.</div>';
+            }
+        })
+        .catch(() => {
+            feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-soft);font-size:13px;">Failed to load activity.</div>';
+        });
 })();

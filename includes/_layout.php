@@ -225,39 +225,7 @@ $nav_items = [
                 <path d="M300 105 Q315 98 330 102" stroke="white" stroke-width="1" opacity=".12" fill="none"/>
             </svg>',
             /* Key / booking variant */
-            'bookings' => '<svg viewBox="0 0 340 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="40" y="20" width="120" height="140" rx="3" fill="white" opacity=".07"/>
-                <rect x="42" y="22" width="116" height="138" rx="2" fill="none" stroke="white" stroke-width=".8" opacity=".2"/>
-                <rect x="54" y="34" width="22" height="18" rx="2" fill="#e8c882" opacity=".22"/>
-                <rect x="84" y="34" width="22" height="18" rx="2" fill="white" opacity=".13"/>
-                <rect x="114" y="34" width="22" height="18" rx="2" fill="white" opacity=".13"/>
-                <rect x="54" y="62" width="22" height="18" rx="2" fill="white" opacity=".13"/>
-                <rect x="84" y="62" width="22" height="18" rx="2" fill="#e8c882" opacity=".18"/>
-                <rect x="114" y="62" width="22" height="18" rx="2" fill="white" opacity=".13"/>
-                <rect x="54" y="90" width="22" height="18" rx="2" fill="white" opacity=".13"/>
-                <rect x="84" y="90" width="22" height="18" rx="2" fill="white" opacity=".13"/>
-                <rect x="114" y="90" width="22" height="18" rx="2" fill="#e8c882" opacity=".22"/>
-                <rect x="84" y="128" width="32" height="32" rx="2" fill="white" opacity=".12"/>
-                <!-- Floating calendar -->
-                <rect x="190" y="40" width="100" height="90" rx="8" fill="white" opacity=".08" stroke="white" stroke-width=".7" stroke-opacity=".2"/>
-                <rect x="190" y="40" width="100" height="22" rx="8" fill="white" opacity=".07"/>
-                <rect x="190" y="52" width="100" height="10" rx="0" fill="white" opacity=".07"/>
-                <line x1="190" y1="62" x2="290" y2="62" stroke="white" stroke-width=".5" opacity=".15"/>
-                <!-- Cal grid -->
-                <rect x="200" y="68" width="13" height="10" rx="2" fill="#e8c882" opacity=".25"/>
-                <rect x="220" y="68" width="13" height="10" rx="2" fill="white" opacity=".1"/>
-                <rect x="240" y="68" width="13" height="10" rx="2" fill="white" opacity=".1"/>
-                <rect x="260" y="68" width="13" height="10" rx="2" fill="white" opacity=".1"/>
-                <rect x="200" y="84" width="13" height="10" rx="2" fill="white" opacity=".1"/>
-                <rect x="220" y="84" width="13" height="10" rx="2" fill="#e8c882" opacity=".3"/>
-                <rect x="240" y="84" width="13" height="10" rx="2" fill="white" opacity=".1"/>
-                <rect x="260" y="84" width="13" height="10" rx="2" fill="white" opacity=".1"/>
-                <rect x="200" y="100" width="13" height="10" rx="2" fill="white" opacity=".1"/>
-                <rect x="220" y="100" width="13" height="10" rx="2" fill="white" opacity=".1"/>
-                <rect x="240" y="100" width="13" height="10" rx="2" fill="#e8c882" opacity=".22"/>
-                <rect x="260" y="100" width="13" height="10" rx="2" fill="white" opacity=".1"/>
-                <line x1="20" y1="160" x2="320" y2="160" stroke="white" stroke-width=".6" opacity=".12"/>
-            </svg>',
+            'bookings' => '',
         ];
         /* Map page keys to art variants */
         $art_map = ['bookings' => 'bookings'];

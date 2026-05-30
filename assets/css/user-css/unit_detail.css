@@ -22,6 +22,17 @@
     --ud-radius-sm: 8px;
   }
 
+  html,
+  body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
   body {
     padding-top: 70px;
     background: var(--ud-bg) !important;
@@ -2731,4 +2742,97 @@
       height: 90vh;
       max-width: 100%;
     }
+  }
+
+  /* Review card — category breakdown pills */
+  .ud-rv-cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border, #e9eef5);
+  }
+
+  .ud-rv-cat-pill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--surface-alt, #f5f7fa);
+    border: 1px solid var(--border, #e9eef5);
+    border-radius: 8px;
+    padding: 4px 9px;
+    font-size: 0.72rem;
+  }
+
+  .ud-rv-cat-icon {
+    font-size: 0.82rem;
+  }
+
+  .ud-rv-cat-label {
+    color: var(--ink-soft, #64748b);
+    font-weight: 500;
+  }
+
+  .ud-rv-cat-stars {
+    letter-spacing: -1px;
+    margin-left: 2px;
+  }
+
+  .ud-rv-cat-stars .sf {
+    color: var(--gold, #f59e0b);
+    font-size: 0.72rem;
+  }
+
+  .ud-rv-cat-stars .se {
+    color: #d1d5db;
+    font-size: 0.72rem;
+  }
+
+  .ud-rv-cat-num {
+    color: var(--ink, #1e293b);
+    font-weight: 700;
+    font-size: 0.72rem;
+    margin-left: 1px;
+  }
+
+  /* Nearby — skeleton loader */
+  .ud-nearby-skeleton {
+    height: 52px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #f0f4f8 25%, #e2e8f0 50%, #f0f4f8 75%);
+    background-size: 200% 100%;
+    animation: ud-shimmer 1.4s infinite;
+    margin-bottom: 8px;
+  }
+
+  @keyframes ud-shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Nearby — empty/error state */
+  .ud-nearby-empty {
+    font-size: 0.82rem;
+    color: var(--ink-soft, #64748b);
+    padding: 12px 0;
+    margin: 0;
+  }
+
+  /* Nearby — radius badge next to label */
+  .ud-nearby-radius-badge {
+    font-size: 0.62rem;
+    font-weight: 600;
+    background: rgba(76, 175, 133, 0.13);
+    color: #4caf85;
+    padding: 2px 7px;
+    border-radius: 99px;
+    margin-left: 8px;
+    letter-spacing: 0.03em;
+    vertical-align: middle;
   }

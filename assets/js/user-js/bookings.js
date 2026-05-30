@@ -37,7 +37,10 @@ function closeModal(id) {
 
 function openDetailsModal(idx) {
     const b = (window.__bookings || [])[idx];
-    if (!b) { console.error('No booking at index', idx); return; }
+    if (!b) {
+        console.error('No booking at index', idx);
+        return;
+    }
 
     currentInvoiceId = b.id; // e.g. "BK-000001"
 
@@ -84,6 +87,7 @@ function openDetailsModal(idx) {
 function downloadInvoice(bookingId) {
     showToast('Invoice for ' + bookingId + ' downloaded!');
 }
+
 function downloadInvoiceFromModal() {
     closeModal('detailsModal');
     showToast('Invoice for ' + currentInvoiceId + ' downloaded!');
@@ -103,21 +107,24 @@ function doCancel() {
     fd.append('reason', 'User-requested cancellation');
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
     showToast('Cancelling booking…', 'info');
-    fetch('../../api/user/cancel_booking.php', { method: 'POST', body: fd })
+    fetch('../../api/user/cancel_booking.php', {
+            method: 'POST',
+            body: fd
+        })
         .then(r => r.json())
         .then(d => {
             if (d.success) {
                 showToast(d.message, 'success', 'Booking Cancelled');
 
                 // ── Update card in-place — no reload ──────────
-                const id   = String(cancelBookingId);
+                const id = String(cancelBookingId);
                 const card = document.querySelector(`[data-booking-id="${id}"]`);
                 if (card) {
                     // Update status badge
                     const badge = card.querySelector('.booking-status-badge');
                     if (badge) {
-                        badge.textContent    = 'Cancelled';
-                        badge.className      = 'badge badge-red booking-status-badge';
+                        badge.textContent = 'Cancelled';
+                        badge.className = 'badge badge-red booking-status-badge';
                         badge.dataset.status = 'cancelled';
                     }
                     // Update card filter state
@@ -132,14 +139,16 @@ function doCancel() {
 
                     // Flash outline
                     card.style.transition = 'outline 0.3s';
-                    card.style.outline    = '2px solid #fca5a5';
-                    setTimeout(() => { card.style.outline = ''; }, 2500);
+                    card.style.outline = '2px solid #fca5a5';
+                    setTimeout(() => {
+                        card.style.outline = '';
+                    }, 2500);
                 }
 
                 // Update stat pills
                 const upcomingEl = document.querySelector('[data-rt-stat="upcoming"]');
                 const cancelledEl = document.querySelector('[data-rt-stat="cancelled"]');
-                if (upcomingEl)  upcomingEl.textContent  = Math.max(0, (parseInt(upcomingEl.textContent)  || 1) - 1);
+                if (upcomingEl) upcomingEl.textContent = Math.max(0, (parseInt(upcomingEl.textContent) || 1) - 1);
                 if (cancelledEl) cancelledEl.textContent = (parseInt(cancelledEl.textContent) || 0) + 1;
 
             } else {
@@ -157,11 +166,52 @@ function openReviewModal(roomName, bookingId, bookingIdx) {
     document.getElementById('reviewRoomName').textContent = roomName;
     document.getElementById('reviewError').style.display = 'none';
     updateStars(0);
+    ['cleanliness', 'location_rating', 'value_rating', 'comfort'].forEach(k => {
+        const hidden = document.getElementById('cat-' + k);
+        const valEl = document.getElementById('cat-' + k + '-val');
+        if (hidden) hidden.value = 3;
+        if (valEl) valEl.textContent = '3';
+        updateCatStars(k, 3);
+    });
     openModal('reviewModal');
 }
-function setRating(val) { selectedRating = val; updateStars(val); }
-function hoverRating(val) { updateStars(val); }
-function resetHover() { updateStars(selectedRating); }
+
+function setRating(val) {
+    selectedRating = val;
+    updateStars(val);
+}
+
+function hoverRating(val) {
+    updateStars(val);
+}
+
+function resetHover() {
+    updateStars(selectedRating);
+}
+
+const _catRatings = { cleanliness: 3, location_rating: 3, value_rating: 3, comfort: 3 };
+
+function setCatRating(key, val) {
+    _catRatings[key] = val;
+    const hidden = document.getElementById('cat-' + key);
+    const valEl  = document.getElementById('cat-' + key + '-val');
+    if (hidden) hidden.value = val;
+    if (valEl)  valEl.textContent = val;
+    updateCatStars(key, val);
+}
+function hoverCatRating(key, val) { updateCatStars(key, val); }
+function resetCatHover(key) { updateCatStars(key, _catRatings[key]); }
+function updateCatStars(key, val) {
+    const container = document.getElementById('catstars-' + key);
+    if (!container) return;
+    container.querySelectorAll('svg').forEach((s, i) => {
+        const active = i < val;
+        s.style.fill      = active ? 'var(--gold, #f59e0b)'   : '#e2e8f0';
+        s.style.stroke    = active ? 'var(--gold-dk, #b45309)' : '#cbd5e1';
+        s.style.transform = active ? 'scale(1.12)' : 'scale(1)';
+    });
+}
+
 function updateStars(val) {
     document.querySelectorAll('#starRating svg').forEach((s, i) => {
         s.style.fill = i < val ? 'var(--gold)' : 'var(--blue-100)';
@@ -169,21 +219,42 @@ function updateStars(val) {
         s.style.transform = i < val ? 'scale(1.1)' : 'scale(1)';
     });
 }
+
 function submitReview() {
     const errEl = document.getElementById('reviewError');
     errEl.style.display = 'none';
-    if (!reviewBookingId) { errEl.textContent = 'Invalid booking selected for review.'; errEl.style.display = 'block'; return; }
-    if (!selectedRating) { errEl.textContent = 'Please select a star rating.'; errEl.style.display = 'block'; return; }
-    if (!document.getElementById('reviewText').value.trim()) { errEl.textContent = 'Please write a short review.'; errEl.style.display = 'block'; return; }
+    if (!reviewBookingId) {
+        errEl.textContent = 'Invalid booking selected for review.';
+        errEl.style.display = 'block';
+        return;
+    }
+    if (!selectedRating) {
+        errEl.textContent = 'Please select a star rating.';
+        errEl.style.display = 'block';
+        return;
+    }
+    if (!document.getElementById('reviewText').value.trim()) {
+        errEl.textContent = 'Please write a short review.';
+        errEl.style.display = 'block';
+        return;
+    }
     const btn = document.getElementById('submitReviewBtn');
-    btn.disabled = true; btn.textContent = 'Submitting…';
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
     const fd = new FormData();
     fd.append('booking_id', String(reviewBookingId));
     fd.append('rating', String(selectedRating));
     fd.append('comment', document.getElementById('reviewText').value.trim());
+    fd.append('cleanliness', document.getElementById('cat-cleanliness')?.value || 3);
+    fd.append('location_rating', document.getElementById('cat-location_rating')?.value || 3);
+    fd.append('value_rating', document.getElementById('cat-value_rating')?.value || 3);
+    fd.append('comfort', document.getElementById('cat-comfort')?.value || 3);
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
 
-    fetch('../../api/user/submit_review.php', { method: 'POST', body: fd })
+    fetch('../../api/user/submit_review.php', {
+            method: 'POST',
+            body: fd
+        })
         .then(r => r.json())
         .then(d => {
             if (!d.success) {
@@ -194,7 +265,7 @@ function submitReview() {
             closeModal('reviewModal');
             showToast('Review submitted! Thank you 🌟', 'success');
 
-            if (reviewBookingIdx !== null && window.__bookings?.[reviewBookingIdx]) {
+            if (reviewBookingIdx !== null && window.__bookings?. [reviewBookingIdx]) {
                 window.__bookings[reviewBookingIdx].reviewed = true;
                 window.__bookings[reviewBookingIdx].review_rating = selectedRating;
             }
@@ -224,12 +295,15 @@ function submitReview() {
 function openRebookModal(roomName) {
     document.getElementById('rebookRoomName').textContent = roomName;
     document.getElementById('rebookError').style.display = 'none';
-    const today = new Date(); today.setDate(today.getDate() + 1);
-    const out = new Date(today); out.setDate(out.getDate() + 3);
+    const today = new Date();
+    today.setDate(today.getDate() + 1);
+    const out = new Date(today);
+    out.setDate(out.getDate() + 3);
     document.getElementById('rebook_checkin').value = today.toISOString().split('T')[0];
     document.getElementById('rebook_checkout').value = out.toISOString().split('T')[0];
     openModal('rebookModal');
 }
+
 function confirmRebook() {
     const ci = document.getElementById('rebook_checkin').value;
     const co = document.getElementById('rebook_checkout').value;
@@ -237,10 +311,12 @@ function confirmRebook() {
     errEl.style.display = 'none';
     if (!ci || !co || new Date(co) <= new Date(ci)) {
         errEl.textContent = 'Please select valid check-in and check-out dates.';
-        errEl.style.display = 'block'; return;
+        errEl.style.display = 'block';
+        return;
     }
     const btn = document.getElementById('rebookConfirmBtn');
-    btn.disabled = true; btn.textContent = 'Processing…';
+    btn.disabled = true;
+    btn.textContent = 'Processing…';
     setTimeout(() => {
         closeModal('rebookModal');
         btn.disabled = false;
@@ -267,7 +343,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ['detailsModal', 'reviewModal', 'rebookModal'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
-        el.addEventListener('click', e => { if (e.target.id === id) closeModal(id); });
+        el.addEventListener('click', e => {
+            if (e.target.id === id) closeModal(id);
+        });
     });
 
     document.addEventListener('keydown', e => {

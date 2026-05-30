@@ -329,7 +329,7 @@ let _currentViewIdUserId = null;
 function openViewIdModal(userId, imagePath) {
     _currentViewIdUserId = userId;
     // Use secure proxy instead of direct path
-    document.getElementById('viewIdImage').src = `../../api/view_id_document.php?user_id=${userId}`;
+    document.getElementById('viewIdImage').src = `../../api/admin/view_id_document.php?user_id=${userId}`;
     document.getElementById('viewIdModal').classList.add('open');
 }
 

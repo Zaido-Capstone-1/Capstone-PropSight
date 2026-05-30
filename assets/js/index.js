@@ -38,9 +38,7 @@ loginModal.addEventListener('click', e => {
 
 document.querySelectorAll('.btn-login-header').forEach(btn => btn.addEventListener('click', () => openModal('login')));
 document.querySelector('.btn-book-header')?.addEventListener('click', () => {
-    document.querySelector('#cta')?.scrollIntoView({
-        behavior: 'smooth'
-    });
+    openModal('signup');
 });
 document.querySelector('.btn-book-big')?.addEventListener('click', () => {
     openModal('login');
@@ -1068,4 +1066,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.location.hash === '#login') {
         openModal('login');
     }
+});
+
+document.getElementById('signupCountryCode')?.addEventListener('change', function () {
+    const selected = this.options[this.selectedIndex];
+    const flag = selected.dataset.flag || '';
+    const code = this.value;
+    document.getElementById('phoneFlagIcon').textContent = flag;
+    document.getElementById('phoneDialCode').textContent = code;
 });

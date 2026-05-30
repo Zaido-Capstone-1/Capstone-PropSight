@@ -22,7 +22,7 @@ include '../../includes/layout_open.php';
 
 function fmt_peso(float $v): string
 {
-    return '₱ ' . number_format($v, 2);
+    return '₱ ' . number_format($v, 0);
 }
 
 

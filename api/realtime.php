@@ -9,6 +9,7 @@
  *
  * Returns JSON with only what has changed since `since`.
  */
+header('X-Debug-Version: v2');
 header('Content-Type: application/json');
 header('Cache-Control: no-store, no-cache, must-revalidate');
 header('Pragma: no-cache');
@@ -142,20 +143,24 @@ if ($role === 'admin') {
     }
 
     // ── Recent activity for dashboard ─────────────────
-    // ── Recent activity for dashboard ─────────────────
     if (in_array($page, ['dashboard', 'task_summary'], true)) {
+        // Use $sinceEsc for live polling; for the initial load (since=2000-01-01)
+        // fall back to the last 30 days so the feed always has entries.
+        $actWhere = (strtotime($since) < strtotime('-1 hour'))
+            ? "b.created_at >= DATE_SUB(NOW(), INTERVAL 5 HOUR)"
+            : "(b.created_at > '$sinceEsc' OR b.updated_at > '$sinceEsc')";
+
         $actRes = mysqli_query(
             $conn,
             "SELECT b.booking_id, b.status, b.created_at, b.total_amount,
-                    CONCAT(u.first_name,' ',u.last_name) AS user_name,
-                    un.unit_name
-             FROM bookings b
-             JOIN users u  ON u.user_id  = b.user_id
-             JOIN units un ON un.unit_id = b.unit_id
-             WHERE (b.created_at > '$sinceEsc' OR b.updated_at > '$sinceEsc')
-               AND b.created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-             ORDER BY GREATEST(b.created_at, COALESCE(b.updated_at, b.created_at)) DESC
-             LIMIT 10"
+                CONCAT(u.first_name,' ',u.last_name) AS user_name,
+                COALESCE(un.unit_name, CONCAT('Unit #', b.unit_id)) AS unit_name
+            FROM bookings b
+            JOIN users u   ON u.user_id  = b.user_id
+            LEFT JOIN units un ON un.unit_id = b.unit_id
+            WHERE $actWhere
+            ORDER BY GREATEST(b.created_at, COALESCE(b.updated_at, b.created_at)) DESC
+            LIMIT 10"
         );
         $act = [];
         while ($r = mysqli_fetch_assoc($actRes))
@@ -406,21 +411,24 @@ if ($role === 'admin') {
         $payload['manage_stay_booking'] = $activeRes ? mysqli_fetch_assoc($activeRes) : null;
     }
 
-    // ── Unread notifications ───────────────────────────
-    // Exclude 'booking' type — those are surfaced via the ps:new_bookings
-    // channel and shown as inline badges on the reservations table.
-    // Toasting them here causes repeated cross-page popups.
     $notifRes = mysqli_query(
         $conn,
         "SELECT * FROM notifications
-         WHERE user_id = $userId AND is_read = 0 AND type != 'booking'
-         ORDER BY created_at DESC LIMIT 10"
+     WHERE user_id = $userId AND is_read = 0 AND type != 'booking'
+     ORDER BY created_at DESC LIMIT 10"
     );
     $notifs = [];
     while ($r = mysqli_fetch_assoc($notifRes))
         $notifs[] = $r;
     $payload['notifications'] = $notifs;
-    $payload['unread_notif_count'] = count($notifs);
+
+    // Real total unread count (all types except booking)
+    $unreadRow = mysqli_fetch_assoc(mysqli_query(
+        $conn,
+        "SELECT COUNT(*) AS c FROM notifications
+     WHERE user_id = $userId AND is_read = 0"
+    ));
+    $payload['unread_notif_count'] = (int) ($unreadRow['c'] ?? 0);
 
     // ── Unread messages from admins ────────────────────
     $uMsgRow = mysqli_fetch_assoc(mysqli_query(

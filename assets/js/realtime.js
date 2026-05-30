@@ -23,7 +23,7 @@
     'use strict';
 
     /* ── Config ─────────────────────────────────────── */
-    const INTERVAL = window.PS_RT_INTERVAL || 8000;   // ms between polls
+    const INTERVAL = window.PS_RT_INTERVAL || 8000; // ms between polls
     const API_BASE = window.PS_RT_API || '../../api/realtime.php';
     const PAGE = window.PS_RT_PAGE || 'dashboard';
     const ROLE = window.PS_RT_ROLE || 'user';
@@ -36,22 +36,44 @@
 
     /* ── Helpers ────────────────────────────────────── */
     function emit(name, detail) {
-        window.dispatchEvent(new CustomEvent('ps:' + name, { detail }));
+        window.dispatchEvent(new CustomEvent('ps:' + name, {
+            detail
+        }));
     }
 
     function fmtCurrency(v) {
-        return '₱' + Number(v).toLocaleString('en-PH', { minimumFractionDigits: 0 });
+        return '₱' + Number(v).toLocaleString('en-PH', {
+            minimumFractionDigits: 0
+        });
     }
 
     function statusLabel(s) {
         const map = {
-            pending: { text: 'Pending', cls: 'badge-pending' },
-            confirmed: { text: 'Confirmed', cls: 'badge-confirmed' },
-            active: { text: 'Active', cls: 'badge-active' },
-            completed: { text: 'Completed', cls: 'badge-completed' },
-            cancelled: { text: 'Cancelled', cls: 'badge-cancelled' },
+            pending: {
+                text: 'Pending',
+                cls: 'badge-pending'
+            },
+            confirmed: {
+                text: 'Confirmed',
+                cls: 'badge-confirmed'
+            },
+            active: {
+                text: 'Active',
+                cls: 'badge-active'
+            },
+            completed: {
+                text: 'Completed',
+                cls: 'badge-completed'
+            },
+            cancelled: {
+                text: 'Cancelled',
+                cls: 'badge-cancelled'
+            },
         };
-        return map[s] || { text: s, cls: '' };
+        return map[s] || {
+            text: s,
+            cls: ''
+        };
     }
 
     // ── Dedup sets — declared here so ALL listeners below can safely reference them ──
@@ -59,12 +81,17 @@
     // Seen notification IDs persisted in localStorage — survives page navigation,
     // so the same notification never toasts again on a different page.
     const _seenNotifs = (function () {
-        try { return new Set(JSON.parse(localStorage.getItem('ps_seen_notifs') || '[]')); }
-        catch (e) { return new Set(); }
+        try {
+            return new Set(JSON.parse(localStorage.getItem('ps_seen_notifs') || '[]'));
+        } catch (e) {
+            return new Set();
+        }
     })();
+
     function _persistSeenNotifs() {
-        try { localStorage.setItem('ps_seen_notifs', JSON.stringify([..._seenNotifs].slice(-200))); }
-        catch (e) { }
+        try {
+            localStorage.setItem('ps_seen_notifs', JSON.stringify([..._seenNotifs].slice(-200)));
+        } catch (e) {}
     }
 
     // Admin booking IDs — seeded from the DOM after page load so existing
@@ -78,12 +105,17 @@
 
     // Seen message IDs — session-scoped (fine to reset on browser close)
     const _seenMsgIds = (function () {
-        try { return new Set(JSON.parse(sessionStorage.getItem('ps_seen_msg_ids') || '[]')); }
-        catch (e) { return new Set(); }
+        try {
+            return new Set(JSON.parse(sessionStorage.getItem('ps_seen_msg_ids') || '[]'));
+        } catch (e) {
+            return new Set();
+        }
     })();
+
     function _persistSeenMsgIds() {
-        try { sessionStorage.setItem('ps_seen_msg_ids', JSON.stringify([..._seenMsgIds].slice(-500))); }
-        catch (e) { }
+        try {
+            sessionStorage.setItem('ps_seen_msg_ids', JSON.stringify([..._seenMsgIds].slice(-500)));
+        } catch (e) {}
     }
 
     /* ── Core poll ──────────────────────────────────── */
@@ -92,7 +124,9 @@
 
         const url = `${API_BASE}?since=${encodeURIComponent(lastTs)}&page=${PAGE}&role=${ROLE}&_=${Date.now()}`;
 
-        fetch(url, { credentials: 'same-origin' })
+        fetch(url, {
+                credentials: 'same-origin'
+            })
             .then(r => r.json())
             .then(data => {
                 if (!data.success) return;
@@ -161,10 +195,12 @@
 
     /* ── Start ──────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', () => {
-        poll();                          // first call immediately
+        poll(); // first call immediately
         pollTimer = setInterval(poll, INTERVAL);
 
-        fetch(`${API_BASE}?since=2000-01-01 00:00:00&page=${PAGE}&role=${ROLE}&_=${Date.now()}`, { credentials: 'same-origin' })
+        fetch(`${API_BASE}?since=2000-01-01 00:00:00&page=${PAGE}&role=${ROLE}&_=${Date.now()}`, {
+                credentials: 'same-origin'
+            })
             .then(r => r.json())
             .then(data => {
                 if (!data.success) return;
@@ -173,13 +209,20 @@
                 if (data.booking_updates && data.booking_updates.length) emit('booking_updates', data.booking_updates);
                 if (data.user_metrics) emit('user_metrics', data.user_metrics);
             })
-            .catch(() => { });
+            .catch(() => {});
     });
 
     /* ── Public API ─────────────────────────────────── */
     window.PSRealtime = {
-        pause: () => { paused = true; clearInterval(pollTimer); },
-        resume: () => { paused = false; reschedule(INTERVAL); poll(); },
+        pause: () => {
+            paused = true;
+            clearInterval(pollTimer);
+        },
+        resume: () => {
+            paused = false;
+            reschedule(INTERVAL);
+            poll();
+        },
         poll,
         fmtCurrency,
         statusLabel,
@@ -230,51 +273,30 @@
     window.addEventListener('ps:notifications', e => {
         const { items, count } = e.detail;
 
-        // Badge
+        // Always sync badge to real DB count
         document.querySelectorAll('[data-rt="notif-count"]').forEach(el => {
             el.textContent = count;
             el.style.display = count > 0 ? 'flex' : 'none';
         });
 
-        // If a notification dropdown/list container exists, inject items
-        const list = document.getElementById('rt-notif-list');
-        if (!list || !items.length) return;
+        if (!items.length) return;
 
-        items.forEach(n => {
-            if (document.querySelector(`[data-notif-id="${n.id}"]`)) return; // dedup
-            const div = document.createElement('div');
-            div.className = 'rt-notif-item';
-            div.dataset.notifId = n.id;
-            div.innerHTML = `
-                <div class="rt-notif-title">${_escHtml(n.title)}</div>
-                <div class="rt-notif-body">${_escHtml(n.body || '')}</div>
-                <div class="rt-notif-time">${_relativeTime(n.created_at)}</div>`;
-            list.prepend(div);
-        });
-
-        // If dropdown is open, inject new items live
+        // Live-inject into open dropdown
         const drop = document.getElementById('notifDropdown');
         if (drop && drop.style.display === 'block') {
             const list = document.getElementById('rt-notif-list');
             const empty = document.getElementById('notifEmptyState');
-            if (list && items.length) {
+            if (list) {
                 if (empty) empty.style.display = 'none';
                 items.forEach(n => {
                     if (list.querySelector(`[data-notif-id="${n.id}"]`)) return;
-                    const div = document.createElement('div');
-                    div.className = 'rt-notif-item';
-                    div.dataset.notifId = n.id;
-                    div.innerHTML = `
-                        <div class="rt-notif-title">${_escHtml(n.title)}</div>
-                        <div class="rt-notif-body">${_escHtml(n.body || '')}</div>
-                        <div class="rt-notif-time">${_relativeTime(n.created_at)}</div>`;
+                    const div = _buildNotifItem(n);
                     list.prepend(div);
                 });
             }
         }
 
-        // Show toast for each truly new notification — skip 'booking' type
-        // since the reservations table handles those with an inline NEW badge
+        // Toast for truly new notifications
         if (typeof showToast === 'function') {
             items.forEach(n => {
                 if (n.type === 'booking') return;
@@ -302,8 +324,12 @@
         const initials = ((first[0] || '') + (last[0] || '')).toUpperCase() || (first[0] || 'G').toUpperCase();
 
         // Sidebar + profile header text
-        document.querySelectorAll('.sb-name').forEach(el => { el.textContent = fullName; });
-        document.querySelectorAll('.sb-email, .avatar-info p').forEach(el => { el.textContent = email; });
+        document.querySelectorAll('.sb-name').forEach(el => {
+            el.textContent = fullName;
+        });
+        document.querySelectorAll('.sb-email, .avatar-info p').forEach(el => {
+            el.textContent = email;
+        });
 
         // Verification badge text/state
         document.querySelectorAll('.sb-badge').forEach(el => {
@@ -513,7 +539,9 @@
         // Flash the row
         row.style.transition = 'background 0.6s';
         row.style.background = 'var(--blue-50, #eff6ff)';
-        setTimeout(() => { row.style.background = ''; }, 1800);
+        setTimeout(() => {
+            row.style.background = '';
+        }, 1800);
 
         if (typeof showToast === 'function' && prev) {
             showToast(`Booking #BK-${id.padStart(4, '0')} updated to ${lbl.text}.`, 'info');
@@ -632,7 +660,9 @@
             }
             row.style.transition = 'background 0.5s';
             row.style.background = 'var(--blue-50, #eff6ff)';
-            setTimeout(() => { row.style.background = ''; }, 1500);
+            setTimeout(() => {
+                row.style.background = '';
+            }, 1500);
         });
     });
 
@@ -771,34 +801,7 @@
                         if (empty) empty.style.display = 'none';
 
                         items.forEach(n => {
-                            const div = document.createElement('div');
-                            div.className = 'rt-notif-item';
-                            div.dataset.notifId = n.id;
-                            div.style.opacity = n.is_read == 1 ? '0.6' : '1';
-                            div.innerHTML = `
-                                <div class="rt-notif-title">${_escHtml(n.title)}</div>
-                                <div class="rt-notif-body">${_escHtml(n.body || '')}</div>
-                                <div class="rt-notif-time">${_relativeTime(n.created_at)}</div>`;
-                            div.addEventListener('click', () => {
-                                const fd = new FormData();
-                                fd.append('action', 'mark_read');
-                                fd.append('id', n.id);
-                                if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
-                                fetch('../../api/user/notifications.php', { method: 'POST', body: fd })
-                                    .catch(() => { });
-                                div.style.opacity = '0.6';
-                                // Decrement badge by 1 if it was unread
-                                if (n.is_read != 1) {
-                                    document.querySelectorAll('[data-rt="notif-count"]').forEach(el => {
-                                        const cur = parseInt(el.textContent) || 0;
-                                        const next = Math.max(0, cur - 1);
-                                        el.textContent = next;
-                                        el.style.display = next > 0 ? 'flex' : 'none';
-                                    });
-                                    n.is_read = 1;
-                                }
-                                if (n.link) window.location.href = '../../' + n.link;
-                            });
+                            const div = _buildNotifItem(n);
                             list.appendChild(div);
                         });
 
@@ -808,7 +811,7 @@
                             el.style.display = data.unread_count > 0 ? 'flex' : 'none';
                         });
                     })
-                    .catch(() => { });
+                    .catch(() => {});
             }
         });
 
@@ -824,7 +827,10 @@
             const fd = new FormData();
             fd.append('action', 'mark_all_read');
             if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
-            fetch('../../api/user/notifications.php', { method: 'POST', body: fd })
+            fetch('../../api/user/notifications.php', {
+                    method: 'POST',
+                    body: fd
+                })
                 .then(r => r.json())
                 .then((data) => {
                     if (!data || data.success !== true) return;
@@ -836,10 +842,12 @@
                         el.style.display = 'none';
                     });
                     // Also clear localStorage seen set so new notifs will show toasts
-                    try { localStorage.removeItem('ps_seen_notifs'); } catch (e) { }
+                    try {
+                        localStorage.removeItem('ps_seen_notifs');
+                    } catch (e) {}
                     _seenNotifs.clear();
                 })
-                .catch(() => { });
+                .catch(() => {});
         });
 
         // Close when clicking outside
@@ -848,6 +856,7 @@
         });
         drop.addEventListener('click', e => e.stopPropagation());
     });
+
     function _escHtml(str) {
         if (!str) return '';
         return String(str)
@@ -863,8 +872,11 @@
 
     function _statusColor(s) {
         const c = {
-            pending: '#f59e0b', confirmed: '#2563c4', active: '#16a34a',
-            completed: '#6b7280', cancelled: '#dc2626'
+            pending: '#f59e0b',
+            confirmed: '#2563c4',
+            active: '#16a34a',
+            completed: '#6b7280',
+            cancelled: '#dc2626'
         };
         return c[s] || '#94a3b8';
     }
@@ -885,6 +897,43 @@
     window.PS.statusLabel = statusLabel;
     window.PS.fmtCurrency = fmtCurrency;
 
+    function _buildNotifItem(n) {
+        const div = document.createElement('div');
+        div.className = 'rt-notif-item';
+        div.dataset.notifId = n.id;
+        if (n.is_read == 1) {
+            div.style.opacity = '0.6';
+        } else {
+            div.style.background = '#f0f7ff';
+        }
+        div.innerHTML = `
+        <div class="rt-notif-title">${_escHtml(n.title)}</div>
+        <div class="rt-notif-body">${_escHtml(n.body || '')}</div>
+        <div class="rt-notif-time">${_relativeTime(n.created_at)}</div>`;
+        div.addEventListener('click', () => {
+            if (n.is_read != 1) {
+                const fd = new FormData();
+                fd.append('action', 'mark_read');
+                fd.append('id', n.id);
+                if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
+                fetch('../../api/user/notifications.php', {
+                    method: 'POST',
+                    body: fd
+                }).catch(() => {});
+                div.style.opacity = '0.6';
+                div.style.background = '';
+                n.is_read = 1;
+                document.querySelectorAll('[data-rt="notif-count"]').forEach(el => {
+                    const cur = parseInt(el.textContent) || 0;
+                    const next = Math.max(0, cur - 1);
+                    el.textContent = next;
+                    el.style.display = next > 0 ? 'flex' : 'none';
+                });
+            }
+            if (n.link) window.location.href = '../../' + n.link;
+        });
+        return div;
+    }
+
 
 })();
-

@@ -58,6 +58,13 @@ if ($type === 'link.payment.paid') {
     $amount = (float) $row['amount'];
     $paidAt = date('Y-m-d H:i:s');
     $paymentId = $data['id'] ?? null;
+    // AFTER — read from bookings where it's reliably saved by book_unit.php
+    $bkMethodStmt = $conn->prepare("SELECT payment_method FROM bookings WHERE booking_id = ? LIMIT 1");
+    $bkMethodStmt->bind_param('i', $bookingId);
+    $bkMethodStmt->execute();
+    $bkMethodRow = $bkMethodStmt->get_result()->fetch_assoc();
+    $bkMethodStmt->close();
+    $paymentMethod = $bkMethodRow['payment_method'] ?? '';
 
     error_log("PayMongo: Processing payment - bookingId: $bookingId, amount: $amount, paymentId: $paymentId");
 
@@ -66,10 +73,11 @@ if ($type === 'link.payment.paid') {
     $upd->execute();
     $upd->close();
 
-    $ins = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (?, ?, ?, 'paymongo', 'paid', ?)");
+    $ins = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (?, ?, ?, ?, 'paid', ?)");
+    $paymentDatetime = date('Y-m-d H:i:s');
     $date = date('Y-m-d');
     $notes = 'PayMongo link payment — ' . ($paymentId ?? '');
-    $ins->bind_param('isds', $bookingId, $date, $amount, $notes);
+    $ins->bind_param('isdss', $bookingId, $paymentDatetime, $amount, $paymentMethod, $notes);
     $executeResult = $ins->execute();
 
     if (!$executeResult) {
@@ -90,10 +98,44 @@ if ($type === 'link.payment.paid') {
     $txStmt->execute();
     $txStmt->close();
 
-    $bkUpdStmt = $conn->prepare("UPDATE bookings SET status='confirmed' WHERE booking_id=? AND status IN ('pending','confirmed')");
+    $bkUpdStmt = $conn->prepare("UPDATE bookings SET status='confirmed', paid_at=NOW() WHERE booking_id=? AND status IN ('pending','confirmed')");
     $bkUpdStmt->bind_param('i', $bookingId);
     $bkUpdStmt->execute();
     $bkUpdStmt->close();
+
+    // Notify admin now that payment is confirmed
+    try {
+        $bkRef2 = 'BK-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
+        $bkInfoNotif = $conn->query("
+            SELECT CONCAT(u2.first_name,' ',u2.last_name) AS guest_name,
+                   COALESCE(un.unit_name, CONCAT(p.property_name, ' — Unit ', un.unit_number)) AS unit_label,
+                   b.checkin_date, b.checkout_date
+            FROM bookings b
+            JOIN users u2 ON u2.user_id = b.user_id
+            JOIN units un ON un.unit_id = b.unit_id
+            LEFT JOIN properties p ON p.property_id = un.property_id
+            WHERE b.booking_id=$bookingId LIMIT 1
+        ")->fetch_assoc();
+        if ($bkInfoNotif) {
+            $gName = $bkInfoNotif['guest_name'] ?? 'A guest';
+            $uLabel2 = $bkInfoNotif['unit_label'] ?? 'a unit';
+            $ciDate = date('M j', strtotime($bkInfoNotif['checkin_date']));
+            $coDate = date('M j, Y', strtotime($bkInfoNotif['checkout_date']));
+            $ntTitle2 = "Payment confirmed: $bkRef2";
+            $ntBody2 = "$gName booked $uLabel2 · $ciDate–$coDate (PayMongo payment received).";
+            $ntLink2 = 'pages/admin/reservations.php';
+            $admins2 = $conn->query("SELECT user_id FROM users WHERE role='admin' LIMIT 20");
+            while ($adm2 = $admins2->fetch_assoc()) {
+                $aId2 = (int) $adm2['user_id'];
+                $aN = $conn->prepare("INSERT INTO notifications (user_id,type,title,body,link) VALUES (?,'booking',?,?,?)");
+                $aN->bind_param('isss', $aId2, $ntTitle2, $ntBody2, $ntLink2);
+                $aN->execute();
+                $aN->close();
+            }
+        }
+    } catch (\Throwable $notifErr2) {
+        error_log('[paymongo_webhook] Admin notif failed: ' . $notifErr2->getMessage());
+    }
 
     $unitStmt = $conn->prepare("SELECT unit_id FROM bookings WHERE booking_id=? LIMIT 1");
     $unitStmt->bind_param('i', $bookingId);

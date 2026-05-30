@@ -190,7 +190,7 @@ $seasonality = [
 $forecastRev = array_fill(0, 12, null);
 $actualPoints = [];
 for ($i = 0; $i < $currentMonth; $i++)
-    if ($revActual[$i] !== null && $revActual[$i] > 0)  // ← added > 0
+    if ($revActual[$i] !== null)
         $actualPoints[] = ['x' => $i, 'y' => $revActual[$i] / $seasonality[$i]];
 
 if (count($actualPoints) >= 2) {

@@ -54,6 +54,7 @@ $totalReviewPages = max(1, (int) ceil($totalReviews / $reviewLimit));
 $_reviewsRes = mysqli_query(
     $conn,
     "SELECT r.rating, r.comment, r.created_at,
+            r.cleanliness, r.location_rating, r.value_rating, r.comfort,
             CONCAT(u.first_name,' ',LEFT(u.last_name,1),'.') AS reviewer
      FROM booking_reviews r
      JOIN users u ON u.user_id = r.user_id
@@ -107,7 +108,7 @@ $_pmRow = mysqli_fetch_assoc(mysqli_query(
      WHERE payment_method IS NOT NULL AND payment_method!='' AND status!='cancelled'
      GROUP BY payment_method ORDER BY COUNT(*) DESC LIMIT 1"
 ));
-$popularPaymentMethod = $_pmRow['payment_method'] ?? 'GCash';
+$popularPaymentMethod = $_pmRow['payment_method'] ?? null;
 
 // ── 11. Booking count for this unit (social proof) ───────────────────────────
 $_bookingCountRow = mysqli_fetch_assoc(mysqli_query(
@@ -122,6 +123,22 @@ $ratingBreakdown = mysqli_fetch_assoc(mysqli_query(
     $conn,
     "SELECT ROUND(AVG(rating), 1) AS overall FROM booking_reviews WHERE unit_id = $unit_id"
 ));
+
+// ── Category averages ─────────────────────────────────────────────────────────
+$_catRow = mysqli_fetch_assoc(mysqli_query(
+    $conn,
+    "SELECT ROUND(AVG(cleanliness),1)     AS avg_cleanliness,
+            ROUND(AVG(location_rating),1) AS avg_location,
+            ROUND(AVG(value_rating),1)    AS avg_value,
+            ROUND(AVG(comfort),1)         AS avg_comfort
+     FROM booking_reviews WHERE unit_id = $unit_id"
+));
+$catAverages = [
+    ['label' => 'Cleanliness', 'avg' => (float) ($_catRow['avg_cleanliness'] ?? 0)],
+    ['label' => 'Location', 'avg' => (float) ($_catRow['avg_location'] ?? 0)],
+    ['label' => 'Value', 'avg' => (float) ($_catRow['avg_value'] ?? 0)],
+    ['label' => 'Comfort', 'avg' => (float) ($_catRow['avg_comfort'] ?? 0)],
+];
 
 // ── 13. Similar units ─────────────────────────────────────────────────────────
 $_similarRes = mysqli_query(

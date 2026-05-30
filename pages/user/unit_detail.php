@@ -87,7 +87,15 @@ $statusLabel = match ($unit['status']) {
 $statusBadgeClass = $isVacant ? 'avail-yes' : ($isBooked ? 'avail-booked' : 'avail-no');
 
 $priceNum = (float) $unit['rent_amount'];
-$price = '₱' . number_format($priceNum, 0);
+$seasonality = [0 => 1.30, 1 => 1.30, 2 => 1.10, 3 => 1.15, 4 => 1.15, 5 => 0.80, 6 => 0.80, 7 => 0.80, 8 => 0.80, 9 => 0.80, 10 => 1.15, 11 => 1.30];
+$seasonLabel = [0 => 'Peak', 1 => 'Peak', 2 => 'High', 3 => 'High', 4 => 'High', 5 => 'Low', 6 => 'Low', 7 => 'Low', 8 => 'Low', 9 => 'Low', 10 => 'High', 11 => 'Peak'];
+$seasonColor = ['Peak' => '#E74C3C', 'High' => '#deaf37', 'Low' => '#2ECC71'];
+$curMonth = (int) date('n') - 1;
+$multiplier = $seasonality[$curMonth];
+$adjRate = (int) round($priceNum * $multiplier);
+$price = '₱' . number_format($adjRate);
+$curLabel = $seasonLabel[$curMonth];
+$curColor = $seasonColor[$curLabel];
 $ratingValue = isset($unit['rating']) && $unit['rating'] !== null ? round((float) $unit['rating'], 1) : null;
 $cityPart = !empty($unit['city']) ? ', ' . $unit['city'] : '';
 $locationStr = ($unit['property_name'] ?? '') . $cityPart;
@@ -399,7 +407,13 @@ $nav_items = [
                 <div class="ud-price-top">
                     <div class="ud-price-left">
                         <div class="ud-price-label">Nightly rate</div>
-                        <div class="ud-price-amount"><?php echo $price; ?><sub>/night</sub></div>
+                        <div class="ud-price-amount">
+                            <?php echo $price; ?><sub>/night</sub>
+                            <span
+                                style="background:<?php echo $curColor; ?>20;color:<?php echo $curColor; ?>;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:8px;vertical-align:middle;">
+                                <?php echo $curLabel; ?>
+                            </span>
+                        </div>
                         <div class="ud-price-meta">
                             <i class="ti ti-map-pin"></i>
                             <?php echo ud_esc($locationStr); ?>
@@ -408,29 +422,7 @@ $nav_items = [
                             <?php endif; ?>
                         </div>
                     </div>
-                    <?php if ($isVacant && !$hasActiveBooking): ?>
-                        <button class="ud-cta-btn" id="udBookBtn"
-                            onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
-                            <i class="ti ti-calendar-plus"></i> Book Now
-                        </button>
-                    <?php elseif ($hasActiveBooking): ?>
-                        <button class="ud-cta-btn" style="background:#112240;cursor:default;color:#e8c882;" disabled>
-                            <i class="ti ti-circle-check"></i> Already Booked
-                        </button>
-                    <?php elseif ($isBooked || $isOccupied): ?>
-                        <button class="ud-cta-btn" id="udBookBtn"
-                            onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
-                            <i class="ti ti-calendar-plus"></i> Book a Future Date
-                        </button>
-                    <?php elseif ($isMaintenance): ?>
-                        <button class="ud-cta-btn" style="background:#9ca3af;cursor:default" disabled>
-                            <i class="ti ti-tool"></i> Under Maintenance
-                        </button>
-                    <?php else: ?>
-                        <button class="ud-cta-btn" disabled>
-                            <i class="ti ti-ban"></i> Unavailable
-                        </button>
-                    <?php endif; ?>
+
                 </div><!-- /ud-price-top -->
 
                 <div class="ud-price-stats">
@@ -490,40 +482,15 @@ $nav_items = [
 
                 <!-- Nearby Attractions -->
                 <div class="ud-info-section">
-                    <div class="ud-info-label">Nearby attractions</div>
-                    <div class="ud-nearby-list">
-                        <div class="ud-nearby-item">
-                            <span class="ud-nearby-icon"><i class="ti ti-beach"></i></span>
-                            <div class="ud-nearby-body">
-                                <div class="ud-nearby-name">White Beach</div>
-                                <div class="ud-nearby-dist">~200m · 3 min walk</div>
-                            </div>
-                            <span class="ud-nearby-tag">Beach</span>
-                        </div>
-                        <div class="ud-nearby-item">
-                            <span class="ud-nearby-icon"><i class="ti ti-plane"></i></span>
-                            <div class="ud-nearby-body">
-                                <div class="ud-nearby-name">Caticlan Airport</div>
-                                <div class="ud-nearby-dist">~7 km · 20 min drive</div>
-                            </div>
-                            <span class="ud-nearby-tag">Transport</span>
-                        </div>
-                        <div class="ud-nearby-item">
-                            <span class="ud-nearby-icon"><i class="ti ti-anchor"></i></span>
-                            <div class="ud-nearby-body">
-                                <div class="ud-nearby-name">Cagban Jetty Port</div>
-                                <div class="ud-nearby-dist">~1.2 km · 5 min drive</div>
-                            </div>
-                            <span class="ud-nearby-tag">Ferry</span>
-                        </div>
-                        <div class="ud-nearby-item">
-                            <span class="ud-nearby-icon"><i class="ti ti-tools-kitchen-2"></i></span>
-                            <div class="ud-nearby-body">
-                                <div class="ud-nearby-name">D'Mall Restaurants</div>
-                                <div class="ud-nearby-dist">~500m · 7 min walk</div>
-                            </div>
-                            <span class="ud-nearby-tag">Dining</span>
-                        </div>
+                    <div class="ud-info-label">
+                        Nearby attractions
+                        <span class="ud-nearby-radius-badge">within 1 km</span>
+                    </div>
+                    <div id="udNearbyList" class="ud-nearby-list">
+                        <!-- skeleton -->
+                        <div class="ud-nearby-skeleton"></div>
+                        <div class="ud-nearby-skeleton"></div>
+                        <div class="ud-nearby-skeleton"></div>
                     </div>
                 </div>
 
@@ -565,19 +532,18 @@ $nav_items = [
                                 </div>
                                 <div class="ud-rating-bars">
                                     <?php
-                                    $categories = [
-                                        ['label' => 'Cleanliness', 'pct' => 90],
-                                        ['label' => 'Location', 'pct' => 95],
-                                        ['label' => 'Value', 'pct' => 85],
-                                        ['label' => 'Comfort', 'pct' => 88],
-                                    ];
-                                    foreach ($categories as $cat): ?>
+                                    foreach ($catAverages as $cat):
+                                        $pct = $cat['avg'] > 0 ? round(($cat['avg'] / 5) * 100) : 0; ?>
                                         <div class="ud-rbar-row">
-                                            <span class="ud-rbar-label"><?php echo $cat['label']; ?></span>
+                                            <span class="ud-rbar-label">
+                                                <span
+                                                    style="margin-right:4px;"><?php echo $cat['icon']; ?></span><?php echo $cat['label']; ?>
+                                            </span>
                                             <div class="ud-rbar-track">
-                                                <div class="ud-rbar-fill" style="width:<?php echo $cat['pct']; ?>%"></div>
+                                                <div class="ud-rbar-fill" style="width:<?php echo $pct; ?>%"></div>
                                             </div>
-                                            <span class="ud-rbar-pct"><?php echo number_format($cat['pct'] / 20, 1); ?></span>
+                                            <span
+                                                class="ud-rbar-pct"><?php echo $cat['avg'] > 0 ? number_format($cat['avg'], 1) : '–'; ?></span>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -605,6 +571,33 @@ $nav_items = [
                                     </div>
                                     <?php if (!empty($rv['comment'])): ?>
                                         <p class="ud-rv-body"><?php echo ud_esc($rv['comment']); ?></p>
+                                    <?php endif; ?>
+                                    <?php
+                                    $rvCats = [
+                                        ['label' => 'Cleanliness', 'val' => $rv['cleanliness'] ?? null],
+                                        ['label' => 'Location', 'val' => $rv['location_rating'] ?? null],
+                                        ['label' => 'Value', 'val' => $rv['value_rating'] ?? null],
+                                        ['label' => 'Comfort', 'val' => $rv['comfort'] ?? null],
+                                    ];
+                                    $hasAnyCat = array_filter($rvCats, fn($c) => $c['val'] !== null);
+                                    if ($hasAnyCat): ?>
+                                        <div class="ud-rv-cats">
+                                            <?php foreach ($rvCats as $c):
+                                                if ($c['val'] === null)
+                                                    continue;
+                                                $v = round((float) $c['val']); ?>
+                                                <div class="ud-rv-cat-pill">
+                                                    <span class="ud-rv-cat-label"><?php echo $c['label']; ?></span>
+                                                    <span class="ud-rv-cat-stars">
+                                                        <?php for ($s = 1; $s <= 5; $s++): ?>
+                                                            <span class="<?php echo $s <= $v ? 'sf' : 'se'; ?>">★</span>
+                                                        <?php endfor; ?>
+                                                    </span>
+                                                    <span
+                                                        class="ud-rv-cat-num"><?php echo number_format((float) $c['val'], 1); ?></span>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
                                     <?php endif; ?>
                                 </div>
                             <?php endforeach; ?>
@@ -643,7 +636,13 @@ $nav_items = [
             <!-- Card 1: Booking -->
             <div class="ud-booking-card" id="udBookingCard">
                 <div class="ud-bc-header">
-                    <div class="ud-bc-price"><?php echo $price; ?><span class="ud-bc-per"> / night</span></div>
+                    <div class="ud-bc-price">
+                        <?php echo $price; ?><span class="ud-bc-per"> / night</span>
+                        <span
+                            style="background:<?php echo $curColor; ?>20;color:<?php echo $curColor; ?>;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:8px;vertical-align:middle;">
+                            <?php echo $curLabel; ?>
+                        </span>
+                    </div>
                     <?php if ($ratingValue !== null): ?>
                         <div class="ud-bc-rating">
                             <span class="ud-bc-stars">★★★★★</span>
@@ -720,8 +719,11 @@ $nav_items = [
                     </div>
 
                     <div class="ud-price-breakdown" id="udPriceBreakdown" style="display:none">
-                        <div class="ud-pb-row"><span id="udNightsLabel">—</span><span id="udNightsTotal">—</span></div>
+                        <div id="udSeasonRows"></div>
                         <div class="ud-pb-divider"></div>
+                        <div class="ud-pb-row ud-pb-demand">
+                            <span id="udDemandBadge"></span>
+                        </div>
                         <div class="ud-pb-total"><span>Total</span><span id="udTotalDue">—</span></div>
                     </div>
 
@@ -745,7 +747,7 @@ $nav_items = [
                     <?php if ($isVacant && !$hasActiveBooking): ?>
                         <button class="ud-book-btn" id="udBookBtn2"
                             onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
-                            Reserve this unit
+                            Book Now
                         </button>
                     <?php elseif ($hasActiveBooking): ?>
                         <button class="ud-book-btn" disabled
@@ -887,7 +889,13 @@ $nav_items = [
     <!-- MOBILE + DESKTOP STICKY FLOAT BAR -->
     <div class="ud-float-bar" id="udFloatBar">
         <div class="ud-float-left">
-            <div class="ud-float-price"><?php echo $price; ?><sub>/night</sub></div>
+            <div class="ud-float-price">
+                <?php echo $price; ?><sub>/night</sub>
+                <span
+                    style="background:<?php echo $curColor; ?>20;color:<?php echo $curColor; ?>;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;">
+                    <?php echo $curLabel; ?>
+                </span>
+            </div>
             <div class="ud-float-dates" id="udFloatDates">Select dates to see total</div>
         </div>
         <div class="ud-float-right">
@@ -971,6 +979,7 @@ $nav_items = [
                             <span><span class="fp-legend-dot booked"></span> Already booked</span>
                         </div>
                     </div>
+                    <input type="hidden" id="bm-computed-total" value="0">
                     <div class="bm-panel" id="bm-panel-2">
                         <div class="bm-panel-title">Review your booking</div>
                         <div class="bm-panel-sub">Check all details before proceeding.</div>
@@ -986,15 +995,24 @@ $nav_items = [
                         <div class="bm-review-block">
                             <div class="bm-review-label">Reservation</div>
                             <div class="bm-review-row"><span class="bm-review-key">Unit</span><span
-                                    class="bm-review-val" id="rv-unit">—</span></div>
+                                    class="bm-review-val" id="rv-unit">—</span>
+                            </div>
                             <div class="bm-review-row"><span class="bm-review-key">Check-in</span><span
-                                    class="bm-review-val" id="rv-movein">—</span></div>
+                                    class="bm-review-val" id="rv-movein">—</span>
+                            </div>
                             <div class="bm-review-row"><span class="bm-review-key">Check-out</span><span
-                                    class="bm-review-val" id="rv-checkout">—</span></div>
+                                    class="bm-review-val" id="rv-checkout">—</span>
+                            </div>
                             <div class="bm-review-row"><span class="bm-review-key">Nights</span><span
-                                    class="bm-review-val" id="rv-nights">—</span></div>
+                                    class="bm-review-val" id="rv-nights">—</span>
+                            </div>
                             <div class="bm-review-row"><span class="bm-review-key">Price/night</span><span
-                                    class="bm-review-val" id="rv-rent">—</span></div>
+                                    class="bm-review-val" id="rv-rent">—</span>
+                            </div>
+                            <div class="bm-review-row" id="rv-season-row" style="display:none">
+                                <span class="bm-review-key">Season</span>
+                                <span class="bm-review-val" id="rv-season">—</span>
+                            </div>
                         </div>
                         <div class="bm-review-block">
                             <div class="bm-review-label">Charges due today</div>
@@ -1038,9 +1056,8 @@ $nav_items = [
                                 <div class="bm-pay-radio"></div>
                             </div>
                             <div class="bm-pay-option" data-method="Cash">
-                                <div class="bm-pay-icon"
-                                    style="height:45px;width:45px;font-size:26px;display:flex;align-items:center;justify-content:center">
-                                    💵</div>
+                                <div class="bm-pay-icon"><img src="../../assets/images/logo-icon/dollar.png" alt="Cash">
+                                </div>
                                 <div class="bm-pay-info">
                                     <div class="bm-pay-name">Cash (On-site)</div>
                                     <div class="bm-pay-desc">Pay at check-in</div>
@@ -1151,7 +1168,11 @@ $nav_items = [
                     </div>
                     <div class="bm-summary-divider"></div>
                     <div class="bm-total-row"><span class="bm-total-label">Total due now</span><span
-                            class="bm-total-amount" id="sb-total">—</span></div>
+                            class="bm-total-amount" id="sb-total">—</span>
+                    </div>
+                    <div style="font-size:0.72rem;color:#6b7280;margin-top:8px;font-style:italic">Price seasonality
+                        applies</div>
+                    <div id="sb-season-breakdown" style="margin-top:4px"></div>
                     <div class="bm-hold-notice">Your booking is held for <strong>30 minutes</strong>.</div>
                 </div>
                 <div class="bm-footer-wrap" id="bmFooter">
@@ -1204,8 +1225,129 @@ $nav_items = [
             lng: <?php echo (float) ($unit['longitude'] ?? 0); ?>,
             priceNum: <?php echo (float) $unit['rent_amount']; ?>,
             maxGuests: <?php echo (int) ($unit['max_guests'] ?? 6); ?>,
+            seasonality: { 0: 1.30, 1: 1.30, 2: 1.10, 3: 1.15, 4: 1.15, 5: 0.80, 6: 0.80, 7: 0.80, 8: 0.80, 9: 0.80, 10: 1.15, 11: 1.30 },
+            seasonLabel: { 0: 'Peak', 1: 'Peak', 2: 'High', 3: 'High', 4: 'High', 5: 'Low', 6: 'Low', 7: 'Low', 8: 'Low', 9: 'Low', 10: 'High', 11: 'Peak' },
         };
         fetch('../../api/user/sync_unit_statuses.php').catch(() => { });
+    </script>
+
+    <script>
+        (function () {
+            const lat = <?php echo json_encode((float) ($unit['latitude'] ?? 0)); ?>;
+            const lng = <?php echo json_encode((float) ($unit['longitude'] ?? 0)); ?>;
+
+            const CATEGORIES = [
+                { amenity: 'restaurant', label: 'Dining', icon: 'ti-tools-kitchen-2' },
+                { amenity: 'cafe', label: 'Café', icon: 'ti-coffee' },
+                { amenity: 'bar', label: 'Bar', icon: 'ti-glass-full' },
+                { amenity: 'bank', label: 'Bank', icon: 'ti-building-bank' },
+                { amenity: 'atm', label: 'ATM', icon: 'ti-credit-card' },
+                { amenity: 'pharmacy', label: 'Pharmacy', icon: 'ti-pill' },
+                { amenity: 'hospital', label: 'Hospital', icon: 'ti-building-hospital' },
+                { amenity: 'supermarket', label: 'Grocery', icon: 'ti-shopping-cart' },
+                { amenity: 'school', label: 'School', icon: 'ti-school' },
+                { amenity: 'place_of_worship', label: 'Church', icon: 'ti-building-church' },
+                { tourism: 'attraction', label: 'Attraction', icon: 'ti-star' },
+                { tourism: 'hotel', label: 'Hotel', icon: 'ti-building' },
+                { leisure: 'park', label: 'Park', icon: 'ti-trees' },
+                { leisure: 'beach', label: 'Beach', icon: 'ti-wave-saw-tool' },
+            ];
+
+            function getLabel(tags) {
+                for (const cat of CATEGORIES) {
+                    const key = cat.amenity ? 'amenity' : cat.tourism ? 'tourism' : 'leisure';
+                    const val = cat.amenity || cat.tourism || cat.leisure;
+                    if (tags[key] === val) return { label: cat.label, icon: cat.icon };
+                }
+                return { label: 'Place', icon: 'ti-map-pin' };
+            }
+
+            function metersToText(m) {
+                if (m < 100) return `${Math.round(m)}m · 1 min walk`;
+                if (m < 500) return `~${Math.round(m)}m · ${Math.round(m / 80)} min walk`;
+                if (m < 2000) return `~${(m / 1000).toFixed(1)} km · ${Math.round(m / 80)} min walk`;
+                return `~${(m / 1000).toFixed(1)} km · ${Math.round(m / 400)} min drive`;
+            }
+
+            function haversine(lat1, lng1, lat2, lng2) {
+                const R = 6371000, r = Math.PI / 180;
+                const dLat = (lat2 - lat1) * r, dLng = (lng2 - lng1) * r;
+                const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(dLng / 2) ** 2;
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            }
+
+            function renderNearby(places, refLat, refLng) {
+                const list = document.getElementById('udNearbyList');
+                if (!places.length) {
+                    list.innerHTML = '<p class="ud-nearby-empty">No nearby places found.</p>';
+                    return;
+                }
+                list.innerHTML = places.map(p => {
+                    const name = p.tags.name || p.tags['name:en'] || 'Unnamed Place';
+                    const { label, icon } = getLabel(p.tags);
+                    const dist = haversine(refLat, refLng, p.lat ?? p.center?.lat, p.lon ?? p.center?.lon);
+                    return `
+            <div class="ud-nearby-item">
+                <span class="ud-nearby-icon"><i class="ti ${icon}"></i></span>
+                <div class="ud-nearby-body">
+                    <div class="ud-nearby-name">${name}</div>
+                    <div class="ud-nearby-dist">${metersToText(dist)}</div>
+                </div>
+                <span class="ud-nearby-tag">${label}</span>
+            </div>`;
+                }).join('');
+            }
+
+            const radius = 1000;
+            const address = <?php echo json_encode(trim(($unit['address'] ?? '') . ' ' . ($unit['city'] ?? ''))); ?>;
+
+            function doNearbyFetch(refLat, refLng) {
+                const query = `[out:json][timeout:10];(node(around:${radius},${refLat},${refLng})[amenity~"restaurant|cafe|bar|bank|atm|pharmacy|hospital|supermarket|school|place_of_worship"];node(around:${radius},${refLat},${refLng})[tourism~"attraction|hotel"];node(around:${radius},${refLat},${refLng})[leisure~"park|beach"];way(around:${radius},${refLat},${refLng})[amenity~"restaurant|cafe|bar|bank|pharmacy|hospital|supermarket"];way(around:${radius},${refLat},${refLng})[leisure~"park|beach"];);out center 20;`;
+                fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(query) })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.elements) throw new Error('no elements');
+                        const named = data.elements.filter(e => e.tags?.name || e.tags?.['name:en']);
+                        const seen = new Set();
+                        const unique = named.filter(e => {
+                            const n = (e.tags.name || e.tags['name:en']).toLowerCase();
+                            if (seen.has(n)) return false;
+                            seen.add(n);
+                            return true;
+                        });
+                        unique.sort((a, b) => {
+                            const da = haversine(refLat, refLng, a.lat ?? a.center?.lat, a.lon ?? a.center?.lon);
+                            const db = haversine(refLat, refLng, b.lat ?? b.center?.lat, b.lon ?? b.center?.lon);
+                            return da - db;
+                        });
+                        renderNearby(unique.slice(0, 8), refLat, refLng);
+                    })
+                    .catch(() => {
+                        document.getElementById('udNearbyList').innerHTML =
+                            '<p class="ud-nearby-empty">Could not load nearby places.</p>';
+                    });
+            }
+
+            if (lat && lng) {
+                doNearbyFetch(lat, lng);
+            } else if (address) {
+                fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`, {
+                    headers: { 'User-Agent': 'PropSight/1.0' }
+                })
+                    .then(r => r.json())
+                    .then(results => {
+                        if (!results.length) throw new Error('no results');
+                        doNearbyFetch(parseFloat(results[0].lat), parseFloat(results[0].lon));
+                    })
+                    .catch(() => {
+                        document.getElementById('udNearbyList').innerHTML =
+                            '<p class="ud-nearby-empty">📍 No location set for this property.</p>';
+                    });
+            } else {
+                document.getElementById('udNearbyList').innerHTML =
+                    '<p class="ud-nearby-empty">📍 No location set for this property.</p>';
+            }
+        })();
     </script>
     <script src="../../assets/js/user-js/script.js"></script>
     <script src="../../assets/js/toast.js"></script>

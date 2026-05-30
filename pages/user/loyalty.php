@@ -30,18 +30,7 @@ $tier_svgs = [
     'Diamond' => '<svg class="tier-svg diamond"  viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 9l3-6h14l3 6-10 12L2 9z" stroke-width="1.5" stroke-linejoin="round"/><path d="M2 9h20M8 3l-3 6 7 12M16 3l3 6-7 12" stroke-width="1.2" stroke-linecap="round"/></svg>',
 ];
 
-$rewards = [];
-$rwStmt = $conn->query(
-    "SELECT reward_id AS id, name, description AS `desc`, points_cost AS pts
-     FROM loyalty_rewards
-     WHERE is_active = 1
-     ORDER BY points_cost ASC"
-);
-if ($rwStmt) {
-    while ($rw = $rwStmt->fetch_assoc()) {
-        $rewards[] = $rw;
-    }
-}
+
 
 // Replace $reward_svg_pool with this:
 
@@ -206,57 +195,73 @@ function resolve_reward_icon(string $name, string $desc, array $map): string
             <p class="card-subtext">Balance: <strong id="rewardsBalanceDisplay"><?php echo number_format($points); ?>
                     pts</strong></p>
             <div class="rewards-grid" id="rewardsGrid">
-                <?php foreach ($rewards as $loop_index => $r):
-                    $can = $points >= $r['pts']; ?>
-                    <div class="reward-card <?php echo !$can ? 'reward-locked' : ''; ?>"
-                        data-reward-id="<?php echo $r['id']; ?>" data-reward-pts="<?php echo $r['pts']; ?>">
-                        <div class="reward-svg-icon <?php echo $can ? 'unlocked' : 'locked'; ?>">
-                            <?php echo resolve_reward_icon($r['name'], $r['desc'], $reward_svg_map); ?>
-                        </div>
-                        <div class="reward-lock-icon">
-                            <?php if (!$can): ?>
-                                <svg viewBox="0 0 24 24" fill="none">
-                                    <rect x="5" y="11" width="14" height="10" rx="2" stroke-width="1.6" />
-                                    <path d="M8 11V7a4 4 0 018 0v4" stroke-width="1.6" stroke-linecap="round" />
-                                </svg>
-                            <?php endif; ?>
-                        </div>
-
-                        <div class="reward-name"><?php echo htmlspecialchars($r['name']); ?></div>
-                        <div class="reward-desc"><?php echo htmlspecialchars($r['desc']); ?></div>
-                        <div class="reward-foot">
-                            <div class="reward-cost">
-                                <svg viewBox="0 0 24 24" fill="none" class="reward-cost-icon">
-                                    <circle cx="12" cy="8" r="5" stroke-width="1.8" />
-                                    <path d="M14.5 11.9L16 21l-4-2.4-4 2.4 1.5-9.1" stroke-width="1.5"
-                                        stroke-linejoin="round" />
-                                </svg>
-                                <?php echo number_format($r['pts']); ?> <span>pts</span>
-                            </div>
-                            <button class="btn-redeem" <?php echo !$can ? 'disabled' : ''; ?>
-                                data-id="<?php echo $r['id']; ?>"
-                                data-name="<?php echo htmlspecialchars($r['name'], ENT_QUOTES); ?>"
-                                data-pts="<?php echo $r['pts']; ?>" data-svg-id="<?php echo $loop_index; ?>"
-                                data-desc="<?php echo htmlspecialchars($r['desc'], ENT_QUOTES); ?>"
-                                onclick="redeemReward(this)">
-                                <?php if ($can): ?>
-                                    <svg viewBox="0 0 24 24" fill="none"
-                                        style="width:12px;height:12px;stroke:currentColor;stroke-width:2.5;">
-                                        <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                    Redeem
-                                <?php else: ?>
-                                    <svg viewBox="0 0 24 24" fill="none"
-                                        style="width:12px;height:12px;stroke:currentColor;stroke-width:2;">
-                                        <line x1="12" y1="5" x2="12" y2="19" />
-                                        <line x1="5" y1="12" x2="19" y2="12" />
-                                    </svg>
-                                    Need more
-                                <?php endif; ?>
-                            </button>
+                <?php if (empty($rewards)): ?>
+                    <div style="grid-column:1/-1;text-align:center;padding:36px 16px;">
+                        <svg width="40" height="40" fill="none" stroke="#d1d5db" stroke-width="1.5" viewBox="0 0 24 24"
+                            style="margin:0 auto 12px;display:block;">
+                            <path d="M20 12V22H4V12" />
+                            <path d="M22 7H2v5h20V7z" stroke-linejoin="round" />
+                            <path d="M12 22V7" />
+                            <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" />
+                            <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+                        </svg>
+                        <div style="font-size:0.9rem;font-weight:600;color:#6b7280;margin-bottom:4px;">No rewards available
+                            yet</div>
+                        <div style="font-size:0.8rem;color:#9ca3af;">Check back soon — new rewards are added regularly.
                         </div>
                     </div>
-                <?php endforeach; ?>
+                <?php else: ?>
+                    <?php foreach ($rewards as $loop_index => $r):
+                        $can = $points >= $r['pts']; ?>
+                        <div class="reward-card <?php echo !$can ? 'reward-locked' : ''; ?>"
+                            data-reward-id="<?php echo $r['id']; ?>" data-reward-pts="<?php echo $r['pts']; ?>">
+                            <div class="reward-svg-icon <?php echo $can ? 'unlocked' : 'locked'; ?>">
+                                <?php echo resolve_reward_icon($r['name'], $r['desc'], $reward_svg_map); ?>
+                            </div>
+                            <div class="reward-lock-icon">
+                                <?php if (!$can): ?>
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <rect x="5" y="11" width="14" height="10" rx="2" stroke-width="1.6" />
+                                        <path d="M8 11V7a4 4 0 018 0v4" stroke-width="1.6" stroke-linecap="round" />
+                                    </svg>
+                                <?php endif; ?>
+                            </div>
+                            <div class="reward-name"><?php echo htmlspecialchars($r['name']); ?></div>
+                            <div class="reward-desc"><?php echo htmlspecialchars($r['desc']); ?></div>
+                            <div class="reward-foot">
+                                <div class="reward-cost">
+                                    <svg viewBox="0 0 24 24" fill="none" class="reward-cost-icon">
+                                        <circle cx="12" cy="8" r="5" stroke-width="1.8" />
+                                        <path d="M14.5 11.9L16 21l-4-2.4-4 2.4 1.5-9.1" stroke-width="1.5"
+                                            stroke-linejoin="round" />
+                                    </svg>
+                                    <?php echo number_format($r['pts']); ?> <span>pts</span>
+                                </div>
+                                <button class="btn-redeem" <?php echo !$can ? 'disabled' : ''; ?>
+                                    data-id="<?php echo $r['id']; ?>"
+                                    data-name="<?php echo htmlspecialchars($r['name'], ENT_QUOTES); ?>"
+                                    data-pts="<?php echo $r['pts']; ?>" data-svg-id="<?php echo $loop_index; ?>"
+                                    data-desc="<?php echo htmlspecialchars($r['desc'], ENT_QUOTES); ?>"
+                                    onclick="redeemReward(this)">
+                                    <?php if ($can): ?>
+                                        <svg viewBox="0 0 24 24" fill="none"
+                                            style="width:12px;height:12px;stroke:currentColor;stroke-width:2.5;">
+                                            <polyline points="20 6 9 17 4 12" />
+                                        </svg>
+                                        Redeem
+                                    <?php else: ?>
+                                        <svg viewBox="0 0 24 24" fill="none"
+                                            style="width:12px;height:12px;stroke:currentColor;stroke-width:2;">
+                                            <line x1="12" y1="5" x2="12" y2="19" />
+                                            <line x1="5" y1="12" x2="19" y2="12" />
+                                        </svg>
+                                        Need more
+                                    <?php endif; ?>
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
 
