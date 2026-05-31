@@ -235,7 +235,6 @@ $nav_items = [
         $_heroImg = '../../assets/images/hero.jpg';
         $_heroStyle = ' style="background-image:url(\'' . $_heroImg . '\');background-size:cover;background-position:center;background-repeat:no-repeat;"';
         echo '<div class="page-hero"' . $_heroStyle . '>';
-        echo '<div class="page-hero-art" aria-hidden="true">' . $art_svg . '</div>';
         echo '<div class="page-hero-rule"></div>';
         echo '<div class="page-hero-inner reveal">';
         echo '<div>';

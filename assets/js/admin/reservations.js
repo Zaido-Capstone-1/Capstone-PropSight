@@ -93,12 +93,13 @@ function normaliseBooking(b) {
 }
 
 /* ─── Page-level state ───────────────────────────────────────────────────── */
-const currentStatus = window.__PS_RESERVATIONS__.currentStatus;
-const currentSearch = window.__PS_RESERVATIONS__.currentSearch;
+let currentStatus = window.__PS_RESERVATIONS__.currentStatus || 'all';
+let currentSearch = window.__PS_RESERVATIONS__.currentSearch || '';
 
 let knownIds = new Set();   // booking IDs already known to the page
 const highlightedOnce = new Set(); // IDs that have already been green-flashed
-let allRows = [];           // flat in-memory list (source of truth)
+let sourceRows = [];        // ALL rows unfiltered (master list)
+let allRows = [];           // filtered rows (what renderPage uses)
 const PER_PAGE = 10;
 let currentPage = 1;
 
@@ -304,6 +305,19 @@ function rowHtml(b, isNew) {
 </tr>`;
 }
 
+/* ─── applyFilter — client-side filter, no reload ───────────────────────── */
+function applyFilter() {
+    const q = currentSearch.toLowerCase().trim();
+    allRows = sourceRows.filter(b => {
+        const statusMatch = currentStatus === 'all' || b.status === currentStatus;
+        const searchMatch = !q || [b.user_name, b.user_email, b.unit_name, b.property_name,
+            String(b.booking_id)].some(v => (v || '').toLowerCase().includes(q));
+        return statusMatch && searchMatch;
+    });
+    currentPage = 1;
+    renderPage();
+}
+
 /* ─── renderPage ─────────────────────────────────────────────────────────── */
 function renderPage() {
     const tbody = document.getElementById('reservationsTbody');
@@ -405,21 +419,94 @@ function goPage(p) {
 window.updateStatus = updateStatus;
 window.goPage = goPage;
 
-/* ─── Search debounce ────────────────────────────────────────────────────── */
+/* ─── Search & Status — dynamic, no reload ──────────────────────────────── */
 const searchInput = document.getElementById('searchInput');
 let searchTimer;
-searchInput.addEventListener('input', () => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => searchInput.closest('form').submit(), 500);
-});
+if (searchInput) {
+    // Pre-fill from URL param if any
+    searchInput.value = currentSearch;
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            currentSearch = searchInput.value;
+            applyFilter();
+        }, 250);
+    });
+}
+
+const statusSelect = document.getElementById('statusSelect');
+if (statusSelect) {
+    statusSelect.value = currentStatus;
+    statusSelect.onchange = null;
+    statusSelect.addEventListener('change', () => {
+        currentStatus = statusSelect.value;
+        applyFilter();
+    });
+}
+
+/* ── Custom status dropdown ── */
+const resStatusWrap    = document.getElementById('resStatusWrap');
+const resStatusTrigger = document.getElementById('resStatusTrigger');
+const resStatusMenu    = document.getElementById('resStatusMenu');
+const resStatusLabel   = document.getElementById('resStatusLabel');
+
+if (resStatusWrap && resStatusTrigger && resStatusMenu) {
+    // Set initial active from currentStatus
+    resStatusMenu.querySelectorAll('.res-status-opt').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.val === currentStatus);
+        if (opt.dataset.val === currentStatus) resStatusLabel.textContent = opt.textContent.trim();
+    });
+
+    resStatusTrigger.addEventListener('click', e => {
+        e.stopPropagation();
+        const isOpen = resStatusWrap.classList.toggle('open');
+        resStatusTrigger.setAttribute('aria-expanded', isOpen);
+    });
+
+    resStatusMenu.querySelectorAll('.res-status-opt').forEach(opt => {
+        opt.addEventListener('click', () => {
+            currentStatus = opt.dataset.val;
+            resStatusLabel.textContent = opt.textContent.trim();
+            resStatusMenu.querySelectorAll('.res-status-opt').forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            resStatusWrap.classList.remove('open');
+            resStatusTrigger.setAttribute('aria-expanded', 'false');
+            applyFilter();
+        });
+    });
+
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#resStatusWrap')) {
+            resStatusWrap.classList.remove('open');
+            resStatusTrigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+
+// Hide the clear button and prevent form submission
+const resForm = document.querySelector('.res-controls form');
+if (resForm) {
+    resForm.addEventListener('submit', e => e.preventDefault());
+}
+
+const clearBtn = document.querySelector('.res-clear-btn');
+if (clearBtn) {
+    clearBtn.addEventListener('click', e => {
+        e.preventDefault();
+        currentSearch = '';
+        if (searchInput) searchInput.value = '';
+        applyFilter();
+    });
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
  *  BOOTSTRAP
  * ═══════════════════════════════════════════════════════════════════════════ */
 allRows = (window.__PS_RESERVATIONS__.allRows || []).map(normaliseBooking).filter(Boolean);
+sourceRows = [...allRows];
 knownIds = new Set(allRows.map(b => String(b.booking_id)));
 allRows.forEach(b => highlightedOnce.add(String(b.booking_id))); // no flash on first load
-renderPage();
+applyFilter();
 
 /* ─── Self-contained polling loop (primary auto-update) ─────────────────── */
 (function startPolling() {
@@ -430,8 +517,8 @@ renderPage();
 
         // Call the same API the page uses — limit=200 to always get full list
         const url = '../../api/reservations.php?' + new URLSearchParams({
-            status: currentStatus,
-            search: currentSearch,
+            status: 'all',
+            search: '',
             limit: '200',
             _: Date.now(),
         });
@@ -451,14 +538,11 @@ renderPage();
                 if (newOnes.length) {
                     newOnes.forEach(b => {
                         knownIds.add(String(b.booking_id));
-                        allRows.unshift(b);
+                        sourceRows.unshift(b);
                     });
 
+                    applyFilter();
                     if (currentPage === 1) _injectNewRows(newOnes);
-
-                    // Rebuild footer + pagination without wiping tbody
-                    const total = allRows.length;
-                    _buildPagination(total, Math.max(1, Math.ceil(total / PER_PAGE)), (currentPage - 1) * PER_PAGE);
                 }
 
                 if (data.stats) _applyStats(data.stats);
@@ -482,11 +566,9 @@ window.addEventListener('ps:new_bookings', e => {
     existing.forEach(b => _patchRow(b.booking_id, b.status));
     if (!newOnes.length) return;
 
-    newOnes.forEach(b => { knownIds.add(String(b.booking_id)); allRows.unshift(b); });
+    newOnes.forEach(b => { knownIds.add(String(b.booking_id)); sourceRows.unshift(b); });
+    applyFilter();
     if (currentPage === 1) _injectNewRows(newOnes);
-
-    const total = allRows.length;
-    _buildPagination(total, Math.max(1, Math.ceil(total / PER_PAGE)), (currentPage - 1) * PER_PAGE);
     _refreshStatsOnly();
 });
 

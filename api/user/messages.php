@@ -16,7 +16,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
     exit;
 }
 
-$userId = (int)$_SESSION['user_id'];
+$userId = (int) $_SESSION['user_id'];
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
@@ -46,13 +46,17 @@ if ($method === 'GET') {
             ORDER BY last_time DESC
         ");
         $threads = [];
-        while ($row = mysqli_fetch_assoc($res)) $threads[] = $row;
+        while ($row = mysqli_fetch_assoc($res))
+            $threads[] = $row;
 
         // Also get list of admins user hasn't messaged yet (so they can start a new thread)
-        $adminRes = mysqli_query($conn,
-            "SELECT user_id, first_name, last_name, email FROM users WHERE role='admin' AND is_active=1 ORDER BY first_name");
+        $adminRes = mysqli_query(
+            $conn,
+            "SELECT user_id, first_name, last_name, email FROM users WHERE role='admin' AND is_active=1 ORDER BY first_name"
+        );
         $admins = [];
-        while ($a = mysqli_fetch_assoc($adminRes)) $admins[] = $a;
+        while ($a = mysqli_fetch_assoc($adminRes))
+            $admins[] = $a;
 
         echo json_encode(['success' => true, 'threads' => $threads, 'admins' => $admins]);
         exit;
@@ -60,8 +64,11 @@ if ($method === 'GET') {
 
     // ── Load full conversation with a specific admin ──
     if ($action === 'conversation') {
-        $adminId = (int)($_GET['admin_id'] ?? 0);
-        if (!$adminId) { echo json_encode(['success'=>false,'message'=>'admin_id required']); exit; }
+        $adminId = (int) ($_GET['admin_id'] ?? 0);
+        if (!$adminId) {
+            echo json_encode(['success' => false, 'message' => 'admin_id required']);
+            exit;
+        }
 
         // Mark messages from admin to user as read
         $markStmt = $conn->prepare(
@@ -83,7 +90,8 @@ if ($method === 'GET') {
         $convStmt->execute();
         $res = $convStmt->get_result();
         $msgs = [];
-        while ($row = mysqli_fetch_assoc($res)) $msgs[] = $row;
+        while ($row = mysqli_fetch_assoc($res))
+            $msgs[] = $row;
         $convStmt->close();
 
         $adminStmt = $conn->prepare(
@@ -100,10 +108,11 @@ if ($method === 'GET') {
 
     // ── Poll for new messages since a timestamp (real-time) ──
     if ($action === 'poll') {
-        $adminId = (int)($_GET['admin_id'] ?? 0);
-        $since   = trim($_GET['since'] ?? '');
+        $adminId = (int) ($_GET['admin_id'] ?? 0);
+        $since = trim($_GET['since'] ?? '');
         if (!$adminId || !$since || !strtotime($since)) {
-            echo json_encode(['success'=>false,'message'=>'admin_id and since required']); exit;
+            echo json_encode(['success' => false, 'message' => 'admin_id and since required']);
+            exit;
         }
 
         // Mark new ones as read
@@ -127,10 +136,28 @@ if ($method === 'GET') {
         $pollStmt->execute();
         $res = $pollStmt->get_result();
         $msgs = [];
-        while ($row = mysqli_fetch_assoc($res)) $msgs[] = $row;
+        while ($row = mysqli_fetch_assoc($res))
+            $msgs[] = $row;
         $pollStmt->close();
 
         echo json_encode(['success' => true, 'messages' => $msgs, 'ts' => date('Y-m-d H:i:s')]);
+        exit;
+    }
+
+    // ── Mark messages from an admin as read ─────────────────
+    if ($action === 'mark_read') {
+        $adminId = (int) ($_GET['admin_id'] ?? 0);
+        if (!$adminId) {
+            echo json_encode(['success' => false, 'message' => 'admin_id required']);
+            exit;
+        }
+        $markStmt = $conn->prepare(
+            'UPDATE messages SET is_read = 1 WHERE from_user = ? AND to_user = ? AND is_read = 0'
+        );
+        $markStmt->bind_param('ii', $adminId, $userId);
+        $markStmt->execute();
+        $markStmt->close();
+        echo json_encode(['success' => true]);
         exit;
     }
 
@@ -141,15 +168,16 @@ if ($method === 'GET') {
 if ($method === 'POST') {
     require_verified_user_action(true);
     require_csrf_token(true);
-    $action  = $_POST['action'] ?? 'send';
+    $action = $_POST['action'] ?? 'send';
 
     if ($action === 'send') {
-        $toAdmin = (int)($_POST['to_admin'] ?? 0);
+        $toAdmin = (int) ($_POST['to_admin'] ?? 0);
         $subject = trim($_POST['subject'] ?? '');
-        $body    = trim($_POST['body'] ?? '');
+        $body = trim($_POST['body'] ?? '');
 
         if (!$toAdmin || (!$body && empty($_FILES['attachment']['name']))) {
-            echo json_encode(['success'=>false,'message'=>'Recipient and message or attachment required.']); exit;
+            echo json_encode(['success' => false, 'message' => 'Recipient and message or attachment required.']);
+            exit;
         }
 
         // Verify target is actually an admin
@@ -161,24 +189,28 @@ if ($method === 'POST') {
         $adminCheck = $adminCheckStmt->get_result()->fetch_assoc();
         $adminCheckStmt->close();
         if (!$adminCheck) {
-            echo json_encode(['success'=>false,'message'=>'Invalid recipient.']); exit;
+            echo json_encode(['success' => false, 'message' => 'Invalid recipient.']);
+            exit;
         }
 
         // Handle file attachment
         $attachmentUrl = null;
         if (!empty($_FILES['attachment']['name']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = __DIR__ . '/../../assets/uploads/messages/';
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+            if (!is_dir($uploadDir))
+                mkdir($uploadDir, 0755, true);
 
-            $allowed = ['jpg','jpeg','png','gif','webp','pdf','doc','docx','txt'];
-            $ext     = strtolower(pathinfo($_FILES['attachment']['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'txt'];
+            $ext = strtolower(pathinfo($_FILES['attachment']['name'], PATHINFO_EXTENSION));
             $maxSize = 5 * 1024 * 1024; // 5MB
 
             if (!in_array($ext, $allowed)) {
-                echo json_encode(['success'=>false,'message'=>'File type not allowed. Allowed: jpg, png, gif, pdf, doc, txt.']); exit;
+                echo json_encode(['success' => false, 'message' => 'File type not allowed. Allowed: jpg, png, gif, pdf, doc, txt.']);
+                exit;
             }
             if ($_FILES['attachment']['size'] > $maxSize) {
-                echo json_encode(['success'=>false,'message'=>'File too large. Maximum size is 5MB.']); exit;
+                echo json_encode(['success' => false, 'message' => 'File too large. Maximum size is 5MB.']);
+                exit;
             }
 
             $filename = uniqid('msg_', true) . '.' . $ext;
@@ -187,7 +219,8 @@ if ($method === 'POST') {
             }
         }
 
-        if (!$body) $body = '📎 Attachment';
+        if (!$body)
+            $body = '📎 Attachment';
 
         $insStmt = $conn->prepare(
             'INSERT INTO messages (from_user, to_user, subject, body, attachment_url) VALUES (?, ?, ?, ?, ?)'
@@ -196,7 +229,7 @@ if ($method === 'POST') {
 
         if ($insStmt->execute()) {
             $newId = $insStmt->insert_id;
-            $now   = date('Y-m-d H:i:s');
+            $now = date('Y-m-d H:i:s');
             $insStmt->close();
 
             // Notify admin
@@ -217,14 +250,14 @@ if ($method === 'POST') {
             $notifStmt->close();
 
             echo json_encode([
-                'success'    => true,
-                'message'    => 'Message sent.',
+                'success' => true,
+                'message' => 'Message sent.',
                 'message_id' => $newId,
-                'ts'         => $now,
+                'ts' => $now,
             ]);
         } else {
             $insStmt->close();
-            echo json_encode(['success'=>false,'message'=>mysqli_error($conn)]);
+            echo json_encode(['success' => false, 'message' => mysqli_error($conn)]);
         }
         exit;
     }

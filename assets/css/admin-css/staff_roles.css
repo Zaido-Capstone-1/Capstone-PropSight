@@ -11,6 +11,119 @@
     position: relative;
 }
 
+/* Controls row: search + role dropdown — inline, no wrap */
+.staff-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+}
+
+/* Role category custom dropdown — matches support/invoice page style */
+.inv-status-dropdown-wrap {
+    position: relative;
+}
+
+.inv-status-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    height: 34px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius, 8px);
+    background: var(--white, #fff);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text, #111);
+    cursor: pointer;
+    white-space: nowrap;
+    box-sizing: border-box;
+    transition: border-color .15s;
+    min-width: 118px;
+    justify-content: space-between;
+}
+
+.inv-status-trigger:hover,
+.inv-status-dropdown-wrap.open .inv-status-trigger {
+    border-color: #4f8ef7;
+}
+
+.inv-status-trigger svg {
+    flex-shrink: 0;
+    transition: transform .2s;
+    color: #6b7a90;
+}
+
+.inv-status-dropdown-wrap.open .inv-status-trigger svg {
+    transform: rotate(180deg);
+}
+
+.inv-status-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    left: auto;
+    z-index: 9999;
+    background: var(--white, #fff);
+    border: 1.5px solid var(--border, #e5e7eb);
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, .11);
+    padding: 5px;
+    min-width: 150px;
+    animation: invDropIn .15s ease;
+}
+
+@keyframes invDropIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.inv-status-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 11px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text, #111);
+    cursor: pointer;
+    border-radius: 7px;
+    text-align: left;
+    transition: background .12s;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.inv-status-opt:hover {
+    background: #f5f6fa;
+}
+
+.inv-status-opt.active {
+    background: #2563eb;
+    color: #fff;
+    font-weight: 600;
+}
+
+.inv-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
 .search-wrap svg {
     position: absolute;
     left: 10px;
@@ -30,8 +143,10 @@
     font-size: 0.82rem;
     outline: none;
     width: 200px;
+    max-width: 100%;
     background: #fff;
     transition: border-color .2s;
+    box-sizing: border-box;
 }
 
 .search-wrap input:focus {
@@ -364,5 +479,38 @@
     to {
         opacity: 1;
         transform: translateY(0) scale(1);
+    }
+}
+
+/* ── Responsive: fix card-header overlap on small screens ── */
+@media (max-width: 700px) {
+    .card-header {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .staff-controls {
+        width: 100%;
+        flex-wrap: nowrap;
+        gap: 6px;
+    }
+
+    .search-wrap {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .search-wrap input {
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .inv-status-dropdown-wrap {
+        flex-shrink: 0;
+    }
+
+    .inv-status-trigger {
+        min-width: 100px;
     }
 }

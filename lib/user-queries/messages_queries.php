@@ -8,6 +8,7 @@ $threadsRes = mysqli_query($conn, "
     SELECT
         IF(m.from_user=$userId, m.to_user, m.from_user) AS admin_id,
         CONCAT(u.first_name,' ',u.last_name)            AS admin_name,
+        u.profile_photo                                  AS admin_photo,
         (SELECT body FROM messages
          WHERE (from_user=$userId AND to_user=IF(m.from_user=$userId,m.to_user,m.from_user))
             OR (from_user=IF(m.from_user=$userId,m.to_user,m.from_user) AND to_user=$userId)

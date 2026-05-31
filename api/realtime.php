@@ -98,7 +98,59 @@ if ($role === 'admin') {
     ));
     $payload['unread_messages'] = (int) ($msgRow['c'] ?? 0);
 
-    // ── New messages (for messages page real-time) ─────
+    // ── Admin notifications (messages + pending bookings + tasks) ─────
+    $adminNotifs = [];
+    $adminMsgNotifRes = mysqli_query(
+        $conn,
+        "SELECT m.message_id AS id, m.created_at,
+                CONCAT(u.first_name,' ',u.last_name) AS actor
+         FROM messages m
+         JOIN users u ON u.user_id = m.from_user
+         WHERE m.to_user = $userId AND m.is_read = 0
+         ORDER BY m.created_at DESC LIMIT 5"
+    );
+    while ($adminMsgNotifRes && ($n = mysqli_fetch_assoc($adminMsgNotifRes))) {
+        $adminNotifs[] = [
+            'id' => 'msg-' . (int) $n['id'],
+            'type' => 'message',
+            'text' => 'New message from ' . trim((string) ($n['actor'] ?? 'User')),
+            'ts' => (string) ($n['created_at'] ?? $now),
+            'path' => 'messages.php',
+        ];
+    }
+    $adminBookingNotifRes = mysqli_query(
+        $conn,
+        "SELECT booking_id, created_at FROM bookings
+         WHERE status = 'pending'
+         ORDER BY created_at DESC LIMIT 5"
+    );
+    while ($adminBookingNotifRes && ($n = mysqli_fetch_assoc($adminBookingNotifRes))) {
+        $adminNotifs[] = [
+            'id' => 'booking-' . (int) $n['booking_id'],
+            'type' => 'booking',
+            'text' => 'Pending booking #' . str_pad((string) $n['booking_id'], 4, '0', STR_PAD_LEFT),
+            'ts' => (string) ($n['created_at'] ?? $now),
+            'path' => 'reservations.php?status=pending',
+        ];
+    }
+    $adminTaskNotifRes = mysqli_query(
+        $conn,
+        "SELECT request_id, issue_description, request_date FROM maintenance_requests
+         WHERE request_status IN ('open','in_progress')
+         ORDER BY request_date DESC LIMIT 5"
+    );
+    while ($adminTaskNotifRes && ($n = mysqli_fetch_assoc($adminTaskNotifRes))) {
+        $adminNotifs[] = [
+            'id' => 'task-' . (int) $n['request_id'],
+            'type' => 'task',
+            'text' => 'Task: ' . trim((string) ($n['issue_description'] ?: 'Maintenance request')),
+            'ts' => (string) ($n['request_date'] ?? $now),
+            'path' => 'task_summary.php?status=open',
+        ];
+    }
+    usort($adminNotifs, fn($a, $b) => strtotime($b['ts']) <=> strtotime($a['ts']));
+    $payload['admin_notifications'] = array_slice($adminNotifs, 0, 10);
+    $payload['admin_notif_count'] = count($payload['admin_notifications']);
     // Only return messages FROM others (not sent by this admin) to avoid
     // double-rendering with the page's own optimistic send + poll.
     if ($page === 'messages') {

@@ -10,7 +10,11 @@
 
   function fmtDate(ts) {
     const d = ts ? new Date(ts) : new Date();
-    return d.toLocaleDateString('en-PH', { day: '2-digit', month: 'long', year: 'numeric' });
+    return d.toLocaleDateString('en-PH', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
   }
 
   function relativeTime(ts) {
@@ -52,11 +56,17 @@
       .sort((a, b) => new Date(b.ts) - new Date(a.ts))
       .slice(0, 5);
     if (!items.length) {
-      if (notifDot) notifDot.style.display = 'none';
+      if (notifDot) {
+        notifDot.style.display = 'none';
+        notifDot.textContent = '';
+      }
       if (notifList) notifList.innerHTML = '<div style="padding:14px 12px;color:#94a3b8;font-size:12px;">No new notifications.</div>';
       return;
     }
-    if (notifDot) notifDot.style.display = '';
+    if (notifDot) {
+      notifDot.style.display = 'flex';
+      notifDot.textContent = items.length > 99 ? '99+' : items.length;
+    }
     if (notifList) {
       notifList.innerHTML = items.map(n => `
           <div class="rp-notif-item" data-notif-id="${escHtml(n.id)}" data-path="${escHtml(n.path || '')}" style="padding:10px 12px;border-bottom:1px solid #f8fafc;cursor:pointer;">
@@ -81,8 +91,8 @@
   if (notifBtn && notifDrop) {
     notifBtn.addEventListener('click', e => {
       e.stopPropagation();
-      notifDrop.style.display = notifDrop.style.display === 'none' ? 'block' : 'none';
-      if (notifDrop.style.display === 'block' && notifDot) notifDot.style.display = 'none';
+      const isOpen = notifDrop.style.display === 'none' || notifDrop.style.display === '';
+      notifDrop.style.display = isOpen ? 'block' : 'none';
     });
     document.addEventListener('click', () => {
       notifDrop.style.display = 'none';
@@ -95,17 +105,40 @@
     if (!item) return;
     const notifId = item.dataset.notifId || '';
     const path = item.dataset.path || '';
-    if (notifId) notifState.delete(String(notifId));
-    renderNotifs();
+
+    // Mark as read in DB for message-type notifications
+    if (notifId) {
+      if (notifId.startsWith('msg-')) {
+        const fd = new FormData();
+        fd.append('action', 'mark_read');
+        fd.append('id', notifId.replace('msg-', ''));
+        fetch('../../api/messages.php', {
+          method: 'POST',
+          body: fd
+        }).catch(() => {});
+      }
+      notifState.delete(String(notifId));
+      renderNotifs();
+    }
+
     if (path) window.location.href = path;
   });
 
   notifMarkAll?.addEventListener('click', () => {
+    // Mark all unread messages to this admin as read in DB
     const fd = new FormData();
-    fd.append('action', 'mark_all_read');
-    fetch('../../api/messages.php', { method: 'POST', body: fd }).catch(() => { });
+    fd.append('action', 'mark_all_admin_read');
+    if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
+    fetch('../../api/messages.php', {
+      method: 'POST',
+      body: fd
+    }).catch(() => {});
     notifState.clear();
     renderNotifs();
+    if (notifDot) {
+      notifDot.style.display = 'none';
+      notifDot.textContent = '';
+    }
   });
 
   const monthEl = document.getElementById('rt-cal-month');
@@ -163,12 +196,15 @@
     scheduleWrap.innerHTML = sameDay.map(t => {
       const raw = String(t.request_date || '');
       const d = raw ? new Date(raw.replace(' ', 'T')) : null;
-      const time = d && !Number.isNaN(d.getTime())
-        ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase()
-        : '--';
-      const eventClass = (t.priority === 'high' || t.priority === 'urgent' || t.status === 'open')
-        ? 'coral'
-        : (t.status === 'in_progress' ? 'teal' : 'dark');
+      const time = d && !Number.isNaN(d.getTime()) ?
+        d.toLocaleTimeString([], {
+          hour: 'numeric',
+          minute: '2-digit'
+        }).toLowerCase() :
+        '--';
+      const eventClass = (t.priority === 'high' || t.priority === 'urgent' || t.status === 'open') ?
+        'coral' :
+        (t.status === 'in_progress' ? 'teal' : 'dark');
       return `
           <div class="schedule-slot">
             <div class="time-col">${escHtml(time)}</div>
@@ -191,7 +227,9 @@
   function renderCalendar() {
     if (!daysEl) return;
     if (monthEl) {
-      monthEl.textContent = state.anchor.toLocaleDateString('en-PH', { month: 'long' });
+      monthEl.textContent = state.anchor.toLocaleDateString('en-PH', {
+        month: 'long'
+      });
     }
 
     const hasEvent = new Set(
@@ -322,4 +360,19 @@
       });
     });
   });
+
+  // ── Wire realtime admin_notifications poll → bell badge ──────────
+  window.addEventListener('ps:admin_notifications', e => {
+    const items = Array.isArray(e.detail?.items) ? e.detail.items : [];
+    const count = e.detail?.count ?? items.length;
+    if (notifDot) {
+      notifDot.style.display = count > 0 ? 'flex' : 'none';
+      notifDot.textContent = count > 0 ? (count > 99 ? '99+' : count) : '';
+    }
+    items.forEach(n => {
+      if (n && n.id) notifState.set(String(n.id), n);
+    });
+    renderNotifs();
+  });
+
 })();

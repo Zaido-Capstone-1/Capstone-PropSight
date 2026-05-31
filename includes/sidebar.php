@@ -86,6 +86,113 @@ if ($_sb_initials === '')
   <span></span><span></span><span></span>
 </button>
 
+<!-- Mobile notification bell — only visible when right-panel is hidden (≤1024px) -->
+<button class="mobile-notif-btn" id="mobileNotifBtn" aria-label="Notifications" title="Notifications">
+  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="18" height="18">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </svg>
+  <span class="mobile-notif-dot" id="mobileNotifDot" style="display:none;"></span>
+</button>
+
+<!-- Mobile notification dropdown -->
+<div id="mobileNotifDropdown"
+  style="display:none;position:fixed;top:70px;right:12px;left:12px;max-height:70vh;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 10px 32px rgba(15,23,42,.18);z-index:9998;">
+  <div
+    style="padding:12px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;">
+    <span>Notifications</span>
+    <button id="mobileNotifMarkAll" type="button"
+      style="border:none;background:none;color:#2563eb;font-size:12px;font-weight:600;cursor:pointer;">Mark all
+      read</button>
+  </div>
+  <div id="mobileNotifList">
+    <div style="padding:24px 14px;text-align:center;color:#94a3b8;font-size:13px;">No new notifications.</div>
+  </div>
+</div>
+
+<style>
+  .mobile-notif-btn {
+    display: none;
+    /* shown via media query below */
+    position: fixed;
+    right: 16px;
+    top: 18px;
+    z-index: 400;
+    width: 44px;
+    height: 44px;
+    background: var(--white, #fff);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: var(--radius, 8px);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--blue-600, #2563eb);
+    transition: background .15s;
+  }
+
+  .mobile-notif-btn:hover {
+    background: var(--blue-50, #eff6ff);
+  }
+
+  .mobile-notif-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: #ef4444;
+    border-radius: 8px;
+    border: 2px solid #fff;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* Show bell when right-panel is hidden */
+  @media (max-width: 1024px) {
+    .mobile-notif-btn {
+      display: flex;
+    }
+  }
+
+  /* Hide when sidebar is open (same as menu-toggle) */
+  body:has(.sidebar.open) .mobile-notif-btn {
+    display: none !important;
+  }
+
+  .mobile-notif-item {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f8fafc;
+    cursor: pointer;
+    transition: background .12s;
+  }
+
+  .mobile-notif-item:hover {
+    background: #f8fafc;
+  }
+
+  .mobile-notif-item:last-child {
+    border-bottom: none;
+  }
+
+  .mobile-notif-item-text {
+    font-size: 13px;
+    color: #0f172a;
+    line-height: 1.4;
+  }
+
+  .mobile-notif-item-time {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 3px;
+  }
+</style>
+
 <nav class="sidebar" id="sidebar" aria-label="Main navigation">
 
   <div class="sidebar-top">
@@ -102,7 +209,7 @@ if ($_sb_initials === '')
 
   <div class="sidebar-nav">
 
-    <div class="nav-section-label" >Overview</div>
+    <div class="nav-section-label">Overview</div>
 
     <a href="index.php" class="nav-item<?= nav_active('dashboard') ?>">
       <div class="nav-icon">
@@ -284,7 +391,6 @@ if ($_sb_initials === '')
         </svg>
       </div>
       <span class="nav-label">Support Tickets</span>
-      <span class="nav-badge" data-rt="messages" style="display:none;">0</span>
     </a>
 
     <a href="loyalty_rewards.php" class="nav-item<?= nav_active('loyalty_rewards') ?>">

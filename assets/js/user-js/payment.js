@@ -289,46 +289,125 @@ document.querySelectorAll('[data-filter-status]').forEach(btn => {
 });
 
 function filterUnified() {
+    const type = document.getElementById('filterType')?.value || 'all';
+    const status = document.getElementById('filterStatus')?.value || 'all';
     const q = (document.getElementById('billingSearch')?.value || '').toLowerCase().trim();
-    const rows = document.querySelectorAll('#billingTable tbody tr[data-type]');
-    let visible = 0;
 
+    const rows = Array.from(document.querySelectorAll('#billingTable tbody tr[data-type]'));
+
+    // Determine which rows match the filter
     rows.forEach(row => {
-        const typeMatch = activeType === 'all' || row.dataset.type === activeType;
-        const statusMatch = activeStatus === 'all' || row.dataset.status === activeStatus;
+        const typeMatch = type === 'all' || row.dataset.type === type;
+        const statusMatch = status === 'all' || row.dataset.status === status;
         const searchMatch = !q || (row.dataset.search || '').includes(q);
-        const show = typeMatch && statusMatch && searchMatch;
-        row.style.display = show ? '' : 'none';
-        if (show) visible++;
+        row._visible = typeMatch && statusMatch && searchMatch;
+        row.style.display = 'none'; // hide all first
     });
 
-    const empty = document.getElementById('billingEmpty');
-    if (empty) empty.style.display = visible === 0 ? 'block' : 'none';
+    const matched = rows.filter(r => r._visible);
+    renderTxPage(matched, 1);
 }
+
+const TX_PER_PAGE = 10;
+
+function renderTxPage(matchedRows, page) {
+    const total = matchedRows.length;
+    const totalPages = Math.max(1, Math.ceil(total / TX_PER_PAGE));
+    page = Math.min(Math.max(1, page), totalPages);
+
+    const start = (page - 1) * TX_PER_PAGE;
+    const end = start + TX_PER_PAGE;
+
+    // All rows off, then show only this page's slice
+    matchedRows.forEach((row, i) => {
+        row.style.display = (i >= start && i < end) ? '' : 'none';
+    });
+
+    const emptyEl = document.getElementById('billingEmpty');
+    if (emptyEl) emptyEl.style.display = total === 0 ? 'block' : 'none';
+
+    // Render pagination bar
+    // Inject pagination styles once
+    if (!document.getElementById('txPgStyles')) {
+        const s = document.createElement('style');
+        s.id = 'txPgStyles';
+        s.textContent = `
+            #txPaginationBar { animation: txFadeIn .25s ease; }
+            @keyframes txFadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+            .tx-pg-btn {
+                min-width:32px; height:32px; padding:0 10px;
+                border-radius:50%; font-size:.78rem; font-weight:600;
+                cursor:pointer; border:1px solid #dbe8f6; background:#fff;
+                color:var(--ink-soft); transition:background .18s, border-color .18s, color .18s, transform .15s, box-shadow .18s;
+            }
+            .tx-pg-btn:not(:disabled):hover {
+                background:#eef4fb; border-color:#c3d8ef;
+                color:var(--navy-900); transform:translateY(-2px);
+                box-shadow:0 4px 10px rgba(11,24,41,.10);
+            }
+            .tx-pg-btn.active {
+                background:var(--navy-900); border-color:var(--navy-900);
+                color:#fff; box-shadow:0 3px 10px rgba(11,24,41,.18);
+            }
+            .tx-pg-btn.active:hover { transform:translateY(-2px); box-shadow:0 5px 14px rgba(11,24,41,.22); }
+            .tx-pg-btn:disabled { opacity:.35; cursor:default; }
+        `;
+        document.head.appendChild(s);
+    }
+
+    let pgWrap = document.getElementById('txPaginationBar');
+    if (!pgWrap) {
+        pgWrap = document.createElement('div');
+        pgWrap.id = 'txPaginationBar';
+        pgWrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 0 8px;';
+        const table = document.getElementById('billingTable');
+        if (table) table.parentNode.insertBefore(pgWrap, table.nextSibling);
+    }
+    pgWrap.innerHTML = '';
+
+    if (totalPages <= 1) return;
+
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;';
+
+    function makeBtn(label, targetPage, isActive, isDisabled) {
+        const b = document.createElement('button');
+        b.innerHTML = label;
+        b.className = 'tx-pg-btn' + (isActive ? ' active' : '');
+        if (isDisabled) b.disabled = true;
+        if (!isDisabled) b.addEventListener('click', () => renderTxPage(window._txMatchedRows, targetPage));
+        return b;
+    }
+
+    btnRow.appendChild(makeBtn('&#8592;', page - 1, false, page === 1));
+    for (let i = 1; i <= totalPages; i++) {
+        btnRow.appendChild(makeBtn(i, i, i === page, false));
+    }
+    btnRow.appendChild(makeBtn('&#8594;', page + 1, false, page === totalPages));
+    pgWrap.appendChild(btnRow);
+
+    const info = document.createElement('div');
+    info.style.cssText = 'font-size:.68rem;color:var(--ink-faint);letter-spacing:.03em;';
+    info.textContent = `Showing ${Math.min(start + 1, total)}–${Math.min(end, total)} of ${total}`;
+    pgWrap.appendChild(info);
+
+    // Store current matched rows for page navigation
+    window._txMatchedRows = matchedRows;
+}
+
 function pickFdd(name, val, label) {
-    // Update hidden input
     document.getElementById('filter' + name).value = val;
-
-    // Update label text
     document.getElementById('fdd' + name + 'Label').textContent = label;
-
-    // Toggle active state on trigger
     const btn = document.getElementById('fdd' + name + 'Btn');
     btn.classList.toggle('is-active', val !== 'all');
-
-    // Update selected option styling
     document.querySelectorAll('#fdd' + name + 'Menu .fdd-option').forEach(opt => {
         opt.classList.toggle('selected', opt.dataset.val === val);
     });
-
-    // Close menu
     document.getElementById('fdd' + name + 'Menu').classList.remove('open');
     btn.setAttribute('aria-expanded', 'false');
-
     filterUnified();
 }
 
-// Close dropdowns when clicking outside
 document.addEventListener('click', e => {
     if (!e.target.closest('.fdd-wrap')) {
         document.querySelectorAll('.fdd-menu').forEach(m => m.classList.remove('open'));
@@ -336,27 +415,7 @@ document.addEventListener('click', e => {
     }
 });
 
-// ── UNIFIED FILTER & SEARCH ────────────────────────
-function filterUnified() {
-    const type = document.getElementById('filterType')?.value || 'all';
-    const status = document.getElementById('filterStatus')?.value || 'all';
-    const q = (document.getElementById('billingSearch')?.value || '').toLowerCase().trim();
-
-    const rows = document.querySelectorAll('#billingTable tbody tr[data-type]');
-    let visible = 0;
-
-    rows.forEach(row => {
-        const typeMatch = type === 'all' || row.dataset.type === type;
-        const statusMatch = status === 'all' || row.dataset.status === status;
-        const searchMatch = !q || (row.dataset.search || '').includes(q);
-        const show = typeMatch && statusMatch && searchMatch;
-        row.style.display = show ? '' : 'none';
-        if (show) visible++;
-    });
-
-    const emptyEl = document.getElementById('billingEmpty');
-    if (emptyEl) emptyEl.style.display = (visible === 0 && rows.length > 0) ? 'block' : 'none';
-}
+document.addEventListener('DOMContentLoaded', () => filterUnified());
 
 // ── MODAL & KEYBOARD ──────────────────────────────
 document.getElementById('addCardModal')?.addEventListener('click', e => {

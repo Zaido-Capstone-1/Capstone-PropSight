@@ -13,6 +13,7 @@ $stmt = $conn->prepare(
         IF(m.from_user=?, m.to_user, m.from_user) AS other_id,
         CONCAT(u.first_name,' ',u.last_name)       AS other_name,
         u.email                                     AS other_email,
+        u.profile_photo                             AS other_photo,
         (SELECT body FROM messages
          WHERE (from_user=? AND to_user=IF(m.from_user=?, m.to_user, m.from_user))
             OR (from_user=IF(m.from_user=?, m.to_user, m.from_user) AND to_user=?)

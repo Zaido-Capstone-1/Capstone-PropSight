@@ -17,8 +17,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
-$method  = $_SERVER['REQUEST_METHOD'];
-$adminId = (int)$_SESSION['user_id'];
+$method = $_SERVER['REQUEST_METHOD'];
+$adminId = (int) $_SESSION['user_id'];
 
 if ($method === 'GET') {
     $action = $_GET['action'] ?? 'threads';
@@ -48,20 +48,26 @@ if ($method === 'GET') {
             ORDER BY last_time DESC
         ");
         $threads = [];
-        while ($row = mysqli_fetch_assoc($res)) $threads[] = $row;
+        while ($row = mysqli_fetch_assoc($res))
+            $threads[] = $row;
         echo json_encode(['success' => true, 'threads' => $threads]);
         exit;
     }
 
     // ── Single conversation ───────────────────────────────────
     if ($action === 'conversation') {
-        $userId = (int)($_GET['user_id'] ?? 0);
-        if (!$userId) { echo json_encode(['success'=>false,'message'=>'user_id required']); exit; }
+        $userId = (int) ($_GET['user_id'] ?? 0);
+        if (!$userId) {
+            echo json_encode(['success' => false, 'message' => 'user_id required']);
+            exit;
+        }
 
         // Mark as read
-        mysqli_query($conn,
+        mysqli_query(
+            $conn,
             "UPDATE messages SET is_read=1
-             WHERE from_user=$userId AND to_user=$adminId AND is_read=0");
+             WHERE from_user=$userId AND to_user=$adminId AND is_read=0"
+        );
 
         $res = mysqli_query($conn, "
             SELECT m.*, CONCAT(u.first_name,' ',u.last_name) AS sender_name
@@ -72,10 +78,13 @@ if ($method === 'GET') {
             ORDER BY m.created_at ASC
         ");
         $msgs = [];
-        while ($row = mysqli_fetch_assoc($res)) $msgs[] = $row;
+        while ($row = mysqli_fetch_assoc($res))
+            $msgs[] = $row;
 
-        $userRow = mysqli_fetch_assoc(mysqli_query($conn,
-            "SELECT user_id, first_name, last_name, email FROM users WHERE user_id=$userId LIMIT 1"));
+        $userRow = mysqli_fetch_assoc(mysqli_query(
+            $conn,
+            "SELECT user_id, first_name, last_name, email FROM users WHERE user_id=$userId LIMIT 1"
+        ));
 
         echo json_encode(['success' => true, 'messages' => $msgs, 'user' => $userRow]);
         exit;
@@ -83,17 +92,20 @@ if ($method === 'GET') {
 
     // ── Poll for new messages since a timestamp ───────────────
     if ($action === 'poll') {
-        $userId = (int)($_GET['user_id'] ?? 0);
-        $since  = trim($_GET['since'] ?? '');
+        $userId = (int) ($_GET['user_id'] ?? 0);
+        $since = trim($_GET['since'] ?? '');
         if (!$userId || !$since || !strtotime($since)) {
-            echo json_encode(['success'=>false,'message'=>'user_id and since required']); exit;
+            echo json_encode(['success' => false, 'message' => 'user_id and since required']);
+            exit;
         }
         $sinceEsc = mysqli_real_escape_string($conn, $since);
 
         // Mark newly arrived messages as read
-        mysqli_query($conn,
+        mysqli_query(
+            $conn,
             "UPDATE messages SET is_read=1
-             WHERE from_user=$userId AND to_user=$adminId AND is_read=0");
+             WHERE from_user=$userId AND to_user=$adminId AND is_read=0"
+        );
 
         $res = mysqli_query($conn, "
             SELECT m.*, CONCAT(u.first_name,' ',u.last_name) AS sender_name
@@ -105,7 +117,8 @@ if ($method === 'GET') {
             ORDER BY m.created_at ASC
         ");
         $msgs = [];
-        while ($row = mysqli_fetch_assoc($res)) $msgs[] = $row;
+        while ($row = mysqli_fetch_assoc($res))
+            $msgs[] = $row;
 
         echo json_encode(['success' => true, 'messages' => $msgs, 'ts' => date('Y-m-d H:i:s')]);
         exit;
@@ -113,13 +126,32 @@ if ($method === 'GET') {
 
     // ── List users for new-message picker ─────────────────────
     if ($action === 'users') {
-        $res = mysqli_query($conn,
+        $res = mysqli_query(
+            $conn,
             "SELECT user_id, first_name, last_name, email
              FROM users WHERE role='user' AND is_active=1
-             ORDER BY first_name, last_name");
+             ORDER BY first_name, last_name"
+        );
         $users = [];
-        while ($row = mysqli_fetch_assoc($res)) $users[] = $row;
+        while ($row = mysqli_fetch_assoc($res))
+            $users[] = $row;
         echo json_encode(['success' => true, 'users' => $users]);
+        exit;
+    }
+
+    // ── Mark messages from a user as read ────────────────────
+    if ($action === 'mark_read') {
+        $userId = (int) ($_GET['user_id'] ?? 0);
+        if (!$userId) {
+            echo json_encode(['success' => false, 'message' => 'user_id required']);
+            exit;
+        }
+        mysqli_query(
+            $conn,
+            "UPDATE messages SET is_read=1
+             WHERE from_user=$userId AND to_user=$adminId AND is_read=0"
+        );
+        echo json_encode(['success' => true]);
         exit;
     }
 
@@ -147,29 +179,33 @@ if ($method === 'POST') {
     }
 
     if ($action === 'send') {
-        $toUser  = (int)($_POST['to_user'] ?? 0);
+        $toUser = (int) ($_POST['to_user'] ?? 0);
         $subject = mysqli_real_escape_string($conn, trim($_POST['subject'] ?? ''));
-        $body    = mysqli_real_escape_string($conn, trim($_POST['body']    ?? ''));
+        $body = mysqli_real_escape_string($conn, trim($_POST['body'] ?? ''));
 
         if (!$toUser || (!$body && empty($_FILES['attachment']['name']))) {
-            echo json_encode(['success'=>false,'message'=>'Recipient and message or attachment required.']); exit;
+            echo json_encode(['success' => false, 'message' => 'Recipient and message or attachment required.']);
+            exit;
         }
 
         // Handle file attachment
         $attachmentUrl = 'NULL';
         if (!empty($_FILES['attachment']['name']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = __DIR__ . '/../assets/uploads/messages/';
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+            if (!is_dir($uploadDir))
+                mkdir($uploadDir, 0755, true);
 
-            $allowed = ['jpg','jpeg','png','gif','webp','pdf','doc','docx','txt'];
-            $ext     = strtolower(pathinfo($_FILES['attachment']['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'txt'];
+            $ext = strtolower(pathinfo($_FILES['attachment']['name'], PATHINFO_EXTENSION));
             $maxSize = 5 * 1024 * 1024; // 5MB
 
             if (!in_array($ext, $allowed)) {
-                echo json_encode(['success'=>false,'message'=>'File type not allowed. Allowed: jpg, png, gif, pdf, doc, txt.']); exit;
+                echo json_encode(['success' => false, 'message' => 'File type not allowed. Allowed: jpg, png, gif, pdf, doc, txt.']);
+                exit;
             }
             if ($_FILES['attachment']['size'] > $maxSize) {
-                echo json_encode(['success'=>false,'message'=>'File too large. Maximum size is 5MB.']); exit;
+                echo json_encode(['success' => false, 'message' => 'File too large. Maximum size is 5MB.']);
+                exit;
             }
 
             $filename = uniqid('msg_', true) . '.' . $ext;
@@ -179,25 +215,28 @@ if ($method === 'POST') {
             }
         }
 
-        if (!$body) $body = mysqli_real_escape_string($conn, '📎 Attachment');
+        if (!$body)
+            $body = mysqli_real_escape_string($conn, '📎 Attachment');
 
         $sql = "INSERT INTO messages (from_user, to_user, subject, body, attachment_url)
                 VALUES ($adminId, $toUser, '$subject', '$body', $attachmentUrl)";
 
         if (mysqli_query($conn, $sql)) {
             $newId = mysqli_insert_id($conn);
-            $now   = date('Y-m-d H:i:s');
+            $now = date('Y-m-d H:i:s');
             $bodyPreview = mb_strimwidth(trim($_POST['body'] ?? '📎 Attachment'), 0, 100, '...');
-            $bodyEsc     = mysqli_real_escape_string($conn, $bodyPreview);
+            $bodyEsc = mysqli_real_escape_string($conn, $bodyPreview);
 
             // Notify the user
-            mysqli_query($conn,
+            mysqli_query(
+                $conn,
                 "INSERT INTO notifications (user_id, type, title, body, link)
-                 VALUES ($toUser, 'message', 'New message from admin', '$bodyEsc', 'pages/user/messages.php')");
+                 VALUES ($toUser, 'message', 'New message from admin', '$bodyEsc', 'pages/user/messages.php')"
+            );
 
-            echo json_encode(['success'=>true,'message'=>'Message sent.','message_id'=>$newId,'ts'=>$now]);
+            echo json_encode(['success' => true, 'message' => 'Message sent.', 'message_id' => $newId, 'ts' => $now]);
         } else {
-            echo json_encode(['success'=>false,'message'=>mysqli_error($conn)]);
+            echo json_encode(['success' => false, 'message' => mysqli_error($conn)]);
         }
         exit;
     }

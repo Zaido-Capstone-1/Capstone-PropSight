@@ -45,9 +45,12 @@ function buildStaffRow(s) {
            <div class="staff-avatar" style="display:none;">${initials}</div>` :
         `<div class="staff-avatar">${initials}</div>`;
 
-    const removeBtn = isSelf ?
-        '' :
-        `<button class="tbl-btn danger" onclick="openRemoveModal(${s.user_id}, '${safeName}')">Remove</button>`;
+    const actionButtons = isSelf
+        ? `<span style="font-size:0.75rem;color:#94a3b8;font-style:italic;padding:4px 6px;">You</span>`
+        : `<button class="tbl-btn" onclick="openToggleModal(${s.user_id}, '${safeName}', ${isActive})">
+            ${isActive ? 'Deactivate' : 'Activate'}
+          </button>
+          <button class="tbl-btn danger" onclick="openRemoveModal(${s.user_id}, '${safeName}')">Remove</button>`;
 
     return `<tr data-user-id="${s.user_id}" data-active="${isActive}">
       <td>
@@ -64,19 +67,22 @@ function buildStaffRow(s) {
       <td><span class="badge badge-${isActive ? 'success' : 'gray'}">${isActive ? 'Active' : 'Inactive'}</span></td>
       <td>
         <div class="action-wrap">
-          <button class="tbl-btn" onclick="openToggleModal(${s.user_id}, '${safeName}', ${isActive})">
-            ${isActive ? 'Deactivate' : 'Activate'}
-          </button>
-          ${removeBtn}
+          ${actionButtons}
         </div>
       </td>
     </tr>`;
 }
 
-function refreshStaffTable() {
-    fetch('../../api/staff.php', {
-            credentials: 'same-origin'
-        })
+function refreshStaffTable(search, role) {
+    const q = (search ?? '').trim();
+    const r = (role ?? '').trim();
+    const params = new URLSearchParams();
+    if (q) params.set('search', q);
+    if (r) params.set('role', r);
+    const qs = params.toString();
+    const url = '../../api/staff.php' + (qs ? '?' + qs : '');
+
+    fetch(url, { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
             if (!data.success) return;
@@ -86,23 +92,24 @@ function refreshStaffTable() {
                 data.staff.map(buildStaffRow).join('') :
                 '<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">No staff found.</td></tr>';
 
-            // Update total staff count (footer + stat card)
+            // Update footer count
             const countEl = document.getElementById('staff-count');
             if (countEl) countEl.textContent = data.staff.length;
-            const totalCard = document.getElementById('stat-total');
-            if (totalCard) totalCard.textContent = data.staff.length;
 
-            if (data.counts) {
-                // Update individual role cards
-                Object.entries(data.counts).forEach(([role, cnt]) => {
-                    const el = document.getElementById('role-count-' + role);
-                    if (el) el.textContent = cnt;
-                });
+            // Only update stat cards when not filtering
+            if (!q && !r) {
+                const totalCard = document.getElementById('stat-total');
+                if (totalCard) totalCard.textContent = data.staff.length;
 
-                // Field Staff = frontdesk + maintenance (computed card)
-                const field = (data.counts['frontdesk'] ?? 0) + (data.counts['maintenance'] ?? 0);
-                const fieldEl = document.getElementById('role-count-field');
-                if (fieldEl) fieldEl.textContent = field;
+                if (data.counts) {
+                    Object.entries(data.counts).forEach(([role, cnt]) => {
+                        const el = document.getElementById('role-count-' + role);
+                        if (el) el.textContent = cnt;
+                    });
+                    const field = (data.counts['frontdesk'] ?? 0) + (data.counts['maintenance'] ?? 0);
+                    const fieldEl = document.getElementById('role-count-field');
+                    if (fieldEl) fieldEl.textContent = field;
+                }
             }
         })
         .catch(() => {});
@@ -449,6 +456,34 @@ window.addEventListener('ps:staff_list', e => {
 });
 
 /* =========================
+   Role Filter Dropdown
+========================= */
+
+window.toggleRoleFilter = function () {
+    const menu    = document.getElementById('roleFilterMenu');
+    const chevron = document.getElementById('roleFilterChevron');
+    const wrap    = document.getElementById('roleFilterWrap');
+    const isOpen  = menu.style.display !== 'none';
+    menu.style.display       = isOpen ? 'none' : 'block';
+    chevron.style.transform  = isOpen ? '' : 'rotate(180deg)';
+    wrap.classList.toggle('open', !isOpen);
+};
+
+window.selectRoleFilter = function (btn) {
+    document.getElementById('roleFilter').value = btn.dataset.value;
+    document.getElementById('roleFilterLabel').textContent = btn.textContent.trim();
+    document.querySelectorAll('#roleFilterMenu .inv-status-opt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('roleFilterMenu').style.display = 'none';
+    document.getElementById('roleFilterChevron').style.transform = '';
+    document.getElementById('roleFilterWrap').classList.remove('open');
+    // trigger refresh
+    const search = document.getElementById('searchStaff')?.value ?? '';
+    const role   = btn.dataset.value;
+    refreshStaffTable(search, role);
+};
+
+/* =========================
    Init
 ========================= */
 
@@ -459,5 +494,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('inviteOverlay')?.addEventListener('click', e => {
         if (e.target === e.currentTarget) closeInvite();
+    });
+
+    // ── Dynamic search (no page reload) ──────────────────
+    let _staffSearchTimer;
+    const searchInput = document.getElementById('searchStaff');
+
+    function getFilters() {
+        return {
+            search: searchInput ? searchInput.value : '',
+            role: document.getElementById('roleFilter')?.value ?? '',
+        };
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(_staffSearchTimer);
+            _staffSearchTimer = setTimeout(() => {
+                const f = getFilters();
+                refreshStaffTable(f.search, f.role);
+            }, 300);
+        });
+    }
+
+    // ── Custom role dropdown ──────────────────────────────
+    document.addEventListener('click', function (e) {
+        const wrap = document.getElementById('roleFilterWrap');
+        if (wrap && !wrap.contains(e.target)) {
+            document.getElementById('roleFilterMenu').style.display = 'none';
+            document.getElementById('roleFilterChevron').style.transform = '';
+            wrap.classList.remove('open');
+        }
     });
 });

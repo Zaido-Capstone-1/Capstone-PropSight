@@ -19,6 +19,18 @@ $active_page = 'expenses';
 
 include '../../includes/db.php';
 include '../../includes/layout_open.php';
+
+$_exp_month = $_GET['month'] ?? date('Y-m');
+$_exp_parts = explode('-', $_exp_month);
+$yr = (int) ($_exp_parts[0] ?? date('Y'));
+$mo = (int) ($_exp_parts[1] ?? date('n'));
+$date_from = sprintf('%04d-%02d-01', $yr, $mo);
+$date_to = date('Y-m-t', strtotime($date_from));
+$exp_cur_picker_year = $yr;
+
+$category_filter = trim($_GET['category'] ?? '');
+$search = trim($_GET['q'] ?? '');
+
 require_once '../../lib/admin-queries/expenses_queries.php';
 ?>
 
@@ -26,7 +38,7 @@ require_once '../../lib/admin-queries/expenses_queries.php';
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner">
-  
+
   <div class="dash-page-header">
     <div class="dash-header-left">
       <h1 class="dash-title">Expenses</h1>

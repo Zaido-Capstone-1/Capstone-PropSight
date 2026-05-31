@@ -29,7 +29,17 @@
     const ROLE = window.PS_RT_ROLE || 'user';
 
     /* ── State ──────────────────────────────────────── */
-    let lastTs = '2000-01-01 00:00:00';
+    // Initialize to current time so first poll only fetches NEW messages going forward,
+    // not all historical messages (which would re-add unread badges on every page load).
+    let lastTs = (function() {
+        const d = new Date();
+        return d.getFullYear() + '-' +
+            String(d.getMonth()+1).padStart(2,'0') + '-' +
+            String(d.getDate()).padStart(2,'0') + ' ' +
+            String(d.getHours()).padStart(2,'0') + ':' +
+            String(d.getMinutes()).padStart(2,'0') + ':' +
+            String(d.getSeconds()).padStart(2,'0');
+    })();
     let pollTimer = null;
     let failCount = 0;
     let paused = false;
@@ -153,6 +163,10 @@
                 if (data.top_properties) emit('top_properties', data.top_properties);
                 if (data.task_summary) emit('task_summary', data.task_summary);
                 if (data.right_panel_activity) emit('right_panel_activity', data.right_panel_activity);
+                if (data.admin_notifications) emit('admin_notifications', {
+                    items: data.admin_notifications,
+                    count: data.admin_notif_count || 0,
+                });
 
                 /* ── User events ─────────────────── */
                 if (data.booking_updates && data.booking_updates.length)

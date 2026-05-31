@@ -82,37 +82,51 @@ require_once '../../lib/admin-queries/reservations_queries.php';
                     All Reservations
                 </div>
                 <div class="res-controls">
-                    <form method="GET" style="display:contents;">
-                        <div class="res-search">
-                            <svg viewBox="0 0 24 24">
-                                <circle cx="11" cy="11" r="8" />
-                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    <div class="res-search">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <input type="text" name="search" value="<?= htmlspecialchars($search) ?>"
+                            placeholder="Search guest, unit…" id="searchInput">
+                    </div>
+                    <div class="res-status-wrap" id="resStatusWrap">
+                        <button class="res-status-trigger" id="resStatusTrigger" type="button" aria-expanded="false">
+                            <span id="resStatusLabel">All Status</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <polyline points="6 9 12 15 18 9" />
                             </svg>
-                            <input type="text" name="search" value="<?= htmlspecialchars($search) ?>"
-                                placeholder="Search guest, unit…" id="searchInput">
+                        </button>
+                        <div class="res-status-menu" id="resStatusMenu">
+                            <button class="res-status-opt active" data-val="all" type="button">All Status</button>
+                            <button class="res-status-opt" data-val="pending" type="button">
+                                <span class="res-status-dot" style="background:#d97706;"></span>Pending
+                            </button>
+                            <button class="res-status-opt" data-val="confirmed" type="button">
+                                <span class="res-status-dot" style="background:#2563eb;"></span>Confirmed
+                            </button>
+                            <button class="res-status-opt" data-val="active" type="button">
+                                <span class="res-status-dot" style="background:#16a34a;"></span>Active
+                            </button>
+                            <button class="res-status-opt" data-val="completed" type="button">
+                                <span class="res-status-dot" style="background:#64748b;"></span>Completed
+                            </button>
+                            <button class="res-status-opt" data-val="cancelled" type="button">
+                                <span class="res-status-dot" style="background:#dc2626;"></span>Cancelled
+                            </button>
                         </div>
-                        <select name="status" class="res-select" onchange="this.form.submit()">
-                            <option value="all" <?= $statusFilter === 'all' ? 'selected' : '' ?>>All Status</option>
-                            <option value="pending" <?= $statusFilter === 'pending' ? 'selected' : '' ?>>Pending</option>
-                            <option value="confirmed" <?= $statusFilter === 'confirmed' ? 'selected' : '' ?>>Confirmed
-                            </option>
-                            <option value="active" <?= $statusFilter === 'active' ? 'selected' : '' ?>>Active</option>
-                            <option value="completed" <?= $statusFilter === 'completed' ? 'selected' : '' ?>>Completed
-                            </option>
-                            <option value="cancelled" <?= $statusFilter === 'cancelled' ? 'selected' : '' ?>>Cancelled
-                            </option>
-                        </select>
-                        <?php if ($search): ?>
-                            <a href="?status=<?= htmlspecialchars($statusFilter) ?>" class="res-clear-btn">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                    style="width:12px;height:12px;">
-                                    <line x1="18" y1="6" x2="6" y2="18" />
-                                    <line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                                Clear
-                            </a>
-                        <?php endif; ?>
-                    </form>
+                    </div>
+                    <?php if ($search): ?>
+                        <a href="#" class="res-clear-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                style="width:12px;height:12px;">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                            Clear
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
 

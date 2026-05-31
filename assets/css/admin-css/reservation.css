@@ -117,6 +117,10 @@
     flex-wrap: nowrap;
 }
 
+.res-card-header .res-controls {
+    margin-left: auto;
+}
+
 .res-card-title {
     font-size: 1.05rem;
     font-weight: 700;
@@ -167,6 +171,7 @@
     align-items: center;
     flex-wrap: nowrap;
     flex-shrink: 0;
+    width: auto;
 }
 
 .res-search {
@@ -178,49 +183,154 @@
     left: 10px;
     top: 50%;
     transform: translateY(-50%);
-    width: 14px;
-    height: 14px;
+    width: 13px;
+    height: 13px;
     stroke: #94a3b8;
     fill: none;
+    stroke-width: 2;
     pointer-events: none;
 }
 
 .res-search input {
-    padding: 8px 12px 8px 32px;
+    padding: 7px 12px 7px 30px;
     border: 1px solid #e2e8f0;
-    border-radius: var(--radius);
-    font-size: 0.82rem;
+    border-radius: 8px;
+    font-size: 0.81rem;
     color: #0f172a;
     background: #fff;
-    min-width: 200px;
-    transition: border-color .2s, box-shadow .2s;
+    min-width: 190px;
+    transition: border-color .18s, box-shadow .18s;
     outline: none;
+    box-shadow: none;
+}
+
+.res-search input::placeholder {
+    color: #94a3b8;
 }
 
 .res-search input:focus {
-    border-color: #4f8ef7;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(147, 197, 253, .18);
+}
+
+/* ── Custom status dropdown ── */
+.res-status-wrap {
+    position: relative;
+}
+
+.res-status-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    height: 34px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 0.81rem;
+    font-weight: 500;
+    color: #0f172a;
+    cursor: pointer;
+    white-space: nowrap;
+    min-width: 118px;
+    justify-content: space-between;
+    transition: border-color .15s, box-shadow .15s;
+}
+
+.res-status-trigger:hover,
+.res-status-wrap.open .res-status-trigger {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(147, 197, 253, .18);
+}
+
+.res-status-wrap.open .res-status-trigger svg {
+    transform: rotate(180deg);
+}
+
+.res-status-trigger svg {
+    flex-shrink: 0;
+    color: #94a3b8;
+    transition: transform .2s;
+}
+
+.res-status-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 999;
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, .11);
+    padding: 5px;
+    min-width: 150px;
+    animation: resDropIn .15s ease;
+}
+
+.res-status-wrap.open .res-status-menu {
+    display: block;
+}
+
+@keyframes resDropIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.res-status-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 11px;
+    border: none;
+    background: none;
+    font-size: 0.81rem;
+    font-weight: 400;
+    color: #0f172a;
+    cursor: pointer;
+    border-radius: 7px;
+    text-align: left;
+    transition: background .12s;
+    white-space: nowrap;
+}
+
+.res-status-opt:hover {
+    background: #f5f6fa;
+}
+
+.res-status-opt.active {
+    background: #2563eb;
+    color: #fff;
+    font-weight: 600;
+}
+
+.res-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
 }
 
 .res-select {
-    padding: 8px 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: var(--radius);
-    font-size: 0.82rem;
-    color: #0f172a;
-    background: #fff;
-    cursor: pointer;
-    outline: none;
+    display: none;
 }
 
-.res-select:focus {
-    border-color: #4f8ef7;
-}
+/* hide the old native select if still present */
 
 .res-clear-btn {
-    padding: 8px 12px;
+    padding: 7px 12px;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 0.82rem;
+    border-radius: 8px;
+    font-size: 0.81rem;
     color: #64748b;
     background: #f8fafc;
     cursor: pointer;
@@ -228,11 +338,13 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    transition: background .2s;
+    transition: background .15s, border-color .15s;
 }
 
 .res-clear-btn:hover {
     background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #475569;
 }
 
 /* ── NEW BOOKING BANNER ──────────────────────────── */

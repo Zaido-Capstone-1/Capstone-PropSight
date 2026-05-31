@@ -18,10 +18,17 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
     $search = trim($_GET['search'] ?? '');
+    $roleFilter = trim($_GET['role'] ?? '');
+    $validRoles = ['admin', 'manager', 'frontdesk', 'accounting', 'maintenance'];
+
     $where = "WHERE u.role != 'user'";
     if ($search) {
         $sq = mysqli_real_escape_string($conn, $search);
         $where .= " AND (u.first_name LIKE '%$sq%' OR u.last_name LIKE '%$sq%' OR u.email LIKE '%$sq%')";
+    }
+    if ($roleFilter && in_array($roleFilter, $validRoles)) {
+        $rf = mysqli_real_escape_string($conn, $roleFilter);
+        $where .= " AND u.role = '$rf'";
     }
 
     $res = mysqli_query($conn, "
@@ -34,12 +41,14 @@ if ($method === 'GET') {
     while ($row = mysqli_fetch_assoc($res))
         $staff[] = $row;
 
+    // Counts are always from the full unfiltered set so stat cards stay accurate
+    $countRes = mysqli_query($conn, "SELECT role, COUNT(*) as cnt FROM users WHERE role != 'user' GROUP BY role");
     $counts = ['total' => 0, 'admin' => 0, 'manager' => 0, 'frontdesk' => 0, 'accounting' => 0, 'maintenance' => 0];
-    foreach ($staff as $s) {
-        $counts['total']++;
-        $r = strtolower($s['role']);
+    while ($cr = mysqli_fetch_assoc($countRes)) {
+        $r = strtolower($cr['role']);
         if (isset($counts[$r]))
-            $counts[$r]++;
+            $counts[$r] = (int) $cr['cnt'];
+        $counts['total'] += (int) $cr['cnt'];
     }
 
     echo json_encode(['success' => true, 'staff' => $staff, 'counts' => $counts]);
@@ -104,62 +113,62 @@ if ($method === 'POST') {
             . rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/') . '/index.php#login';
 
         $htmlBody = <<<HTML
-<div style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
-    <tr><td align="center">
-      <table role="presentation" width="520" cellpadding="0" cellspacing="0"
-             style="background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;">
-        <tr>
-          <td style="background:linear-gradient(135deg,#1e3a5f 0%,#2d5a8e 100%);padding:32px 40px;text-align:center;">
-            <div style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">$siteName</div>
-            <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-top:4px;">You've been invited to join the team</div>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:36px 40px;">
-            <p style="font-size:15px;color:#374151;margin:0 0 18px;">Hi <strong>$firstName</strong>,</p>
-            <p style="font-size:14px;color:#6b7280;line-height:1.7;margin:0 0 24px;">
-              You've been added to <strong>$siteName</strong> as a <strong>$roleLabel</strong>.
-              Use the credentials below to log in and get started.
-            </p>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                   style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:28px;">
-              <tr>
-                <td style="font-size:13px;color:#64748b;padding-bottom:10px;">
-                  <strong style="color:#1e293b;">Email:</strong>&nbsp; {$_POST['email']}
+        <div style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+            <tr><td align="center">
+            <table role="presentation" width="520" cellpadding="0" cellspacing="0"
+                    style="background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;">
+                <tr>
+                <td style="background:linear-gradient(135deg,#1e3a5f 0%,#2d5a8e 100%);padding:32px 40px;text-align:center;">
+                    <div style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">$siteName</div>
+                    <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-top:4px;">You've been invited to join the team</div>
                 </td>
-              </tr>
-              <tr>
-                <td style="font-size:13px;color:#64748b;">
-                  <strong style="color:#1e293b;">Temporary Password:</strong>&nbsp;
-                  <span style="font-family:monospace;background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:4px;">$tempPass</span>
+                </tr>
+                <tr>
+                <td style="padding:36px 40px;">
+                    <p style="font-size:15px;color:#374151;margin:0 0 18px;">Hi <strong>$firstName</strong>,</p>
+                    <p style="font-size:14px;color:#6b7280;line-height:1.7;margin:0 0 24px;">
+                    You've been added to <strong>$siteName</strong> as a <strong>$roleLabel</strong>.
+                    Use the credentials below to log in and get started.
+                    </p>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                        style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:28px;">
+                    <tr>
+                        <td style="font-size:13px;color:#64748b;padding-bottom:10px;">
+                        <strong style="color:#1e293b;">Email:</strong>&nbsp; {$_POST['email']}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:13px;color:#64748b;">
+                        <strong style="color:#1e293b;">Temporary Password:</strong>&nbsp;
+                        <span style="font-family:monospace;background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:4px;">$tempPass</span>
+                        </td>
+                    </tr>
+                    </table>
+                    <div style="text-align:center;margin-bottom:28px;">
+                    <a href="$loginUrl"
+                        style="display:inline-block;background:#1e3a5f;color:#ffffff;text-decoration:none;
+                                padding:14px 36px;border-radius:8px;font-size:15px;font-weight:600;">
+                        Log In Now
+                    </a>
+                    </div>
+                    <p style="font-size:12px;color:#94a3b8;text-align:center;margin:0;">
+                    Please change your password after your first login.
+                    </p>
                 </td>
-              </tr>
+                </tr>
+                <tr>
+                <td style="background:#f8fafc;padding:18px 40px;text-align:center;border-top:1px solid #e5e7eb;">
+                    <p style="font-size:12px;color:#94a3b8;margin:0;">
+                    &copy; <?= date('Y') ?> $siteName. If you did not expect this invitation, please ignore this email.
+                    </p>
+                </td>
+                </tr>
             </table>
-            <div style="text-align:center;margin-bottom:28px;">
-              <a href="$loginUrl"
-                 style="display:inline-block;background:#1e3a5f;color:#ffffff;text-decoration:none;
-                        padding:14px 36px;border-radius:8px;font-size:15px;font-weight:600;">
-                Log In Now
-              </a>
-            </div>
-            <p style="font-size:12px;color:#94a3b8;text-align:center;margin:0;">
-              Please change your password after your first login.
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td style="background:#f8fafc;padding:18px 40px;text-align:center;border-top:1px solid #e5e7eb;">
-            <p style="font-size:12px;color:#94a3b8;margin:0;">
-              &copy; <?= date('Y') ?> $siteName. If you did not expect this invitation, please ignore this email.
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
-  </table>
-</div>
-HTML;
+            </td></tr>
+        </table>
+        </div>
+        HTML;
 
         $textBody = "Hi $firstName,\n\nYou've been added to $siteName as a $roleLabel.\n\nEmail: {$_POST['email']}\nTemporary Password: $tempPass\n\nLog in at: $loginUrl\n\nPlease change your password after your first login.";
 
@@ -207,6 +216,12 @@ HTML;
     // ── Deactivate / reactivate ───────────────────────────
     if ($action === 'toggle_active') {
         $uid = (int) ($_POST['user_id'] ?? 0);
+
+        // Prevent self-deactivation
+        if ($uid === (int) $_SESSION['user_id']) {
+            echo json_encode(['success' => false, 'message' => 'You cannot deactivate your own account.']);
+            exit;
+        }
         $curRes = mysqli_fetch_assoc(mysqli_query(
             $conn,
             "SELECT is_active FROM users WHERE user_id=$uid LIMIT 1"

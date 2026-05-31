@@ -25,5 +25,6 @@
 </IfModule>
 
 # Custom error pages
-ErrorDocument 404 /404.php
-ErrorDocument 403 /404.php
+# After
+ErrorDocument 404 /Propsight-Capstone/404.php
+ErrorDocument 403 /Propsight-Capstone/404.php

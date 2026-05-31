@@ -13,12 +13,14 @@ function filterThreads(q) {
 }
 
 // ── Open conversation ────────────────────────────────────────
-function openConversation(adminId, adminName) {
+function openConversation(adminId, adminName, adminPhoto) {
     adminId = parseInt(adminId);
     if (activeAdminId === adminId) return;
 
     activeAdminId = adminId;
     activeAdminName = adminName;
+    // Fire mark-as-read immediately so badge clears on next page load
+    fetch(`${window.__PS_USER_MSG__.apiUrl}?action=mark_read&admin_id=${adminId}`).catch(() => {});
 
     // Highlight thread
     document.querySelectorAll('.msg-thread-item').forEach(el => {
@@ -36,15 +38,19 @@ function openConversation(adminId, adminName) {
         document.getElementById('msgChat').classList.add('active');
     }
 
+    const avatarHtml = adminPhoto
+        ? `<img src="${escHtml(adminPhoto)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.insertAdjacentText('afterend','${adminName[0].toUpperCase()}')">`
+        : adminName[0].toUpperCase();
+
     // Render chat shell
     const chat = document.getElementById('msgChat');
     chat.innerHTML = `
             <div class="msg-chat-header">
-                ${isMobile ? `<button class="msg-back-btn" onclick="goBack()">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <button class="msg-back-btn" onclick="goBack()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <polyline points="15 18 9 12 15 6"/>
-                    </svg>Back</button>` : ''}
-                <div class="chat-avatar">${adminName[0].toUpperCase()}</div>
+                    </svg>Back</button>
+                <div class="chat-avatar">${avatarHtml}</div>
                 <div class="chat-header-info">
                     <div class="chat-header-name">${escHtml(adminName)}</div>
                     <div class="chat-header-sub"><span class="chat-online-dot"></span>Property Team</div>
@@ -93,6 +99,12 @@ function loadMessages() {
             const msgs = data.messages || [];
             renderMessages(msgs, true);
             lastMsgTs = msgs.length ? msgs[msgs.length - 1].created_at : new Date().toISOString().slice(0, 19).replace('T', ' ');
+            // Clear unread badge for this thread now that messages are marked read in DB
+            const t = document.querySelector(`.msg-thread-item[data-admin-id="${activeAdminId}"]`);
+            if (t) {
+                t.classList.remove('has-unread');
+                t.querySelectorAll('.ti-badge').forEach(b => b.remove());
+            }
         })
         .catch(() => renderChatError('Failed to load messages.'));
 }
@@ -544,12 +556,82 @@ document.addEventListener('visibilitychange', () => {
 
 // Auto-open first thread on desktop
 document.addEventListener('DOMContentLoaded', () => {
-    if (!isMobile) {
-        const first = document.querySelector('.msg-thread-item');
-        if (first) first.click();
-    }
+    // No auto-open: user selects a conversation manually
 });
 
 window.addEventListener('ps:unread_messages', e => {
     // Could update nav badge if needed
+});
+/* ── Thread-list badge poller ───────────────────────────────
+   Polls ?action=threads every 3 s to keep unread badges and
+   previews current for ALL threads in real time.
+──────────────────────────────────────────────────────────── */
+let threadPollTimer = null;
+
+function startThreadPoll() {
+    if (threadPollTimer) return;
+    threadPollTimer = setInterval(refreshThreadBadges, 3000);
+}
+
+function stopThreadPoll() {
+    if (threadPollTimer) { clearInterval(threadPollTimer); threadPollTimer = null; }
+}
+
+function refreshThreadBadges() {
+    if (document.hidden) return;
+    const api = window.__PS_USER_MSG__.apiUrl;
+    fetch(`${api}?action=threads`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success || !data.threads) return;
+            data.threads.forEach(t => {
+                const aid = parseInt(t.admin_id);
+                const thread = document.querySelector(`.msg-thread-item[data-admin-id="${aid}"]`);
+                if (!thread) return;
+
+                const unread = parseInt(t.unread) || 0;
+                const isActive = aid === activeAdminId;
+
+                // Update preview
+                const preview = thread.querySelector('.ti-preview');
+                if (preview && t.last_body) preview.textContent = (t.last_body || '').slice(0, 48);
+
+                // Update timestamp
+                const time = thread.querySelector('.ti-time');
+                if (time && t.last_time) {
+                    const d = new Date(t.last_time.replace(' ', 'T'));
+                    time.textContent = isNaN(d) ? '' :
+                        (Date.now() - d < 86400000)
+                            ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                            : d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+                }
+
+                // Skip badge update if this thread is currently open
+                if (isActive) return;
+
+                const meta = thread.querySelector('.ti-meta');
+                let badge = thread.querySelector('.ti-badge');
+
+                if (unread > 0) {
+                    thread.classList.add('has-unread');
+                    if (badge) {
+                        badge.textContent = unread;
+                    } else if (meta) {
+                        const b = document.createElement('div');
+                        b.className = 'ti-badge';
+                        b.textContent = unread;
+                        meta.appendChild(b);
+                    }
+                } else {
+                    thread.classList.remove('has-unread');
+                    if (badge) badge.remove();
+                }
+            });
+        })
+        .catch(() => {});
+}
+
+document.addEventListener('DOMContentLoaded', startThreadPoll);
+document.addEventListener('visibilitychange', () => {
+    document.hidden ? stopThreadPoll() : startThreadPoll();
 });

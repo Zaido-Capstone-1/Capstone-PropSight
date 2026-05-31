@@ -42,7 +42,7 @@ include '../../lib/admin-queries/messages_queries.php';
             </button>
         </div>
     </div>
-    
+
     <div class="msg-layout">
 
         <div class="msg-list">
@@ -58,11 +58,21 @@ include '../../lib/admin-queries/messages_queries.php';
                         $preview = mb_strimwidth($t['last_body'] ?? '', 0, 50, '...');
                         $timeAgo = $t['last_time'] ? (time() - strtotime($t['last_time']) < 86400 ? date('g:i A', strtotime($t['last_time'])) : date('M j', strtotime($t['last_time']))) : '';
                         $unread = (int) $t['unread'];
+                        $otherPhoto = !empty($t['other_photo']) ? htmlspecialchars('../../' . ltrim($t['other_photo'], '/')) : '';
                         ?>
-                        <div class="msg-thread" data-user-id="<?= $t['other_id'] ?>"
-                            onclick="loadConversation(<?= $t['other_id'] ?>, '<?= htmlspecialchars($t['other_name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($t['other_email'] ?? '', ENT_QUOTES) ?>')"
+                        <div class="msg-thread" data-user-id="<?= $t['other_id'] ?>" data-user-photo="<?= $otherPhoto ?>"
+                            onclick="loadConversation(<?= $t['other_id'] ?>, '<?= htmlspecialchars($t['other_name'], ENT_QUOTES) ?>', '<?= htmlspecialchars($t['other_email'] ?? '', ENT_QUOTES) ?>', '<?= $otherPhoto ?>')"
                             style="cursor:pointer;">
-                            <div class="avatar"><?= $initials ?></div>
+                            <div class="avatar">
+                                <?php if ($otherPhoto): ?>
+                                    <img src="<?= $otherPhoto ?>" alt=""
+                                        style="width:100%;height:100%;border-radius:50%;object-fit:cover;"
+                                        onerror="this.style.display='none';this.nextElementSibling.style.display='';">
+                                    <span style="display:none;"><?= $initials ?></span>
+                                <?php else: ?>
+                                    <?= $initials ?>
+                                <?php endif; ?>
+                            </div>
                             <div class="msg-thread-info">
                                 <div class="msg-thread-name"><?= htmlspecialchars($t['other_name']) ?></div>
                                 <div class="msg-thread-preview thread-preview"><?= htmlspecialchars($preview) ?></div>

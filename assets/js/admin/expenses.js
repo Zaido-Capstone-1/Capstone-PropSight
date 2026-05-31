@@ -241,6 +241,7 @@ function renderTable(expenses) {
         const col = catColour(e.expense_category);
         const tr = document.createElement('tr');
         tr.dataset.id = e.expense_id;
+        tr.dataset.category = e.expense_category;
 
         tr.innerHTML = `
             <td style="font-weight:600;">${esc(e.description)}</td>
@@ -425,9 +426,13 @@ async function loadExpenses() {
         renderCharts(data.trends || [], data.categories || []);
         renderLegend(data.categories || []);
 
+        // Return the fresh expenses so callers can use it
+        return data.expenses || [];
+
     } catch (err) {
         console.error('loadExpenses error:', err);
         showToast('Error loading expenses.', 'error');
+        return [];
     }
 }
 
@@ -465,6 +470,41 @@ const ExpenseModal = {
         DOM.modal.classList.remove('open');
     },
 };
+
+// ─────────────────────────────────────────────────────────
+//  CATEGORY DROPDOWN HELPERS
+// ─────────────────────────────────────────────────────────
+function refreshCatDropdown(newCat) {
+    if (!newCat) return;
+    const menu = document.getElementById('expCatMenu');
+    if (!menu) return;
+    // Check if option already exists
+    const exists = Array.from(menu.querySelectorAll('.exp-cat-opt'))
+        .some(btn => btn.dataset.value === newCat);
+    if (exists) return;
+    // Add new option
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'exp-cat-opt';
+    btn.dataset.value = newCat;
+    btn.onclick = function () { selectExpCatOpt(this); };
+    btn.innerHTML = `<span class="exp-cat-dot" data-cat="${newCat}"></span>${newCat}`;
+    menu.appendChild(btn);
+}
+
+// Removes a category from the filter dropdown only if no
+// expenses in the freshly-loaded list still use it.
+function removeCatFromDropdownIfEmpty(deletedCat, freshExpenses) {
+    if (!deletedCat) return;
+    const list = Array.isArray(freshExpenses) ? freshExpenses : _expenseCache;
+    const stillUsed = list.some(e => e.expense_category === deletedCat);
+    if (stillUsed) return;
+    const menu = document.getElementById('expCatMenu');
+    if (!menu) return;
+    const btn = Array.from(menu.querySelectorAll('.exp-cat-opt'))
+        .find(b => b.dataset.value === deletedCat);
+    if (btn) btn.remove();
+}
 
 // ─────────────────────────────────────────────────────────
 //  FORM SAVE
@@ -505,6 +545,7 @@ async function saveExpense() {
             sessionStorage.setItem('txn_needs_refresh', '1');
             ExpenseModal.close();
             await loadExpenses();
+            refreshCatDropdown(category);
         } else {
             showToast(json.message || 'Something went wrong.', 'error');
         }
@@ -513,41 +554,6 @@ async function saveExpense() {
     } finally {
         DOM.btnSave.disabled = false;
         DOM.btnSave.textContent = 'Save Expense';
-    }
-}
-
-// ─────────────────────────────────────────────────────────
-//  DELETE
-// ─────────────────────────────────────────────────────────
-async function deleteExpense(expense_id) {
-    if (!confirm('Delete this expense? This cannot be undone.')) return;
-
-    try {
-        const fd = new FormData();
-        fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
-        fd.append('action', 'delete');
-        fd.append('expense_id', expense_id);
-
-        const res = await fetch(EXPENSES.apiUrl, { method: 'POST', body: fd });
-        const json = await res.json();
-
-        if (json.success) {
-            showToast('Expense deleted.');
-            _psChannel.postMessage({ type: 'transaction_deleted' });
-            sessionStorage.setItem('txn_needs_refresh', '1');
-            const row = document.querySelector(`tr[data-id="${expense_id}"]`);
-            if (row) {
-                row.style.transition = 'opacity .3s';
-                row.style.opacity = '0';
-                setTimeout(() => { row.remove(); loadExpenses(); }, 350);
-            } else {
-                await loadExpenses();
-            }
-        } else {
-            showToast(json.message || 'Delete failed.', 'error');
-        }
-    } catch (err) {
-        showToast('Error: ' + err.message, 'error');
     }
 }
 
@@ -646,8 +652,6 @@ _psChannel.onmessage = (e) => {
    MONTH PICKER  (moved from inline PHP script)
 ══════════════════════════════════════════════════════════════════════ */
 (function () {
-    // Read initial values from the DOM — the hidden input already has the
-    // PHP-rendered value baked in as an HTML attribute, so no PHP echo needed.
     const _initVal = document.getElementById('expMonthFilter')?.value || '';
     const _initParts = _initVal.split('-');
     let expPickerYear = _initParts[0] ? parseInt(_initParts[0]) : new Date().getFullYear();
@@ -773,7 +777,7 @@ _psChannel.onmessage = (e) => {
 
 
 /* ══════════════════════════════════════════════════════════════════════
-   DELETE CONFIRMATION MODAL  (from previous session)
+   DELETE CONFIRMATION MODAL
 ══════════════════════════════════════════════════════════════════════ */
 let _pendingDeleteId = null;
 
@@ -794,6 +798,10 @@ async function _doDeleteExpense() {
     if (!expense_id) return;
     closeDeleteModal();
 
+    // Capture the category BEFORE removing the row
+    const row = document.querySelector(`tr[data-id="${expense_id}"]`);
+    const deletedCat = row?.dataset.category || '';
+
     try {
         const fd = new FormData();
         fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
@@ -807,13 +815,20 @@ async function _doDeleteExpense() {
             showToast('Expense deleted.');
             _psChannel.postMessage({ type: 'transaction_deleted' });
             sessionStorage.setItem('txn_needs_refresh', '1');
-            const row = document.querySelector(`tr[data-id="${expense_id}"]`);
+
             if (row) {
                 row.style.transition = 'opacity .3s';
                 row.style.opacity = '0';
-                setTimeout(() => { row.remove(); loadExpenses(); }, 350);
+                setTimeout(async () => {
+                    row.remove();
+                    // loadExpenses returns the fresh list — pass it to the
+                    // dropdown cleaner so it checks up-to-date data
+                    const freshList = await loadExpenses();
+                    removeCatFromDropdownIfEmpty(deletedCat, freshList);
+                }, 350);
             } else {
-                await loadExpenses();
+                const freshList = await loadExpenses();
+                removeCatFromDropdownIfEmpty(deletedCat, freshList);
             }
         } else {
             showToast(json.message || 'Delete failed.', 'error');

@@ -104,12 +104,23 @@ require_once '../../lib/user-queries/messages_queries.php';
                     $ts = $t['last_time'] ? strtotime($t['last_time']) : 0;
                     $timeStr = $ts ? (time() - $ts < 86400 ? date('g:i A', $ts) : date('M j', $ts)) : '';
                     $unread = (int) $t['unread'];
+                    $adminPhoto = !empty($t['admin_photo']) ? htmlspecialchars('../../' . ltrim($t['admin_photo'], '/')) : '';
                     ?>
                     <div class="msg-thread-item<?= $unread ? ' has-unread' : '' ?>" data-admin-id="<?= $t['admin_id'] ?>"
                         data-admin-name="<?= htmlspecialchars($t['admin_name'], ENT_QUOTES) ?>"
+                        data-admin-photo="<?= $adminPhoto ?>"
                         data-search="<?= strtolower(htmlspecialchars($t['admin_name'], ENT_QUOTES)) ?>"
-                        onclick="openConversation(<?= $t['admin_id'] ?>, '<?= htmlspecialchars($t['admin_name'], ENT_QUOTES) ?>')">
-                        <div class="ti-avatar"><?= $initial ?></div>
+                        onclick="openConversation(<?= $t['admin_id'] ?>, '<?= htmlspecialchars($t['admin_name'], ENT_QUOTES) ?>', '<?= $adminPhoto ?>')">
+                        <div class="ti-avatar">
+                            <?php if ($adminPhoto): ?>
+                                <img src="<?= $adminPhoto ?>" alt=""
+                                    style="width:100%;height:100%;border-radius:50%;object-fit:cover;"
+                                    onerror="this.style.display='none';this.nextElementSibling.style.display='';">
+                                <span style="display:none;"><?= $initial ?></span>
+                            <?php else: ?>
+                                <?= $initial ?>
+                            <?php endif; ?>
+                        </div>
                         <div class="ti-body">
                             <div class="ti-name"><?= htmlspecialchars($t['admin_name']) ?></div>
                             <div class="ti-preview"><?= htmlspecialchars($preview) ?></div>
@@ -143,7 +154,8 @@ require_once '../../lib/user-queries/messages_queries.php';
         <label>Send to</label>
         <select id="nm_admin">
             <?php foreach ($admins as $a): ?>
-                <option value="<?= $a['user_id'] ?>"><?= htmlspecialchars($a['first_name'] . ' ' . $a['last_name']) ?></option>
+                <option value="<?= $a['user_id'] ?>"><?= htmlspecialchars($a['first_name'] . ' ' . $a['last_name']) ?>
+                </option>
             <?php endforeach; ?>
         </select>
         <label>Subject <span style="color:#94a3b8;font-weight:400;">(optional)</span></label>

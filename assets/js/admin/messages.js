@@ -25,11 +25,13 @@ function closeMsgPane() {
     document.querySelectorAll('.msg-thread').forEach(t => t.classList.remove('active'));
 }
 
-function loadConversation(userId, name, email) {
+function loadConversation(userId, name, email, photo) {
     userId = parseInt(userId);
     if (activeUserId === userId) return;
     activeUserId = userId;
     activeUserName = name;
+    // Fire mark-as-read immediately so badge clears on next page load
+    fetch(`${ADMIN_API}?action=mark_read&user_id=${userId}`).catch(() => {});
 
     // Mobile: slide to pane view
     const layout = document.querySelector('.msg-layout');
@@ -44,6 +46,10 @@ function loadConversation(userId, name, email) {
         if (badge) badge.remove();
     }
 
+    const avatarHtml = photo
+        ? `<img src="${escHtml(photo)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<div class=\'avatar\'>${escHtml(name[0].toUpperCase())}</div>'">`
+        : name[0].toUpperCase();
+
     const pane = document.getElementById('msgPane');
     pane.innerHTML = `
         <div class="msg-pane-header">
@@ -51,7 +57,7 @@ function loadConversation(userId, name, email) {
                 <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
                 Back
             </button>
-            <div class="avatar">${name[0].toUpperCase()}</div>
+            <div class="avatar">${avatarHtml}</div>
             <div><div class="msg-pane-title">${escHtml(name)}</div>
             <div class="msg-pane-sub">${escHtml(email || '')}</div></div>
         </div>
@@ -87,6 +93,12 @@ function loadConversation(userId, name, email) {
             const msgs = data.messages || [];
             renderMsgs(msgs, true);
             lastMsgTs = msgs.length ? msgs[msgs.length - 1].created_at : new Date().toISOString().slice(0, 19).replace('T', ' ');
+            // Clear unread badge for this thread now that messages are marked read in DB
+            const t = document.querySelector(`.msg-thread[data-user-id="${userId}"]`);
+            if (t) {
+                t.classList.remove('has-unread');
+                t.querySelectorAll('.msg-unread').forEach(b => b.remove());
+            }
             startPoll();
         })
         .catch(() => { const b = document.getElementById('msgBody'); if (b) b.innerHTML = '<p style="padding:20px;color:red;">Network error.</p>'; });
@@ -109,7 +121,7 @@ function renderMsgs(msgs, clearFirst) {
         const timeStr = isNaN(d) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         if (dateStr !== lastDate) {
             const div = document.createElement('div');
-            div.style.cssText = 'text-align:center;font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin:8px 0;';
+            div.className = 'msg-date-label';
             div.textContent = dateStr;
             body.appendChild(div);
             lastDate = dateStr;
@@ -294,22 +306,26 @@ function openNewMessage() {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'ps-msg-modal';
-        modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);backdrop-filter:blur(3px);';
+        modal.className = 'msg-modal-overlay';
+        modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
         document.body.appendChild(modal);
     }
     modal.innerHTML = `
-        <div style="background:#fff;border-radius:14px;padding:28px 24px;width:100%;max-width:440px;box-shadow:0 24px 48px rgba(0,0,0,0.18);">
-            <h3 style="margin:0 0 18px;font-size:1.1rem;font-weight:700;color:#1e293b;">New Message</h3>
-            <select id="nm_to" style="width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;font-size:0.9rem;">${opts}</select>
-            <input id="nm_subj" placeholder="Subject (optional)" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;font-size:0.9rem;">
-            <textarea id="nm_body" placeholder="Message…" style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;height:110px;font-size:0.9rem;resize:vertical;"></textarea>
-            <p id="nm_err" style="color:#dc2626;font-size:0.82rem;margin:6px 0 0;display:none;"></p>
-            <div style="display:flex;gap:10px;margin-top:16px;">
-                <button onclick="document.getElementById('ps-msg-modal').style.display='none'" style="flex:1;padding:10px;border:1px solid #e2e8f0;background:#fff;border-radius:8px;cursor:pointer;color:#64748b;">Cancel</button>
-                <button id="nm_send" style="flex:2;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Send</button>
+        <div class="msg-modal" onclick="event.stopPropagation()">
+            <h3>New Message</h3>
+            <label>Send to</label>
+            <select id="nm_to">${opts}</select>
+            <label>Subject <span style="color:#94a8bb;font-weight:400;">(optional)</span></label>
+            <input id="nm_subj" type="text" placeholder="e.g. Maintenance request">
+            <label>Message</label>
+            <textarea id="nm_body" placeholder="Type your message here…"></textarea>
+            <p id="nm_err" style="color:#c0694a;font-size:12px;margin:8px 0 0;display:none;"></p>
+            <div class="msg-modal-actions">
+                <button class="msg-modal-cancel" onclick="document.getElementById('ps-msg-modal').classList.remove('open')">Cancel</button>
+                <button id="nm_send" class="msg-modal-send">Send Message</button>
             </div>
         </div>`;
-    modal.style.display = 'flex';
+    modal.classList.add('open');
 
     document.getElementById('nm_send').onclick = () => {
         const to = document.getElementById('nm_to').value;
@@ -328,7 +344,7 @@ function openNewMessage() {
         fetch(ADMIN_API, { method: 'POST', body: fd })
             .then(r => r.json())
             .then(data => {
-                modal.style.display = 'none';
+                modal.classList.remove('open');
                 if (data.success) {
                     showToast('Message sent!', 'success');
                     const sel = document.getElementById('nm_to');
@@ -388,4 +404,83 @@ window.addEventListener('ps:new_messages', e => {
 document.addEventListener('visibilitychange', () => {
     if (!activeUserId) return;
     document.hidden ? stopPoll() : startPoll();
+});
+// On load: ensure no thread starts with active class (no conversation pre-selected)
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.msg-thread').forEach(t => t.classList.remove('active'));
+});
+/* ── Thread-list badge poller ───────────────────────────────
+   Polls ?action=threads every 3 s to keep unread badges and
+   previews up to date for ALL threads, not just the open one.
+   This is separate from the conversation poll (startPoll) which
+   only fetches new bubbles for the currently active thread.
+──────────────────────────────────────────────────────────── */
+let threadPollTimer = null;
+
+function startThreadPoll() {
+    if (threadPollTimer) return;
+    threadPollTimer = setInterval(refreshThreadBadges, 3000);
+}
+
+function stopThreadPoll() {
+    if (threadPollTimer) { clearInterval(threadPollTimer); threadPollTimer = null; }
+}
+
+function refreshThreadBadges() {
+    if (document.hidden) return;
+    fetch(`${ADMIN_API}?action=threads`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success || !data.threads) return;
+            data.threads.forEach(t => {
+                const uid = parseInt(t.other_id);
+                const thread = document.querySelector(`.msg-thread[data-user-id="${uid}"]`);
+                if (!thread) return;
+
+                const unread = parseInt(t.unread) || 0;
+                const isActive = uid === activeUserId;
+
+                // Update preview text
+                const preview = thread.querySelector('.thread-preview');
+                if (preview && t.last_body) preview.textContent = (t.last_body || '').slice(0, 50);
+
+                // Update timestamp
+                const time = thread.querySelector('.msg-thread-time');
+                if (time && t.last_time) {
+                    const d = new Date(t.last_time.replace(' ', 'T'));
+                    time.textContent = isNaN(d) ? '' :
+                        (Date.now() - d < 86400000)
+                            ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                            : d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+                }
+
+                // Badge — skip if this thread is currently open (mark_read already fired)
+                if (isActive) return;
+
+                const meta = thread.querySelector('.msg-thread-meta');
+                let badge = thread.querySelector('.msg-unread');
+
+                if (unread > 0) {
+                    thread.classList.add('has-unread');
+                    if (badge) {
+                        badge.textContent = unread;
+                    } else if (meta) {
+                        const b = document.createElement('div');
+                        b.className = 'msg-unread';
+                        b.textContent = unread;
+                        meta.appendChild(b);
+                    }
+                } else {
+                    thread.classList.remove('has-unread');
+                    if (badge) badge.remove();
+                }
+            });
+        })
+        .catch(() => {}); // silent — never disrupt UX
+}
+
+// Start on load, pause when tab is hidden
+document.addEventListener('DOMContentLoaded', startThreadPoll);
+document.addEventListener('visibilitychange', () => {
+    document.hidden ? stopThreadPoll() : startThreadPoll();
 });

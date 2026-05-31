@@ -415,58 +415,9 @@ PS.initAmenities = function () {
 /* ─────────────────────────────────────────────
    10.  MESSAGES PAGE
    ───────────────────────────────────────────── */
-PS.initMessages = function () {
-    // Thread switching
-    document.querySelectorAll('.msg-thread').forEach(thread => {
-        thread.addEventListener('click', function () {
-            document.querySelectorAll('.msg-thread').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            const name = this.querySelector('.msg-thread-name')?.textContent || 'Contact';
-            const paneTitle = document.querySelector('.msg-pane-title');
-            const paneSub = document.querySelector('.msg-pane-sub');
-            if (paneTitle) paneTitle.textContent = name;
-            if (paneSub) paneSub.textContent = 'Unit · Property · Online';
-            // Clear unread badge
-            const badge = this.querySelector('.msg-unread');
-            if (badge) badge.remove();
-        });
-    });
-
-    // Send message
-    const composeInput = document.querySelector('.msg-compose input');
-    const sendBtn = document.querySelector('.msg-compose .btn-primary');
-    if (composeInput && sendBtn) {
-        function sendMessage() {
-            const text = composeInput.value.trim();
-            if (!text) return;
-            const body = document.querySelector('.msg-pane-body');
-            if (body) {
-                const now = new Date();
-                const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const bubble = document.createElement('div');
-                bubble.className = 'msg-bubble me';
-                bubble.innerHTML = `<div class="bubble">${text}</div><div class="btime">${time}</div>`;
-                body.appendChild(bubble);
-                body.scrollTop = body.scrollHeight;
-            }
-            composeInput.value = '';
-        }
-        sendBtn.addEventListener('click', sendMessage);
-        composeInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
-    }
-
-    // Message search
-    const msgSearch = document.querySelector('.msg-list-header input');
-    if (msgSearch) {
-        msgSearch.addEventListener('input', function () {
-            const q = this.value.toLowerCase();
-            document.querySelectorAll('.msg-thread').forEach(t => {
-                const text = t.textContent.toLowerCase();
-                t.style.display = text.includes(q) ? '' : 'none';
-            });
-        });
-    }
-};
+// PS.initMessages is handled entirely by assets/js/admin/messages.js.
+// This stub is intentionally left empty to avoid duplicate listeners.
+PS.initMessages = function () {};
 
 /* ─────────────────────────────────────────────
    12.  SETTINGS PAGE

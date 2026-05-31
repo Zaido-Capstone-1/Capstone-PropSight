@@ -1,0 +1,79 @@
+/* assets/css/admin-css/refunds.css */
+
+/* ── Status badges ────────────────────────────────────────────────────────── */
+.badge-pending {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde68a;
+}
+
+.badge-approved {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.badge-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+/* ── Reason cell ──────────────────────────────────────────────────────────── */
+.refund-reason-cell {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-soft);
+    font-size: 12px;
+}
+
+/* ── Action buttons ───────────────────────────────────────────────────────── */
+.btn-approve {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid #16a34a;
+    background: #f0fdf4;
+    color: #16a34a;
+    transition: all 0.15s;
+}
+
+.btn-approve:hover {
+    background: #16a34a;
+    color: #fff;
+}
+
+.btn-reject {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid #dc2626;
+    background: #fff1f2;
+    color: #dc2626;
+    transition: all 0.15s;
+}
+
+.btn-reject:hover {
+    background: #dc2626;
+    color: #fff;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+.refund-empty {
+    text-align: center;
+    padding: 52px 16px;
+    color: #aaa;
+    font-size: 14px;
+}

@@ -86,7 +86,8 @@ include '../../lib/admin-queries/staff_roles_queries.php';
             <div class="stat-card">
                 <div>
                     <div class="stat-label">Field Staff</div>
-                    <div class="stat-value" id="role-count-field"><?= $counts['frontdesk'] + $counts['maintenance'] ?></div>
+                    <div class="stat-value" id="role-count-field"><?= $counts['frontdesk'] + $counts['maintenance'] ?>
+                    </div>
                 </div>
                 <div class="stat-icon-wrap red">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -102,17 +103,51 @@ include '../../lib/admin-queries/staff_roles_queries.php';
             <div class="card" style="flex:2;">
                 <div class="card-header">
                     <span class="card-title">Team Members</span>
-                    <form method="GET" style="display:contents;">
+                    <div class="staff-controls">
                         <div class="search-wrap">
                             <svg viewBox="0 0 24 24">
                                 <circle cx="11" cy="11" r="8" />
                                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
                             </svg>
-                            <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" id="searchStaff"
-                                placeholder="Search staff…"
-                                oninput="clearTimeout(st2);st2=setTimeout(()=>this.form.submit(),450)">
+                            <input type="text" id="searchStaff" placeholder="Search staff…">
                         </div>
-                    </form>
+                        <!-- Custom role dropdown -->
+                        <div class="inv-status-dropdown-wrap" id="roleFilterWrap">
+                            <button type="button" class="inv-status-trigger" id="roleFilterTrigger"
+                                onclick="toggleRoleFilter()">
+                                <span id="roleFilterLabel">All Roles</span>
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12"
+                                    height="12" id="roleFilterChevron">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </button>
+                            <input type="hidden" id="roleFilter" value="">
+                            <div class="inv-status-menu" id="roleFilterMenu" style="display:none;">
+                                <button type="button" class="inv-status-opt active" data-value=""
+                                    onclick="selectRoleFilter(this)">All Roles</button>
+                                <button type="button" class="inv-status-opt" data-value="admin"
+                                    onclick="selectRoleFilter(this)">
+                                    <span class="inv-status-dot" style="background:#6366f1;"></span>Admin
+                                </button>
+                                <button type="button" class="inv-status-opt" data-value="manager"
+                                    onclick="selectRoleFilter(this)">
+                                    <span class="inv-status-dot" style="background:#3b82f6;"></span>Manager
+                                </button>
+                                <button type="button" class="inv-status-opt" data-value="frontdesk"
+                                    onclick="selectRoleFilter(this)">
+                                    <span class="inv-status-dot" style="background:#22c55e;"></span>Front Desk
+                                </button>
+                                <button type="button" class="inv-status-opt" data-value="accounting"
+                                    onclick="selectRoleFilter(this)">
+                                    <span class="inv-status-dot" style="background:#eab308;"></span>Accounting
+                                </button>
+                                <button type="button" class="inv-status-opt" data-value="maintenance"
+                                    onclick="selectRoleFilter(this)">
+                                    <span class="inv-status-dot" style="background:#94a3b8;"></span>Maintenance
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="table-wrap">
                     <table>
@@ -168,11 +203,14 @@ include '../../lib/admin-queries/staff_roles_queries.php';
                                         </td>
                                         <td>
                                             <div class="action-wrap">
-                                                <button class="tbl-btn"
-                                                    onclick="toggleActive(<?= $s['user_id'] ?>, '<?= $fullName ?>', <?= $isActive ?>)">
-                                                    <?= $isActive ? 'Deactivate' : 'Activate' ?>
-                                                </button>
-                                                <?php if (!$isSelf): ?>
+                                                <?php if ($isSelf): ?>
+                                                    <span
+                                                        style="font-size:0.75rem;color:#94a3b8;font-style:italic;padding:4px 6px;">You</span>
+                                                <?php else: ?>
+                                                    <button class="tbl-btn"
+                                                        onclick="toggleActive(<?= $s['user_id'] ?>, '<?= $fullName ?>', <?= $isActive ?>)">
+                                                        <?= $isActive ? 'Deactivate' : 'Activate' ?>
+                                                    </button>
                                                     <button class="tbl-btn danger"
                                                         onclick="removeStaff(<?= $s['user_id'] ?>, '<?= $fullName ?>')">
                                                         Remove
@@ -189,7 +227,7 @@ include '../../lib/admin-queries/staff_roles_queries.php';
                 <div style="padding:10px 20px;font-size:0.75rem;color:#94a3b8;border-top:1px solid #f1f5f9;">
                     <span id="staff-count"><?= count($staff) ?></span>
                     team member<?= count($staff) !== 1 ? 's' : '' ?>
-                    <?= $search ? '· search: <strong>' . htmlspecialchars($search) . '</strong>' : '' ?>
+
                 </div>
             </div>
 
@@ -309,7 +347,6 @@ include '../../lib/admin-queries/staff_roles_queries.php';
 </div>
 
 <script>
-    // Pass current user ID to staff_roles.js for isSelf check in buildStaffRow
     window.__PS_STAFF__ = {
         currentUserId: <?= (int) $_SESSION['user_id'] ?>,
     };

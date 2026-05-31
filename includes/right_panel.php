@@ -165,7 +165,7 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
   }
 
   .user-avatar-initials {
-    background:linear-gradient(135deg,var(--blue-300),var(--blue-700));
+    background: linear-gradient(135deg, var(--blue-300), var(--blue-700));
     color: white;
     font-weight: 600;
     font-size: 16px;
@@ -179,38 +179,39 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
   }
 </style>
 <section class="right-panel">
-  <div class="right-header">
+  <div class="right-header" style="position:relative; overflow:visible;">
     <div class="notif-btn" id="adminNotifBtn" title="Notifications">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
       </svg>
-      <div class="notif-dot" id="adminNotifDot" style="<?= empty($notifications) ? 'display:none;' : '' ?>"></div>
-      <div id="adminNotifDropdown"
-        style="display:none;position:absolute;top:44px;left:0;width:280px;max-height:340px;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 28px rgba(15,23,42,.18);z-index:9999;">
-        <div
-          style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:700;color:#0f172a;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <span>Notifications</span>
-          <button id="adminNotifMarkAll" type="button"
-            style="border:none;background:none;color:#2563eb;font-size:11px;font-weight:600;cursor:pointer;">Mark all as
-            read</button>
-        </div>
-        <div id="adminNotifList">
-          <?php if (empty($notifications)): ?>
-            <div style="padding:14px 12px;color:#94a3b8;font-size:12px;">No new notifications.</div>
-          <?php else: ?>
-            <?php foreach ($notifications as $n): ?>
-              <div class="rp-notif-item" data-notif-id="<?= htmlspecialchars($n['id']) ?>"
-                data-path="<?= htmlspecialchars($n['path'] ?? '') ?>"
-                style="padding:10px 12px;border-bottom:1px solid #f8fafc;cursor:pointer;">
-                <div style="font-size:12px;color:#0f172a;line-height:1.35;"><?= htmlspecialchars($n['text']) ?></div>
-                <div style="font-size:11px;color:#94a3b8;margin-top:2px;">
-                  <?= htmlspecialchars(date('M j, g:i A', strtotime($n['ts']))) ?>
-                </div>
+      <span class="notif-dot" id="adminNotifDot" style="<?= empty($notifications) ? 'display:none;' : '' ?>"><?= count($notifications) ?></span>
+    </div>
+
+    <div id="adminNotifDropdown"
+      style="display:none;position:absolute;top:calc(100% + -20px);left:-230px;width:300px;max-height:360px;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 28px rgba(15,23,42,.18);z-index:99999;">
+      <div
+        style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:700;color:#0f172a;display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:0;background:#fff;">
+        <span>Notifications</span>
+        <button id="adminNotifMarkAll" type="button"
+          style="border:none;background:none;color:#2563eb;font-size:11px;font-weight:600;cursor:pointer;">Mark all as
+          read</button>
+      </div>
+      <div id="adminNotifList">
+        <?php if (empty($notifications)): ?>
+          <div style="padding:14px 12px;color:#94a3b8;font-size:12px;">No new notifications.</div>
+        <?php else: ?>
+          <?php foreach ($notifications as $n): ?>
+            <div class="rp-notif-item" data-notif-id="<?= htmlspecialchars($n['id']) ?>"
+              data-path="<?= htmlspecialchars($n['path'] ?? '') ?>"
+              style="padding:10px 12px;border-bottom:1px solid #f8fafc;cursor:pointer;">
+              <div style="font-size:12px;color:#0f172a;line-height:1.35;"><?= htmlspecialchars($n['text']) ?></div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:2px;">
+                <?= htmlspecialchars(date('M j, g:i A', strtotime($n['ts']))) ?>
               </div>
-            <?php endforeach; ?>
-          <?php endif; ?>
-        </div>
+            </div>
+          <?php endforeach; ?>
+        <?php endif; ?>
       </div>
     </div>
     <div class="user-info">
