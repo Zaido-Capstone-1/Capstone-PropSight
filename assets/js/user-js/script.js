@@ -959,12 +959,17 @@ if (burger && mob) {
 
     function goToSupportFromManage() {
         const id = Number(currentBookingId);
+        const unit = document.getElementById('manageUnitName')?.textContent?.trim() || '';
+        const property = document.getElementById('manageProperty')?.textContent?.trim() || '';
         closeManageModal();
         if (Number.isFinite(id) && id > 0) {
-            window.location.href = `support.php?booking_id=${encodeURIComponent(String(id))}`;
+            const params = new URLSearchParams({ booking_id: id, open_ticket: '1' });
+            if (unit) params.set('unit', unit);
+            if (property) params.set('property', property);
+            window.location.href = `support.php?${params.toString()}`;
             return;
         }
-        window.location.href = 'support.php';
+        window.location.href = 'support.php?open_ticket=1';
     }
 
     // ── CAROUSEL ───────────────────────────────────────────────

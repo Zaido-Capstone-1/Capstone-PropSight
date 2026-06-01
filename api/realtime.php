@@ -98,6 +98,13 @@ if ($role === 'admin') {
     ));
     $payload['unread_messages'] = (int) ($msgRow['c'] ?? 0);
 
+    // ── Open support tickets count ─────────────────────
+    $supportRow = mysqli_fetch_assoc(mysqli_query(
+        $conn,
+        "SELECT COUNT(*) AS c FROM support_tickets WHERE status = 'open'"
+    ));
+    $payload['open_support_tickets'] = (int) ($supportRow['c'] ?? 0);
+
     // ── Admin notifications (messages + pending bookings + tasks) ─────
     $adminNotifs = [];
     $adminMsgNotifRes = mysqli_query(

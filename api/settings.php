@@ -141,7 +141,7 @@ if ($method === 'POST') {
             echo json_encode(['success' => false, 'message' => 'Invalid request token.']);
             exit;
         }
-        $fields = ['contact_address', 'contact_phone', 'contact_email'];
+        $fields = ['contact_address', 'contact_phone', 'contact_phone2', 'contact_email'];
         foreach ($fields as $key) {
             $val = mysqli_real_escape_string($conn, trim($_POST[$key] ?? ''));
             $keyEsc = mysqli_real_escape_string($conn, $key);

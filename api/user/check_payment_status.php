@@ -4,17 +4,74 @@ require_once '../../includes/session.php';
 require_once '../../includes/db.php';
 require_once '../../includes/paymongo.php';
 
-if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'user') {
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'] ?? '', ['user', 'admin'], true)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
     exit;
 }
 
 $bookingId = (int) ($_GET['booking_id'] ?? 0);
+$invoiceId = (int) ($_GET['invoice_id'] ?? 0);
 $userId = (int) $_SESSION['user_id'];
 
-if (!$bookingId) {
-    echo json_encode(['success' => false, 'message' => 'Missing booking_id.']);
+if (!$bookingId && !$invoiceId) {
+    echo json_encode(['success' => false, 'message' => 'Missing booking_id or invoice_id.']);
+    exit;
+}
+
+// Invoice payment status check
+if ($invoiceId && !$bookingId) {
+    $stmt = $conn->prepare("
+        SELECT pp.status AS payment_status, pp.paymongo_link_id
+        FROM paymongo_payments pp
+        WHERE pp.reference_id = ? AND pp.reference_type = 'invoice'
+        ORDER BY pp.created_at DESC LIMIT 1
+    ");
+    $stmt->bind_param('i', $invoiceId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$row) {
+        echo json_encode(['success' => true, 'payment_status' => 'pending', 'invoice_status' => 'Pending']);
+        exit;
+    }
+
+    if ($row['payment_status'] === 'paid') {
+        echo json_encode(['success' => true, 'payment_status' => 'paid', 'invoice_status' => 'Paid']);
+        exit;
+    }
+
+    // Poll PayMongo for current link status
+    try {
+        $link = paymongo_request('GET', '/links/' . $row['paymongo_link_id']);
+        $linkStatus = $link['attributes']['status'] ?? '';
+        if ($linkStatus === 'paid') {
+            // Mark paymongo_payments paid
+            $conn->query("UPDATE paymongo_payments SET status='paid' WHERE paymongo_link_id='" . $conn->real_escape_string($row['paymongo_link_id']) . "'");
+            // Mark invoice Paid
+            $invUpd = $conn->prepare("UPDATE invoices SET status='Paid' WHERE id=? AND status!='Paid'");
+            $invUpd->bind_param('i', $invoiceId);
+            $invUpd->execute();
+            $invUpd->close();
+            // Log transaction
+            $pmPay = $conn->query("SELECT amount FROM paymongo_payments WHERE paymongo_link_id='" . $conn->real_escape_string($row['paymongo_link_id']) . "' LIMIT 1")->fetch_assoc();
+            $invAmt = (float) ($pmPay['amount'] ?? 0);
+            $invRef = 'INV-PMT-' . $invoiceId;
+            $today = date('Y-m-d');
+            // Only insert transaction if not already recorded
+            $txCheck = $conn->query("SELECT id FROM transactions WHERE reference_no='$invRef' LIMIT 1");
+            if (!$txCheck || $txCheck->num_rows === 0) {
+                $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date) VALUES ('$invRef', 'PayMongo payment for Invoice #$invoiceId', 'Invoice Revenue', 'Income', $invAmt, '$today')");
+            }
+            echo json_encode(['success' => true, 'payment_status' => 'paid', 'invoice_status' => 'Paid']);
+            exit;
+        }
+    } catch (Exception $e) {
+        error_log('[check_payment_status] Invoice poll failed: ' . $e->getMessage());
+    }
+
+    echo json_encode(['success' => true, 'payment_status' => $row['payment_status'], 'invoice_status' => 'Pending']);
     exit;
 }
 

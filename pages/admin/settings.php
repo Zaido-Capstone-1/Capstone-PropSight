@@ -171,13 +171,19 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
                         placeholder="Full address" />
                 </div>
                 <div class="form-group">
-                    <label>Phone</label>
+                    <label>Phone (Primary)</label>
                     <input id="contact_phone" type="text"
                         value="<?php echo htmlspecialchars($sysCfg['contact_phone'] ?? '+63 33 123 4567'); ?>"
                         placeholder="+63 33 123 4567" />
                 </div>
                 <div class="form-group">
-                    <label>Email</label>
+                    <label>Phone (Secondary)</label>
+                    <input id="contact_phone2" type="text"
+                        value="<?php echo htmlspecialchars($sysCfg['contact_phone2'] ?? '+63 912 345 6789'); ?>"
+                        placeholder="+63 912 345 6789" />
+                </div>
+                <div class="form-group">
+                    <label>Support Email</label>
                     <input id="contact_email" type="email"
                         value="<?php echo htmlspecialchars($sysCfg['contact_email'] ?? 'hello@boracayaccommodation.ph'); ?>"
                         placeholder="hello@example.com" />

@@ -56,7 +56,7 @@ include '../../lib/admin-queries/messages_queries.php';
                     <?php foreach ($threads as $i => $t):
                         $initials = strtoupper(mb_substr($t['other_name'], 0, 1));
                         $preview = mb_strimwidth($t['last_body'] ?? '', 0, 50, '...');
-                        $timeAgo = $t['last_time'] ? (time() - strtotime($t['last_time']) < 86400 ? date('g:i A', strtotime($t['last_time'])) : date('M j', strtotime($t['last_time']))) : '';
+                        $timeAgo = $t['last_time'] ? (time() - strtotime($t['last_time'] . ' UTC') < 86400 ? gmdate('g:i A', strtotime($t['last_time'] . ' UTC')) : gmdate('M j', strtotime($t['last_time'] . ' UTC'))) : '';
                         $unread = (int) $t['unread'];
                         $otherPhoto = !empty($t['other_photo']) ? htmlspecialchars('../../' . ltrim($t['other_photo'], '/')) : '';
                         ?>
@@ -78,7 +78,7 @@ include '../../lib/admin-queries/messages_queries.php';
                                 <div class="msg-thread-preview thread-preview"><?= htmlspecialchars($preview) ?></div>
                             </div>
                             <div class="msg-thread-meta">
-                                <div class="msg-thread-time"><?= $timeAgo ?></div>
+                                <div class="msg-thread-time" data-ts="<?= $t['last_time'] ?>"></div>
                                 <?php if ($unread > 0): ?>
                                     <div class="msg-unread"><?= $unread ?></div>
                                 <?php endif; ?>

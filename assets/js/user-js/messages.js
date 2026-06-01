@@ -3,6 +3,7 @@ let activeAdminName = '';
 let pollTimer = null;
 let lastMsgTs = null; // timestamp of newest message loaded
 let isMobile = window.innerWidth <= 680;
+let seenCheckTimer = null;
 
 // ── Thread search ────────────────────────────────────────────
 function filterThreads(q) {
@@ -19,6 +20,8 @@ function openConversation(adminId, adminName, adminPhoto) {
 
     activeAdminId = adminId;
     activeAdminName = adminName;
+    // Save active conversation to restore on reload
+    sessionStorage.setItem('ps_active_admin', JSON.stringify({ adminId, adminName, adminPhoto }));
     // Fire mark-as-read immediately so badge clears on next page load
     fetch(`${window.__PS_USER_MSG__.apiUrl}?action=mark_read&admin_id=${adminId}`).catch(() => {});
 
@@ -105,6 +108,8 @@ function loadMessages() {
                 t.classList.remove('has-unread');
                 t.querySelectorAll('.ti-badge').forEach(b => b.remove());
             }
+            // Check seen status of last sent message
+            checkSeen();
         })
         .catch(() => renderChatError('Failed to load messages.'));
 }
@@ -125,7 +130,7 @@ function renderMessages(msgs, clearFirst = false) {
 
     msgs.forEach(m => {
         const mine = parseInt(m.from_user) === window.__PS_USER_MSG__.userId;
-        const d = new Date(m.created_at);
+        const d = new Date((m.created_at || '').replace(' ', 'T') + 'Z');
         const dateStr = d.toLocaleDateString('en-PH', {
             weekday: 'long',
             month: 'long',
@@ -147,12 +152,16 @@ function renderMessages(msgs, clearFirst = false) {
         const bubble = document.createElement('div');
         bubble.className = `msg-bubble ${mine ? 'me' : 'them'}`;
         bubble.dataset.msgId = m.message_id;
+        const bodyText = m.body && m.body !== '📎 Attachment' ? `<div class="bubble-text">${escHtml(m.body)}</div>` : '';
         bubble.innerHTML = `
-            <div class="bubble-text">${escHtml(m.body)}</div>
+            ${bodyText}
             ${m.attachment_url ? renderAttachment(m.attachment_url, m.message_id) : ''}
             <div class="bubble-time">${timeStr}</div>`;
         body.appendChild(bubble);
     });
+
+    // Show seen indicator only on the last sent bubble
+    updateSeenIndicator();
 
     body.dataset.lastDate = lastDate;
     body.scrollTop = body.scrollHeight;
@@ -300,10 +309,14 @@ function sendMsg() {
             btn.disabled = false;
             const tmp = document.getElementById(tempId);
             if (data.success) {
-                if (tmp) tmp.classList.remove('sending');
+                if (tmp) {
+                    tmp.classList.remove('sending');
+                    if (data.message_id) tmp.dataset.msgId = data.message_id;
+                }
                 lastMsgTs = data.ts || lastMsgTs;
                 updateThreadPreview(activeAdminId, body || '📎 Attachment');
                 clearAttach();
+                updateSeenIndicator();
             } else {
                 if (tmp) tmp.remove();
                 showToast(data.message || 'Failed to send.', 'error');
@@ -319,8 +332,8 @@ function sendMsg() {
 
 // ── Real-time polling for new messages ──────────────────────
 function startPolling() {
-    stopPolling();
-    pollTimer = setInterval(pollNew, 4000);
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    pollTimer = setInterval(pollNew, 2000);
 }
 
 function stopPolling() {
@@ -328,10 +341,66 @@ function stopPolling() {
         clearInterval(pollTimer);
         pollTimer = null;
     }
+    stopSeenCheck();
 }
 
+// ── Seen / delivered indicator ───────────────────────────────
+function updateSeenIndicator() {
+    const chatBody = document.getElementById('chatBody');
+    if (!chatBody) return;
+    // Check if already marked as Seen before removing
+    const existing = chatBody.querySelector('.seen-indicator');
+    const alreadySeen = existing && existing.classList.contains('seen');
+    chatBody.querySelectorAll('.seen-indicator').forEach(el => el.remove());
+    // Only show if the very last bubble in chat is mine
+    const allBubbles = [...chatBody.querySelectorAll('.msg-bubble')];
+    if (!allBubbles.length) return;
+    const lastBubble = allBubbles[allBubbles.length - 1];
+    if (!lastBubble.classList.contains('me')) return;
+    const seenEl = document.createElement('div');
+    seenEl.className = alreadySeen ? 'seen-indicator seen' : 'seen-indicator';
+    seenEl.textContent = alreadySeen ? 'Seen' : 'Delivered';
+    lastBubble.appendChild(seenEl);
+}
+
+function markLastBubbleSeen() {
+    const chatBody = document.getElementById('chatBody');
+    if (!chatBody) return;
+    const seenEl = chatBody.querySelector('.seen-indicator');
+    if (seenEl) {
+        seenEl.textContent = 'Seen';
+        seenEl.classList.add('seen');
+    }
+}
+
+function startSeenCheck() {
+    stopSeenCheck();
+    seenCheckTimer = setInterval(checkSeen, 2000);
+}
+
+function stopSeenCheck() {
+    if (seenCheckTimer) { clearInterval(seenCheckTimer); seenCheckTimer = null; }
+}
+
+function checkSeen() {
+    if (!activeAdminId) return;
+    fetch(`${window.__PS_USER_MSG__.apiUrl}?action=check_seen&admin_id=${activeAdminId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            // Always re-evaluate: if last bubble is mine and it's been read, show Seen
+            updateSeenIndicator();
+            if (data.is_read) {
+                markLastBubbleSeen();
+            }
+        })
+        .catch(() => {});
+}
+
+let isPolling = false;
 function pollNew() {
-    if (!activeAdminId || !lastMsgTs || document.hidden) return;
+    if (!activeAdminId || !lastMsgTs || document.hidden || isPolling) return;
+    isPolling = true;
     const since = encodeURIComponent(lastMsgTs);
     fetch(`${window.__PS_USER_MSG__.apiUrl}?action=poll&admin_id=${activeAdminId}&since=${since}`)
         .then(r => r.json())
@@ -345,8 +414,6 @@ function pollNew() {
                 // Dedup by message_id so a message the server confirmed won't
                 // appear twice alongside its optimistic bubble.
                 const incoming = data.messages.filter(m => {
-                    if (parseInt(m.from_user) === window.__PS_USER_MSG__.userId) return false;
-                    // Skip if a bubble with this message_id already exists in the chat body
                     if (m.message_id && document.querySelector(`.msg-bubble[data-msg-id="${m.message_id}"]`)) return false;
                     return true;
                 });
@@ -355,8 +422,11 @@ function pollNew() {
                     updateThreadPreview(activeAdminId, incoming[incoming.length - 1].body);
                 }
             }
+            // Check seen status on every poll tick
+            checkSeen();
         })
-        .catch(() => { }); // Silent - don't disrupt UX on poll fail
+        .catch(() => { }) // Silent - don't disrupt UX on poll fail
+        .finally(() => { isPolling = false; });
 }
 
 // ── Update thread list preview ───────────────────────────────
@@ -473,6 +543,7 @@ function sendNewMsg() {
 function goBack() {
     stopPolling();
     activeAdminId = null;
+    sessionStorage.removeItem('ps_active_admin');
     document.getElementById('msgSidebar').classList.remove('hidden');
     document.getElementById('msgChat').classList.remove('active');
     document.getElementById('msgChat').innerHTML = `
@@ -556,7 +627,15 @@ document.addEventListener('visibilitychange', () => {
 
 // Auto-open first thread on desktop
 document.addEventListener('DOMContentLoaded', () => {
-    // No auto-open: user selects a conversation manually
+    // Restore last open conversation on reload
+    const saved = sessionStorage.getItem('ps_active_admin');
+    if (saved) {
+        try {
+            const { adminId, adminName, adminPhoto } = JSON.parse(saved);
+            // Wait for thread list to be ready then open
+            setTimeout(() => openConversation(adminId, adminName, adminPhoto), 100);
+        } catch(e) { sessionStorage.removeItem('ps_active_admin'); }
+    }
 });
 
 window.addEventListener('ps:unread_messages', e => {
@@ -570,7 +649,7 @@ let threadPollTimer = null;
 
 function startThreadPoll() {
     if (threadPollTimer) return;
-    threadPollTimer = setInterval(refreshThreadBadges, 3000);
+    threadPollTimer = setInterval(refreshThreadBadges, 2000);
 }
 
 function stopThreadPoll() {
@@ -599,7 +678,7 @@ function refreshThreadBadges() {
                 // Update timestamp
                 const time = thread.querySelector('.ti-time');
                 if (time && t.last_time) {
-                    const d = new Date(t.last_time.replace(' ', 'T'));
+                    const d = new Date((t.last_time || '').replace(' ', 'T') + 'Z');
                     time.textContent = isNaN(d) ? '' :
                         (Date.now() - d < 86400000)
                             ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

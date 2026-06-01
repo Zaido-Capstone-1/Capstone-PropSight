@@ -114,13 +114,33 @@ $avg_pts = $total ? (int) round(array_sum(array_column($rewards, 'points_cost'))
                     </svg>
                     <input type="text" id="rwSearchInput" placeholder="Search rewards…" oninput="filterTable()">
                 </div>
-                <select class="rw-select" id="rwStatusFilter" onchange="filterTable()">
-                    <option value="">All Status</option>
-                    <option value="1">Active</option>
-                    <option value="0">Inactive</option>
-                </select>
+
+                <!-- Custom Status Dropdown (matches expenses/payments style) -->
+                <div class="rw-status-dropdown-wrap" id="rwStatusDropdownWrap">
+                    <button type="button" class="rw-status-trigger" id="rwStatusTrigger"
+                        onclick="toggleRwStatusDropdown()">
+                        <span id="rwStatusTriggerLabel">All Status</span>
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12"
+                            height="12" id="rwStatusChevron">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                    </button>
+                    <!-- Hidden input read by filterTable() -->
+                    <input type="hidden" id="rwStatusFilter" value="">
+                    <div class="rw-status-menu" id="rwStatusMenu" style="display:none;">
+                        <button type="button" class="rw-status-opt active" data-value=""
+                            onclick="selectRwStatusOpt(this)">All Status</button>
+                        <button type="button" class="rw-status-opt" data-value="1" onclick="selectRwStatusOpt(this)">
+                            <span class="rw-status-dot rw-dot-active"></span>Active
+                        </button>
+                        <button type="button" class="rw-status-opt" data-value="0" onclick="selectRwStatusOpt(this)">
+                            <span class="rw-status-dot rw-dot-inactive"></span>Inactive
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
+
         <div class="rw-table-wrap">
             <table class="rw-table" id="rwTable">
                 <thead>
@@ -289,7 +309,9 @@ $avg_pts = $total ? (int) round(array_sum(array_column($rewards, 'points_cost'))
 <!-- Toggle Reward Confirm Modal -->
 <div class="rw-modal-overlay" id="rwToggleModal">
     <div class="rw-modal" style="max-width:400px;text-align:center;">
-        <div id="rwToggleIcon" style="width:56px;height:56px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;"></div>
+        <div id="rwToggleIcon"
+            style="width:56px;height:56px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+        </div>
         <div class="rw-modal-title" id="rwToggleTitle" style="margin-bottom:8px;"></div>
         <p style="color:#64748b;font-size:13.5px;margin:0 0 6px;font-weight:600;" id="rwToggleRewardName"></p>
         <p style="color:#94a3b8;font-size:12px;margin:0 0 24px;" id="rwToggleNote"></p>
@@ -304,21 +326,24 @@ $avg_pts = $total ? (int) round(array_sum(array_column($rewards, 'points_cost'))
 <div class="rw-modal-overlay" id="rwDeleteModal">
     <div class="rw-modal" style="max-width:400px;text-align:center;">
         <div style="padding-top:8px;">
-            <div style="width:56px;height:56px;margin:0 auto 14px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;">
+            <div
+                style="width:56px;height:56px;margin:0 auto 14px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;">
                 <svg fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24" width="26" height="26">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-                    <path d="M10 11v6M14 11v6"/>
-                    <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                    <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
                 </svg>
             </div>
             <div class="rw-modal-title" style="margin-bottom:10px;">Delete Reward?</div>
             <p style="color:#64748b;font-size:13.5px;margin:0 0 6px;font-weight:600;" id="rwDeleteName"></p>
-            <p style="color:#94a3b8;font-size:12px;margin:0 0 24px;">This cannot be undone. Existing redemptions will not be affected.</p>
+            <p style="color:#94a3b8;font-size:12px;margin:0 0 24px;">This cannot be undone. Existing redemptions will
+                not be affected.</p>
         </div>
         <div class="rw-modal-actions" style="justify-content:center;">
             <button class="btn-outline" onclick="closeDeleteModal()">Cancel</button>
-            <button class="btn btn-primary" style="background:#dc2626;box-shadow:0 2px 8px rgba(220,38,38,.25);" id="rwDeleteBtn" onclick="confirmDelete()">Delete</button>
+            <button class="btn btn-primary" style="background:#dc2626;box-shadow:0 2px 8px rgba(220,38,38,.25);"
+                id="rwDeleteBtn" onclick="confirmDelete()">Delete</button>
         </div>
     </div>
 </div>

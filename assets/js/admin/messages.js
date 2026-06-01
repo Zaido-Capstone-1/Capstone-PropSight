@@ -2,6 +2,7 @@ let activeUserId = null;
 let activeUserName = '';
 let lastMsgTs = null;
 let pollTimer = null;
+let seenCheckTimer = null;
 
 function escHtml(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -12,6 +13,7 @@ function closeMsgPane() {
     if (layout) layout.classList.remove('pane-open');
     // Reset active user so the same thread can be reopened
     activeUserId = null;
+    sessionStorage.removeItem('ps_active_user');
     stopPoll();
     // Restore empty state
     const pane = document.getElementById('msgPane');
@@ -30,6 +32,8 @@ function loadConversation(userId, name, email, photo) {
     if (activeUserId === userId) return;
     activeUserId = userId;
     activeUserName = name;
+    // Save active conversation to restore on reload
+    sessionStorage.setItem('ps_active_user', JSON.stringify({ userId, name, email, photo }));
     // Fire mark-as-read immediately so badge clears on next page load
     fetch(`${ADMIN_API}?action=mark_read&user_id=${userId}`).catch(() => {});
 
@@ -99,6 +103,7 @@ function loadConversation(userId, name, email, photo) {
                 t.classList.remove('has-unread');
                 t.querySelectorAll('.msg-unread').forEach(b => b.remove());
             }
+            checkSeen();
             startPoll();
         })
         .catch(() => { const b = document.getElementById('msgBody'); if (b) b.innerHTML = '<p style="padding:20px;color:red;">Network error.</p>'; });
@@ -116,7 +121,7 @@ function renderMsgs(msgs, clearFirst) {
     msgs.forEach(m => {
         const mine = parseInt(m.from_user) === ADMIN_ID;
         // MySQL returns "YYYY-MM-DD HH:MM:SS" — replace space with T so all browsers parse it correctly
-        const d = new Date((m.created_at || '').replace(' ', 'T'));
+        const d = new Date((m.created_at || '').replace(' ', 'T') + 'Z');
         const dateStr = isNaN(d) ? '' : d.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' });
         const timeStr = isNaN(d) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         if (dateStr !== lastDate) {
@@ -128,9 +133,13 @@ function renderMsgs(msgs, clearFirst) {
         }
         const bub = document.createElement('div');
         bub.className = `msg-bubble ${mine ? 'me' : 'them'}`;
-        bub.innerHTML = `<div class="bubble">${escHtml(m.body)}</div>${m.attachment_url ? renderAdminAttachment(m.attachment_url, m.message_id) : ''}<div class="btime">${timeStr}</div>`;
+        bub.dataset.msgId = m.message_id;
+        const bodyText = m.body && m.body !== '📎 Attachment' ? `<div class="bubble">${escHtml(m.body)}</div>` : '';
+        bub.innerHTML = `${bodyText}${m.attachment_url ? renderAdminAttachment(m.attachment_url, m.message_id) : ''}<div class="btime">${timeStr}</div>`;
         body.appendChild(bub);
     });
+    // Show seen indicator only on last sent bubble
+    updateSeenIndicator();
     body.dataset.lastDate = lastDate;
     body.scrollTop = body.scrollHeight;
 }
@@ -257,9 +266,11 @@ function sendMsg() {
         .then(d => {
             bub.style.opacity = '';
             if (d.success) {
+                if (d.message_id) bub.dataset.msgId = d.message_id;
                 lastMsgTs = d.ts || lastMsgTs;
                 updateThreadPreview(activeUserId, bodyTxt || '📎 Attachment');
                 clearAdminAttach();
+                updateSeenIndicator();
             } else {
                 bub.remove();
                 showToast(d.message || 'Failed to send.', 'error');
@@ -268,10 +279,12 @@ function sendMsg() {
         .catch(() => { bub.remove(); showToast('Network error.', 'error'); });
 }
 
+let isPolling = false;
 function startPoll() {
-    stopPoll();
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
     pollTimer = setInterval(() => {
-        if (!activeUserId || !lastMsgTs || document.hidden) return;
+        if (!activeUserId || !lastMsgTs || document.hidden || isPolling) return;
+        isPolling = true;
         fetch(`${ADMIN_API}?action=poll&user_id=${activeUserId}&since=${encodeURIComponent(lastMsgTs)}`)
             .then(r => r.json())
             .then(data => {
@@ -282,10 +295,67 @@ function startPoll() {
                     updateThreadPreview(activeUserId, incoming[incoming.length - 1].body);
                 }
                 lastMsgTs = data.ts || lastMsgTs;
-            }).catch(() => { });
-    }, 4000);
+                // Check seen status on every poll tick
+                checkSeen();
+            })
+            .catch(() => { })
+            .finally(() => { isPolling = false; });
+    }, 2000);
 }
-function stopPoll() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+function stopPoll() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } stopSeenCheck(); }
+
+// ── Seen / delivered indicator ───────────────────────────────
+function updateSeenIndicator() {
+    const msgBody = document.getElementById('msgBody');
+    if (!msgBody) return;
+    // Check if already marked as Seen before removing
+    const existing = msgBody.querySelector('.seen-indicator');
+    const alreadySeen = existing && existing.classList.contains('seen');
+    msgBody.querySelectorAll('.seen-indicator').forEach(el => el.remove());
+    // Only show if the very last bubble in chat is mine
+    const allBubbles = [...msgBody.querySelectorAll('.msg-bubble')];
+    if (!allBubbles.length) return;
+    const lastBubble = allBubbles[allBubbles.length - 1];
+    if (!lastBubble.classList.contains('me')) return;
+    const seenEl = document.createElement('div');
+    seenEl.className = alreadySeen ? 'seen-indicator seen' : 'seen-indicator';
+    seenEl.textContent = alreadySeen ? 'Seen' : 'Delivered';
+    lastBubble.appendChild(seenEl);
+}
+
+function markLastBubbleSeen() {
+    const msgBody = document.getElementById('msgBody');
+    if (!msgBody) return;
+    const seenEl = msgBody.querySelector('.seen-indicator');
+    if (seenEl) {
+        seenEl.textContent = 'Seen';
+        seenEl.classList.add('seen');
+    }
+}
+
+function startSeenCheck() {
+    stopSeenCheck();
+    seenCheckTimer = setInterval(checkSeen, 2000);
+}
+
+function stopSeenCheck() {
+    if (seenCheckTimer) { clearInterval(seenCheckTimer); seenCheckTimer = null; }
+}
+
+function checkSeen() {
+    if (!activeUserId) return;
+    fetch(`${ADMIN_API}?action=check_seen&user_id=${activeUserId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            // Always re-evaluate: if last bubble is mine and it's been read, show Seen
+            updateSeenIndicator();
+            if (data.is_read) {
+                markLastBubbleSeen();
+            }
+        })
+        .catch(() => {});
+}
 
 function updateThreadPreview(userId, body) {
     const item = document.querySelector(`.msg-thread[data-user-id="${userId}"]`);
@@ -408,6 +478,14 @@ document.addEventListener('visibilitychange', () => {
 // On load: ensure no thread starts with active class (no conversation pre-selected)
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.msg-thread').forEach(t => t.classList.remove('active'));
+    // Restore last open conversation on reload
+    const saved = sessionStorage.getItem('ps_active_user');
+    if (saved) {
+        try {
+            const { userId, name, email, photo } = JSON.parse(saved);
+            setTimeout(() => loadConversation(userId, name, email, photo), 100);
+        } catch(e) { sessionStorage.removeItem('ps_active_user'); }
+    }
 });
 /* ── Thread-list badge poller ───────────────────────────────
    Polls ?action=threads every 3 s to keep unread badges and
@@ -419,7 +497,7 @@ let threadPollTimer = null;
 
 function startThreadPoll() {
     if (threadPollTimer) return;
-    threadPollTimer = setInterval(refreshThreadBadges, 3000);
+    threadPollTimer = setInterval(refreshThreadBadges, 2000);
 }
 
 function stopThreadPoll() {
@@ -447,7 +525,7 @@ function refreshThreadBadges() {
                 // Update timestamp
                 const time = thread.querySelector('.msg-thread-time');
                 if (time && t.last_time) {
-                    const d = new Date(t.last_time.replace(' ', 'T'));
+                    const d = new Date((t.last_time || '').replace(' ', 'T') + 'Z');
                     time.textContent = isNaN(d) ? '' :
                         (Date.now() - d < 86400000)
                             ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

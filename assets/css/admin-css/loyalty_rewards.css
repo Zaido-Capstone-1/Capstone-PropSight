@@ -117,6 +117,7 @@
     align-items: center;
 }
 
+/* ── SEARCH ──────────────────────────────────────── */
 .rw-search {
     position: relative;
 }
@@ -143,25 +144,124 @@
     min-width: 200px;
     outline: none;
     transition: border-color .2s;
+    height: 34px;
+    box-sizing: border-box;
 }
 
 .rw-search input:focus {
     border-color: #4f8ef7;
 }
 
-.rw-select {
-    padding: 8px 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 0.82rem;
-    color: #0f172a;
-    background: #fff;
-    cursor: pointer;
-    outline: none;
+/* ── CUSTOM STATUS DROPDOWN (filter bar) ─────────── */
+.rw-status-dropdown-wrap {
+    position: relative;
 }
 
-.rw-select:focus {
+.rw-status-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    height: 34px;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 10px;
+    background: var(--white, #fff);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text, #0f172a);
+    cursor: pointer;
+    white-space: nowrap;
+    box-sizing: border-box;
+    transition: border-color .15s;
+    min-width: 120px;
+    justify-content: space-between;
+}
+
+.rw-status-trigger:hover,
+.rw-status-dropdown-wrap.open .rw-status-trigger {
     border-color: #4f8ef7;
+}
+
+.rw-status-trigger svg {
+    flex-shrink: 0;
+    transition: transform .2s;
+    color: #6b7a90;
+}
+
+.rw-status-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 999;
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, .11);
+    padding: 5px;
+    min-width: 150px;
+    animation: rwDropIn .15s ease;
+}
+
+@keyframes rwDropIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.rw-status-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 11px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    font-weight: 400;
+    color: #0f172a;
+    cursor: pointer;
+    border-radius: 7px;
+    text-align: left;
+    transition: background .12s;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.rw-status-opt:hover {
+    background: #f5f6fa;
+}
+
+.rw-status-opt.active {
+    background: #2563eb;
+    color: #fff;
+    font-weight: 600;
+}
+
+.rw-status-opt.active .rw-status-dot {
+    border: 1.5px solid rgba(255, 255, 255, .6);
+}
+
+/* Status indicator dots */
+.rw-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+.rw-dot-active {
+    background: #16a34a;
+}
+
+.rw-dot-inactive {
+    background: #94a3b8;
 }
 
 /* ── TABLE ───────────────────────────────────────── */
@@ -302,7 +402,7 @@
     color: #6b7a90;
 }
 
-/* ── EMPTY / LOADING ─────────────────────────────── */
+/* ── EMPTY ───────────────────────────────────────── */
 .rw-empty {
     padding: 60px 20px;
     text-align: center;
@@ -421,141 +521,6 @@
     background: #f1f5f9;
 }
 
-/* ── DELETE MODAL IMPROVEMENTS ───────────────────── */
-.rw-delete-modal {
-    max-width: 420px;
-    text-align: center;
-}
-
-.rw-delete-icon {
-    width: 56px;
-    height: 56px;
-    margin: 0 auto 16px;
-    background: #fee2e2;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.rw-delete-icon svg {
-    width: 28px;
-    height: 28px;
-    stroke: #dc2626;
-}
-
-.rw-delete-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1e293b;
-    margin: 0 0 8px;
-}
-
-.rw-delete-note {
-    font-size: 12.5px;
-    color: #94a3b8;
-    margin: 0 0 24px;
-    line-height: 1.5;
-}
-
-.btn-danger {
-    background: #dc2626;
-    border-color: #dc2626;
-    color: #fff;
-}
-
-.btn-danger:hover {
-    background: #b91c1c;
-    border-color: #b91c1c;
-}
-
-.btn-danger:disabled {
-    background: #fca5a5;
-    border-color: #fca5a5;
-    cursor: not-allowed;
-}
-
-/* ── EDIT MODAL STATUS FIELD ─────────────────────── */
-.rw-status-field {
-    display: flex;
-    gap: 8px;
-}
-
-.rw-status-option {
-    flex: 1;
-    padding: 10px;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #64748b;
-    background: #fff;
-    cursor: pointer;
-    transition: all .15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.rw-status-option:hover {
-    border-color: #cbd5e1;
-}
-
-.rw-status-option.selected {
-    border-color: #2563eb;
-    background: #eff6ff;
-    color: #2563eb;
-}
-
-.rw-status-option svg {
-    width: 12px;
-    height: 12px;
-}
-
-/* ── RESPONSIVE ──────────────────────────────────── */
-@media (max-width: 900px) {
-    .rw-stats {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 500px) {
-    .rw-stats {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .rw-card-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .rw-controls {
-        width: 100%;
-        flex-direction: row;
-        /* ← was column, now row */
-        flex-wrap: nowrap;
-    }
-
-    .rw-search {
-        flex: 1;
-        min-width: 0;
-        /* ← allows it to shrink */
-    }
-
-    .rw-search input {
-        width: 100%;
-        min-width: 0;
-        /* ← removes the 200px floor */
-    }
-
-    .rw-select {
-        flex-shrink: 0;
-        width: auto;
-        /* ← only as wide as it needs to be */
-    }
-}
-
 /* ── MODAL BUTTON STYLES ─────────────────────────── */
 .btn-outline {
     display: inline-flex;
@@ -643,4 +608,46 @@
     cursor: not-allowed;
     box-shadow: none;
     transform: none;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────── */
+@media (max-width: 900px) {
+    .rw-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 500px) {
+    .rw-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .rw-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .rw-controls {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: nowrap;
+    }
+
+    .rw-search {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .rw-search input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .rw-status-dropdown-wrap {
+        flex-shrink: 0;
+    }
+
+    .rw-status-trigger {
+        min-width: 100px;
+    }
 }

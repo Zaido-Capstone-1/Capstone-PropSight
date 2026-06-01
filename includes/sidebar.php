@@ -391,6 +391,7 @@ if ($_sb_initials === '')
         </svg>
       </div>
       <span class="nav-label">Support Tickets</span>
+      <span class="nav-badge" data-rt="support" style="display:none;">0</span>
     </a>
 
     <a href="loyalty_rewards.php" class="nav-item<?= nav_active('loyalty_rewards') ?>">

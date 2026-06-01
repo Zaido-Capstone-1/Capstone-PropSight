@@ -120,7 +120,7 @@ if ($method === 'GET') {
         while ($row = mysqli_fetch_assoc($res))
             $msgs[] = $row;
 
-        echo json_encode(['success' => true, 'messages' => $msgs, 'ts' => date('Y-m-d H:i:s')]);
+        echo json_encode(['success' => true, 'messages' => $msgs, 'ts' => gmdate('Y-m-d H:i:s')]);
         exit;
     }
 
@@ -152,6 +152,28 @@ if ($method === 'GET') {
              WHERE from_user=$userId AND to_user=$adminId AND is_read=0"
         );
         echo json_encode(['success' => true]);
+        exit;
+    }
+
+    // ── Check if MY sent messages have been read ─────────────
+    if ($action === 'check_seen') {
+        $userId = (int) ($_GET['user_id'] ?? 0);
+        if (!$userId) {
+            echo json_encode(['success' => false]);
+            exit;
+        }
+        $stmt = $conn->prepare('
+        SELECT message_id, is_read 
+        FROM messages 
+        WHERE from_user = ? AND to_user = ? 
+        ORDER BY created_at DESC 
+        LIMIT 1
+    ');
+        $stmt->bind_param('ii', $adminId, $userId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        echo json_encode(['success' => true, 'message_id' => $row['message_id'] ?? null, 'is_read' => (bool) ($row['is_read'] ?? false)]);
         exit;
     }
 
@@ -223,7 +245,7 @@ if ($method === 'POST') {
 
         if (mysqli_query($conn, $sql)) {
             $newId = mysqli_insert_id($conn);
-            $now = date('Y-m-d H:i:s');
+            $now = gmdate('Y-m-d H:i:s');
             $bodyPreview = mb_strimwidth(trim($_POST['body'] ?? '📎 Attachment'), 0, 100, '...');
             $bodyEsc = mysqli_real_escape_string($conn, $bodyPreview);
 

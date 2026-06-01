@@ -389,37 +389,32 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
   </div>
 
   <div id="viewInvoiceModal" class="inv-overlay" role="dialog" aria-modal="true" aria-labelledby="viewInvTitle">
-    <div class="inv-modal lg">
-      <div class="inv-modal-head">
-        <span class="inv-modal-title" id="viewInvTitle">Invoice Details</span>
-        <button class="inv-modal-close" id="closeViewInvoice" aria-label="Close">✕</button>
+    <div class="inv-modal inv-modal--view">
+      <div class="inv-modal-head inv-modal-head--branded">
+        <div class="inv-modal-head-inner">
+          <div class="inv-modal-head-eyebrow">Invoice</div>
+          <div class="inv-modal-head-no" id="viewInvTitle">—</div>
+          <span class="inv-badge inv-badge--header" id="vi_badge_header">—</span>
+        </div>
+        <button class="inv-modal-close inv-modal-close--light" id="closeViewInvoice" aria-label="Close">✕</button>
       </div>
-      <div class="inv-modal-body">
 
-        <div class="inv-view-header">
-          <div class="inv-view-no">Invoice</div>
-          <div class="inv-view-title" id="vi_invoice_no">—</div>
-          <div class="inv-view-status">
-            <span class="inv-badge" id="vi_badge">—</span>
+      <div class="inv-modal-body inv-modal-body--view">
+
+        <!-- Tenant / contact strip -->
+        <div class="inv-view-tenant-strip">
+          <div class="inv-view-avatar" id="vi_avatar_initials">—</div>
+          <div>
+            <div class="inv-view-tenant-name" id="vi_tenant">—</div>
+            <div class="inv-view-tenant-email" id="vi_email">—</div>
           </div>
         </div>
 
-        <div class="inv-detail-grid">
-          <div class="inv-detail-item">
-            <div class="inv-detail-label">Tenant</div>
-            <div class="inv-detail-value" id="vi_tenant">—</div>
-          </div>
-          <div class="inv-detail-item">
-            <div class="inv-detail-label">Email</div>
-            <div class="inv-detail-value email" id="vi_email">—</div>
-          </div>
+        <!-- Detail grid -->
+        <div class="inv-detail-grid inv-detail-grid--4">
           <div class="inv-detail-item">
             <div class="inv-detail-label">Unit</div>
             <div class="inv-detail-value" id="vi_unit">—</div>
-          </div>
-          <div class="inv-detail-item">
-            <div class="inv-detail-label">Total Amount</div>
-            <div class="inv-detail-value big" id="vi_total">—</div>
           </div>
           <div class="inv-detail-item">
             <div class="inv-detail-label">Issued</div>
@@ -427,16 +422,22 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
           </div>
           <div class="inv-detail-item">
             <div class="inv-detail-label">Due Date</div>
-            <div class="inv-detail-value" id="vi_due">—</div>
+            <div class="inv-detail-value inv-detail-value--due" id="vi_due">—</div>
+          </div>
+          <div class="inv-detail-item">
+            <div class="inv-detail-label">Total Amount</div>
+            <div class="inv-detail-value inv-detail-value--total" id="vi_total">—</div>
           </div>
         </div>
 
+        <!-- Items box -->
         <div class="inv-items-box">
           <div class="inv-items-box-label">Items / Description</div>
           <div class="inv-items-box-value" id="vi_items">—</div>
         </div>
 
       </div>
+
       <div class="inv-modal-foot">
         <button type="button" class="inv-btn secondary" id="closeViewInvoice2">Close</button>
         <button type="button" class="inv-btn primary" id="vi_sendBtn">
@@ -451,11 +452,19 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
   </div>
 
   <div id="sendModal" class="inv-overlay" role="dialog" aria-modal="true" aria-labelledby="sendModalTitle">
-    <div class="inv-modal sm">
+    <div class="inv-modal inv-modal--send">
       <div class="inv-modal-head">
-        <span class="inv-modal-title" id="sendModalTitle">Send Invoice</span>
+        <span class="inv-modal-title" id="sendModalTitle">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"
+            style="margin-right:6px;vertical-align:-2px;">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+          Send Invoice
+        </span>
         <button class="inv-modal-close" id="closeSendModal" aria-label="Close">✕</button>
       </div>
+
       <div class="inv-modal-body">
 
         <div id="sendModalLoading" class="inv-spinner-wrap">
@@ -463,44 +472,57 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
         </div>
 
         <div id="sendModalContent" style="display:none;">
-          <p class="send-hint">Review the details below before sending the email to the tenant.</p>
-          <table class="send-preview">
-            <tr>
-              <th>Invoice #</th>
-              <td id="si_invoice_no"></td>
-            </tr>
-            <tr>
-              <th>Tenant</th>
-              <td id="si_tenant"></td>
-            </tr>
-            <tr>
-              <th>Email</th>
-              <td id="si_email" class="sp-email"></td>
-            </tr>
-            <tr>
-              <th>Unit</th>
-              <td id="si_unit"></td>
-            </tr>
-            <tr>
-              <th>Items</th>
-              <td id="si_items"></td>
-            </tr>
-            <tr>
-              <th>Total</th>
-              <td id="si_total" class="sp-total"></td>
-            </tr>
-            <tr>
-              <th>Due Date</th>
-              <td id="si_due"></td>
-            </tr>
-          </table>
+
+          <!-- Info banner -->
+          <div class="send-info-banner">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>A PayMongo payment link will be generated and included in this email.</span>
+          </div>
+
+          <!-- Preview card -->
+          <div class="send-preview-card">
+            <div class="send-preview-row">
+              <span class="send-preview-label">Invoice #</span>
+              <span class="send-preview-val send-preview-val--no" id="si_invoice_no">—</span>
+            </div>
+            <div class="send-preview-row">
+              <span class="send-preview-label">Tenant</span>
+              <span class="send-preview-val" id="si_tenant">—</span>
+            </div>
+            <div class="send-preview-row">
+              <span class="send-preview-label">Email</span>
+              <span class="send-preview-val send-preview-val--email" id="si_email">—</span>
+            </div>
+            <div class="send-preview-row">
+              <span class="send-preview-label">Unit</span>
+              <span class="send-preview-val" id="si_unit">—</span>
+            </div>
+            <div class="send-preview-row">
+              <span class="send-preview-label">Items</span>
+              <span class="send-preview-val" id="si_items">—</span>
+            </div>
+            <div class="send-preview-row send-preview-row--total">
+              <span class="send-preview-label">Total</span>
+              <span class="send-preview-val send-preview-val--total" id="si_total">—</span>
+            </div>
+            <div class="send-preview-row">
+              <span class="send-preview-label">Due Date</span>
+              <span class="send-preview-val send-preview-val--due" id="si_due">—</span>
+            </div>
+          </div>
+
           <div id="sendModalError" class="send-error"></div>
         </div>
 
       </div>
+
       <div class="inv-modal-foot">
         <button type="button" class="inv-btn secondary" id="cancelSendModal">Cancel</button>
-        <button type="button" class="inv-btn primary" id="confirmSendBtn" style="display:none;">
+        <button type="button" class="inv-btn primary inv-btn--send" id="confirmSendBtn" style="display:none;">
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <line x1="22" y1="2" x2="11" y2="13" />
             <polygon points="22 2 15 22 11 13 2 9 22 2" />

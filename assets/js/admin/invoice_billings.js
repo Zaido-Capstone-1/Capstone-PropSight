@@ -374,7 +374,22 @@
         let inv;
         try { inv = JSON.parse(row.dataset.inv); } catch { return; }
 
-        setText('vi_invoice_no', inv.invoice_no || `#${inv.id}`);
+        // Branded header
+        const headNo = document.getElementById('viewInvTitle');
+        if (headNo) headNo.textContent = inv.invoice_no || `#${inv.id}`;
+
+        const badgeHeader = $('vi_badge_header');
+        if (badgeHeader) { badgeHeader.textContent = inv.status; badgeHeader.className = 'inv-badge inv-badge--header ' + statusClass(inv.status); }
+
+        // Avatar initials
+        const avatar = $('vi_avatar_initials');
+        if (avatar) {
+            const words = (inv.tenant || '?').trim().split(/\s+/);
+            avatar.textContent = words.length >= 2
+                ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+                : (inv.tenant || '?')[0].toUpperCase();
+        }
+
         setText('vi_tenant', inv.tenant || '—');
         setText('vi_email', inv.email || '(no email on file)');
         setText('vi_unit', inv.unit || '—');
@@ -382,9 +397,6 @@
         setText('vi_total', '₱ ' + parseFloat(inv.total).toLocaleString('en-PH', { minimumFractionDigits: 2 }));
         setText('vi_issued', inv.issued || '—');
         setText('vi_due', inv.due || '—');
-
-        const badge = $('vi_badge');
-        if (badge) { badge.textContent = inv.status; badge.className = 'inv-badge ' + statusClass(inv.status); }
 
         const sendBtn = $('vi_sendBtn');
         if (sendBtn) sendBtn.onclick = () => { closeViewModal(); openSendModal(inv.id); };
@@ -468,7 +480,11 @@
                 updateRowBadge(sendingId, 'Sent');
                 applyFilters();
                 await refreshStats();
-                toast('Invoice sent successfully!', 'success');
+                toast('Invoice sent! Email with payment link delivered to tenant.', 'success');
+                // Start polling so the badge auto-updates once tenant pays
+                if (data.invoice_id) {
+                    startInvoicePaymentPoll(sendingId, data.invoice_id);
+                }
             } else {
                 showSendError(data.message || 'Failed to send invoice.');
                 setBtnState(btn, false, 'Retry Send');
@@ -478,6 +494,43 @@
             setBtnState(btn, false, 'Retry Send');
         }
     });
+
+    /* Poll api/admin/invoice.php?action=check_paid until invoice flips to Paid.
+       Uses the existing admin endpoint so no session mismatch. */
+    function startInvoicePaymentPoll(rowId, invoiceId) {
+        if (!invoiceId) return;
+        // Stop any existing poll for the same invoice
+        if (window._invPollTimers && window._invPollTimers[invoiceId]) {
+            clearInterval(window._invPollTimers[invoiceId]);
+        }
+        window._invPollTimers = window._invPollTimers || {};
+        let attempts = 0;
+        const MAX = 72; // 6 minutes at 5s
+        window._invPollTimers[invoiceId] = setInterval(async () => {
+            attempts++;
+            if (attempts > MAX) {
+                clearInterval(window._invPollTimers[invoiceId]);
+                return;
+            }
+            try {
+                const fd = new FormData();
+                fd.append('action', 'check_paid');
+                fd.append('id', invoiceId);
+                fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
+                const res = await fetch('../../api/admin/invoice.php', {
+                    method: 'POST', credentials: 'same-origin', body: fd
+                });
+                const d = await res.json();
+                if (d.is_paid) {
+                    clearInterval(window._invPollTimers[invoiceId]);
+                    updateRowBadge(rowId, 'Paid');
+                    applyFilters();
+                    await refreshStats();
+                    toast('Payment confirmed! Invoice marked as Paid.', 'success');
+                }
+            } catch { /* network hiccup, keep polling */ }
+        }, 5000);
+    }
 
     function bindSendBtns() {
         $$('.send-btn').forEach(btn => {

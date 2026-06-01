@@ -4,15 +4,19 @@ require_once '../../includes/db.php';
 $userId = (int) $_SESSION['user_id'];
 
 $activeBookingRes = mysqli_query($conn, "
-    SELECT booking_id, unit_id, checkin_date, checkout_date
-    FROM bookings
-    WHERE user_id = $userId
-      AND status IN ('confirmed', 'active')
-      AND checkout_date >= CURDATE()
+    SELECT b.booking_id, b.unit_id, b.checkin_date, b.checkout_date,
+           u.unit_name
+    FROM bookings b
+    JOIN units u ON u.unit_id = b.unit_id
+    WHERE b.user_id = $userId
+      AND b.status IN ('confirmed', 'active')
+      AND b.checkout_date >= CURDATE()
     LIMIT 1
 ");
 $activeBooking = $activeBookingRes ? mysqli_fetch_assoc($activeBookingRes) : null;
 $hasActiveBooking = !empty($activeBooking);
+$activeRoom = $hasActiveBooking ? htmlspecialchars($activeBooking['unit_name'] ?? '') : '';
+$checkOut   = $hasActiveBooking ? ($activeBooking['checkout_date'] ?? '') : '';
 
 $maintRes = $hasActiveBooking ? mysqli_query($conn, "
     SELECT request_id, issue_description, request_status, priority, request_date

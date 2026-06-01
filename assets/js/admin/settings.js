@@ -167,6 +167,7 @@ function saveContactInfo(e) {
     fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
     fd.append('contact_address', document.getElementById('contact_address').value.trim());
     fd.append('contact_phone', document.getElementById('contact_phone').value.trim());
+    fd.append('contact_phone2', document.getElementById('contact_phone2')?.value.trim() || '');
     fd.append('contact_email', document.getElementById('contact_email').value.trim());
     fetch('../../api/settings.php', { method: 'POST', body: fd })
         .then(r => r.json())

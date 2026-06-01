@@ -306,6 +306,69 @@ document.querySelectorAll('.contact-cta').forEach(btn => {
 document.querySelectorAll('.ticket-item').forEach(wireTicketItemClick);
 applyBookingContextPrefill();
 
+/* ── Auto-open modal + prefill when coming from Manage Stay ── */
+(function autoOpenTicketModal() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('open_ticket') !== '1') return;
+
+    const bookingId = params.get('booking_id');
+    const unit      = params.get('unit') || '';
+    const property  = params.get('property') || '';
+
+    function tryOpen() {
+        const modal = document.getElementById('newTicketModal');
+        if (!modal) { setTimeout(tryOpen, 100); return; }
+
+        openNewTicketModal();
+
+        // Remove open_ticket params from URL so reload won't reopen the modal
+        const cleanParams = new URLSearchParams(window.location.search);
+        cleanParams.delete('open_ticket');
+        cleanParams.delete('booking_id');
+        cleanParams.delete('unit');
+        cleanParams.delete('property');
+        const cleanUrl = window.location.pathname + (cleanParams.toString() ? '?' + cleanParams.toString() : '');
+        history.replaceState(null, '', cleanUrl);
+
+        // Prefill subject
+        const subjectEl = document.getElementById('modal_contact_subject');
+        if (subjectEl && !subjectEl.value.trim()) {
+            const ref = bookingId ? 'BK-' + String(bookingId).padStart(6, '0') : '';
+            subjectEl.value = ref ? `[${ref}] Booking concern` : 'Booking concern';
+        }
+
+        // Prefill message
+        const msgEl = document.getElementById('modal_contact_message');
+        if (msgEl && !msgEl.value.trim()) {
+            const ref  = bookingId ? 'BK-' + String(bookingId).padStart(6, '0') : '';
+            const room = unit ? `Room/Unit: ${unit}` : '';
+            const prop = property ? `Property: ${property}` : '';
+            const lines = ['Hi Support Team,', ''];
+            if (ref)  lines.push(`Booking Reference: ${ref}`);
+            if (room) lines.push(room);
+            if (prop) lines.push(prop);
+            lines.push('', 'Concern:', '');
+            msgEl.value = lines.join('\n');
+        }
+
+        // Pre-select "Booking Inquiry" topic
+        const allChips = Array.from(document.querySelectorAll('#modalTicketTypes .ticket-type'));
+        if (allChips.length) {
+            allChips.forEach(t => t.classList.remove('selected'));
+            const target = allChips.find(b => b.textContent.trim().toLowerCase() === 'booking inquiry');
+            (target || allChips[0]).classList.add('selected');
+        }
+
+        // Focus message so user can type their concern immediately
+        if (msgEl) {
+            msgEl.focus();
+            msgEl.setSelectionRange(msgEl.value.length, msgEl.value.length);
+        }
+    }
+
+    tryOpen();
+})();
+
 document.getElementById('ticketViewModal')?.addEventListener('click', (e) => {
     if (e.target.id === 'ticketViewModal') closeTicketModal();
 });
@@ -319,12 +382,9 @@ window.addEventListener('ps:new_messages', function (e) {
         if (!msg.ticket_id) return;
         const ticketId = String(msg.ticket_id);
         const modalBody = document.getElementById('ticketModalBody');
-        const modalTitle = document.getElementById('ticketModalTitle');
         const isModalOpen = document.getElementById('ticketViewModal')?.classList.contains('open');
 
-        // If this ticket's modal is currently open, append the new message
         if (isModalOpen && modalBody) {
-            // Check if this message is for the currently open ticket
             const currentTicketId = document.getElementById('ticketViewModal')?.dataset.ticketId;
             if (!currentTicketId || currentTicketId === ticketId) {
                 const msgEl = document.createElement('div');
@@ -344,10 +404,8 @@ window.addEventListener('ps:new_messages', function (e) {
             }
         }
 
-        // Update the ticket list item badge
         const listItem = document.querySelector(`.ticket-item[data-ticket-id="${ticketId}"]`);
         if (listItem) {
-            // Add unread indicator
             let badge = listItem.querySelector('.ticket-unread-dot');
             if (!badge) {
                 badge = document.createElement('span');
@@ -356,13 +414,11 @@ window.addEventListener('ps:new_messages', function (e) {
                 const subject = listItem.querySelector('.ticket-subject, .ticket-item-title');
                 if (subject) subject.appendChild(badge);
             }
-            // Flash the list item
             listItem.style.transition = 'background 0.3s';
             listItem.style.background = '#eff6ff';
             setTimeout(() => { listItem.style.background = ''; }, 2000);
         }
 
-        // Toast notification
         if (typeof showToast === 'function') {
             const preview = (msg.body || msg.message || '').slice(0, 60);
             showToast(`Support replied: "${preview}${preview.length >= 60 ? '…' : ''}"`, 'info', 'Support Reply', 5000);
@@ -439,5 +495,152 @@ function submitMaintenance() {
         .finally(() => {
             btn.disabled = false;
             btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg> Submit Request`;
+        });
+}
+
+/* ═══════════════════════════════════════════════════
+   PropSight User — Support modals
+   New Ticket + New Maintenance Request
+   ═══════════════════════════════════════════════════ */
+
+/* ── Helpers ──────────────────────────────────────── */
+function _openModal(id) {
+    const m = document.getElementById(id);
+    if (!m) return;
+    m.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    // close on backdrop click
+    m.onclick = (e) => { if (e.target === m) _closeModal(id); };
+}
+
+function _closeModal(id) {
+    const m = document.getElementById(id);
+    if (!m) return;
+    m.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function _showModalError(elId, msg) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = 'flex';
+}
+
+function _hideModalError(elId) {
+    const el = document.getElementById(elId);
+    if (el) el.style.display = 'none';
+}
+
+/* ── New Ticket Modal ─────────────────────────────── */
+function openNewTicketModal() { _openModal('newTicketModal'); }
+function closeNewTicketModal() { _closeModal('newTicketModal'); }
+
+function selectModalTicketType(el) {
+    el.closest('#modalTicketTypes')
+      .querySelectorAll('.ticket-type')
+      .forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+}
+
+function submitModalTicket() {
+    const name    = document.getElementById('modal_contact_name')?.value.trim();
+    const email   = document.getElementById('modal_contact_email')?.value.trim();
+    const subject = document.getElementById('modal_contact_subject')?.value.trim();
+    const message = document.getElementById('modal_contact_message')?.value.trim();
+    const type    = document.querySelector('#modalTicketTypes .ticket-type.selected')?.textContent?.trim() ?? 'Other';
+
+    _hideModalError('modalTicketError');
+
+    if (!subject) return _showModalError('modalTicketError', 'Please enter a subject.');
+    if (!message) return _showModalError('modalTicketError', 'Please enter a message.');
+
+    const btn = document.getElementById('modalSendMsgBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M12 2a10 10 0 0110 10"/></svg> Sending…';
+
+    const fd = new FormData();
+    fd.append('action', 'create');
+    fd.append('category', type);
+    fd.append('subject', subject);
+    fd.append('body', message);
+    fd.append('priority', 'medium');
+    if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
+
+    const apiUrl = window.__PS_USER_SUPPORT_API__ ?? '../../api/user/support.php';
+
+    fetch(apiUrl, { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                closeNewTicketModal();
+                if (typeof showToast === 'function') showToast('Ticket submitted successfully!', 'success');
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                _showModalError('modalTicketError', data.message ?? 'Something went wrong. Please try again.');
+            }
+        })
+        .catch(() => _showModalError('modalTicketError', 'Network error. Please check your connection.'))
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2" fill="none"/></svg> Send Message';
+        });
+}
+
+/* ── New Maintenance Modal ────────────────────────── */
+function openNewMaintenanceModal() { _openModal('newMaintenanceModal'); }
+function closeNewMaintenanceModal() { _closeModal('newMaintenanceModal'); }
+
+function selectModalMaintenanceType(el) {
+    el.closest('#modalMaintenanceTypes')
+      .querySelectorAll('.ticket-type')
+      .forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+}
+
+function submitModalMaintenance() {
+    const name     = document.getElementById('modal_maint_name')?.value.trim();
+    const room     = document.getElementById('modal_maint_room')?.value.trim();
+    const subject  = document.getElementById('modal_maint_subject')?.value.trim();
+    const priority = document.getElementById('modal_maint_priority')?.value;
+    const message  = document.getElementById('modal_maint_message')?.value.trim();
+    const issueType = document.querySelector('#modalMaintenanceTypes .ticket-type.selected')?.textContent?.trim() ?? 'Other';
+
+    _hideModalError('modalMaintenanceError');
+
+    if (!subject) return _showModalError('modalMaintenanceError', 'Please enter an issue summary.');
+    if (!message) return _showModalError('modalMaintenanceError', 'Please describe the issue in detail.');
+
+    const btn = document.getElementById('modalSendMaintBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M12 2a10 10 0 0110 10"/></svg> Submitting…';
+
+    const fd = new FormData();
+    fd.append('action', 'submit_maintenance');
+    fd.append('name', name);
+    fd.append('room', room);
+    fd.append('subject', subject);
+    fd.append('priority', priority);
+    fd.append('message', message);
+    fd.append('issue_type', issueType);
+    if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
+
+    const apiUrl = window.__PS_USER_SUPPORT_API__ ?? '../../api/user/support.php';
+
+    fetch(apiUrl, { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                closeNewMaintenanceModal();
+                if (typeof showToast === 'function') showToast('Maintenance request submitted!', 'success');
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                _showModalError('modalMaintenanceError', data.message ?? 'Something went wrong. Please try again.');
+            }
+        })
+        .catch(() => _showModalError('modalMaintenanceError', 'Network error. Please check your connection.'))
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg> Submit Request';
         });
 }

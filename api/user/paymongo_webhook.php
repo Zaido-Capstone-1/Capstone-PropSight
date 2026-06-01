@@ -12,10 +12,23 @@ if (!$secret) {
     exit('Webhook secret not configured');
 }
 
-$expectedSig = hash_hmac('sha256', $rawBody, $secret);
-
-if (!hash_equals($expectedSig, $sigHeader)) {
-    error_log('PayMongo: Invalid HMAC signature - possible spoofed webhook');
+// PayMongo signature format: "t=<timestamp>,te=<hmac>,li=<hmac>"
+// HMAC is computed over "<timestamp>.<rawBody>", NOT over rawBody alone.
+$sigValid = false;
+$sigParts = [];
+foreach (explode(',', $sigHeader) as $part) {
+    $kv = explode('=', $part, 2);
+    if (count($kv) === 2) $sigParts[$kv[0]] = $kv[1];
+}
+if (!empty($sigParts['t']) && !empty($sigParts['te'])) {
+    $toSign   = $sigParts['t'] . '.' . $rawBody;
+    $expected = hash_hmac('sha256', $toSign, $secret);
+    $sigValid = hash_equals($expected, $sigParts['te']);
+}
+// Allow unsigned in local dev when ngrok sends no signature header
+$isDev = (($_ENV['APP_ENV'] ?? getenv('APP_ENV')) === 'local');
+if (!$sigValid && !($isDev && $sigHeader === '')) {
+    error_log('PayMongo: Invalid HMAC signature. Header: ' . $sigHeader);
     http_response_code(401);
     exit('Invalid signature');
 }
@@ -72,6 +85,33 @@ if ($type === 'link.payment.paid') {
     $upd->bind_param('sss', $paymentId, $paidAt, $linkId);
     $upd->execute();
     $upd->close();
+
+    // Invoice payment: update invoices.status + log transaction, skip booking logic
+    if (($row['reference_type'] ?? '') === 'invoice') {
+        $invoiceId = (int) ($row['reference_id'] ?? 0);
+        if ($invoiceId) {
+            $invUpd = $conn->prepare("UPDATE invoices SET status = 'Paid' WHERE id = ? AND status != 'Paid'");
+            $invUpd->bind_param('i', $invoiceId);
+            $invUpd->execute();
+            $invUpd->close();
+
+            $date    = date('Y-m-d');
+            $invRef  = 'INV-PMT-' . $invoiceId;
+            $invDesc = 'PayMongo payment for Invoice #' . $invoiceId;
+            $invCat  = 'Invoice Revenue';
+            $invTyp  = 'Income';
+            $txInv = $conn->prepare("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date) VALUES (?, ?, ?, ?, ?, ?)");
+            if ($txInv) {
+                $txInv->bind_param('ssssds', $invRef, $invDesc, $invCat, $invTyp, $amount, $date);
+                $txInv->execute();
+                $txInv->close();
+            }
+            error_log('[webhook] Invoice #' . $invoiceId . ' marked Paid via PayMongo link ' . $linkId);
+        }
+        http_response_code(200);
+        echo 'ok';
+        exit;
+    }
 
     $ins = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (?, ?, ?, ?, 'paid', ?)");
     $paymentDatetime = date('Y-m-d H:i:s');

@@ -150,6 +150,8 @@
                     emit('new_bookings', data.new_bookings);
                 if (typeof data.unread_messages === 'number')
                     emit('unread_messages', data.unread_messages);
+                if (typeof data.open_support_tickets === 'number')
+                    emit('open_support_tickets', data.open_support_tickets);
                 if (data.new_messages && data.new_messages.length)
                     emit('new_messages', data.new_messages);
                 if (data.checkin_updates && data.checkin_updates.length)
@@ -278,6 +280,16 @@
         // Hide/show chevron based on badge visibility
         document.querySelectorAll('[data-msg-chevron]').forEach(chevron => {
             chevron.style.display = count > 0 ? 'none' : 'inline-flex';
+        });
+    });
+
+    window.addEventListener('ps:open_support_tickets', e => {
+        const count = e.detail || 0;
+
+        // Update "Support Tickets" badge in admin sidebar
+        document.querySelectorAll('.nav-badge[data-rt="support"]').forEach(el => {
+            el.textContent = count > 99 ? '99+' : count;
+            el.style.display = count > 0 ? 'inline-flex' : 'none';
         });
     });
 

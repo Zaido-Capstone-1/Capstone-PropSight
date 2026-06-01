@@ -25,6 +25,43 @@ elseif ($loyaltyPoints >= 2000)
 elseif ($loyaltyPoints >= 500)
     $loyaltyTier = 'Gold';
 
+// Next tier progress
+$loyaltyTierThresholds = ['Silver' => 0, 'Gold' => 500, 'Platinum' => 2000, 'Diamond' => 5000];
+$loyaltyTierList = ['Silver', 'Gold', 'Platinum', 'Diamond'];
+$loyaltyTierIndex = array_search($loyaltyTier, $loyaltyTierList);
+$loyaltyNextTier = $loyaltyTierIndex < 3 ? $loyaltyTierList[$loyaltyTierIndex + 1] : null;
+$loyaltyCurrentMin = $loyaltyTierThresholds[$loyaltyTier];
+$loyaltyNextMin = $loyaltyNextTier ? $loyaltyTierThresholds[$loyaltyNextTier] : null;
+$loyaltyProgressPct = $loyaltyNextTier
+    ? min(100, round(($loyaltyPoints - $loyaltyCurrentMin) / ($loyaltyNextMin - $loyaltyCurrentMin) * 100))
+    : 100;
+$loyaltyPtsToNext = $loyaltyNextTier ? max(0, $loyaltyNextMin - $loyaltyPoints) : 0;
+
+// Perks per tier
+$loyaltyTierPerks = [
+    'Silver' => ['Earn 1 pt per ₱100 spent', 'Early check-in on availability', 'Exclusive member deals'],
+    'Gold' => ['5% discount on all bookings', 'Priority support response', 'Late check-out until 1 PM'],
+    'Platinum' => ['10% discount on all bookings', 'Free room upgrade on availability', 'Late check-out until 2 PM'],
+    'Diamond' => ['15% discount on all bookings', 'Dedicated concierge service', 'Complimentary welcome amenity'],
+];
+$loyaltyCurrentPerks = $loyaltyTierPerks[$loyaltyTier];
+
+// Tier badge colors (inline styles)
+$loyaltyTierStyles = [
+    'Silver' => 'background:rgba(180,182,185,.15);border:1px solid rgba(180,182,185,.3);color:#b4b6b9',
+    'Gold' => 'background:rgba(232,200,130,.15);border:1px solid rgba(232,200,130,.35);color:#e8c882',
+    'Platinum' => 'background:rgba(100,180,220,.12);border:1px solid rgba(100,180,220,.3);color:#7ec8e3',
+    'Diamond' => 'background:rgba(160,120,255,.15);border:1px solid rgba(160,120,255,.3);color:#c4a8ff',
+];
+$loyaltyTierDotColors = [
+    'Silver' => '#b4b6b9',
+    'Gold' => '#e8c882',
+    'Platinum' => '#7ec8e3',
+    'Diamond' => '#c4a8ff',
+];
+$loyaltyTierStyle = $loyaltyTierStyles[$loyaltyTier];
+$loyaltyTierDotColor = $loyaltyTierDotColors[$loyaltyTier];
+
 $_pmRow = mysqli_fetch_assoc(mysqli_query(
     $conn,
     "SELECT payment_method, COUNT(*) AS cnt
@@ -843,15 +880,25 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
         <div class="loyalty-band-orb loyalty-band-orb-lg"></div>
         <div class="loyalty-band-orb loyalty-band-orb-sm"></div>
         <div class="loyalty-band-inner reveal">
-            <div>
+            <div class="loyalty-left">
                 <div class="loyalty-eyebrow">🥇 Loyalty Program</div>
                 <h2 class="loyalty-title">Earn points on every stay.<br><em>Redeem for free nights.</em></h2>
                 <p class="loyalty-copy">Every booking earns you loyalty points. Reach Gold, Platinum or Diamond status
                     to unlock exclusive perks, room upgrades, and complimentary stays.</p>
+                <div class="loyalty-tier-row">
+                    <span class="loyalty-tier-badge" style="<?php echo $loyaltyTierStyle; ?>">
+                        <span class="loyalty-tier-dot" style="background:<?php echo $loyaltyTierDotColor; ?>"></span>
+                        <?php echo $loyaltyTier; ?> Member
+                    </span>
+                    <?php if ($loyaltyNextTier): ?>
+                        <span class="loyalty-pts-to-next"><?php echo number_format($loyaltyPtsToNext); ?> pts to
+                            <?php echo $loyaltyNextTier; ?></span>
+                    <?php endif; ?>
+                </div>
                 <div class="loyalty-actions">
                     <a href="loyalty.php" class="loyalty-btn loyalty-btn-primary"
                         onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5">
                             <circle cx="12" cy="8" r="6" />
                             <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" />
@@ -864,11 +911,50 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         onmouseleave="this.style.background='rgba(255,255,255,.12)'">Browse Rooms →</a>
                 </div>
             </div>
-            <div class="loyalty-points-card">
-                <div class="loyalty-points-emoji">🥇</div>
-                <div class="loyalty-points-value"><?php echo number_format($loyaltyPoints); ?></div>
-                <div class="loyalty-points-label">Points Balance</div>
-                <div class="loyalty-points-tier"><?php echo $loyaltyTier; ?> Member</div>
+            <div class="loyalty-right">
+                <div class="loyalty-points-card">
+                    <div class="loyalty-points-top">
+                        <div>
+                            <div class="loyalty-points-value" data-rt-user="loyalty_points">
+                                <?php echo number_format($loyaltyPoints); ?></div>
+                            <div class="loyalty-points-label">Points Balance</div>
+                        </div>
+                        <span class="loyalty-tier-pill"
+                            style="<?php echo $loyaltyTierStyle; ?>"><?php echo $loyaltyTier; ?></span>
+                    </div>
+                    <?php if ($loyaltyNextTier): ?>
+                        <div class="loyalty-progress-wrap">
+                            <div class="loyalty-progress-labels">
+                                <span><?php echo $loyaltyTier; ?> · <?php echo number_format($loyaltyCurrentMin); ?>
+                                    pts</span>
+                                <span><?php echo $loyaltyNextTier; ?> · <?php echo number_format($loyaltyNextMin); ?>
+                                    pts</span>
+                            </div>
+                            <div class="loyalty-progress-bar">
+                                <div class="loyalty-progress-fill" style="width:<?php echo $loyaltyProgressPct; ?>%"></div>
+                            </div>
+                            <div class="loyalty-progress-note"><?php echo number_format($loyaltyPtsToNext); ?> more points
+                                to reach <?php echo $loyaltyNextTier; ?></div>
+                        </div>
+                    <?php else: ?>
+                        <div class="loyalty-progress-note" style="margin-top:10px;">🏆 You've reached the highest tier!
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="loyalty-perks-card">
+                    <div class="loyalty-perks-title">Your <?php echo $loyaltyTier; ?> Perks</div>
+                    <?php foreach ($loyaltyCurrentPerks as $perk): ?>
+                        <div class="loyalty-perk-row">
+                            <span class="loyalty-perk-check" style="color:<?php echo $loyaltyTierDotColor; ?>">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="3">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            </span>
+                            <span class="loyalty-perk-text"><?php echo htmlspecialchars($perk); ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
     </section>

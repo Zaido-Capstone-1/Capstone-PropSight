@@ -17,8 +17,8 @@ body {
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(ellipse 60% 100% at 100% 50%, rgba(37,99,196,.06) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 80% at 0% 100%, rgba(232,200,130,.04) 0%, transparent 65%);
+        radial-gradient(ellipse 60% 100% at 100% 50%, rgba(37, 99, 196, .06) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 80% at 0% 100%, rgba(232, 200, 130, .04) 0%, transparent 65%);
     pointer-events: none;
 }
 
@@ -26,9 +26,11 @@ body {
 .user-hero::after {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent 0%, rgba(232,200,130,.4) 30%, rgba(232,200,130,.6) 50%, rgba(232,200,130,.4) 70%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(232, 200, 130, .4) 30%, rgba(232, 200, 130, .6) 50%, rgba(232, 200, 130, .4) 70%, transparent 100%);
     pointer-events: none;
 }
 
@@ -116,16 +118,18 @@ body {
 .ustat::after {
     content: '';
     position: absolute;
-    bottom: 0; left: 0; right: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(37,99,196,.25), transparent);
+    background: linear-gradient(90deg, transparent, rgba(37, 99, 196, .25), transparent);
     border-radius: 0 0 16px 16px;
 }
 
 .ustat:hover {
     border-color: #c3d8ef;
-    box-shadow: 0 8px 24px rgba(11,24,41,.10);
-    
+    box-shadow: 0 8px 24px rgba(11, 24, 41, .10);
+
 }
 
 .ustat-num {
@@ -254,7 +258,7 @@ body {
     max-width: none;
     margin: 0;
     background:
-        linear-gradient(105deg, rgba(4,10,22,.92) 0%, rgba(10,28,58,.80) 55%, rgba(18,48,82,.65) 100%),
+        linear-gradient(105deg, rgba(4, 10, 22, .92) 0%, rgba(10, 28, 58, .80) 55%, rgba(18, 48, 82, .65) 100%),
         url("../../images/header.jpg") center/cover no-repeat;
     border-radius: var(--r-xl);
     padding: 28px 32px;
@@ -263,10 +267,10 @@ body {
     justify-content: space-between;
     gap: 20px;
     flex-wrap: wrap;
-    box-shadow: 0 8px 32px rgba(4,10,22,.35), 0 2px 8px rgba(4,10,22,.2);
+    box-shadow: 0 8px 32px rgba(4, 10, 22, .35), 0 2px 8px rgba(4, 10, 22, .2);
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,.07);
+    border: 1px solid rgba(255, 255, 255, .07);
 }
 
 /* Soft gold bloom — left */
@@ -278,7 +282,7 @@ body {
     width: 240px;
     height: 240px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(232,200,130,.10) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(232, 200, 130, .10) 0%, transparent 70%);
     pointer-events: none;
 }
 
@@ -291,7 +295,7 @@ body {
     width: 220px;
     height: 220px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(232,200,130,.10) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(232, 200, 130, .10) 0%, transparent 70%);
     pointer-events: none;
 }
 
@@ -309,7 +313,7 @@ body {
     border-radius: var(--r-md);
     background: rgba(232, 200, 130, .12);
     border: 1px solid rgba(232, 200, 130, .30);
-    box-shadow: 0 0 18px rgba(232,200,130,.10);
+    box-shadow: 0 0 18px rgba(232, 200, 130, .10);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -344,7 +348,7 @@ body {
     height: 5px;
     border-radius: 50%;
     background: #22c55e;
-    box-shadow: 0 0 6px rgba(34,197,94,.7);
+    box-shadow: 0 0 6px rgba(34, 197, 94, .7);
     flex-shrink: 0;
 }
 
@@ -354,7 +358,7 @@ body {
     font-weight: 700;
     color: var(--white);
     line-height: 1.2;
-    text-shadow: 0 1px 8px rgba(0,0,0,.3);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, .3);
 }
 
 .bb-dates {
@@ -385,7 +389,7 @@ body {
     background: rgba(34, 197, 94, .15);
     color: #86efac;
     border: 1px solid rgba(34, 197, 94, .3);
-    box-shadow: 0 0 12px rgba(34,197,94,.12);
+    box-shadow: 0 0 12px rgba(34, 197, 94, .12);
 }
 
 .st-pending {
@@ -419,13 +423,13 @@ body {
     letter-spacing: .03em;
     transition: all .22s;
     white-space: nowrap;
-    box-shadow: 0 4px 14px rgba(232,200,130,.25);
+    box-shadow: 0 4px 14px rgba(232, 200, 130, .25);
 }
 
 .btn-manage:hover {
     background: linear-gradient(135deg, #f0d898 0%, var(--sand) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(232,200,130,.35);
+    box-shadow: 0 6px 20px rgba(232, 200, 130, .35);
 }
 
 /* Rooms section */
@@ -915,32 +919,34 @@ body {
 
 .history-list {
     display: grid;
-    gap: 14px;
+    gap: 10px;
 }
 
 .history-item {
     background: var(--white);
-    border: 1px solid var(--border-lt);
-    border-radius: var(--r-xl);
-    display: flex;
+    border: 1px solid #eceae4;
+    border-radius: 16px;
+    display: grid;
+    grid-template-columns: 72px 1fr auto auto;
     align-items: center;
     gap: 16px;
-    padding: 16px 20px;
-    transition: all .22s;
-    box-shadow: var(--sh-xs);
+    padding: 14px 18px;
+    transition: border-color .2s, box-shadow .2s;
+    cursor: pointer;
 }
 
 .history-item:hover {
-    /* box-shadow: var(--sh-md); */
-    border-color: var(--navy-200);
+    border-color: #c4bfb0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .07);
 }
 
 .history-img {
-    width: 70px;
-    height: 56px;
-    border-radius: var(--r-md);
+    width: 72px;
+    height: 58px;
+    border-radius: 10px;
     overflow: hidden;
     flex-shrink: 0;
+    background: linear-gradient(145deg, #dbeafe, #3b82f6);
 }
 
 .history-img-bg {
@@ -955,29 +961,52 @@ body {
 }
 
 .history-room {
-    font-size: .9rem;
-    font-weight: 700;
+    font-size: .88rem;
+    font-weight: 600;
     color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-bottom: 5px;
 }
 
 .history-dates {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: .73rem;
+    gap: 5px;
+    font-size: .72rem;
     color: var(--ink-faint);
-    margin-top: 3px;
+    flex-wrap: wrap;
 }
 
-.history-dates svg {
-    width: 12px;
-    height: 12px;
+.history-dates>svg {
+    width: 11px;
+    height: 11px;
     stroke: currentColor;
     fill: none;
-    stroke-width: 1.8;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
+
+.history-nights {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f4f2ec;
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: .67rem;
+    font-weight: 600;
+    color: #6b6560;
+    margin-left: 6px;
+}
+
+.history-nights svg {
+    width: 10px;
+    height: 10px;
+    stroke: #6b6560;
+    fill: none;
+    stroke-width: 2;
     flex-shrink: 0;
 }
 
@@ -988,39 +1017,39 @@ body {
 
 .history-price {
     font-family: var(--font-display);
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 700;
     color: var(--ink);
 }
 
 .history-total {
-    font-size: .65rem;
+    font-size: .62rem;
     color: var(--ink-faint);
     font-weight: 500;
-    margin-top: 2px;
+    margin-top: 1px;
 }
 
 .history-status {
-    font-size: .63rem;
+    font-size: .62rem;
     font-weight: 700;
     letter-spacing: .07em;
     text-transform: uppercase;
-    padding: 4px 11px;
-    border-radius: var(--r-pill);
+    padding: 5px 12px;
+    border-radius: 20px;
     flex-shrink: 0;
     white-space: nowrap;
 }
 
 .st-completed.history-status {
-    background: var(--sage-lt);
-    color: var(--sage);
-    border: 1px solid rgba(74, 124, 107, .2);
+    background: #edf7f2;
+    color: #2e7d57;
+    border: 1px solid #b8deca;
 }
 
 .st-active.history-status {
-    background: var(--navy-50);
-    color: var(--navy-700);
-    border: 1px solid var(--navy-200);
+    background: #edf2fb;
+    color: #3358a4;
+    border: 1px solid #c5d3ef;
 }
 
 .st-pending.history-status {
@@ -1030,9 +1059,9 @@ body {
 }
 
 .st-cancelled.history-status {
-    background: rgba(192, 105, 74, .1);
+    background: #fdf0eb;
     color: var(--terra);
-    border: 1px solid rgba(192, 105, 74, .25);
+    border: 1px solid #edc8b4;
 }
 
 /* Loyalty band */
@@ -1366,58 +1395,43 @@ body {
     }
 
     .history-item {
-        display: grid;
-        grid-template-columns: 84px 1fr;
+        grid-template-columns: 72px 1fr;
         grid-template-areas:
             "img info"
-            "img meta"
-            "img status";
+            "img dates"
+            "img bottom";
         align-items: start;
-        gap: 10px 12px;
+        gap: 8px 12px;
         padding: 14px;
     }
 
     .history-img {
         grid-area: img;
-        width: 84px;
-        height: 72px;
-        border-radius: 12px;
+        width: 72px;
+        height: 62px;
     }
 
     .history-info {
         grid-area: info;
     }
 
-    .history-room {
-        font-size: .92rem;
-        line-height: 1.25;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
     .history-dates {
-        margin-top: 5px;
-        font-size: .78rem;
-        line-height: 1.35;
-        flex-wrap: wrap;
+        grid-area: dates;
+        margin-top: 0;
+        font-size: .7rem;
     }
 
     .history-price-col {
-        grid-area: meta;
+        grid-area: bottom;
         text-align: left;
     }
 
     .history-price {
-        font-size: 1rem;
-        line-height: 1.1;
+        font-size: .95rem;
     }
 
     .history-status {
-        grid-area: status;
-        justify-self: start;
-        font-size: .62rem;
-        padding: 5px 10px;
+        display: none;
     }
 }
 
@@ -1436,14 +1450,14 @@ body {
         grid-template-areas:
             "img"
             "info"
-            "meta"
-            "status";
-        gap: 10px;
+            "dates"
+            "bottom";
+        gap: 8px;
     }
 
     .history-img {
         width: 100%;
-        height: 130px;
+        height: 120px;
     }
 
     .history-room {
@@ -1463,7 +1477,7 @@ body {
         height: 30px;
     }
 
-    header .logo span > span {
+    header .logo span>span {
         font-size: .9rem;
         line-height: 1.04;
     }
@@ -1482,6 +1496,7 @@ body {
         padding: 9px 10px;
     }
 }
+
 /* ── Mobile responsiveness fixes ───────────────────────────── */
 
 /* Booking banner — small screens */
@@ -1553,8 +1568,8 @@ body {
         gap: 8px;
     }
 
-    .room-price-row > div,
-    .room-price-row > a {
+    .room-price-row>div,
+    .room-price-row>a {
         width: 100%;
     }
 
@@ -1577,6 +1592,7 @@ body {
         overflow: hidden;
         font-size: 0;
     }
+
     .bb-date-sep::before {
         content: '';
         display: block;

@@ -3,7 +3,7 @@ require_once '../../includes/db.php';
 
 $userId = (int) $_SESSION['user_id'];
 
-/* ── Payment logs ── */
+/* -- Payment logs (bookings) -- */
 $bRes = mysqli_query($conn, "
     SELECT py.payment_id, py.payment_date, py.amount_paid, py.payment_method, py.payment_status,
         b.booking_id,
@@ -20,6 +20,32 @@ $bRes = mysqli_query($conn, "
     ORDER BY sort_datetime DESC
     LIMIT 100
 ");
+
+/* -- Invoice payments for this user -- */
+// Invoice payments linked via paymongo_payments.reference_type = 'invoice'
+// and the invoice tenant matches this user's email / tenant record.
+$invPayRes = mysqli_query($conn, "
+    SELECT
+        pp.id          AS payment_id,
+        pp.paid_at     AS payment_date,
+        pp.amount      AS amount_paid,
+        'PayMongo'     AS payment_method,
+        'paid'         AS payment_status,
+        NULL           AS booking_id,
+        CONCAT('Invoice ', i.invoice_no) AS unit_label,
+        NULL           AS nights,
+        'Boracay Accommodation' AS property_name,
+        pp.paid_at     AS sort_datetime
+    FROM paymongo_payments pp
+    JOIN invoices i ON i.id = pp.reference_id
+    JOIN tenants  t ON t.tenant_id = i.tenant_id
+    JOIN users    u ON u.email = t.email
+    WHERE pp.reference_type = 'invoice'
+      AND pp.status = 'paid'
+      AND u.user_id = $userId
+    ORDER BY pp.paid_at DESC
+    LIMIT 100
+");
 $bills = [];
 $total_spent = 0;
 $paid_count = 0;
@@ -32,6 +58,14 @@ while ($r = mysqli_fetch_assoc($bRes)) {
     }
     if ($r['payment_status'] === 'pending') {
         $pending_count++;
+    }
+}
+// Merge invoice payments into $bills
+if ($invPayRes) {
+    while ($r = mysqli_fetch_assoc($invPayRes)) {
+        $bills[] = $r;
+        $total_spent += (float) $r['amount_paid'];
+        $paid_count++;
     }
 }
 

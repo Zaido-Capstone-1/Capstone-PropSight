@@ -101,8 +101,8 @@ require_once '../../lib/user-queries/messages_queries.php';
                 <?php foreach ($threads as $t):
                     $initial = strtoupper(mb_substr($t['admin_name'], 0, 1));
                     $preview = mb_strimwidth($t['last_body'] ?? '', 0, 48, '…');
-                    $ts = $t['last_time'] ? strtotime($t['last_time']) : 0;
-                    $timeStr = $ts ? (time() - $ts < 86400 ? date('g:i A', $ts) : date('M j', $ts)) : '';
+                    $ts = $t['last_time'] ? strtotime($t['last_time'] . ' UTC') : 0;
+                    $timeStr = $ts ? (time() - $ts < 86400 ? gmdate('g:i A', $ts) : gmdate('M j', $ts)) : '';
                     $unread = (int) $t['unread'];
                     $adminPhoto = !empty($t['admin_photo']) ? htmlspecialchars('../../' . ltrim($t['admin_photo'], '/')) : '';
                     ?>
@@ -126,7 +126,7 @@ require_once '../../lib/user-queries/messages_queries.php';
                             <div class="ti-preview"><?= htmlspecialchars($preview) ?></div>
                         </div>
                         <div class="ti-meta">
-                            <div class="ti-time"><?= $timeStr ?></div>
+                            <div class="ti-time" data-ts="<?= $t['last_time'] ?>"></div>
                             <?php if ($unread): ?>
                                 <div class="ti-badge"><?= $unread ?></div><?php endif; ?>
                         </div>
@@ -177,7 +177,8 @@ require_once '../../lib/user-queries/messages_queries.php';
     };
 </script>
 <script>window.PS_RT_PAGE = 'messages';</script>
-<script src="../../assets/js/user-js/messages.js"></script>
+<script
+    src="../../assets/js/user-js/messages.js?v=<?= filemtime(__DIR__ . '/../../assets/js/user-js/messages.js') ?>"></script>
 
 <?php require '../../includes/_layout_end.php'; ?>
 <script src="../../assets/js/user-js/messages-inline.js"></script>
