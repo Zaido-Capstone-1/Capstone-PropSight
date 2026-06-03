@@ -35,7 +35,7 @@ if ($idStatus !== 'approved') {
 $user_id = $_SESSION['user_id'];
 
 $check = $conn->prepare("
-    SELECT booking_id, checkin_date, checkout_date, status
+    SELECT booking_id, checkin_date, checkout_date, status, unit_id
     FROM bookings 
     WHERE user_id = ? 
     AND status IN ('pending','confirmed','active')
@@ -47,6 +47,27 @@ $existing = $check->get_result()->fetch_assoc();
 $check->close();
 
 if ($existing) {
+    $incomingUnitId = (int) ($_POST['unit_id'] ?? 0);
+    $incomingCheckin = trim($_POST['checkin'] ?? '');
+    $incomingCheckout = trim($_POST['checkout'] ?? '');
+
+    // If same unit + same dates + still pending → reuse it, don't create a duplicate
+    if (
+        (int) $existing['unit_id'] === $incomingUnitId &&
+        $existing['checkin_date'] === $incomingCheckin &&
+        $existing['checkout_date'] === $incomingCheckout &&
+        $existing['status'] === 'pending'
+    ) {
+        ob_clean();
+        echo json_encode([
+            'success' => true,
+            'booking_id' => (int) $existing['booking_id'],
+            'reused' => true,
+        ]);
+        exit;
+    }
+
+    // Different unit/dates or already confirmed/active → block
     $bkRef = 'BK-' . str_pad($existing['booking_id'], 6, '0', STR_PAD_LEFT);
     $bkIn = date('M j, Y', strtotime($existing['checkin_date']));
     $bkOut = date('M j, Y', strtotime($existing['checkout_date']));

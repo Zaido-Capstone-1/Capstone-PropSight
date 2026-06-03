@@ -347,3 +347,56 @@ document.addEventListener('click', function (e) {
 document.getElementById('sptSearch')?.addEventListener('input', applySptFilters);
 
 applySptFilters();
+function ucFirst(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+async function deleteTicket(ticketId) {
+    if (!confirm('Delete this support ticket and all its messages? This cannot be undone.')) return;
+
+    const fd = new FormData();
+    fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
+    fd.append('action', 'delete');
+    fd.append('ticket_id', ticketId);
+
+    try {
+        const res  = await fetch('../../api/admin/support.php', { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (data.success) {
+            const row = document.querySelector(`#sptTableBody tr[data-status]`)
+                ? (() => {
+                    // find the row whose View button references this ticketId
+                    for (const btn of document.querySelectorAll('#sptTableBody button[onclick*="openTicketModal"]')) {
+                        if (btn.getAttribute('onclick').includes(`openTicketModal(${ticketId},`)) return btn.closest('tr');
+                    }
+                    return null;
+                })()
+                : null;
+
+            if (row) {
+                // Adjust stat cards
+                const oldStatus = row.dataset.status;
+                const statMap = { open: 'stat-spt-open', in_progress: 'stat-spt-progress', resolved: 'stat-spt-resolved' };
+                const cardId = statMap[oldStatus];
+                if (cardId) {
+                    const el = document.getElementById(cardId);
+                    if (el) el.textContent = Math.max(0, parseInt(el.textContent, 10) - 1);
+                }
+                const totalEl = document.getElementById('stat-spt-total');
+                if (totalEl) totalEl.textContent = Math.max(0, parseInt(totalEl.textContent, 10) - 1);
+
+                row.style.transition = 'opacity .3s';
+                row.style.opacity = '0';
+                setTimeout(() => { row.remove(); applySptFilters(); }, 300);
+            }
+
+            showToast('Ticket deleted.');
+        } else {
+            showToast(data.message || 'Failed to delete ticket.', 'error');
+        }
+    } catch (e) {
+        showToast('Network error.', 'error');
+    }
+}

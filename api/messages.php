@@ -263,5 +263,23 @@ if ($method === 'POST') {
         exit;
     }
 
+    if ($action === 'unsend') {
+        $messageId = (int) ($_POST['message_id'] ?? 0);
+        if (!$messageId) {
+            echo json_encode(['success' => false, 'message' => 'message_id required']);
+            exit;
+        }
+        $stmt = $conn->prepare('DELETE FROM messages WHERE message_id = ? AND from_user = ?');
+        $stmt->bind_param('ii', $messageId, $adminId);
+        $stmt->execute();
+        if ($stmt->affected_rows > 0) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Message not found or not yours.']);
+        }
+        $stmt->close();
+        exit;
+    }
+
     echo json_encode(['success' => false, 'message' => 'Unknown action.']);
 }

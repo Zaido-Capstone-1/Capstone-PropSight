@@ -134,14 +134,87 @@ function renderMsgs(msgs, clearFirst) {
         const bub = document.createElement('div');
         bub.className = `msg-bubble ${mine ? 'me' : 'them'}`;
         bub.dataset.msgId = m.message_id;
+        bub.dataset.body = m.body || '';
         const bodyText = m.body && m.body !== '📎 Attachment' ? `<div class="bubble">${escHtml(m.body)}</div>` : '';
-        bub.innerHTML = `${bodyText}${m.attachment_url ? renderAdminAttachment(m.attachment_url, m.message_id) : ''}<div class="btime">${timeStr}</div>`;
+        bub.innerHTML = `${bodyText}${m.attachment_url ? renderAdminAttachment(m.attachment_url, m.message_id) : ''}<div class="btime">${timeStr}</div>
+            <div class="bubble-menu-btn" onclick="toggleBubbleMenu(this, ${m.message_id}, ${mine}, '${escHtml(m.body || '')}')">&#8942;</div>`;
         body.appendChild(bub);
     });
     // Show seen indicator only on last sent bubble
     updateSeenIndicator();
     body.dataset.lastDate = lastDate;
     body.scrollTop = body.scrollHeight;
+}
+
+// ── Bubble context menu (reply / unsent) ────────────────────
+function toggleBubbleMenu(btn, msgId, isMine, bodyText) {
+    document.querySelectorAll('.bubble-menu').forEach(m => m.remove());
+    const existing = btn.querySelector('.bubble-menu');
+    if (existing) return;
+
+    const menu = document.createElement('div');
+    menu.className = 'bubble-menu';
+    menu.innerHTML = `
+        <div class="bubble-menu-item" onclick="replyToMessage(${msgId}, '${bodyText.replace(/'/g, "\'")}')">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+            Reply
+        </div>
+        ${isMine ? `<div class="bubble-menu-item unsent" onclick="unsentMessage(${msgId})">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            Unsend
+        </div>` : ''}`;
+    btn.appendChild(menu);
+
+    setTimeout(() => {
+        document.addEventListener('click', function closeMenu(e) {
+            if (!menu.contains(e.target) && e.target !== btn) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        });
+    }, 0);
+}
+
+function replyToMessage(msgId, bodyText) {
+    document.querySelectorAll('.bubble-menu').forEach(m => m.remove());
+    const existing = document.getElementById('replyPreview');
+    if (existing) existing.remove();
+
+    const compose = document.querySelector('.msg-compose');
+    const preview = document.createElement('div');
+    preview.id = 'replyPreview';
+    preview.dataset.replyTo = msgId;
+    preview.style.cssText = 'padding:8px 12px;background:#f1f5f9;border-left:3px solid #3b82f6;border-radius:6px;font-size:12px;color:#475569;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;';
+    preview.innerHTML = `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">↩ ${escHtml(bodyText.slice(0, 60))}${bodyText.length > 60 ? '...' : ''}</span>
+        <button onclick="cancelReply()" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;padding:0 0 0 8px;">×</button>`;
+    compose.insertBefore(preview, compose.firstChild);
+    document.getElementById('msgInput').focus();
+}
+
+function cancelReply() {
+    const preview = document.getElementById('replyPreview');
+    if (preview) preview.remove();
+}
+
+function unsentMessage(msgId) {
+    document.querySelectorAll('.bubble-menu').forEach(m => m.remove());
+    if (!confirm('Unsend this message?')) return;
+    const fd = new FormData();
+    fd.append('action', 'unsend');
+    fd.append('message_id', msgId);
+    fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
+    fetch(ADMIN_API, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const bub = document.querySelector(`.msg-bubble[data-msg-id="${msgId}"]`);
+            if (bub) bub.remove();
+            updateSeenIndicator();
+        } else {
+            showToast(data.message || 'Failed to unsend.', 'error');
+        }
+    })
+    .catch(() => showToast('Network error.', 'error'));
 }
 
 function renderAdminAttachment(url, messageId) {
@@ -245,9 +318,9 @@ function sendMsg() {
     if (file) {
         if (file.type.startsWith('image/')) {
             const tmpUrl = URL.createObjectURL(file);
-            previewHtml += `<img src="${tmpUrl}" style="max-width:220px;max-height:200px;border-radius:8px;margin-top:6px;display:block;opacity:.7;">`;
+            previewHtml += `<img src="${tmpUrl}" style="max-width:220px;max-height:200px;border-radius:8px;margin-top:6px;display:block;opacity:.5;">`;
         } else {
-            previewHtml += `<div style="font-size:12px;margin-top:6px;opacity:.7;">📎 ${escHtml(file.name)}</div>`;
+            previewHtml += `<div style="font-size:12px;margin-top:6px;opacity:.5;">📎 ${escHtml(file.name)}</div>`;
         }
     }
     previewHtml += `<div class="btime">${timeStr}</div>`;
@@ -260,13 +333,29 @@ function sendMsg() {
     fd.append('to_user', activeUserId);
     fd.append('body', bodyTxt);
     if (file) fd.append('attachment', file);
+    const replyPreview = document.getElementById('replyPreview');
+    if (replyPreview) { fd.append('reply_to', replyPreview.dataset.replyTo); cancelReply(); }
 
     fetch(ADMIN_API, { method: 'POST', body: fd })
         .then(r => r.json())
         .then(d => {
             bub.style.opacity = '';
             if (d.success) {
-                if (d.message_id) bub.dataset.msgId = d.message_id;
+                if (d.message_id) {
+                    bub.dataset.msgId = d.message_id;
+                    // Replace blob URL with real proxy URL and remove opacity
+                    const proxyUrl = `../../api/view_message_attachment.php?message_id=${d.message_id}`;
+                    bub.querySelectorAll('img[src^="blob:"]').forEach(el => {
+                        URL.revokeObjectURL(el.src);
+                        el.src = proxyUrl;
+                        el.style.opacity = '1';
+                        el.onclick = () => openImageModal(proxyUrl);
+                        el.title = 'Click to enlarge';
+                        el.style.cursor = 'pointer';
+                    });
+                }
+                bub.querySelectorAll('img').forEach(el => el.style.opacity = '1');
+                bub.querySelectorAll('div[style]').forEach(el => el.style.opacity = '1');
                 lastMsgTs = d.ts || lastMsgTs;
                 updateThreadPreview(activeUserId, bodyTxt || '📎 Attachment');
                 clearAdminAttach();

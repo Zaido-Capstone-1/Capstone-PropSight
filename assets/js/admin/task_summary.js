@@ -145,35 +145,40 @@ document.addEventListener('click', e => {
 
 function openTaskModal(taskId, data) {
     currentTaskId = taskId;
-
-    document.getElementById('taskModalTitle').textContent = 'Task #' + String(taskId).padStart(4, '0');
-    document.getElementById('taskModalSub').textContent = data.issue_description || '';
-
+ 
+    // ── Header ───────────────────────────────────────────────────
+    document.getElementById('taskModalTitle').textContent =
+        'Task #' + String(taskId).padStart(4, '0');
+    document.getElementById('taskModalSub').textContent =
+        data.property_name ? '📍 ' + data.property_name : '';
+ 
+    // ── Colour maps ───────────────────────────────────────────────
     const priorityColors = {
-        urgent: '#ef4444',
-        high: '#ef4444',
-        medium: '#d97706',
-        normal: '#d97706',
+        urgent: '#ef4444', high: '#ef4444',
+        medium: '#d97706', normal: '#d97706',
         low: '#16a34a'
     };
-    const priColor = priorityColors[(data.priority || 'normal').toLowerCase()] || '#d97706';
-
     const statusLabels = {
-        open: 'Open',
-        in_progress: 'In Progress',
-        pending: 'Pending',
-        completed: 'Done',
-        closed: 'Closed'
+        open: 'Open', in_progress: 'In Progress',
+        pending: 'Pending', completed: 'Done', closed: 'Closed'
     };
     const statusColors = {
-        open: '#ef4444',
-        in_progress: '#3b82f6',
-        pending: '#d97706',
-        completed: '#16a34a',
-        closed: '#6b7280'
+        open: '#ef4444', in_progress: '#3b82f6',
+        pending: '#d97706', completed: '#16a34a', closed: '#6b7280'
     };
-    const sv = data.request_status || 'pending';
-
+ 
+    const sv  = data.request_status || 'pending';
+    const pri = (data.priority || 'normal').toLowerCase();
+    const priColor  = priorityColors[pri] || '#d97706';
+    const statColor = statusColors[sv]   || '#6b7280';
+ 
+    // Format date nicely
+    const reqDate = data.request_date
+        ? new Date(data.request_date).toLocaleDateString('en-US',
+            { month: 'short', day: 'numeric', year: 'numeric' })
+        : '—';
+ 
+    // ── 4-column meta strip ───────────────────────────────────────
     document.getElementById('taskDetailGrid').innerHTML = `
         <div class="sm-meta-item">
             <div class="sm-meta-label">Property</div>
@@ -181,19 +186,37 @@ function openTaskModal(taskId, data) {
         </div>
         <div class="sm-meta-item">
             <div class="sm-meta-label">Priority</div>
-            <div class="sm-meta-value" style="color:${priColor};">${esc(ucFirst(data.priority || 'Normal'))}</div>
+            <div class="sm-meta-value" style="color:${priColor};">
+                ${esc(ucFirst(pri))}
+            </div>
         </div>
         <div class="sm-meta-item">
             <div class="sm-meta-label">Status</div>
-            <div class="sm-meta-value" style="color:${statusColors[sv] || '#6b7280'};">${statusLabels[sv] || sv}</div>
+            <div class="sm-meta-value" style="color:${statColor};">
+                ${statusLabels[sv] || sv}
+            </div>
         </div>
         <div class="sm-meta-item">
             <div class="sm-meta-label">Requested</div>
-            <div class="sm-meta-value">${esc(data.request_date ? data.request_date.slice(0, 10) : '—')}</div>
+            <div class="sm-meta-value">${esc(reqDate)}</div>
         </div>
     `;
-
+ 
+    // ── Description block ─────────────────────────────────────────
+    const desc = data.issue_description || '';
+    const descBlock = document.getElementById('taskDescBlock');
+    const descText  = document.getElementById('taskDescText');
+    if (desc) {
+        descText.textContent = desc;
+        descBlock.style.display = '';
+    } else {
+        descBlock.style.display = 'none';
+    }
+ 
+    // ── Status select ─────────────────────────────────────────────
     document.getElementById('taskStatusSelect').value = sv;
+ 
+    // ── Open modal ────────────────────────────────────────────────
     document.getElementById('taskModal').classList.add('open');
     document.body.style.overflow = 'hidden';
 }

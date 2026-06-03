@@ -507,17 +507,32 @@ function handle_check_paid(mysqli $conn): void
     $updInv->execute();
     $updInv->close();
 
-    // 3. Log transaction (skip if already recorded)
+    // 3. Insert into payments table so admin payments page shows it
+    $pmtCheck = $conn->query("SELECT payment_id FROM payments WHERE notes='" . $conn->real_escape_string('INV-PMT-' . $id) . "' LIMIT 1");
+    if ($pmtCheck && $pmtCheck->num_rows === 0) {
+      $pmtMethod = 'PayMongo';
+      $pmtStatus = 'paid';
+      $pmtNote = 'INV-PMT-' . $id;
+      // booking_id = 0 for invoice payments; admin page will need to handle this
+      $pmtStmt = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (0, ?, ?, ?, ?, ?)");
+      $pmtStmt->bind_param('sdsss', $date, $amount, $pmtMethod, $pmtStatus, $pmtNote);
+      $pmtStmt->execute();
+      $pmtStmt->close();
+    }
+
+    // 4. Log transaction (skip if already recorded)
     $invRef = 'INV-PMT-' . $id;
     $txCheck = $conn->query("SELECT id FROM transactions WHERE reference_no='" . $conn->real_escape_string($invRef) . "' LIMIT 1");
     if ($txCheck && $txCheck->num_rows === 0) {
       $desc = 'PayMongo payment for Invoice #' . $id;
       $cat = 'Invoice Revenue';
       $typ = 'Income';
-      $txStmt = $conn->prepare("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date) VALUES (?, ?, ?, ?, ?, ?)");
-      $txStmt->bind_param('ssssds', $invRef, $desc, $cat, $typ, $amount, $date);
-      $txStmt->execute();
-      $txStmt->close();
+      $notes = '';
+      $propId = 'NULL';
+      $recBy = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 'NULL';
+      $safeRef = $conn->real_escape_string($invRef);
+      $safeDesc = $conn->real_escape_string($desc);
+      $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by) VALUES ('$safeRef','$safeDesc','$cat','$typ',$amount,'$date',$propId,'$notes',$recBy)");
     }
 
     json_response(true, 'Payment confirmed.', ['is_paid' => true]);

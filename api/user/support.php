@@ -14,12 +14,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
     exit;
 }
 
-$userId = (int)$_SESSION['user_id'];
+$userId = (int) $_SESSION['user_id'];
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-    $action   = $_GET['action'] ?? 'list';
-    $ticketId = (int)($_GET['ticket_id'] ?? 0);
+    $action = $_GET['action'] ?? 'list';
+    $ticketId = (int) ($_GET['ticket_id'] ?? 0);
 
     if ($action === 'list') {
         $res = mysqli_query($conn, "
@@ -32,7 +32,8 @@ if ($method === 'GET') {
             ORDER BY t.created_at DESC
         ");
         $tickets = [];
-        while ($row = mysqli_fetch_assoc($res)) $tickets[] = $row;
+        while ($row = mysqli_fetch_assoc($res))
+            $tickets[] = $row;
         echo json_encode(['success' => true, 'tickets' => $tickets]);
         exit;
     }
@@ -47,7 +48,8 @@ if ($method === 'GET') {
         $ticket = $ticketStmt->get_result()->fetch_assoc();
         $ticketStmt->close();
         if (!$ticket) {
-            echo json_encode(['success'=>false,'message'=>'Ticket not found.']); exit;
+            echo json_encode(['success' => false, 'message' => 'Ticket not found.']);
+            exit;
         }
 
         $msgStmt = $conn->prepare("
@@ -61,7 +63,8 @@ if ($method === 'GET') {
         $msgStmt->execute();
         $res = $msgStmt->get_result();
         $msgs = [];
-        while ($row = mysqli_fetch_assoc($res)) $msgs[] = $row;
+        while ($row = mysqli_fetch_assoc($res))
+            $msgs[] = $row;
         $msgStmt->close();
         echo json_encode(['success' => true, 'ticket' => $ticket, 'messages' => $msgs]);
         exit;
@@ -78,13 +81,14 @@ if ($method === 'POST') {
 
     if ($action === 'create') {
         $category = trim($_POST['category'] ?? 'General');
-        $subject  = trim($_POST['subject']  ?? '');
-        $body     = trim($_POST['body']     ?? '');
-        $priority = in_array($_POST['priority'] ?? 'medium', ['low','medium','high','urgent'])
-                    ? $_POST['priority'] : 'medium';
+        $subject = trim($_POST['subject'] ?? '');
+        $body = trim($_POST['body'] ?? '');
+        $priority = in_array($_POST['priority'] ?? 'medium', ['low', 'medium', 'high', 'urgent'])
+            ? $_POST['priority'] : 'medium';
 
         if (!$subject || !$body) {
-            echo json_encode(['success'=>false,'message'=>'Subject and message are required.']); exit;
+            echo json_encode(['success' => false, 'message' => 'Subject and message are required.']);
+            exit;
         }
 
         // Create ticket
@@ -107,7 +111,7 @@ if ($method === 'POST') {
         // Notify all admins
         $adminsRes = mysqli_query($conn, "SELECT user_id FROM users WHERE role='admin' AND is_active=1");
         while ($admin = mysqli_fetch_assoc($adminsRes)) {
-            $aid = (int)$admin['user_id'];
+            $aid = (int) $admin['user_id'];
             $title = 'New Support Ticket';
             $link = 'pages/admin/messages.php';
             $notifStmt = $conn->prepare(
@@ -120,20 +124,21 @@ if ($method === 'POST') {
         }
 
         echo json_encode([
-            'success'   => true,
-            'message'   => 'Support ticket created.',
+            'success' => true,
+            'message' => 'Support ticket created.',
             'ticket_id' => $ticketId,
-            'ticket_ref'=> 'TKT-' . str_pad($ticketId, 5, '0', STR_PAD_LEFT),
+            'ticket_ref' => 'TKT-' . str_pad($ticketId, 5, '0', STR_PAD_LEFT),
         ]);
         exit;
     }
 
     if ($action === 'reply') {
-        $ticketId = (int)($_POST['ticket_id'] ?? 0);
-        $body     = trim($_POST['body'] ?? '');
+        $ticketId = (int) ($_POST['ticket_id'] ?? 0);
+        $body = trim($_POST['body'] ?? '');
 
         if (!$ticketId || !$body) {
-            echo json_encode(['success'=>false,'message'=>'Ticket ID and message required.']); exit;
+            echo json_encode(['success' => false, 'message' => 'Ticket ID and message required.']);
+            exit;
         }
 
         // Verify ownership
@@ -145,7 +150,8 @@ if ($method === 'POST') {
         $ticket = $ticketStmt->get_result()->fetch_assoc();
         $ticketStmt->close();
         if (!$ticket) {
-            echo json_encode(['success'=>false,'message'=>'Ticket not found.']); exit;
+            echo json_encode(['success' => false, 'message' => 'Ticket not found.']);
+            exit;
         }
 
         $replyStmt = $conn->prepare(
@@ -157,14 +163,94 @@ if ($method === 'POST') {
         $replyStmt->close();
 
         // Re-open if closed
-        if (in_array($ticket['status'], ['resolved','closed'])) {
+        if (in_array($ticket['status'], ['resolved', 'closed'])) {
             $reopenStmt = $conn->prepare("UPDATE support_tickets SET status = 'open' WHERE ticket_id = ?");
             $reopenStmt->bind_param('i', $ticketId);
             $reopenStmt->execute();
             $reopenStmt->close();
         }
 
-        echo json_encode(['success'=>true,'message'=>'Reply sent.','id'=>$newReplyId]);
+        echo json_encode(['success' => true, 'message' => 'Reply sent.', 'id' => $newReplyId]);
+        exit;
+    }
+
+    if ($action === 'submit_maintenance') {
+        $issueType = trim($_POST['issue_type'] ?? 'Other');
+        $subject = trim($_POST['subject'] ?? '');
+        $body = trim($_POST['message'] ?? '');
+        $rawPriority = $_POST['priority'] ?? 'medium';
+        // maintenance_requests only supports low/medium/high (no 'urgent')
+        $priority = in_array($rawPriority, ['low', 'medium', 'high']) ? $rawPriority : 'medium';
+        $room = trim($_POST['room'] ?? '');
+        $name = trim($_POST['name'] ?? '');
+
+        if (!$subject || !$body) {
+            echo json_encode(['success' => false, 'message' => 'Issue summary and details are required.']);
+            exit;
+        }
+
+        // Build full description with context
+        $issueLine = ($issueType && $issueType !== 'Other') ? "[{$issueType}] " : '';
+        $fullDesc = $issueLine . $subject;
+        if ($room)
+            $fullDesc .= "\nRoom/Unit: {$room}";
+        if ($name)
+            $fullDesc .= "\nReported by: {$name}";
+        $fullDesc .= "\n\n" . $body;
+
+        // Get the user's active booking unit_id
+        $bookingStmt = $conn->prepare(
+            "SELECT unit_id FROM bookings
+             WHERE user_id = ? AND status IN ('confirmed','active')
+               AND checkout_date >= CURDATE()
+             ORDER BY checkin_date DESC LIMIT 1"
+        );
+        $bookingStmt->bind_param('i', $userId);
+        $bookingStmt->execute();
+        $bookingRow = $bookingStmt->get_result()->fetch_assoc();
+        $bookingStmt->close();
+        $unitId = $bookingRow ? (int) $bookingRow['unit_id'] : null;
+
+        // Insert into maintenance_requests (shows in admin Task Summary)
+        $today = date('Y-m-d');
+        if ($unitId) {
+            $mStmt = $conn->prepare(
+                "INSERT INTO maintenance_requests (unit_id, issue_description, priority, request_status, request_date)
+                 VALUES (?, ?, ?, 'open', ?)"
+            );
+            $mStmt->bind_param('isss', $unitId, $fullDesc, $priority, $today);
+        } else {
+            $mStmt = $conn->prepare(
+                "INSERT INTO maintenance_requests (issue_description, priority, request_status, request_date)
+                 VALUES (?, ?, 'open', ?)"
+            );
+            $mStmt->bind_param('sss', $fullDesc, $priority, $today);
+        }
+        $mStmt->execute();
+        $requestId = $mStmt->insert_id;
+        $mStmt->close();
+
+        if (!$requestId) {
+            echo json_encode(['success' => false, 'message' => 'Failed to save request. Please try again.']);
+            exit;
+        }
+
+        // Notify admins
+        $adminsRes = mysqli_query($conn, "SELECT user_id FROM users WHERE role='admin' AND is_active=1");
+        while ($admin = mysqli_fetch_assoc($adminsRes)) {
+            $aid = (int) $admin['user_id'];
+            $title = 'New Maintenance Request';
+            $link = 'pages/admin/task_summary.php';
+            $notifStmt = $conn->prepare(
+                "INSERT INTO notifications (user_id, type, title, body, link)
+                 VALUES (?, 'support', ?, ?, ?)"
+            );
+            $notifStmt->bind_param('isss', $aid, $title, $subject, $link);
+            $notifStmt->execute();
+            $notifStmt->close();
+        }
+
+        echo json_encode(['success' => true, 'message' => 'Maintenance request submitted.', 'request_id' => $requestId]);
         exit;
     }
 

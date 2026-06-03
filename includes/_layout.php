@@ -148,7 +148,7 @@ $nav_items = [
                 </button>
             </div>
             <div class="btn-profile-wrap">
-                <button class="btn-profile" id="profileBtn" aria-label="My Profile">
+                <button class="btn-profile" id="profileBtn" aria-label="My Profile" style="position:relative;">
                     <?php if ($sidebarPhoto): ?>
                         <img src="<?php echo htmlspecialchars($sidebarPhoto); ?>" alt="Profile photo"
                             onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
@@ -156,6 +156,21 @@ $nav_items = [
                     <span class="profile-initials" <?php echo $sidebarPhoto ? 'style="display:none;"' : ''; ?>>
                         <?php echo $initials; ?>
                     </span>
+                    <span id="profileActivityBadge" style="
+                        display:none;
+                        position:absolute;
+                        top:-3px;right:-3px;
+                        min-width:17px;height:17px;
+                        background:#ef4444;color:#fff;
+                        border-radius:99px;
+                        font-size:0.62rem;font-weight:700;
+                        padding:0 4px;
+                        align-items:center;justify-content:center;
+                        border:2px solid var(--surface,#fff);
+                        pointer-events:none;
+                        z-index:10;
+                        line-height:1;
+                    ">0</span>
                 </button>
                 <span class="profile-dot"></span>
             </div>

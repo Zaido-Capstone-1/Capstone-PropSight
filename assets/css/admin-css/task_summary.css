@@ -301,11 +301,18 @@
     display: inline-block;
 }
 
-/* ── Modal (reuses support modal classes) ── */
+/* ═══════════════════════════════════════════════════════════════
+   TASK SUMMARY — Redesigned View Modal
+   Drop-in replacement for the .sm-modal-* classes in task_summary.css
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Overlay ── */
 .sm-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(10, 22, 40, .5);
+    background: rgba(10, 22, 40, 0.55);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
     z-index: 9000;
     display: flex;
     align-items: center;
@@ -313,7 +320,7 @@
     padding: 20px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .2s;
+    transition: opacity 0.22s ease;
 }
 
 .sm-modal-overlay.open {
@@ -321,133 +328,212 @@
     pointer-events: all;
 }
 
+/* ── Modal shell ── */
 .sm-modal {
-    background: #fff;
-    border-radius: 14px;
+    background: var(--card-bg, #fff);
+    border-radius: 20px;
     width: 100%;
-    max-width: 540px;
+    max-width: 560px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 60px rgba(10, 22, 40, .22);
+    box-shadow:
+        0 0 0 1px rgba(10, 22, 40, 0.07),
+        0 24px 64px rgba(10, 22, 40, 0.20);
     overflow: hidden;
+    transform: translateY(10px) scale(0.98);
+    transition: transform 0.22s ease, opacity 0.22s ease;
 }
 
+.sm-modal-overlay.open .sm-modal {
+    transform: translateY(0) scale(1);
+}
+
+/* ── Header ── */
 .sm-modal-head {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
-    padding: 20px 22px 16px;
-    border-bottom: 1px solid var(--border, #dbeafe);
+    padding: 22px 24px 18px;
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.sm-modal-head::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    pointer-events: none;
+}
+
+.sm-modal-head::after {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    left: 40px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    pointer-events: none;
 }
 
 .sm-modal-title {
-    font-size: .95rem;
+    font-size: 1rem;
     font-weight: 700;
-    color: var(--text-dark, #0a1628);
+    color: #fff;
+    letter-spacing: 0.01em;
 }
 
 .sm-modal-sub {
-    font-size: .8rem;
-    color: var(--text-soft, #64748b);
-    margin-top: 3px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.72);
+    margin-top: 4px;
+    line-height: 1.4;
 }
 
 .sm-modal-close {
-    background: var(--gray-light, #f1f5fb);
+    background: rgba(255, 255, 255, 0.15);
     border: none;
-    border-radius: 7px;
-    width: 28px;
-    height: 28px;
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: var(--text-soft);
-    transition: background .14s, color .14s;
+    color: rgba(255, 255, 255, 0.85);
+    transition: background 0.14s, color 0.14s;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
 }
 
 .sm-modal-close:hover {
-    background: #fee2e2;
-    color: #ef4444;
+    background: rgba(239, 68, 68, 0.8);
+    color: #fff;
 }
 
+/* ── Meta strip (4-column info bar) ── */
 .sm-modal-meta {
-    display: flex;
-    border-bottom: 1px solid var(--border, #dbeafe);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     background: var(--gray-light, #f8fafc);
-    overflow-x: auto;
+    border-bottom: 1px solid var(--border, #e5e7eb);
 }
 
 .sm-meta-item {
-    padding: 12px 20px;
-    flex: 1;
-    min-width: 90px;
-    border-right: 1px solid var(--border, #dbeafe);
+    padding: 14px 16px;
+    border-right: 1px solid var(--border, #e5e7eb);
+    transition: background 0.12s;
 }
 
 .sm-meta-item:last-child {
     border-right: none;
 }
 
+.sm-meta-item:hover {
+    background: rgba(37, 99, 235, 0.04);
+}
+
 .sm-meta-label {
-    font-size: .63rem;
+    font-size: 0.60rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: .07em;
+    letter-spacing: 0.08em;
     color: var(--text-soft, #94a3b8);
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 }
 
 .sm-meta-value {
-    font-size: .83rem;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 700;
     color: var(--text-dark, #0a1628);
+    line-height: 1.2;
 }
 
+/* ── Description block ── */
+.sm-modal-desc {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+.sm-modal-desc-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-soft, #94a3b8);
+    margin-bottom: 8px;
+}
+
+.sm-modal-desc-text {
+    font-size: 0.87rem;
+    line-height: 1.6;
+    color: var(--text, #1e2533);
+    background: var(--gray-light, #f8fafc);
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+
+/* ── Footer ── */
 .sm-modal-footer {
-    border-top: 1px solid var(--border, #dbeafe);
-    padding: 14px 22px 18px;
-    background: #fff;
+    border-top: 1px solid var(--border, #e5e7eb);
+    padding: 16px 24px 20px;
+    background: var(--card-bg, #fff);
 }
 
 .sm-footer-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
 }
 
 .sm-status-wrap {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .sm-status-lbl {
-    font-size: .75rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    color: var(--text-soft);
+    color: var(--text-soft, #64748b);
     white-space: nowrap;
 }
 
 .sm-select {
-    padding: 7px 10px;
-    border: 1.5px solid var(--border, #dbeafe);
-    border-radius: 8px;
-    font-size: .81rem;
+    padding: 8px 12px;
+    border: 1.5px solid var(--border, #e5e7eb);
+    border-radius: 9px;
+    font-size: 0.82rem;
     font-family: inherit;
-    font-weight: 500;
-    background: #f8fafc;
-    color: var(--text-dark);
+    font-weight: 600;
+    background: var(--gray-light, #f8fafc);
+    color: var(--text-dark, #0a1628);
     cursor: pointer;
     outline: none;
-    transition: border-color .15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
 }
 
 .sm-select:focus {
-    border-color: var(--blue-400, #2563c4);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .sm-footer-btns {
@@ -458,22 +544,76 @@
 .sm-btn-primary {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: .81rem;
-    font-weight: 600;
+    gap: 6px;
+    padding: 9px 18px;
+    border-radius: 9px;
+    font-size: 0.82rem;
+    font-weight: 700;
     font-family: inherit;
     cursor: pointer;
     border: none;
-    background: var(--blue-400, #2563c4);
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
     color: #fff;
-    transition: all .15s;
+    transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.30);
+    letter-spacing: 0.01em;
 }
 
 .sm-btn-primary:hover {
-    background: var(--blue-500, #1e50a2);
+    background: linear-gradient(135deg, #1d3fa4 0%, #1e56d4 100%);
     transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.38);
+}
+
+.sm-btn-primary:active {
+    transform: translateY(0);
+}
+
+/* ── Responsive ── */
+@media (max-width: 540px) {
+    .sm-modal {
+        border-radius: 16px;
+    }
+
+    .sm-modal-head {
+        padding: 18px 18px 14px;
+    }
+
+    .sm-modal-meta {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .sm-meta-item:nth-child(2) {
+        border-right: none;
+    }
+
+    .sm-meta-item:nth-child(1),
+    .sm-meta-item:nth-child(2) {
+        border-bottom: 1px solid var(--border, #e5e7eb);
+    }
+
+    .sm-footer-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .sm-status-wrap {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .sm-select {
+        width: 100%;
+    }
+
+    .sm-footer-btns {
+        justify-content: flex-end;
+    }
+
+    .sm-btn-primary {
+        flex: 1;
+        justify-content: center;
+    }
 }
 
 /* ── Responsive ── */

@@ -658,13 +658,6 @@
                 const preview = thread.querySelector('.thread-preview');
                 if (preview) preview.textContent = m.body || m.subject || 'New message';
             }
-
-            if (typeof showToast === 'function') {
-                showToast(
-                    `New message from ${_escHtml(m.sender_name || 'a guest')}`,
-                    'info'
-                );
-            }
         });
     });
 

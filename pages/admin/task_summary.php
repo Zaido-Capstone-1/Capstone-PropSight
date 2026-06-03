@@ -203,22 +203,33 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
   </div>
 </div>
 
-<!-- Task Modal -->
 <div class="sm-modal-overlay" id="taskModal">
   <div class="sm-modal">
+
+    <!-- Header -->
     <div class="sm-modal-head">
       <div>
         <div class="sm-modal-title" id="taskModalTitle">Task Details</div>
         <div class="sm-modal-sub" id="taskModalSub"></div>
       </div>
-      <button class="sm-modal-close" onclick="closeTaskModal()">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
+      <button class="sm-modal-close" onclick="closeTaskModal()" title="Close">
+        <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="15" height="15">
           <line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </button>
     </div>
+
+    <!-- 4-column meta strip (filled by JS) -->
     <div class="sm-modal-meta" id="taskDetailGrid"></div>
+
+    <!-- Full description block (filled by JS) -->
+    <div class="sm-modal-desc" id="taskDescBlock" style="display:none;">
+      <div class="sm-modal-desc-label">Issue Description</div>
+      <div class="sm-modal-desc-text" id="taskDescText"></div>
+    </div>
+
+    <!-- Footer: status update -->
     <div class="sm-modal-footer">
       <div class="sm-footer-row">
         <div class="sm-status-wrap">
@@ -232,10 +243,16 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
           </select>
         </div>
         <div class="sm-footer-btns">
-          <button class="sm-btn-primary" onclick="updateTaskStatus()">Save Status</button>
+          <button class="sm-btn-primary" onclick="updateTaskStatus()">
+            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="13" height="13">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Save Status
+          </button>
         </div>
       </div>
     </div>
+
   </div>
 </div>
 

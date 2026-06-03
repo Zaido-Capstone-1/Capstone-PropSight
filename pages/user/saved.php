@@ -413,6 +413,83 @@ require_once '../../lib/user-queries/saved_queries.php';
                             </div>
                             <div class="bm-pay-radio"></div>
                         </div>
+                        <div class="bm-pay-option" data-method="Card">
+                            <div class="bm-pay-icon"
+                                style="background:#f0f4ff;border-radius:8px;display:flex;align-items:center;justify-content:center;width:44px;height:44px;">
+                                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e50a2"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                                    <line x1="1" y1="10" x2="23" y2="10" />
+                                </svg>
+                            </div>
+                            <div class="bm-pay-info">
+                                <div class="bm-pay-name">Credit / Debit Card</div>
+                                <div class="bm-pay-desc">Visa &amp; Mastercard accepted</div>
+                            </div>
+                            <div class="bm-pay-radio"></div>
+                        </div>
+                    </div>
+
+                    <!-- Card form: shown when Card is selected -->
+                    <div id="bmCardForm"
+                        style="display:none;margin-top:18px;padding:18px;background:#f8fafd;border-radius:12px;border:1.5px solid #dbe4f0;">
+                        <div
+                            style="font-size:13px;font-weight:600;color:#1e3a5f;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#1e50a2"
+                                stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" />
+                                <line x1="1" y1="10" x2="23" y2="10" />
+                            </svg>
+                            Enter Card Details
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:10px;">
+                            <div>
+                                <label
+                                    style="font-size:12px;color:#556;font-weight:500;display:block;margin-bottom:4px;">Card
+                                    Number</label>
+                                <input type="text" id="bmCardNumber" maxlength="19" placeholder="1234 5678 9012 3456"
+                                    oninput="bmFormatCardNumber(this)"
+                                    style="width:100%;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:14px;font-family:monospace;box-sizing:border-box;">
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                                <div>
+                                    <label
+                                        style="font-size:12px;color:#556;font-weight:500;display:block;margin-bottom:4px;">Month</label>
+                                    <input type="number" id="bmCardExpMonth" min="1" max="12" placeholder="MM"
+                                        style="width:100%;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:14px;box-sizing:border-box;">
+                                </div>
+                                <div>
+                                    <label
+                                        style="font-size:12px;color:#556;font-weight:500;display:block;margin-bottom:4px;">Year</label>
+                                    <input type="number" id="bmCardExpYear" min="<?= date('Y') ?>" placeholder="YYYY"
+                                        style="width:100%;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:14px;box-sizing:border-box;">
+                                </div>
+                                <div>
+                                    <label
+                                        style="font-size:12px;color:#556;font-weight:500;display:block;margin-bottom:4px;">CVC</label>
+                                    <input type="password" id="bmCardCvc" maxlength="4" placeholder="&bull;&bull;&bull;"
+                                        style="width:100%;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:14px;box-sizing:border-box;">
+                                </div>
+                            </div>
+                            <div>
+                                <label
+                                    style="font-size:12px;color:#556;font-weight:500;display:block;margin-bottom:4px;">Cardholder
+                                    Name</label>
+                                <input type="text" id="bmCardHolder" placeholder="Name as on card"
+                                    style="width:100%;padding:9px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:14px;box-sizing:border-box;">
+                            </div>
+                            <div id="bmCardError"
+                                style="display:none;color:#dc2626;font-size:12px;padding:8px 10px;background:#fef2f2;border-radius:6px;">
+                            </div>
+                            <div style="font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:5px;">
+                                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                                Secured by PayMongo &middot; PCI-DSS Level 1
+                            </div>
+                        </div>
                     </div>
                 </div>
 

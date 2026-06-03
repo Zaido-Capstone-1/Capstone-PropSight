@@ -28,10 +28,14 @@ require '../../includes/_layout.php';
 // Load contact info from admin settings
 $sysCfgRes = mysqli_query($conn, "SELECT setting_key, value FROM admin_settings WHERE setting_key IN ('contact_phone','contact_email','contact_phone2','support_hero_image')");
 $sysCfg = [];
-if ($sysCfgRes) { while ($sr = mysqli_fetch_assoc($sysCfgRes)) $sysCfg[$sr['setting_key']] = $sr['value']; }
-$contactPhone  = htmlspecialchars($sysCfg['contact_phone']  ?? '+63 33 123 4567');
+if ($sysCfgRes) {
+    while ($sr = mysqli_fetch_assoc($sysCfgRes))
+        $sysCfg[$sr['setting_key']] = $sr['value'];
+}
+$contactPhone = htmlspecialchars($sysCfg['contact_phone'] ?? '+63 33 123 4567');
 $contactPhone2 = htmlspecialchars($sysCfg['contact_phone2'] ?? '+63 912 345 6789');
-$contactEmail  = htmlspecialchars($sysCfg['contact_email']  ?? 'hello@boracayaccommodation.ph');
+$contactEmail = htmlspecialchars($sysCfg['contact_email'] ?? 'hello@boracayaccommodation.ph');
+$heroImage = $sysCfg['support_hero_image'] ?? '';
 
 require_once '../../lib/user-queries/support_queries.php';
 
@@ -83,18 +87,18 @@ $faqs = [
     </div>
     <div class="support-hero-art">
         <?php if ($heroImage): ?>
-            <img src="<?php echo htmlspecialchars('../../' . ltrim($heroImage, '/')); ?>"
-                 alt="Support" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">
+            <img src="<?php echo htmlspecialchars('../../' . ltrim($heroImage, '/')); ?>" alt="Support"
+                style="width:100%;height:100%;object-fit:cover;border-radius:16px;">
         <?php else: ?>
-        <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none">
-            <circle cx="40" cy="40" r="36" stroke-dasharray="4 6" stroke-width="1" />
-            <circle cx="40" cy="40" r="22" stroke-width="1" />
-            <circle cx="40" cy="40" r="8" fill="rgba(232,200,130,.15)" stroke-width="1.5" />
-            <path d="M28 22 Q40 14 52 22" stroke-width="1" />
-            <path d="M28 58 Q40 66 52 58" stroke-width="1" />
-            <line x1="14" y1="40" x2="22" y2="40" stroke-width="1.5" />
-            <line x1="58" y1="40" x2="66" y2="40" stroke-width="1.5" />
-        </svg>
+            <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none">
+                <circle cx="40" cy="40" r="36" stroke-dasharray="4 6" stroke-width="1" />
+                <circle cx="40" cy="40" r="22" stroke-width="1" />
+                <circle cx="40" cy="40" r="8" fill="rgba(232,200,130,.15)" stroke-width="1.5" />
+                <path d="M28 22 Q40 14 52 22" stroke-width="1" />
+                <path d="M28 58 Q40 66 52 58" stroke-width="1" />
+                <line x1="14" y1="40" x2="22" y2="40" stroke-width="1.5" />
+                <line x1="58" y1="40" x2="66" y2="40" stroke-width="1.5" />
+            </svg>
         <?php endif; ?>
     </div>
 </div>

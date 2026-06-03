@@ -10,7 +10,7 @@
  *   profile    — name/email/photo/verification (sidebar + header)
  *   saved      — saved count badge
  *   settings   — no dynamic data; just profile sync (shared handler)
- *   support    — unread badge, ticket status updates, new reply toast
+ *   support    — unread badge, ticket status updates
  *   payment    — unread messages badge (shared handler)
  *   messages   — unread count badge (shared handler)
  *   dashboard  — manage-stay banner & modal live status update
@@ -54,32 +54,15 @@
 
     function _stBadge(status) {
         const m = {
-            pending: {
-                text: 'Pending',
-                cls: 'badge-pending'
-            },
-            confirmed: {
-                text: 'Confirmed',
-                cls: 'badge-confirmed'
-            },
-            active: {
-                text: 'Active',
-                cls: 'badge-active'
-            },
-            completed: {
-                text: 'Completed',
-                cls: 'badge-completed'
-            },
-            cancelled: {
-                text: 'Cancelled',
-                cls: 'badge-cancelled'
-            },
+            pending: { text: 'Pending', cls: 'badge-pending' },
+            confirmed: { text: 'Confirmed', cls: 'badge-confirmed' },
+            active: { text: 'Active', cls: 'badge-active' },
+            completed: { text: 'Completed', cls: 'badge-completed' },
+            cancelled: { text: 'Cancelled', cls: 'badge-cancelled' },
         };
-        return m[status] || {
-            text: status,
-            cls: ''
-        };
+        return m[status] || { text: status, cls: '' };
     }
+
     // Status → css class used by .mm-status and .bb-status
     const _mmStMap = {
         pending: 'mm-st-pending',
@@ -97,6 +80,50 @@
     };
 
     /* ═══════════════════════════════════════════════════════
+     *  PROFILE BADGE — declared at top so all sections can use it
+     * ═══════════════════════════════════════════════════════ */
+    var _profileBadgeCounts = { messages: 0, support: 0 };
+
+    function _updateProfileBadge() {
+        var total = _profileBadgeCounts.messages + _profileBadgeCounts.support;
+        var badge = document.getElementById('profileActivityBadge');
+        if (!badge) return;
+        if (total > 0) {
+            badge.textContent = total > 99 ? '99+' : String(total);
+            badge.style.display = 'inline-flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // Seed profile badge on load — fetch unread count directly from the realtime API
+    // so the badge is populated on first page load, not just after the next poll fires.
+    document.addEventListener('DOMContentLoaded', function () {
+        var apiBase = window.PS_RT_API || '../../api/realtime.php';
+        var page = window.PS_RT_PAGE || 'dashboard';
+        fetch(apiBase + '?since=2000-01-01+00:00:00&page=' + page + '&role=user&_=' + Date.now(), {
+            credentials: 'same-origin'
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success) return;
+            var count = parseInt(data.unread_messages, 10) || 0;
+            if (count > 0) {
+                _profileBadgeCounts.messages = count;
+                _updateProfileBadge();
+            }
+        })
+        .catch(function () {});
+
+        // Show live-indicator dot in header if element exists
+        var liveDot = document.getElementById('rt-live-dot');
+        if (liveDot) {
+            liveDot.style.display = 'inline-block';
+            liveDot.title = 'Live updates active';
+        }
+    });
+
+    /* ═══════════════════════════════════════════════════════
      *  1. BOOKINGS PAGE — stat pills + card status badges
      * ═══════════════════════════════════════════════════════ */
     window.addEventListener('ps:booking_updates', function (e) {
@@ -105,14 +132,11 @@
             const id = String(b.booking_id);
             const lbl = _stBadge(b.status);
 
-            // Update every element that carries data-booking-id
             document.querySelectorAll('[data-booking-id="' + id + '"]').forEach(function (el) {
-                // Status badge
                 const badge = el.querySelector(
                     '.booking-status-badge, .badge, [data-field="status"], .history-status'
                 );
                 if (badge) {
-                    // Remove old badge- and st- colour classes
                     badge.className = badge.className
                         .replace(/\bbadge-\w+/g, '')
                         .replace(/\bst-\w+/g, '')
@@ -122,7 +146,6 @@
                     badge.setAttribute('data-status', b.status);
                 }
 
-                // Cancel button — hide when no longer cancellable
                 const cancelBtn = el.querySelector('[data-action="cancel"], .bc-btn-cancel');
                 if (cancelBtn && ['cancelled', 'completed', 'active'].includes(b.status)) {
                     cancelBtn.style.display = 'none';
@@ -144,7 +167,6 @@
             var banner = document.getElementById('rt-active-booking-wrap');
             if (banner && String(banner.dataset.bookingId) === id) {
 
-                // Update inline status badge
                 var bannerBadge = document.getElementById('rt-active-booking-status');
                 if (bannerBadge) {
                     var stCls = _bbStMap[b.status] || '';
@@ -154,7 +176,6 @@
                     bannerBadge.textContent = _stBadge(b.status).text;
                 }
 
-                // Update dates if changed
                 if (b.checkin_date || b.checkout_date) {
                     var ci = b.checkin_date || banner.dataset.checkin;
                     var co = b.checkout_date || banner.dataset.checkout;
@@ -167,7 +188,6 @@
                     }
                 }
 
-                // Collapse banner when booking ends
                 if (['cancelled', 'completed'].includes(b.status)) {
                     banner.style.transition = 'opacity 0.5s, max-height 0.7s ease, margin 0.7s, padding 0.7s';
                     banner.style.overflow = 'hidden';
@@ -195,13 +215,11 @@
             /* ── Manage Stay Modal (if open for this booking) ──── */
             var modal = document.getElementById('manageModal');
             var isOpen = modal && modal.classList.contains('open');
-            // currentBookingId is declared in script.js
             var matchId = typeof window.currentBookingId !== 'undefined' &&
                 String(window.currentBookingId) === id;
 
             if (modal && isOpen && matchId) {
 
-                // Status pill
                 var pill = document.getElementById('manageStatusPill');
                 if (pill) {
                     pill.className = 'mm-status ' + (_mmStMap[b.status] || '');
@@ -209,7 +227,6 @@
                     if (pillText) pillText.textContent = _stBadge(b.status).text;
                 }
 
-                // Dates
                 if (b.checkin_date) {
                     var ciEl = document.getElementById('manageCheckin');
                     if (ciEl) ciEl.textContent = _fmtDate(b.checkin_date);
@@ -219,24 +236,19 @@
                     if (coEl) coEl.textContent = _fmtDate(b.checkout_date);
                 }
 
-                // Nights
                 if (b.nights !== undefined) {
                     var nEl = document.getElementById('manageNightsNum');
                     if (nEl) nEl.textContent = b.nights;
                 }
 
-                // Total amount
                 if (b.total_amount) {
                     var totEl = document.getElementById('manageTotal');
                     if (totEl) {
                         totEl.textContent = '₱' + Number(b.total_amount)
-                            .toLocaleString('en-PH', {
-                                minimumFractionDigits: 0
-                            });
+                            .toLocaleString('en-PH', { minimumFractionDigits: 0 });
                     }
                 }
 
-                // Progress bar update
                 if (b.checkin_date && b.checkout_date) {
                     var inD = new Date(b.checkin_date + 'T12:00:00');
                     var outD = new Date(b.checkout_date + 'T12:00:00');
@@ -252,23 +264,18 @@
                     if (pWrap) pWrap.style.display = (pct > 0 && pct < 100) ? '' : 'none';
                 }
 
-                // Cancel button visibility
                 var cancelBtn = document.getElementById('manageCancelBtn');
                 if (cancelBtn) {
                     cancelBtn.style.display = ['completed', 'cancelled'].includes(b.status) ? 'none' : '';
                 }
 
-                // Flash modal header subtly
                 var hero = modal.querySelector('.mm-hero-content');
                 if (hero) {
                     hero.style.transition = 'background 0.4s';
                     hero.style.background = 'rgba(59,130,246,0.07)';
-                    setTimeout(function () {
-                        hero.style.background = '';
-                    }, 1200);
+                    setTimeout(function () { hero.style.background = ''; }, 1200);
                 }
 
-                // Toast
                 if (typeof showToast === 'function') {
                     showToast(
                         'Your booking status updated to ' + _stBadge(b.status).text + '.',
@@ -279,7 +286,6 @@
 
             /* ── Update Room Card Availability ──────────────────── */
             if (b.unit_id) {
-                // Use .room-card to avoid matching the booking banner which also has data-unit-id
                 var roomCard = document.querySelector('.room-card[data-unit-id="' + String(b.unit_id) + '"]');
                 if (roomCard) {
                     if (['cancelled', 'completed'].includes(b.status)) {
@@ -287,11 +293,9 @@
                             roomCard.dataset.status = 'vacant';
                         }
                         var availBadge = roomCard.querySelector('[data-avail-status]');
-                        if (availBadge) {
-                            if (roomCard.dataset.status !== 'maintenance') {
-                                availBadge.className = 'room-avail avail-yes';
-                                availBadge.textContent = '✓ Available';
-                            }
+                        if (availBadge && roomCard.dataset.status !== 'maintenance') {
+                            availBadge.className = 'room-avail avail-yes';
+                            availBadge.textContent = '✓ Available';
                         }
                         var bookBtn = roomCard.querySelector('[data-book-btn]');
                         if (bookBtn) {
@@ -326,7 +330,6 @@
      * ═══════════════════════════════════════════════════════ */
     window.addEventListener('ps:booking_updates', function (e) {
         var updates = e.detail || [];
-
         var unitStatusMap = {};
 
         updates.forEach(function (b) {
@@ -336,25 +339,18 @@
             var priority = isOccupied ? 2 : 1;
 
             if (!unitStatusMap[unitId] || priority > unitStatusMap[unitId].priority) {
-                unitStatusMap[unitId] = {
-                    status: b.status,
-                    priority: priority,
-                };
+                unitStatusMap[unitId] = { status: b.status, priority: priority };
             }
 
-            // Update booking count when new booking is created
             if (b.status === 'pending' || b.status === 'confirmed') {
                 var bookingCountEl = document.querySelector('[data-rt-user="booking_total"]');
                 if (bookingCountEl) {
                     var currentCount = parseInt(bookingCountEl.textContent, 10) || 0;
-                    // Increment if this is a new booking (optimistic update)
                     if (!document.querySelector('[data-booking-id="' + b.booking_id + '"]')) {
                         bookingCountEl.textContent = currentCount + 1;
                         bookingCountEl.style.transition = 'transform 0.3s ease';
                         bookingCountEl.style.transform = 'scale(1.15)';
-                        setTimeout(function () {
-                            bookingCountEl.style.transform = '';
-                        }, 300);
+                        setTimeout(function () { bookingCountEl.style.transform = ''; }, 300);
                     }
                 }
             }
@@ -370,11 +366,9 @@
                     roomCard.dataset.status = 'vacant';
                 }
                 var availBadge = roomCard.querySelector('[data-avail-status]');
-                if (availBadge) {
-                    if (roomCard.dataset.status !== 'maintenance') {
-                        availBadge.className = 'room-avail avail-yes';
-                        availBadge.textContent = '✓ Available';
-                    }
+                if (availBadge && roomCard.dataset.status !== 'maintenance') {
+                    availBadge.className = 'room-avail avail-yes';
+                    availBadge.textContent = '✓ Available';
                 }
                 var bookBtn = roomCard.querySelector('[data-book-btn]');
                 if (bookBtn) {
@@ -382,8 +376,8 @@
                     bookBtn.textContent = 'Book Now';
                     bookBtn.onclick = function (ev) {
                         if (ev) ev.stopPropagation();
-                        var unitId = roomCard.dataset.unitId;
-                        if (unitId) window.location.href = 'unit_detail.php?id=' + unitId + '&book=1';
+                        var uid = roomCard.dataset.unitId;
+                        if (uid) window.location.href = 'unit_detail.php?id=' + uid + '&book=1';
                     };
                 }
             } else if (['confirmed', 'active', 'pending'].includes(status)) {
@@ -408,7 +402,6 @@
     window.addEventListener('ps:user_metrics', function (e) {
         var m = e.detail || {};
 
-        // Update booking count on dashboard header stat
         if (m.booking_total !== undefined) {
             var bookCountEl = document.querySelector('[data-rt-user="booking_total"]');
             if (bookCountEl) {
@@ -418,23 +411,16 @@
                 if (newCount !== oldCount) {
                     bookCountEl.style.transition = 'transform 0.3s ease';
                     bookCountEl.style.transform = 'scale(1.15)';
-                    setTimeout(function () {
-                        bookCountEl.style.transform = '';
-                    }, 300);
+                    setTimeout(function () { bookCountEl.style.transform = ''; }, 300);
                 }
             }
         }
 
-        // Update saved count on dashboard header stat
         if (m.saved_count !== undefined) {
             var savedCountEl = document.querySelector('[data-rt-user="saved_count"]');
-            if (savedCountEl) {
-                savedCountEl.textContent = parseInt(m.saved_count, 10);
-            }
+            if (savedCountEl) savedCountEl.textContent = parseInt(m.saved_count, 10);
             var savedTextEl = document.querySelector('[data-rt-user="saved_count_text"]');
-            if (savedTextEl) {
-                savedTextEl.textContent = parseInt(m.saved_count, 10) + ' on wishlist';
-            }
+            if (savedTextEl) savedTextEl.textContent = parseInt(m.saved_count, 10) + ' on wishlist';
         }
 
         var points = parseInt(m.loyalty_points, 10);
@@ -443,65 +429,34 @@
         if (!isNaN(points)) {
             var fmtPts = points.toLocaleString('en-PH');
 
-            // Update dashboard loyalty stats
             var dashLoyaltyEl = document.querySelector('[data-rt-user="loyalty_points"]');
-            if (dashLoyaltyEl) {
-                dashLoyaltyEl.textContent = fmtPts;
-            }
+            if (dashLoyaltyEl) dashLoyaltyEl.textContent = fmtPts;
             var dashLoyaltyTextEl = document.querySelector('[data-rt-user="loyalty_points_text"]');
-            if (dashLoyaltyTextEl) {
-                dashLoyaltyTextEl.textContent = fmtPts + ' points';
-            }
+            if (dashLoyaltyTextEl) dashLoyaltyTextEl.textContent = fmtPts + ' points';
             var dashTierEl = document.querySelector('[data-rt-user="loyalty_tier"]');
-            if (dashTierEl) {
-                dashTierEl.textContent = tier;
-            }
+            if (dashTierEl) dashTierEl.textContent = tier;
 
-            // Hero card big number
             var numEl = document.getElementById('loyaltyPointsNum');
             if (numEl) numEl.textContent = fmtPts;
-
-            // Summary panel
             var sumEl = document.getElementById('summaryBalance');
             if (sumEl) sumEl.textContent = fmtPts + ' pts';
-
-            // Progress left label
             var progLeft = document.getElementById('loyaltyProgressLeft');
-            if (progLeft && tier) {
-                progLeft.textContent = tier + ' (' + fmtPts + ' pts)';
-            }
+            if (progLeft && tier) progLeft.textContent = tier + ' (' + fmtPts + ' pts)';
 
-            // Sub-label — recalculate pts to next tier
-            var tierDefs = [{
-                    name: 'Silver',
-                    min: 0
-                },
-                {
-                    name: 'Gold',
-                    min: 500
-                },
-                {
-                    name: 'Platinum',
-                    min: 2000
-                },
-                {
-                    name: 'Diamond',
-                    min: 5000
-                },
+            var tierDefs = [
+                { name: 'Silver', min: 0 },
+                { name: 'Gold', min: 500 },
+                { name: 'Platinum', min: 2000 },
+                { name: 'Diamond', min: 5000 },
             ];
             var curIdx = 0;
-            tierDefs.forEach(function (t, i) {
-                if (points >= t.min) curIdx = i;
-            });
+            tierDefs.forEach(function (t, i) { if (points >= t.min) curIdx = i; });
             var nextTd = tierDefs[curIdx + 1];
             var nextTier = nextTd ? nextTd.name : 'Diamond';
             var ptsToNext = nextTd ? Math.max(0, nextTd.min - points) : 0;
             var subEl = document.getElementById('loyaltyPointsSub');
-            if (subEl) {
-                subEl.textContent = 'points · ' + ptsToNext + ' pts to ' + nextTier;
-            }
+            if (subEl) subEl.textContent = 'points · ' + ptsToNext + ' pts to ' + nextTier;
 
-            // Progress bar (bar id="loyaltyProgressBar" if present)
             if (nextTd) {
                 var tierBase = tierDefs[curIdx].min;
                 var tierTotal = nextTd.min;
@@ -519,7 +474,6 @@
             var tierEl = document.getElementById('loyaltyTierName');
             if (tierEl) tierEl.textContent = tier;
 
-            // Active tier card highlight
             document.querySelectorAll('.tier-card').forEach(function (tc) {
                 var nameEl = tc.querySelector('.tier-name');
                 if (!nameEl) return;
@@ -538,17 +492,17 @@
         var m = e.detail || {};
         var saved = parseInt(m.saved_count, 10);
         if (!isNaN(saved)) {
-            // Saved page header stat
             _setText('[data-rt-saved="count"]', saved);
             _setText('[data-rt-saved="count-text"]', saved + ' saved');
         }
     });
 
     /* ═══════════════════════════════════════════════════════
-     *  5. SUPPORT PAGE — new admin reply toast + ticket status
+     *  5. SUPPORT PAGE — new admin reply + ticket status
+     *     (no toast — badge only via profile badge)
      * ═══════════════════════════════════════════════════════ */
 
-    // Track seen reply IDs so we don't double-toast
+    // Track seen reply IDs so we don't double-badge
     var _seenReplyIds = (function () {
         try {
             return new Set(JSON.parse(sessionStorage.getItem('ps_seen_reply_ids') || '[]'));
@@ -562,7 +516,7 @@
         if (!Array.isArray(msgs)) return;
 
         msgs.forEach(function (msg) {
-            // ticket_replies arrive with is_admin=1 and ticket_id
+            // ticket_replies arrive with ticket_id
             if (!msg.ticket_id) return;
             var key = 'reply_' + msg.message_id;
             if (_seenReplyIds.has(key)) return;
@@ -570,11 +524,6 @@
             try {
                 sessionStorage.setItem('ps_seen_reply_ids', JSON.stringify([..._seenReplyIds].slice(-200)));
             } catch (e) {}
-
-            // Toast notification
-            if (typeof showToast === 'function') {
-                showToast('New reply on ticket #' + msg.ticket_id + ': ' + _esc(msg.body || '').slice(0, 60), 'info');
-            }
 
             // Live-inject reply into open ticket modal if currently viewing that ticket
             var modalBody = document.getElementById('ticketModalBody');
@@ -597,24 +546,34 @@
                 badge.textContent = cur + 1;
                 badge.style.display = '';
             }
+
+            // Increment profile badge for support reply
+            _profileBadgeCounts.support = (_profileBadgeCounts.support || 0) + 1;
+            _updateProfileBadge();
         });
     });
 
     /* ═══════════════════════════════════════════════════════
-     *  6. ALL PAGES — unread messages badge in nav
+     *  6. ALL PAGES — unread messages badge in nav + profile badge
      * ═══════════════════════════════════════════════════════ */
     window.addEventListener('ps:unread_messages', function (e) {
         var count = parseInt(e.detail, 10) || 0;
-        // User layout uses data-rt="messages" on nav badge
+
+        // Nav badge (sidebar messages link)
         document.querySelectorAll('.nav-badge[data-rt="messages"], [data-rt-user="unread_messages"]')
             .forEach(function (el) {
                 el.textContent = count;
                 el.style.display = count > 0 ? '' : 'none';
             });
+
         // Messages link icon dot
         document.querySelectorAll('[data-rt="msg-dot"]').forEach(function (el) {
             el.style.display = count > 0 ? '' : 'none';
         });
+
+        // Profile picture badge
+        _profileBadgeCounts.messages = count;
+        _updateProfileBadge();
     });
 
     /* ═══════════════════════════════════════════════════════
@@ -630,13 +589,11 @@
             cancelled: parseInt(s.cancelled, 10) || 0,
             total: parseInt(s.total, 10) || 0,
         };
-        // data-rt-stat="upcoming|active|completed|cancelled"
         Object.keys(map).forEach(function (k) {
             document.querySelectorAll('[data-rt-stat="' + k + '"]').forEach(function (el) {
                 el.textContent = map[k];
             });
         });
-        // data-rt-user="booking_total"
         document.querySelectorAll('[data-rt-user="booking_total"]').forEach(function (el) {
             el.textContent = map.total;
         });
@@ -644,8 +601,6 @@
 
     /* ═══════════════════════════════════════════════════════
      *  8. PROFILE / SETTINGS — profile sync (name/photo)
-     *     (already handled in realtime.js; this adds extra
-     *      profile-page-specific targets)
      * ═══════════════════════════════════════════════════════ */
     window.addEventListener('ps:profile_sync', function (e) {
         var p = e.detail || {};
@@ -653,13 +608,11 @@
         var last = String(p.last_name || '').trim();
         var full = (first + ' ' + last).trim() || 'Guest';
 
-        // Profile page heading
         _setText('#profileFullName, [data-rt-profile="full_name"]', full);
         _setText('[data-rt-profile="first_name"]', first);
         _setText('[data-rt-profile="last_name"]', last);
         _setText('[data-rt-profile="email"]', String(p.email || ''));
 
-        // Verification badge on profile page
         var vStatus = String(p.verification_status || '').toLowerCase() === 'verified';
         document.querySelectorAll('[data-rt-profile="verification_badge"]').forEach(function (el) {
             el.classList.toggle('verified', vStatus);
@@ -669,37 +622,16 @@
     });
 
     /* ═══════════════════════════════════════════════════════
-     *  9. PAGE-TITLE INDICATOR — show a subtle "live" dot
-     *     when realtime is active (cosmetic, optional)
-     * ═══════════════════════════════════════════════════════ */
-    document.addEventListener('DOMContentLoaded', function () {
-        // Stamp each user page with its PS_RT_PAGE so realtime.js
-        // can send the right `page` query param.
-        // (Pages set window.PS_RT_PAGE before _layout_end loads this file.)
-
-        // Show live-indicator dot in header if element exists
-        var liveDot = document.getElementById('rt-live-dot');
-        if (liveDot) {
-            liveDot.style.display = 'inline-block';
-            liveDot.title = 'Live updates active';
-        }
-    });
-
-    /* ═══════════════════════════════════════════════════════
      *  10. DASHBOARD — full manage-stay banner sync from API
-     *      Fires on every poll with the current active booking
-     *      snapshot (or null when there's no active booking).
      * ═══════════════════════════════════════════════════════ */
     window.addEventListener('ps:manage_stay_booking', function (e) {
-        var bk = e.detail; // null = no active booking
+        var bk = e.detail;
         var banner = document.getElementById('rt-active-booking-wrap');
-        if (!banner) return; // not on dashboard
+        if (!banner) return;
 
-        // ── No active booking → collapse banner ────────────
         if (!bk) {
-            if (banner.style.display === 'none') return; // already hidden
+            if (banner.style.display === 'none') return;
 
-            // Reset the room card before collapsing
             var unitId = banner.dataset.unitId;
             if (unitId) {
                 var roomCard = document.querySelector('.room-card[data-unit-id="' + unitId + '"]');
@@ -708,11 +640,9 @@
                         roomCard.dataset.status = 'vacant';
                     }
                     var availBadge = roomCard.querySelector('[data-avail-status]');
-                    if (availBadge) {
-                        if (roomCard.dataset.status !== 'maintenance') {
-                            availBadge.className = 'room-avail avail-yes';
-                            availBadge.textContent = '✓ Available';
-                        }
+                    if (availBadge && roomCard.dataset.status !== 'maintenance') {
+                        availBadge.className = 'room-avail avail-yes';
+                        availBadge.textContent = '✓ Available';
                     }
                     var bookBtn = roomCard.querySelector('[data-book-btn]');
                     if (bookBtn) {
@@ -720,8 +650,8 @@
                         bookBtn.textContent = 'Book Now';
                         bookBtn.onclick = function (ev) {
                             if (ev) ev.stopPropagation();
-                            var unitId = roomCard.dataset.unitId;
-                            if (unitId) window.location.href = 'unit_detail.php?id=' + unitId + '&book=1';
+                            var uid = roomCard.dataset.unitId;
+                            if (uid) window.location.href = 'unit_detail.php?id=' + uid + '&book=1';
                         };
                     }
                 }
@@ -738,13 +668,10 @@
                 banner.style.paddingTop = '0';
                 banner.style.paddingBottom = '0';
             }, 520);
-            setTimeout(function () {
-                banner.style.display = 'none';
-            }, 1300);
+            setTimeout(function () { banner.style.display = 'none'; }, 1300);
             return;
         }
 
-        // ── Active booking → refresh banner fields ─────────
         var id = String(bk.booking_id);
         banner.dataset.bookingId = id;
         if (bk.unit_id) banner.dataset.unitId = String(bk.unit_id);
@@ -767,7 +694,6 @@
             }
         }
 
-        // Restore banner visibility if it was previously collapsed
         if (banner.style.display === 'none' || parseFloat(banner.style.opacity) === 0) {
             banner.style.display = '';
             banner.style.opacity = '';
@@ -779,7 +705,6 @@
             banner.style.paddingBottom = '';
         }
 
-        // Status badge
         var bannerBadge = document.getElementById('rt-active-booking-status');
         if (bannerBadge) {
             var stCls = _bbStMap[bk.status] || '';
@@ -788,14 +713,12 @@
             bannerBadge.textContent = _stBadge(bk.status).text;
         }
 
-        // Room + property label
         var roomEl = banner.querySelector('.bb-room');
         if (roomEl) {
             var unitLabel = bk.unit_name || bk.unit_number || 'Unit';
             roomEl.textContent = unitLabel + (bk.property_name ? ' \u2014 ' + bk.property_name : '');
         }
 
-        // Dates row
         if (bk.checkin_date || bk.checkout_date) {
             var bbDates = banner.querySelector('.bb-dates');
             if (bbDates) {
@@ -806,14 +729,12 @@
             }
         }
 
-        // Keep the Manage Stay button's onclick payload fresh
         var manageBtn = banner.querySelector('.btn-manage');
         if (manageBtn) {
             var nights = bk.nights !== undefined ? bk.nights :
                 (bk.checkin_date && bk.checkout_date ?
                     Math.max(0, Math.round(
-                        (new Date(bk.checkout_date) - new Date(bk.checkin_date)) / 86400000)) :
-                    0);
+                        (new Date(bk.checkout_date) - new Date(bk.checkin_date)) / 86400000)) : 0);
             var imgSrc = bk.image_path ?
                 '../../' + String(bk.image_path).replace(/^\/+/, '') : '';
             var modalPayload = {
@@ -828,9 +749,7 @@
                 nights: nights,
                 status: _stBadge(bk.status).text,
                 total_amount: 'PHP ' + Number(bk.total_amount || 0)
-                    .toLocaleString('en-PH', {
-                        minimumFractionDigits: 0
-                    }),
+                    .toLocaleString('en-PH', { minimumFractionDigits: 0 }),
                 guests: parseInt(bk.guests || 2, 10),
                 image: imgSrc,
             };
@@ -840,7 +759,6 @@
                 .replace(/'/g, "\\'") + ')');
         }
 
-        // If the manage modal is already open for this booking, refresh it too
         var modal = document.getElementById('manageModal');
         var isOpen = modal && modal.classList.contains('open');
         if (isOpen &&

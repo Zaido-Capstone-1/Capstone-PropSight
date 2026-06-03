@@ -1064,7 +1064,23 @@ $nav_items = [
                                 </div>
                                 <div class="bm-pay-radio"></div>
                             </div>
+                            <div class="bm-pay-option" data-method="Card">
+                                <div class="bm-pay-icon"
+                                    style="background:#f0f4ff;border-radius:8px;display:flex;align-items:center;justify-content:center;width:44px;height:44px;">
+                                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e50a2"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                                        <line x1="1" y1="10" x2="23" y2="10" />
+                                    </svg>
+                                </div>
+                                <div class="bm-pay-info">
+                                    <div class="bm-pay-name">Credit / Debit Card</div>
+                                    <div class="bm-pay-desc">Visa &amp; Mastercard accepted</div>
+                                </div>
+                                <div class="bm-pay-radio"></div>
+                            </div>
                         </div>
+
                     </div>
                     <div class="bm-panel" id="bm-panel-4">
                         <div class="bm-confirm-check" id="bm-payment-waiting">
@@ -1353,6 +1369,7 @@ $nav_items = [
     <script src="../../assets/js/toast.js"></script>
     <script src="../../assets/js/user-js/saved.js"></script>
     <script src="../../assets/js/user-js/unit_detail_additions.js"></script>
+    <script src="../../assets/js/user-js/card-checkout.js"></script>
 </body>
 
 </html>

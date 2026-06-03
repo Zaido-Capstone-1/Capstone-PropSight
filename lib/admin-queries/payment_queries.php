@@ -75,15 +75,26 @@ $recStmt = $conn->prepare("
     SELECT
         p.payment_id, p.booking_id, p.payment_date, p.amount_paid,
         p.payment_method, p.payment_status, p.notes, p.created_at,
-        COALESCE(NULLIF(t.full_name,''), CONCAT(COALESCE(u2.first_name,''), ' ', COALESCE(u2.last_name,'')), '—') AS full_name,
-        t.tenant_id,
-        u.unit_number, u.unit_id,
+        COALESCE(
+            NULLIF(t.full_name,''),
+            CONCAT(COALESCE(u2.first_name,''), ' ', COALESCE(u2.last_name,'')),
+            -- invoice payment: pull tenant name from invoices table
+            NULLIF(COALESCE(inv_t.full_name,''),''),
+            '—'
+        ) AS full_name,
+        COALESCE(t.tenant_id, inv_t.tenant_id) AS tenant_id,
+        COALESCE(u.unit_number, inv.unit) AS unit_number,
+        u.unit_id,
         u2.profile_photo
     FROM payments p
-    LEFT JOIN bookings b   ON b.booking_id = p.booking_id
+    LEFT JOIN bookings b   ON b.booking_id = p.booking_id AND p.booking_id > 0
     LEFT JOIN tenants  t   ON t.tenant_id  = b.tenant_id
     LEFT JOIN units    u   ON u.unit_id    = b.unit_id
     LEFT JOIN users    u2  ON u2.user_id   = b.user_id
+    -- invoice payment joins (booking_id = 0, notes = 'INV-PMT-{id}')
+    LEFT JOIN invoices inv  ON p.booking_id = 0
+                           AND p.notes = CONCAT('INV-PMT-', inv.id)
+    LEFT JOIN tenants inv_t ON inv_t.tenant_id = inv.tenant_id
     WHERE $where_sql
     ORDER BY p.created_at DESC
 ");

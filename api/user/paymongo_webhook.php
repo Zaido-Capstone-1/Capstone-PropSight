@@ -97,15 +97,25 @@ if ($type === 'link.payment.paid') {
 
             $date    = date('Y-m-d');
             $invRef  = 'INV-PMT-' . $invoiceId;
-            $invDesc = 'PayMongo payment for Invoice #' . $invoiceId;
-            $invCat  = 'Invoice Revenue';
-            $invTyp  = 'Income';
-            $txInv = $conn->prepare("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date) VALUES (?, ?, ?, ?, ?, ?)");
-            if ($txInv) {
-                $txInv->bind_param('ssssds', $invRef, $invDesc, $invCat, $invTyp, $amount, $date);
-                $txInv->execute();
-                $txInv->close();
+
+            // Insert into payments table (so admin payments page shows it)
+            $pmtNote = $invRef;
+            $pmtChk  = $conn->query("SELECT payment_id FROM payments WHERE notes='" . $conn->real_escape_string($pmtNote) . "' LIMIT 1");
+            if ($pmtChk && $pmtChk->num_rows === 0) {
+                $pmtMethod = 'PayMongo'; $pmtStatus = 'paid';
+                $ps = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (0, ?, ?, ?, ?, ?)");
+                $ps->bind_param('sdsss', $date, $amount, $pmtMethod, $pmtStatus, $pmtNote);
+                $ps->execute(); $ps->close();
             }
+
+            // Insert into transactions
+            $txChk = $conn->query("SELECT id FROM transactions WHERE reference_no='" . $conn->real_escape_string($invRef) . "' LIMIT 1");
+            if ($txChk && $txChk->num_rows === 0) {
+                $desc = 'PayMongo payment for Invoice #' . $invoiceId;
+                $safeRef = $conn->real_escape_string($invRef);
+                $safeDesc = $conn->real_escape_string($desc);
+                $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by) VALUES ('$safeRef','$safeDesc','Invoice Revenue','Income',$amount,'$date',NULL,'',NULL)");
+                }
             error_log('[webhook] Invoice #' . $invoiceId . ' marked Paid via PayMongo link ' . $linkId);
         }
         http_response_code(200);
@@ -284,7 +294,6 @@ if ($type === 'payment.failed') {
         }
     }
 }
-
 
 // ── Handle refund.updated ─────────────────────────────────────────────────────
 if ($type === 'refund.updated') {

@@ -142,5 +142,22 @@ if ($method === 'POST') {
         exit;
     }
 
+    // ── Delete ticket ────────────────────────────────────────────
+    if ($action === 'delete') {
+        // Delete messages first (FK), then ticket
+        $del1 = $conn->prepare('DELETE FROM support_messages WHERE ticket_id=?');
+        $del1->bind_param('i', $ticketId);
+        $del1->execute();
+        $del1->close();
+
+        $del2 = $conn->prepare('DELETE FROM support_tickets WHERE ticket_id=?');
+        $del2->bind_param('i', $ticketId);
+        $ok = $del2->execute();
+        $del2->close();
+
+        echo json_encode(['success' => $ok, 'message' => $ok ? 'Ticket deleted.' : 'DB error: ' . $conn->error]);
+        exit;
+    }
+
     echo json_encode(['success' => false, 'message' => 'Unknown action.']);
 }

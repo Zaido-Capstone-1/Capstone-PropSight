@@ -263,36 +263,76 @@ include '../../lib/admin-queries/support_queries.php';
 
     <div class="sm-modal-overlay" id="ticketModal">
         <div class="sm-modal">
-            <button class="sm-modal-close" onclick="closeModal('ticketModal')">✕</button>
-            <div class="sm-modal-title" id="ticketModalTitle">Ticket Details</div>
-            <div class="sm-modal-sub" id="ticketModalSub"></div>
 
+            <!-- Header with avatar -->
+            <div class="sm-modal-head">
+                <div class="sm-modal-head-info">
+                    <div class="sm-modal-head-avatar" id="ticketModalAvatar"></div>
+                    <div class="sm-modal-head-text">
+                        <div class="sm-modal-title" id="ticketModalTitle">Ticket Details</div>
+                        <div class="sm-modal-sub" id="ticketModalSub"></div>
+                    </div>
+                </div>
+                <button class="sm-modal-close" onclick="closeModal('ticketModal')" title="Close">
+                    <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="15"
+                        height="15">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 4-column info strip (filled by JS) -->
             <div class="sm-detail-grid" id="ticketDetailGrid"></div>
 
-            <hr class="sm-divider">
+            <!-- Scrollable body: thread + reply -->
+            <div class="sm-modal-body">
 
-            <div class="sm-field-label">Conversation</div>
-            <div class="sm-msg-thread" id="ticketMsgThread">
-                <div style="text-align:center;color:#94a3b8;padding:20px;font-size:0.84rem;">Loading messages…</div>
-            </div>
-
-            <hr class="sm-divider">
-
-            <div class="sm-field-label" style="margin-bottom:10px;">Reply &amp; Update Status</div>
-            <div class="sm-reply-area">
-                <textarea id="ticketReplyBody" placeholder="Type your reply to the guest…"></textarea>
-                <div class="sm-status-row">
-                    <select id="ticketStatusSelect">
-                        <option value="open">Open</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="resolved">Resolved</option>
-                        <option value="closed">Closed</option>
-                    </select>
-                    <button class="sm-action-btn" onclick="sendTicketReply()" style="margin-left:auto;">Send
-                        Reply</button>
-                    <button class="sm-action-btn" onclick="updateTicketStatus()">Update Status</button>
+                <!-- Conversation thread -->
+                <div>
+                    <div class="sm-section-label">Conversation</div>
+                    <div class="sm-msg-thread" id="ticketMsgThread">
+                        <div style="text-align:center;color:var(--text-soft,#94a3b8);padding:20px;font-size:0.84rem;">
+                            Loading messages…
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Reply + status -->
+                <div>
+                    <div class="sm-section-label">Reply &amp; Update Status</div>
+                    <div class="sm-reply-area">
+                        <textarea id="ticketReplyBody" placeholder="Type your reply to the guest…" rows="3"></textarea>
+                        <div class="sm-status-row">
+                            <select id="ticketStatusSelect">
+                                <option value="open">Open</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                            <button class="sm-action-btn btn-status" onclick="updateTicketStatus()">
+                                <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="13"
+                                    height="13">
+                                    <polyline points="23 4 23 10 17 10" />
+                                    <polyline points="1 20 1 14 7 14" />
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                                </svg>
+                                Update Status
+                            </button>
+                            <button class="sm-action-btn btn-send" onclick="sendTicketReply()">
+                                <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="13"
+                                    height="13">
+                                    <line x1="22" y1="2" x2="11" y2="13" />
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                                </svg>
+                                Send Reply
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
+
         </div>
     </div>
 </div>

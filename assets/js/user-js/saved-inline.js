@@ -191,9 +191,15 @@ showToast("You do not have permission to access this page.", "error", "Unauthori
                     document.querySelectorAll('.bm-pay-option').forEach(o => o.classList.remove('selected'));
                     opt.classList.add('selected');
                     bmSelectedMethod = opt.dataset.method;
+                    // Show card form only for Card method
+                    const cardForm = document.getElementById('bmCardForm');
+                    if (cardForm) cardForm.style.display = bmSelectedMethod === 'Card' ? '' : 'none';
                     bmUpdatePaymentUI();
                 });
             });
+            // Reset card form visibility
+            const cardForm = document.getElementById('bmCardForm');
+            if (cardForm) cardForm.style.display = bmSelectedMethod === 'Card' ? '' : 'none';
             bmUpdatePaymentUI();
         }
 
@@ -205,6 +211,9 @@ showToast("You do not have permission to access this page.", "error", "Unauthori
                 qrBox.style.display = 'none';
                 cashBox.style.display = '';
                 document.getElementById('bmCashAmount').textContent = bmFmt(total);
+            } else if (bmSelectedMethod === 'Card') {
+                qrBox.style.display = 'none';
+                cashBox.style.display = 'none';
             } else {
                 qrBox.style.display = '';
                 cashBox.style.display = 'none';
@@ -258,19 +267,121 @@ showToast("You do not have permission to access this page.", "error", "Unauthori
             })
                 .then(r => r.json())
                 .then(data => {
-                    if (data.success) {
-                        bmOnBookingSuccess(data);
-                    } else {
+                    if (!data.success) {
                         btn.disabled = false;
                         btn.innerHTML = '<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" style="width:14px;height:14px;stroke-width:2"><polyline points="20 6 9 17 4 12"/></svg> Confirm Payment';
                         if (typeof showToast === 'function') showToast(data.message || 'Booking failed. Please try again.', 'error');
+                        return;
                     }
+
+                    const bid = data.booking_id;
+                    const { total } = bmGetTotal();
+
+                    // ── Card: Payment Intent flow ─────────────────────────────────
+                    if (bmSelectedMethod === 'Card') {
+                        const cardNum  = (document.getElementById('bmCardNumber')?.value || '').replace(/\s/g, '');
+                        const expMonth = parseInt(document.getElementById('bmCardExpMonth')?.value || '0');
+                        const expYear  = parseInt(document.getElementById('bmCardExpYear')?.value || '0');
+                        const cvc      = (document.getElementById('bmCardCvc')?.value || '').trim();
+                        const holder   = (document.getElementById('bmCardHolder')?.value || '').trim();
+                        const cardErrEl = document.getElementById('bmCardError');
+
+                        function _showCardErr(msg) {
+                            if (cardErrEl) { cardErrEl.textContent = msg; cardErrEl.style.display = ''; }
+                            btn.disabled = false;
+                            btn.innerHTML = '<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" style="width:14px;height:14px;stroke-width:2"><polyline points="20 6 9 17 4 12"/></svg> Confirm Payment';
+                            if (typeof showToast === 'function') showToast(msg, 'error');
+                        }
+
+                        if (!cardNum || cardNum.length < 13) { _showCardErr('Please enter a valid card number.'); return; }
+                        if (!expMonth || !expYear)           { _showCardErr('Please enter the expiry date.'); return; }
+                        if (!cvc)                            { _showCardErr('Please enter the CVC.'); return; }
+                        if (!holder)                         { _showCardErr('Cardholder name is required.'); return; }
+
+                        const cardFd = new FormData();
+                        cardFd.append('booking_id',  bid);
+                        cardFd.append('card_number', cardNum);
+                        cardFd.append('exp_month',   expMonth);
+                        cardFd.append('exp_year',    expYear);
+                        cardFd.append('cvc',         cvc);
+                        cardFd.append('holder_name', holder);
+                        cardFd.append('return_url',  window.location.href);
+                        cardFd.append('csrf_token',  typeof window.psGetCsrfToken === 'function' ? window.psGetCsrfToken() : '');
+
+                        fetch('../../api/user/create_card_payment.php', { method: 'POST', body: cardFd })
+                            .then(r => r.json())
+                            .then(cd => {
+                                if (!cd.success) { _showCardErr(cd.message || 'Card payment failed.'); return; }
+                                const intentId = cd.intent_id;
+
+                                // If 3DS required open redirect in new tab
+                                if (cd.intent_status === 'awaiting_next_action' && cd.redirect_url) {
+                                    window.open(cd.redirect_url, '_blank');
+                                }
+
+                                // Show waiting state on step 4
+                                bmRenderStep(4);
+                                const waitEl = document.getElementById('bm-payment-waiting');
+                                if (waitEl) waitEl.style.display = '';
+
+                                // Poll until paid/failed
+                                let polls = 0;
+                                const pollIv = setInterval(() => {
+                                    if (++polls > 72) {
+                                        clearInterval(pollIv);
+                                        const expEl = document.getElementById('bm-payment-expired');
+                                        if (expEl) { document.getElementById('bm-payment-waiting').style.display = 'none'; expEl.style.display = ''; }
+                                        return;
+                                    }
+                                    fetch(`../../api/user/check_card_payment_status.php?booking_id=${bid}&intent_id=${encodeURIComponent(intentId)}`)
+                                        .then(r => r.json())
+                                        .then(st => {
+                                            if (st.payment_status === 'paid' || st.booking_status === 'confirmed') {
+                                                clearInterval(pollIv);
+                                                bmOnCardPaySuccess(data, total);
+                                            } else if (st.payment_status === 'failed' || st.booking_status === 'cancelled') {
+                                                clearInterval(pollIv);
+                                                const failEl = document.getElementById('bm-payment-failed');
+                                                if (failEl) { document.getElementById('bm-payment-waiting').style.display = 'none'; failEl.style.display = ''; }
+                                            }
+                                        }).catch(() => {});
+                                }, 5000);
+                            })
+                            .catch(() => { _showCardErr('Could not reach payment service.'); });
+                        return;
+                    }
+
+                    // ── All other methods: direct booking success ─────────────────
+                    bmOnBookingSuccess(data);
                 })
                 .catch(() => {
                     btn.disabled = false;
                     btn.innerHTML = '<svg viewBox="0 0 24 24" stroke="currentColor" fill="none" style="width:14px;height:14px;stroke-width:2"><polyline points="20 6 9 17 4 12"/></svg> Confirm Payment';
                     if (typeof showToast === 'function') showToast('Connection error. Please try again.', 'error');
                 });
+        }
+
+        function bmOnCardPaySuccess(data, total) {
+            clearInterval(bmTimerInterval);
+            bmBookingId = data.booking_id;
+            const checkin  = document.getElementById('bm-checkin').value;
+            const checkout = document.getElementById('bm-lease').value;
+            const fmtDate  = d => d ? new Date(d + 'T12:00').toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
+            document.getElementById('bmConfirmRef').textContent = 'Ref #BK-' + String(data.booking_id).padStart(4, '0');
+            const waitEl = document.getElementById('bm-payment-waiting');
+            const succEl = document.getElementById('bm-payment-success');
+            if (waitEl) waitEl.style.display = 'none';
+            if (succEl) succEl.style.display = '';
+            document.getElementById('cf-unit').textContent    = bmRoomData.name;
+            document.getElementById('cf-movein').textContent  = fmtDate(checkin);
+            document.getElementById('cf-checkout').textContent = fmtDate(checkout);
+            document.getElementById('cf-method').textContent  = 'Credit / Debit Card';
+            document.getElementById('cf-total').textContent   = bmFmt(total);
+            const doneBtn = document.getElementById('bmDoneBtn');
+            if (doneBtn) doneBtn.style.display = '';
+            window.hasActiveBooking = true;
+            window._lastBmBookingData = data;
+            if (typeof showToast === 'function') showToast('Payment confirmed!');
         }
 
         function bmOnBookingSuccess(data) {
@@ -280,7 +391,7 @@ showToast("You do not have permission to access this page.", "error", "Unauthori
             const checkin = document.getElementById('bm-checkin').value;
             const checkout = document.getElementById('bm-lease').value;
             const { total } = bmGetTotal();
-            const methodLabels = { gcash: 'GCash', maya: 'Maya', bank: 'Bank Transfer', cash: 'Cash (On-site)' };
+            const methodLabels = { gcash: 'GCash', maya: 'Maya', bank: 'Bank Transfer', cash: 'Cash (On-site)', Card: 'Credit / Debit Card' };
 
             const fmtDate = d => d ? new Date(d + 'T12:00').toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : '—';
 
@@ -378,3 +489,9 @@ function _onBookingDoneFromSaved() {
         window._lastBmBookingData = null;
     }
 }
+
+// Card number auto-formatter
+window.bmFormatCardNumber = window.bmFormatCardNumber || function(input) {
+    let v = input.value.replace(/\D/g, '').slice(0, 16);
+    input.value = v.replace(/(.{4})/g, '$1 ').trim();
+};

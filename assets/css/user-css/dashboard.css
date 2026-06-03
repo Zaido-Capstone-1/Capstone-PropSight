@@ -719,6 +719,14 @@ body {
     background: rgba(255, 245, 240, .9);
 }
 
+.avail-maintenance {
+    background: rgba(234, 179, 8, .12);
+    color: #92400e;
+    border: 1px solid rgba(234, 179, 8, .35);
+    backdrop-filter: blur(6px);
+    background: rgba(255, 251, 235, .9);
+}
+
 /* ── Heart / Save button ── */
 .btn-save-room {
     position: absolute;
@@ -919,7 +927,7 @@ body {
 
 .history-list {
     display: grid;
-    gap: 10px;
+    gap: 8px;
 }
 
 .history-item {
@@ -927,12 +935,13 @@ body {
     border: 1px solid #eceae4;
     border-radius: 16px;
     display: grid;
-    grid-template-columns: 72px 1fr auto auto;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 18px;
+    grid-template-columns: 220px 1fr auto;
+    align-items: stretch;
+    overflow: hidden;
     transition: border-color .2s, box-shadow .2s;
     cursor: pointer;
+    padding: 0;
+    gap: 0;
 }
 
 .history-item:hover {
@@ -941,42 +950,76 @@ body {
 }
 
 .history-img {
-    width: 72px;
-    height: 58px;
-    border-radius: 10px;
-    overflow: hidden;
+    width: 220px;
     flex-shrink: 0;
     background: linear-gradient(145deg, #dbeafe, #3b82f6);
+    overflow: hidden;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    align-self: stretch;
 }
 
 .history-img-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
+    margin: 0;
+    padding: 0;
 }
 
 .history-info {
     flex: 1;
     min-width: 0;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
 }
 
 .history-room {
-    font-size: .88rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 700;
     color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 5px;
+}
+
+.history-prop {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .82rem;
+    color: var(--ink-soft);
+    font-weight: 500;
+}
+
+.history-prop svg {
+    width: 12px;
+    height: 12px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
 }
 
 .history-dates {
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: .72rem;
+    font-size: .75rem;
     color: var(--ink-faint);
     flex-wrap: wrap;
+    margin-top: 2px;
 }
 
 .history-dates>svg {
@@ -991,35 +1034,45 @@ body {
 .history-nights {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     background: #f4f2ec;
     border-radius: 20px;
     padding: 2px 8px;
-    font-size: .67rem;
+    font-size: .68rem;
     font-weight: 600;
     color: #6b6560;
-    margin-left: 6px;
+    margin-left: 4px;
 }
 
 .history-nights svg {
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
     stroke: #6b6560;
     fill: none;
     stroke-width: 2;
     flex-shrink: 0;
 }
 
-.history-price-col {
-    text-align: right;
+.history-right {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 20px;
     flex-shrink: 0;
+}
+
+.history-right-meta {
+    text-align: right;
 }
 
 .history-price {
     font-family: var(--font-display);
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--ink);
+    text-align: right;
 }
 
 .history-total {
@@ -1027,6 +1080,19 @@ body {
     color: var(--ink-faint);
     font-weight: 500;
     margin-top: 1px;
+    text-align: right;
+}
+
+.history-bid {
+    font-size: .62rem;
+    color: #c4bfc0;
+    margin-top: 2px;
+    text-align: right;
+}
+
+.history-price-col {
+    text-align: right;
+    flex-shrink: 0;
 }
 
 .history-status {
@@ -1067,7 +1133,7 @@ body {
 /* Loyalty band */
 .loyalty-band {
     padding: 48px 2.5vw;
-    background: linear-gradient(135deg, #1e3a5f 0%, #1a56c4 60%, #0f2d6b 100%);
+    background: #0d1f3c;
     position: relative;
     overflow: hidden;
 }
@@ -1076,51 +1142,53 @@ body {
     position: absolute;
     border-radius: 50%;
     pointer-events: none;
-    background: rgba(255, 255, 255, .05);
 }
 
 .loyalty-band-orb-lg {
-    top: -60px;
+    top: -80px;
     right: -60px;
-    width: 300px;
-    height: 300px;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(26, 86, 196, .35) 0%, transparent 70%);
 }
 
 .loyalty-band-orb-sm {
-    bottom: -40px;
-    left: 10%;
+    bottom: -60px;
+    left: 5%;
     width: 200px;
     height: 200px;
-    background: rgba(255, 255, 255, .04);
+    background: radial-gradient(circle, rgba(232, 200, 130, .12) 0%, transparent 70%);
 }
 
 .loyalty-band-inner {
     width: 100%;
     margin: 0;
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 32px;
+    grid-template-columns: 1fr 340px;
+    gap: 40px;
     align-items: center;
     position: relative;
     z-index: 1;
 }
 
+.loyalty-left {}
+
 .loyalty-eyebrow {
-    font-size: .7rem;
+    font-size: .68rem;
     font-weight: 700;
-    letter-spacing: .12em;
+    letter-spacing: .14em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, .6);
-    margin-bottom: 10px;
+    color: rgba(255, 255, 255, .45);
+    margin-bottom: 12px;
 }
 
 .loyalty-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
     font-weight: 700;
     color: #fff;
     margin: 0 0 10px;
-    line-height: 1.2;
+    line-height: 1.25;
 }
 
 .loyalty-title em {
@@ -1129,16 +1197,48 @@ body {
 }
 
 .loyalty-copy {
-    font-size: .9rem;
-    color: rgba(255, 255, 255, .7);
-    margin: 0 0 24px;
-    max-width: 480px;
-    line-height: 1.65;
+    font-size: .88rem;
+    color: rgba(255, 255, 255, .6);
+    margin: 0 0 20px;
+    max-width: 460px;
+    line-height: 1.7;
+}
+
+.loyalty-tier-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.loyalty-tier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px 5px 8px;
+    border-radius: 40px;
+    font-size: .71rem;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.loyalty-tier-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.loyalty-pts-to-next {
+    font-size: .75rem;
+    color: rgba(255, 255, 255, .35);
 }
 
 .loyalty-actions {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
 }
 
@@ -1146,69 +1246,177 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 24px;
+    padding: 11px 22px;
     border-radius: 40px;
-    font-size: .85rem;
+    font-size: .83rem;
     text-decoration: none;
+    transition: transform .15s;
+}
+
+.loyalty-btn:hover {
+    transform: translateY(-1px);
 }
 
 .loyalty-btn-primary {
-    background: #fff;
-    color: #1e3a5f;
+    background: #e8c882;
+    color: #0d1f3c;
     font-weight: 700;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
-    transition: transform .2s, box-shadow .2s;
 }
 
 .loyalty-btn-secondary {
-    background: rgba(255, 255, 255, .12);
+    background: rgba(255, 255, 255, .1);
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, .25);
+    border: 1px solid rgba(255, 255, 255, .2);
     font-weight: 600;
-    transition: background .2s;
+    transition: background .2s, transform .15s;
+}
+
+.loyalty-right {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
 .loyalty-points-card {
-    text-align: center;
-    padding: 24px 32px;
-    background: rgba(255, 255, 255, .08);
-    border: 1px solid rgba(255, 255, 255, .15);
-    border-radius: 20px;
-    min-width: 180px;
+    padding: 22px 24px;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 18px;
 }
 
-.loyalty-points-emoji {
-    font-size: 2.8rem;
-    margin-bottom: 6px;
+.loyalty-points-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
 }
 
 .loyalty-points-value {
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 800;
     color: #fff;
     line-height: 1;
+    letter-spacing: -.02em;
 }
 
 .loyalty-points-label {
-    font-size: .75rem;
-    color: rgba(255, 255, 255, .6);
-    margin-top: 4px;
+    font-size: .7rem;
     font-weight: 600;
-    letter-spacing: .05em;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .4);
+    margin-top: 4px;
+}
+
+.loyalty-tier-pill {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: .67rem;
+    font-weight: 600;
+    letter-spacing: .06em;
     text-transform: uppercase;
 }
 
-.loyalty-points-tier {
-    margin-top: 12px;
+.loyalty-progress-wrap {
+    margin-top: 4px;
+}
+
+.loyalty-progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: .68rem;
+    color: rgba(255, 255, 255, .35);
+    margin-bottom: 6px;
+}
+
+.loyalty-progress-bar {
+    height: 5px;
+    background: rgba(255, 255, 255, .1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.loyalty-progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #e8c882, #f5d78e);
+    transition: width .6s ease;
+}
+
+.loyalty-progress-note {
+    font-size: .7rem;
+    color: rgba(255, 255, 255, .35);
+    margin-top: 6px;
+}
+
+.loyalty-perks-card {
+    padding: 16px 18px;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 14px;
+}
+
+.loyalty-perks-title {
+    font-size: .67rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .35);
+    margin-bottom: 10px;
+}
+
+.loyalty-perk-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .05);
+}
+
+.loyalty-perk-row:last-child {
+    border-bottom: none;
+}
+
+.loyalty-perk-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, .06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.loyalty-perk-text {
     font-size: .78rem;
-    color: var(--sand);
-    font-weight: 600;
+    color: rgba(255, 255, 255, .65);
+    flex: 1;
+}
+
+.loyalty-redeem-badge {
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: rgba(232, 200, 130, .15);
+    color: #e8c882;
+    border: 1px solid rgba(232, 200, 130, .3);
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: background .15s;
+}
+
+.loyalty-redeem-badge:hover {
+    background: rgba(232, 200, 130, .28);
 }
 
 /* Newsletter */
 .newsletter-section {
-    padding: 48px 2.5vw;
-    background: #fff;
+    padding: 56px 2.5vw;
+    background: #f7f6f2;
     border-top: 1px solid var(--border-lt);
 }
 
@@ -1217,46 +1425,108 @@ body {
     margin: 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 32px;
+    gap: 48px;
     align-items: center;
 }
 
 .newsletter-eyebrow {
-    font-size: .7rem;
+    font-size: .65rem;
     font-weight: 700;
-    letter-spacing: .12em;
+    letter-spacing: .14em;
     text-transform: uppercase;
-    color: var(--ink-faint);
-    margin-bottom: 8px;
+    color: var(--sand-dk);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.newsletter-eyebrow svg {
+    stroke: var(--sand-dk);
+    flex-shrink: 0;
 }
 
 .newsletter-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
     font-weight: 700;
     color: var(--ink);
-    margin: 0 0 10px;
+    margin: 0 0 12px;
+    line-height: 1.15;
+}
+
+.newsletter-title em {
+    font-style: italic;
+    color: var(--terra);
 }
 
 .newsletter-copy {
     font-size: .85rem;
     color: var(--ink-soft);
     margin: 0;
-    line-height: 1.65;
+    line-height: 1.75;
+}
+
+.newsletter-perks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.newsletter-perk {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .8rem;
+    color: var(--ink-soft);
+}
+
+.newsletter-perk-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid var(--border-lt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--sand-dk);
+}
+
+.newsletter-perk-icon svg {
+    stroke: var(--sand-dk);
+}
+
+.newsletter-card {
+    background: #fff;
+    border: 1px solid var(--border-lt);
+    border-radius: 20px;
+    padding: 28px;
+}
+
+.newsletter-form-label {
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
 }
 
 .newsletter-form {
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
 .newsletter-input {
     flex: 1;
-    min-width: 200px;
-    padding: 12px 16px;
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
+    min-width: 0;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border-lt);
+    border-radius: 10px;
     font-family: 'DM Sans', sans-serif;
     font-size: .85rem;
     color: var(--ink);
@@ -1265,22 +1535,77 @@ body {
 }
 
 .newsletter-btn {
-    padding: 12px 24px;
+    padding: 11px 20px;
     background: var(--navy-800);
-    color: #fff;
+    color: var(--sand);
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     font-family: 'DM Sans', sans-serif;
     font-weight: 600;
-    font-size: .85rem;
+    font-size: .83rem;
     cursor: pointer;
     transition: background .2s;
+    white-space: nowrap;
+}
+
+.newsletter-btn:hover {
+    background: var(--navy-900);
 }
 
 .newsletter-note {
+    font-size: .68rem;
+    color: var(--ink-faint);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.newsletter-note svg {
+    flex-shrink: 0;
+    stroke: var(--ink-faint);
+}
+
+.newsletter-divider {
+    height: 1px;
+    background: var(--border-lt);
+    margin: 16px 0;
+}
+
+.newsletter-social {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.newsletter-social-lbl {
     font-size: .72rem;
     color: var(--ink-faint);
-    margin: 10px 0 0;
+    margin-right: 4px;
+}
+
+.newsletter-social-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid var(--border-lt);
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--ink-soft);
+    transition: border-color .2s, color .2s;
+}
+
+.newsletter-social-btn:hover {
+    border-color: var(--navy-300);
+    color: var(--navy-700);
+}
+
+.newsletter-social-btn svg {
+    stroke: currentColor;
 }
 
 @media(max-width:1400px) {
@@ -1305,16 +1630,16 @@ body {
 
     .loyalty-band-inner {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 24px;
     }
 
-    .loyalty-points-card {
-        justify-self: start;
+    .loyalty-right {
+        width: 100%;
     }
 
     .newsletter-inner {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 24px;
     }
 }
 
@@ -1372,12 +1697,12 @@ body {
         padding: 18px 16px;
     }
 
-    .loyalty-points-emoji {
-        font-size: 2.2rem;
-    }
-
     .loyalty-points-value {
         font-size: 1.8rem;
+    }
+
+    .loyalty-perks-card {
+        padding: 14px;
     }
 
     .newsletter-section {
@@ -1394,43 +1719,49 @@ body {
         min-width: 0;
     }
 
+    .newsletter-card {
+        padding: 20px;
+    }
+
     .history-item {
-        grid-template-columns: 72px 1fr;
+        grid-template-columns: 64px 1fr;
         grid-template-areas:
             "img info"
-            "img dates"
-            "img bottom";
+            "img right";
         align-items: start;
-        gap: 8px 12px;
-        padding: 14px;
     }
 
     .history-img {
         grid-area: img;
-        width: 72px;
-        height: 62px;
+        width: 64px;
     }
 
     .history-info {
         grid-area: info;
+        padding: 10px 12px 4px;
     }
 
-    .history-dates {
-        grid-area: dates;
-        margin-top: 0;
-        font-size: .7rem;
-    }
-
-    .history-price-col {
-        grid-area: bottom;
-        text-align: left;
+    .history-right {
+        grid-area: right;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        border-left: none;
+        border-top: 1px solid #f2f0ea;
+        padding: 8px 12px;
+        min-width: 0;
     }
 
     .history-price {
-        font-size: .95rem;
+        font-size: .92rem;
+        text-align: left;
     }
 
-    .history-status {
+    .history-total {
+        text-align: left;
+    }
+
+    .history-bid {
         display: none;
     }
 }
@@ -1450,14 +1781,12 @@ body {
         grid-template-areas:
             "img"
             "info"
-            "dates"
-            "bottom";
-        gap: 8px;
+            "right";
     }
 
     .history-img {
         width: 100%;
-        height: 120px;
+        height: 110px;
     }
 
     .history-room {

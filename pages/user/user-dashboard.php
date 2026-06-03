@@ -38,13 +38,13 @@ $loyaltyProgressPct = $loyaltyNextTier
 $loyaltyPtsToNext = $loyaltyNextTier ? max(0, $loyaltyNextMin - $loyaltyPoints) : 0;
 
 // Perks per tier
-$loyaltyTierPerks = [
-    'Silver' => ['Earn 1 pt per ₱100 spent', 'Early check-in on availability', 'Exclusive member deals'],
-    'Gold' => ['5% discount on all bookings', 'Priority support response', 'Late check-out until 1 PM'],
-    'Platinum' => ['10% discount on all bookings', 'Free room upgrade on availability', 'Late check-out until 2 PM'],
-    'Diamond' => ['15% discount on all bookings', 'Dedicated concierge service', 'Complimentary welcome amenity'],
-];
-$loyaltyCurrentPerks = $loyaltyTierPerks[$loyaltyTier];
+// Redeemable rewards — show up to 3, sorted by points_cost ASC
+$_rewardsRes = mysqli_query($conn, "SELECT name, description, points_cost FROM loyalty_rewards WHERE is_active=1 ORDER BY points_cost ASC LIMIT 3");
+$loyaltyRewards = [];
+if ($_rewardsRes) {
+    while ($rw = mysqli_fetch_assoc($_rewardsRes))
+        $loyaltyRewards[] = $rw;
+}
 
 // Tier badge colors (inline styles)
 $loyaltyTierStyles = [
@@ -266,7 +266,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
                 </button>
             </div>
-            <div class="btn-profile-wrap">
+            <div class="btn-profile-wrap" style="position:relative;">
                 <button class="btn-profile" id="profileBtn" aria-label="My Profile">
                     <?php if ($dashboardPhoto): ?>
                         <img src="<?php echo htmlspecialchars($dashboardPhoto); ?>" alt="Profile photo"
@@ -276,6 +276,21 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         <?php echo $initials; ?>
                     </span>
                 </button>
+                <span id="profileActivityBadge" style="
+                    display:none;
+                    position:absolute;
+                    top:-4px;right:-4px;
+                    min-width:17px;height:17px;
+                    background:#ef4444;color:#fff;
+                    border-radius:99px;
+                    font-size:0.62rem;font-weight:700;
+                    padding:0 4px;
+                    align-items:center;justify-content:center;
+                    border:2px solid var(--surface,#fff);
+                    pointer-events:none;
+                    z-index:10;
+                    line-height:1;
+                ">0</span>
                 <span class="profile-dot"></span>
             </div>
             <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -829,7 +844,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                                     <div
                                         style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6);color:#fff;">
-                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                             stroke-width="1.5">
                                             <rect x="3" y="3" width="18" height="18" rx="2" />
                                             <circle cx="8.5" cy="8.5" r="1.5" />
@@ -839,6 +854,13 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                 </div>
                                 <div class="history-info">
                                     <div class="history-room"><?php echo htmlspecialchars($bkUnitName); ?></div>
+                                    <div class="history-prop">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                                            <circle cx="12" cy="10" r="3" />
+                                        </svg>
+                                        <?php echo htmlspecialchars($bk['property_name'] ?? ''); ?>
+                                    </div>
                                     <div class="history-dates">
                                         <svg viewBox="0 0 24 24">
                                             <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -848,18 +870,27 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                         </svg>
                                         <span data-field="checkin"><?php echo formatDate($bk['checkin_date']); ?></span> –
                                         <span data-field="checkout"><?php echo formatDate($bk['checkout_date']); ?></span>
-                                        &nbsp;·&nbsp; <span data-field="nights"><?php echo $nights; ?>
-                                            night<?php echo $nights !== 1 ? 's' : ''; ?></span>
+                                        <span class="history-nights">
+                                            <svg viewBox="0 0 24 24">
+                                                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                                            </svg>
+                                            <span data-field="nights"><?php echo $nights; ?>
+                                                night<?php echo $nights !== 1 ? 's' : ''; ?></span>
+                                        </span>
                                     </div>
                                 </div>
-                                <div class="history-price-col">
-                                    <div class="history-price" data-field="price">
-                                        ₱<?php echo number_format((float) $bk['total_amount'], 0); ?>
+                                <div class="history-right">
+                                    <div class="history-right-meta">
+                                        <div class="history-price" data-field="price">
+                                            ₱<?php echo number_format((float) $bk['total_amount'], 0); ?></div>
+                                        <div class="history-total">Total paid</div>
+                                        <div class="history-bid">
+                                            #BK-<?php echo str_pad($bk['booking_id'], 6, '0', STR_PAD_LEFT); ?></div>
                                     </div>
-                                    <div class="history-total">Total paid</div>
+                                    <span class="history-status <?php echo statusBadgeClass($bk['status']); ?>"
+                                        data-field="status"
+                                        data-raw-status="<?php echo $bk['status']; ?>"><?php echo statusLabel($bk['status']); ?></span>
                                 </div>
-                                <span class="history-status <?php echo statusBadgeClass($bk['status']); ?>" data-field="status"
-                                    data-raw-status="<?php echo $bk['status']; ?>"><?php echo statusLabel($bk['status']); ?></span>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -916,7 +947,8 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                     <div class="loyalty-points-top">
                         <div>
                             <div class="loyalty-points-value" data-rt-user="loyalty_points">
-                                <?php echo number_format($loyaltyPoints); ?></div>
+                                <?php echo number_format($loyaltyPoints); ?>
+                            </div>
                             <div class="loyalty-points-label">Points Balance</div>
                         </div>
                         <span class="loyalty-tier-pill"
@@ -942,18 +974,46 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                     <?php endif; ?>
                 </div>
                 <div class="loyalty-perks-card">
-                    <div class="loyalty-perks-title">Your <?php echo $loyaltyTier; ?> Perks</div>
-                    <?php foreach ($loyaltyCurrentPerks as $perk): ?>
+                    <div class="loyalty-perks-title">Rewards You Can Redeem</div>
+                    <?php if (empty($loyaltyRewards)): ?>
                         <div class="loyalty-perk-row">
-                            <span class="loyalty-perk-check" style="color:<?php echo $loyaltyTierDotColor; ?>">
-                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="3">
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                            </span>
-                            <span class="loyalty-perk-text"><?php echo htmlspecialchars($perk); ?></span>
+                            <span class="loyalty-perk-text" style="color:rgba(255,255,255,.35);font-style:italic;">No
+                                rewards available yet.</span>
                         </div>
-                    <?php endforeach; ?>
+                    <?php else: ?>
+                        <?php foreach ($loyaltyRewards as $rw):
+                            $canAfford = $loyaltyPoints >= (int) $rw['points_cost'];
+                            ?>
+                            <div class="loyalty-perk-row">
+                                <span class="loyalty-perk-check"
+                                    style="color:<?php echo $canAfford ? $loyaltyTierDotColor : 'rgba(255,255,255,.2)'; ?>">
+                                    <?php if ($canAfford): ?>
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="3">
+                                            <polyline points="20 6 9 17 4 12" />
+                                        </svg>
+                                    <?php else: ?>
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+                                            <line x1="12" y1="8" x2="12" y2="12" />
+                                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                                        </svg>
+                                    <?php endif; ?>
+                                </span>
+                                <span class="loyalty-perk-text"
+                                    style="<?php echo $canAfford ? '' : 'color:rgba(255,255,255,.35);'; ?>;flex:1;">
+                                    <?php echo htmlspecialchars($rw['name']); ?>
+                                    <span
+                                        style="font-size:.65rem;margin-left:4px;opacity:.6;"><?php echo number_format((int) $rw['points_cost']); ?>
+                                        pts</span>
+                                </span>
+                                <?php if ($canAfford): ?>
+                                    <a href="loyalty.php" class="loyalty-redeem-badge">Redeem</a>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -963,21 +1023,91 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
     <section id="support" class="newsletter-section">
         <div class="newsletter-inner reveal">
             <div>
-                <div class="newsletter-eyebrow">📬 Stay in the loop</div>
-                <h2 class="newsletter-title">Get exclusive deals<br>straight to your inbox</h2>
-                <p class="newsletter-copy">Be the first to know about seasonal promotions, new property listings, and
-                    member-only offers.</p>
-            </div>
-            <div>
-                <div class="newsletter-form">
-                    <input type="email" class="newsletter-input" placeholder="Enter your email address"
-                        onfocus="this.style.borderColor='var(--navy-400)'"
-                        onblur="this.style.borderColor='var(--border)'">
-                    <button onclick="showToast('Thanks! You\'re subscribed. 🎉')" class="newsletter-btn"
-                        onmouseenter="this.style.background='var(--navy-900)'"
-                        onmouseleave="this.style.background='var(--navy-800)'">Subscribe</button>
+                <div class="newsletter-eyebrow">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="flex-shrink:0;">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                        <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    Stay in the loop
                 </div>
-                <p class="newsletter-note">No spam, ever. Unsubscribe at any time.</p>
+                <h2 class="newsletter-title">Deals &amp; updates,<br><em>straight to you.</em></h2>
+                <p class="newsletter-copy">Be the first to know about seasonal promos, new rooms, and member-only perks
+                    curated for Boracay stays.</p>
+                <div class="newsletter-perks">
+                    <div class="newsletter-perk">
+                        <span class="newsletter-perk-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                        </span>
+                        Tips and guides for your Boracay stay
+                    </div>
+                    <div class="newsletter-perk">
+                        <span class="newsletter-perk-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                <polyline points="9 22 9 12 15 12 15 22" />
+                            </svg>
+                        </span>
+                        First look at new property listings
+                    </div>
+                    <div class="newsletter-perk">
+                        <span class="newsletter-perk-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                            </svg>
+                        </span>
+                        Updates on your bookings and account
+                    </div>
+                </div>
+            </div>
+            <div class="newsletter-card">
+                <div class="newsletter-form-label">Your email address</div>
+                <div class="newsletter-form">
+                    <input type="email" class="newsletter-input" placeholder="you@example.com"
+                        onfocus="this.style.borderColor='var(--navy-800)'"
+                        onblur="this.style.borderColor='var(--border)'">
+                    <button onclick="showToast('Thanks! You\'re subscribed. 🎉')"
+                        class="newsletter-btn">Subscribe</button>
+                </div>
+                <p class="newsletter-note">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                        <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                    No spam, ever. Unsubscribe anytime.
+                </p>
+                <div class="newsletter-divider"></div>
+                <div class="newsletter-social">
+                    <span class="newsletter-social-lbl">Follow us</span>
+                    <a href="https://facebook.com" target="_blank" class="newsletter-social-btn" aria-label="Facebook">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
+                        </svg>
+                    </a>
+                    <a href="https://instagram.com" target="_blank" class="newsletter-social-btn"
+                        aria-label="Instagram">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="2" y="2" width="20" height="20" rx="5" />
+                            <circle cx="12" cy="12" r="4" />
+                            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+                        </svg>
+                    </a>
+                    <a href="https://tiktok.com" target="_blank" class="newsletter-social-btn" aria-label="TikTok">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M9 12a4 4 0 104 4V4a5 5 0 005 5" />
+                        </svg>
+                    </a>
+                </div>
             </div>
         </div>
     </section>
