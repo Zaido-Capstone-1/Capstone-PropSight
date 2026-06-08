@@ -35,6 +35,14 @@ define('INV_MAIL_FROM_NAME', MAIL_FROM_NAME);
 
 define('CAFILE_PATH', realpath(__DIR__ . '/../../includes/ssl/cacert.pem'));
 
+// Payment methods offered in the email invoice
+define('INVOICE_PAYMENT_METHODS', [
+  'gcash' => ['label' => 'GCash', 'svg' => '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\" viewBox=\"0 0 32 32\"><circle cx=\"16\" cy=\"16\" r=\"16\" fill=\"#007aff\"/><text x=\"16\" y=\"22\" font-family=\"Arial,sans-serif\" font-size=\"18\" font-weight=\"800\" text-anchor=\"middle\" fill=\"#fff\">G</text></svg>', 'color' => '#0055cc', 'bg' => '#e8f0ff', 'border' => '#b3cbf7'],
+  'paymaya' => ['label' => 'Maya', 'svg' => '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\" viewBox=\"0 0 32 32\"><rect width=\"32\" height=\"32\" rx=\"8\" fill=\"#00b14f\"/><text x=\"16\" y=\"22\" font-family=\"Arial,sans-serif\" font-size=\"18\" font-weight=\"800\" text-anchor=\"middle\" fill=\"#fff\">M</text></svg>', 'color' => '#006b35', 'bg' => '#e6f9ef', 'border' => '#a3dfc0'],
+  'card' => ['label' => 'Credit / Debit Card', 'svg' => '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\" viewBox=\"0 0 32 32\"><rect width=\"32\" height=\"32\" rx=\"6\" fill=\"#1e40af\"/><rect x=\"4\" y=\"9\" width=\"24\" height=\"14\" rx=\"2\" fill=\"none\" stroke=\"#fff\" stroke-width=\"1.5\"/><rect x=\"4\" y=\"13\" width=\"24\" height=\"4\" fill=\"#fff\" opacity=\"0.9\"/><rect x=\"6\" y=\"19\" width=\"6\" height=\"2\" rx=\"1\" fill=\"#fff\"/><rect x=\"14\" y=\"19\" width=\"4\" height=\"2\" rx=\"1\" fill=\"#fff\" opacity=\"0.6\"/></svg>', 'color' => '#1e40af', 'bg' => '#eef2ff', 'border' => '#a5b4fc'],
+  'dob' => ['label' => 'Online Banking', 'svg' => '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\" viewBox=\"0 0 32 32\"><rect width=\"32\" height=\"32\" rx=\"6\" fill=\"#374151\"/><polygon points=\"16,6 6,12 26,12\" fill=\"#fff\"/><rect x=\"8\" y=\"13\" width=\"3\" height=\"9\" rx=\"1\" fill=\"#fff\"/><rect x=\"14.5\" y=\"13\" width=\"3\" height=\"9\" rx=\"1\" fill=\"#fff\"/><rect x=\"21\" y=\"13\" width=\"3\" height=\"9\" rx=\"1\" fill=\"#fff\"/><rect x=\"6\" y=\"23\" width=\"20\" height=\"2.5\" rx=\"1\" fill=\"#fff\"/></svg>', 'color' => '#374151', 'bg' => '#f3f4f6', 'border' => '#d1d5db'],
+]);
+
 
 function json_response(bool $success, string $message, array $extra = []): void
 {
@@ -49,6 +57,21 @@ function require_post(string ...$keys): void
       json_response(false, "Missing required field: {$key}");
     }
   }
+}
+
+/**
+ * Map PayMongo internal method keys to human-readable display names
+ * used when saving to payments.payment_method and transactions.description.
+ */
+function format_payment_method(string $method): string
+{
+  return match (strtolower(trim($method))) {
+    'gcash' => 'GCash',
+    'paymaya', 'maya' => 'Maya',
+    'card' => 'Card',
+    'dob', 'online_banking', 'bank_transfer' => 'Bank Transfer',
+    default => ucfirst($method) ?: 'PayMongo',
+  };
 }
 
 
@@ -86,7 +109,6 @@ function handle_create(mysqli $conn): void
   $issued_year = date('Y', strtotime($issued_date));
   $issued_month = date('m', strtotime($issued_date));
 
-  // Count ALL invoices ever for this month to avoid reuse after deletions
   $cnt = $conn->prepare("SELECT COUNT(*) FROM invoices WHERE YEAR(issued_date) = ? AND MONTH(issued_date) = ?");
   $cnt->bind_param('ii', $issued_year, $issued_month);
   $cnt->execute();
@@ -94,7 +116,6 @@ function handle_create(mysqli $conn): void
   $cnt->fetch();
   $cnt->close();
 
-  // Keep incrementing until we find a unique invoice_no
   do {
     $count++;
     $invoice_no = 'INV-' . $issued_year . $issued_month . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
@@ -192,6 +213,11 @@ function handle_get_invoice(mysqli $conn): void
   json_response(true, 'OK', ['invoice' => $invoice]);
 }
 
+/**
+ * handle_send — creates one PayMongo payment link per payment method,
+ * stores each link in paymongo_payments with its method, and emails
+ * the tenant a button for every method.
+ */
 function handle_send(mysqli $conn): void
 {
   $id = (int) ($_POST['id'] ?? 0);
@@ -221,59 +247,176 @@ function handle_send(mysqli $conn): void
   $due = htmlspecialchars($invoice['due_date']);
   $status = htmlspecialchars($invoice['status']);
 
-  // ── Generate PayMongo payment link ────────────────────────────────────
-  $payment_url = null;
-  try {
-    require_once __DIR__ . '/../../includes/paymongo.php';
-    $amount_int = (int) round($total_raw);   // centavo conversion done inside paymongo_create_link
-    if ($amount_int >= 1) {
-      // Re-use an existing active link for this invoice if available
-      $exStmt = $conn->prepare("
-                SELECT checkout_url FROM paymongo_payments
-                WHERE reference_id = ? AND reference_type = 'invoice'
-                  AND status NOT IN ('paid','expired','failed')
-                ORDER BY created_at DESC LIMIT 1
-            ");
-      if ($exStmt) {
-        $exStmt->bind_param('i', $id);
+  // ── Generate one PayMongo payment link per method ─────────────────────
+  $method_links = []; // ['method' => string, 'url' => string, 'link_id' => string]
+
+  require_once __DIR__ . '/../../includes/paymongo.php';
+  $amount_int = (int) round($total_raw);
+
+  if ($amount_int >= 1) {
+    foreach (INVOICE_PAYMENT_METHODS as $method_key => $method_info) {
+      try {
+        // Re-use an existing active link for this invoice + method if available
+        $exStmt = $conn->prepare("
+                    SELECT paymongo_link_id, checkout_url
+                    FROM paymongo_payments
+                    WHERE reference_id   = ?
+                      AND reference_type = 'invoice'
+                      AND payment_method = ?
+                      AND status NOT IN ('paid','expired','failed','cancelled')
+                    ORDER BY created_at DESC LIMIT 1
+                ");
+        $exStmt->bind_param('is', $id, $method_key);
         $exStmt->execute();
         $exRow = $exStmt->get_result()->fetch_assoc();
         $exStmt->close();
-        if ($exRow && !empty($exRow['checkout_url'])) {
-          $payment_url = $exRow['checkout_url'];
-        }
-      }
 
-      if (!$payment_url) {
-        $link = paymongo_create_link(
-          $amount_int,
-          "PropSight Invoice {$invoice_no} — {$unit}",
-          ['invoice_id' => $id, 'invoice_no' => $invoice_no]
-        );
-        if (!empty($link['attributes']['checkout_url'])) {
-          $payment_url = $link['attributes']['checkout_url'];
-          $link_id = $link['id'] ?? null;
+        if ($exRow && !empty($exRow['checkout_url'])) {
+          $method_links[] = [
+            'method' => $method_key,
+            'label' => $method_info['label'],
+            'svg' => $method_info['svg'],
+            'color' => $method_info['color'],
+            'bg' => $method_info['bg'],
+            'border' => $method_info['border'],
+            'url' => $exRow['checkout_url'],
+            'link_id' => $exRow['paymongo_link_id'],
+          ];
+          continue;
+        }
+
+        // Create payment — card uses Checkout Sessions (card-only), others use Links
+        if ($method_key === 'card') {
+          // ── PayMongo Checkout Session restricted to card only ──────────
+          $secret = $_ENV['PAYMONGO_SECRET_KEY'] ?? getenv('PAYMONGO_SECRET_KEY');
+          if (empty($secret))
+            throw new \RuntimeException('PAYMONGO_SECRET_KEY not set.');
+
+          $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+          $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+          $base = $scheme . '://' . $host;
+          // Use a generic invoice success/cancel page (falls back to invoices page)
+          $successUrl = $base . '/PropSight-Capstone/pages/user/invoice_payment_done.php?invoice_id=' . $id . '&method=card';
+          $cancelUrl = $base . '/PropSight-Capstone/pages/user/invoice_payment_done.php?invoice_id=' . $id . '&method=card&cancelled=1';
+
+          $csBody = [
+            'data' => [
+              'attributes' => [
+                'send_email_receipt' => false,
+                'show_description' => true,
+                'show_line_items' => true,
+                'description' => "PropSight Invoice {$invoice_no} — {$unit}",
+                'line_items' => [
+                  [
+                    'currency' => 'PHP',
+                    'amount' => $amount_int * 100,
+                    'name' => "Invoice {$invoice_no}",
+                    'quantity' => 1,
+                  ]
+                ],
+                'payment_method_types' => ['card'],
+                'success_url' => $successUrl,
+                'cancel_url' => $cancelUrl,
+                'metadata' => [
+                  'invoice_id' => (string) $id,
+                  'invoice_no' => $invoice_no,
+                  'payment_method' => 'card',
+                  'reference_type' => 'invoice',
+                ],
+              ],
+            ],
+          ];
+
+          $ch = curl_init('https://api.paymongo.com/v1/checkout_sessions');
+          $curlOpts = [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($csBody),
+            CURLOPT_HTTPHEADER => [
+              'Authorization: Basic ' . base64_encode($secret . ':'),
+              'Content-Type: application/json',
+              'Accept: application/json',
+            ],
+            CURLOPT_TIMEOUT => 30,
+          ];
+          $caInfo = ini_get('curl.cainfo') ?: ini_get('openssl.cafile');
+          if ($caInfo && file_exists($caInfo)) {
+            $curlOpts[CURLOPT_CAINFO] = $caInfo;
+          } else {
+            $defaultCa = __DIR__ . '/../../includes/ssl/cacert.pem';
+            if (file_exists($defaultCa)) {
+              $curlOpts[CURLOPT_CAINFO] = $defaultCa;
+            } else {
+              $curlOpts[CURLOPT_SSL_VERIFYPEER] = false;
+              $curlOpts[CURLOPT_SSL_VERIFYHOST] = 0;
+            }
+          }
+          curl_setopt_array($ch, $curlOpts);
+          $csResponse = curl_exec($ch);
+          $csHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+          curl_close($ch);
+
+          $csDecoded = json_decode($csResponse, true);
+          if ($csHttpCode >= 400 || empty($csDecoded['data'])) {
+            $errMsg = $csDecoded['errors'][0]['detail'] ?? "Checkout Session error (HTTP {$csHttpCode})";
+            throw new \RuntimeException($errMsg);
+          }
+
+          $checkout_url = $csDecoded['data']['attributes']['checkout_url'] ?? '';
+          $link_id = $csDecoded['data']['id'] ?? null;
           $link_status = 'pending';
 
-          // Try to persist; silently ignore if paymongo_payments table schema
-          // doesn't have reference_id/reference_type columns yet — add them when ready.
+        } else {
+          // ── PayMongo Link (GCash / Maya / Online Banking) ──────────────
+          $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+          $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+          $redirectUrl = $scheme . '://' . $host
+            . '/PropSight-Capstone/pages/user/invoice_payment_done.php'
+            . '?invoice_id=' . $id . '&method=' . urlencode($method_key);
+
+          $link = paymongo_create_link(
+            $amount_int,
+            "PropSight Invoice {$invoice_no} — {$unit} ({$method_info['label']})",
+            ['invoice_id' => $id, 'invoice_no' => $invoice_no, 'payment_method' => $method_key],
+            $redirectUrl
+          );
+          $checkout_url = $link['attributes']['checkout_url'] ?? '';
+          $link_id = $link['id'] ?? null;
+          $link_status = 'pending';
+        }
+
+        if (!empty($checkout_url)) {
+          // Persist with payment_method so webhook/check_paid know what method was used
           $insStmt = $conn->prepare("
                         INSERT IGNORE INTO paymongo_payments
                             (booking_id, user_id, paymongo_link_id, checkout_url, amount, status,
                              payment_method, reference_id, reference_type, created_at, expires_at)
-                        VALUES (0, 0, ?, ?, ?, ?, '', ?, 'invoice', NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR))
+                        VALUES (NULL, NULL, ?, ?, ?, ?, ?, ?, 'invoice', NOW(), DATE_ADD(NOW(), INTERVAL 24 HOUR))
                     ");
           if ($insStmt) {
-            $insStmt->bind_param('ssdsi', $link_id, $payment_url, $total_raw, $link_status, $id);
+            $insStmt->bind_param('ssdssi', $link_id, $checkout_url, $total_raw, $link_status, $method_key, $id);
             $insStmt->execute();
+            if ($insStmt->errno) {
+              error_log('[invoice send] paymongo_payments INSERT error: ' . $insStmt->error);
+            }
             $insStmt->close();
           }
+
+          $method_links[] = [
+            'method' => $method_key,
+            'label' => $method_info['label'],
+            'svg' => $method_info['svg'],
+            'color' => $method_info['color'],
+            'bg' => $method_info['bg'],
+            'border' => $method_info['border'],
+            'url' => $checkout_url,
+            'link_id' => $link_id,
+          ];
         }
+      } catch (Throwable $pm_err) {
+        error_log("[invoice send] PayMongo error for method {$method_key}: " . $pm_err->getMessage());
       }
     }
-  } catch (Throwable $pm_err) {
-    // PayMongo failure is non-fatal — send email without payment link
-    error_log('[invoice send] PayMongo error: ' . $pm_err->getMessage());
   }
 
   // ── Send email ────────────────────────────────────────────────────────
@@ -305,7 +448,7 @@ function handle_send(mysqli $conn): void
 
     $mail->isHTML(true);
     $mail->Subject = "Invoice {$invoice_no} — Payment Due";
-    $mail->Body = build_email_body($invoice_no, $name, $unit, $items, $total, $due, $status, $payment_url);
+    $mail->Body = build_email_body($invoice_no, $name, $unit, $items, $total, $due, $status, $method_links);
     $mail->AltBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $mail->Body));
 
     $mail->send();
@@ -318,14 +461,21 @@ function handle_send(mysqli $conn): void
   $upd->bind_param('i', $id);
   $upd->execute();
 
+  // Return the first checkout URL for convenience (admin can copy it)
+  $first_url = !empty($method_links) ? $method_links[0]['url'] : null;
+
   json_response(true, 'Invoice sent successfully.', [
     'invoice_id' => $id,
-    'checkout_url' => $payment_url,
+    'checkout_url' => $first_url,
+    'method_links' => $method_links,
   ]);
 }
 
 /* ─── EMAIL BODY BUILDER ──────────────────────────────────────────────── */
 
+/**
+ * @param array $method_links  Each item: ['method'=>, 'label'=>, 'color'=>, 'bg'=>, 'border'=>, 'url'=>]
+ */
 function build_email_body(
   string $invoice_no,
   string $name,
@@ -334,26 +484,53 @@ function build_email_body(
   string $total,
   string $due,
   string $status,
-  ?string $payment_url = null
+  array $method_links = []
 ): string {
 
   $paymongo_block = '';
-  if ($payment_url) {
-    $safe_url = htmlspecialchars($payment_url, ENT_QUOTES);
+  if (!empty($method_links)) {
+    $buttons_html = '';
+    foreach ($method_links as $ml) {
+      $safe_url = htmlspecialchars($ml['url'], ENT_QUOTES);
+      $safe_label = htmlspecialchars($ml['label']);
+      $color = htmlspecialchars($ml['color']);
+      $bg = htmlspecialchars($ml['bg']);
+      $border = htmlspecialchars($ml['border']);
+
+      $buttons_html .= <<<BTN
+            <table role="presentation" cellpadding="0" cellspacing="0" style="display:inline-table;margin:5px 5px;">
+              <tr>
+                <td style="border-radius:10px;border:1.5px solid {$border};background:{$bg};
+                            box-shadow:0 1px 4px rgba(0,0,0,.08);">
+                  <a href="{$safe_url}" target="_blank"
+                     style="display:block;padding:12px 22px;
+                            font-family:Arial,sans-serif;font-size:13px;font-weight:700;
+                            color:{$color};text-decoration:none;white-space:nowrap;
+                            text-align:center;letter-spacing:.1px;">
+                    Pay via {$safe_label}
+                  </a>
+                </td>
+              </tr>
+            </table>
+BTN;
+    }
+
     $paymongo_block = <<<PMBLOCK
 
-          <!-- PayMongo CTA -->
-          <div style="text-align:center;margin-bottom:24px;">
-            <p style="margin:0 0 10px;font-size:13px;color:#64748b;">
-              Pay securely online via GCash, Maya, card, and more:
+          <!-- PayMongo Method Buttons -->
+          <div style="margin-bottom:24px;">
+            <p style="margin:0 0 14px;font-size:13px;color:#475569;font-weight:700;
+                      text-align:center;text-transform:uppercase;letter-spacing:.6px;">
+              Choose your payment method
             </p>
-            <a href="{$safe_url}" target="_blank"
-               style="display:inline-block;padding:13px 34px;background:#1e40af;color:#fff;
-                      font-size:14px;font-weight:700;border-radius:8px;text-decoration:none;
-                      letter-spacing:.3px;">
-              💳&nbsp; Pay &#8369;{$total} Now
-            </a>
-            <p style="margin:8px 0 0;font-size:11px;color:#94a3b8;">
+            <div style="text-align:center;">
+              {$buttons_html}
+            </div>
+            <p style="margin:14px 0 0;font-size:11.5px;color:#94a3b8;text-align:center;line-height:1.6;">
+              Each button opens a separate secure checkout.<br>
+              Once paid through one, the remaining links expire automatically.
+            </p>
+            <p style="margin:6px 0 0;font-size:11px;color:#cbd5e1;text-align:center;">
               Powered by PayMongo &middot; Secure &amp; encrypted
             </p>
           </div>
@@ -409,16 +586,15 @@ function build_email_body(
               </tr>
             </table>
           </div>
-
-          {$paymongo_block}
-
           <!-- Important note -->
-          <div style="background:#fffbeb;border-radius:9px;padding:13px 16px;border-left:3px solid #f59e0b;margin-bottom:24px;">
+          <div style="background:#fffbeb;border-radius:9px;padding:13px 16px;margin-bottom:24px;">
             <div style="font-size:11px;font-weight:800;color:#92400e;margin-bottom:4px;letter-spacing:.5px;">IMPORTANT</div>
             <div style="font-size:12.5px;color:#92400e;line-height:1.65;">
               Use <strong>{$invoice_no}</strong> as your payment reference. After paying, please send your proof of payment via the <strong>Messages page</strong> in your account.
             </div>
           </div>
+
+          {$paymongo_block}
 
           <!-- Footer -->
           <p style="margin:0;font-size:11.5px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:16px;line-height:1.6;">
@@ -449,98 +625,203 @@ function handle_check_paid(mysqli $conn): void
 
   if (!$row)
     json_response(false, 'Invoice not found.');
-  if ($row['status'] === 'Paid') {
-    json_response(true, 'Already paid.', ['is_paid' => true]);
-  }
 
-  // Look up the active PayMongo link for this invoice
+  // Look up ALL active PayMongo links for this invoice (one per method)
+  // NOTE: do NOT early-exit when status=Paid — payments/transactions may still be missing
   $pmStmt = $conn->prepare("
-        SELECT paymongo_link_id, amount, status
+        SELECT id, paymongo_link_id, amount, status, payment_method
         FROM paymongo_payments
-        WHERE reference_id = ? AND reference_type = 'invoice'
-        ORDER BY created_at DESC LIMIT 1
+        WHERE reference_id   = ?
+          AND reference_type = 'invoice'
+        ORDER BY created_at DESC
     ");
   $pmStmt->bind_param('i', $id);
   $pmStmt->execute();
-  $pmRow = $pmStmt->get_result()->fetch_assoc();
+  $pmRows = $pmStmt->get_result()->fetch_all(MYSQLI_ASSOC);
   $pmStmt->close();
 
-  if (!$pmRow || empty($pmRow['paymongo_link_id'])) {
-    // No link yet — not paid
+  if (empty($pmRows)) {
     json_response(true, 'No payment link.', ['is_paid' => false]);
   }
 
-  if ($pmRow['status'] === 'paid') {
-    // paymongo_payments already paid but invoices not updated yet — fix it
-    $fix = $conn->prepare("UPDATE invoices SET status = 'Paid' WHERE id = ? AND status != 'Paid'");
-    $fix->bind_param('i', $id);
-    $fix->execute();
-    $fix->close();
-    json_response(true, 'Synced.', ['is_paid' => true]);
+  // Check if any already marked paid locally — still ensure payments/transactions are inserted
+  foreach ($pmRows as $pmRow) {
+    if ($pmRow['status'] === 'paid') {
+      // Fix invoice status
+      $fix = $conn->prepare("UPDATE invoices SET status = 'Paid' WHERE id = ? AND status != 'Paid'");
+      $fix->bind_param('i', $id);
+      $fix->execute();
+      $fix->close();
+
+      // Ensure payments row exists
+      $pmtNote2 = 'INV-PMT-' . $id;
+      $chk2 = $conn->prepare("SELECT payment_id FROM payments WHERE notes = ? LIMIT 1");
+      $chk2->bind_param('s', $pmtNote2);
+      $chk2->execute();
+      $chk2->store_result();
+      if ($chk2->num_rows === 0) {
+        $chk2->close();
+        $paidAmt2 = (float) $pmRow['amount'];
+        $paidMeth2 = format_payment_method($pmRow['payment_method'] ?: 'PayMongo');
+        $dateStr2 = date('Y-m-d');
+        $pSt2 = 'paid';
+        $ps2 = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (NULL, ?, ?, ?, ?, ?)");
+        $ps2->bind_param('sdsss', $dateStr2, $paidAmt2, $paidMeth2, $pSt2, $pmtNote2);
+        $ps2->execute();
+        if ($ps2->errno) {
+          error_log('[check_paid fast-path] payments INSERT error: ' . $ps2->error);
+        }
+        $ps2->close();
+      } else {
+        $chk2->close();
+      }
+
+      // Ensure transaction row exists
+      $txRef2 = 'INV-PMT-' . $id;
+      $txChk2 = $conn->prepare("SELECT id FROM transactions WHERE reference_no = ? LIMIT 1");
+      $txChk2->bind_param('s', $txRef2);
+      $txChk2->execute();
+      $txChk2->store_result();
+      if ($txChk2->num_rows === 0) {
+        $txChk2->close();
+        $paidAmt2 = (float) $pmRow['amount'];
+        $paidMeth2 = format_payment_method($pmRow['payment_method'] ?: 'PayMongo');
+        $dateStr2 = date('Y-m-d');
+        $safeRef2 = $conn->real_escape_string($txRef2);
+        $safeDesc2 = $conn->real_escape_string('PayMongo payment (' . $paidMeth2 . ') for Invoice #' . $id);
+        $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by)
+                      VALUES ('$safeRef2','$safeDesc2','Invoice Revenue','Income',$paidAmt2,'$dateStr2',NULL,'',NULL)");
+      } else {
+        $txChk2->close();
+      }
+
+      // Invoice already Paid and records ensured — stop polling
+      json_response(true, 'Synced.', ['is_paid' => true]);
+    }
   }
 
-  // Actively ask PayMongo for the live link status
+  // No locally-paid row found — actively poll PayMongo for each link
   require_once __DIR__ . '/../../includes/paymongo.php';
-  try {
-    $link = paymongo_request('GET', '/links/' . $pmRow['paymongo_link_id']);
-    $linkStatus = $link['attributes']['status'] ?? '';
 
-    if ($linkStatus !== 'paid') {
-      json_response(true, 'Not paid yet.', ['is_paid' => false]);
+  $paid_method = null;
+  $paid_link_id = null;
+  $paid_amount = 0;
+  $paid_pm_row = null;
+  $paymentId = null;
+
+  foreach ($pmRows as $pmRow) {
+    if (empty($pmRow['paymongo_link_id']) || in_array($pmRow['status'], ['failed', 'expired', 'cancelled'])) {
+      continue;
     }
+    try {
+      $isCard = ($pmRow['payment_method'] === 'card');
 
-    // PayMongo confirms paid — sync everything
-    $paymentId = $link['attributes']['payments'][0]['id'] ?? null;
-    $paidAt = date('Y-m-d H:i:s');
-    $amount = (float) $pmRow['amount'];
-    $date = date('Y-m-d');
+      if ($isCard) {
+        // Card uses Checkout Sessions — different endpoint and status field
+        $session = paymongo_request('GET', '/checkout_sessions/' . $pmRow['paymongo_link_id']);
+        $csStatus = $session['attributes']['payment_intent']['attributes']['status'] ?? '';
+        $isPaid = ($csStatus === 'succeeded');
+        $paymentId = $session['attributes']['payment_intent']['attributes']['payments'][0]['id']
+          ?? $session['attributes']['payment_intent']['id']
+          ?? null;
+      } else {
+        // GCash / Maya / Online Banking use Links
+        $session = paymongo_request('GET', '/links/' . $pmRow['paymongo_link_id']);
+        $isPaid = (($session['attributes']['status'] ?? '') === 'paid');
+        $paymentId = $session['attributes']['payments'][0]['id'] ?? null;
+      }
 
-    // 1. Mark paymongo_payments
-    $updPm = $conn->prepare("UPDATE paymongo_payments SET status='paid', paymongo_payment_id=?, paid_at=? WHERE paymongo_link_id=?");
-    $updPm->bind_param('sss', $paymentId, $paidAt, $pmRow['paymongo_link_id']);
-    $updPm->execute();
-    $updPm->close();
-
-    // 2. Mark invoice Paid
-    $updInv = $conn->prepare("UPDATE invoices SET status='Paid' WHERE id=? AND status!='Paid'");
-    $updInv->bind_param('i', $id);
-    $updInv->execute();
-    $updInv->close();
-
-    // 3. Insert into payments table so admin payments page shows it
-    $pmtCheck = $conn->query("SELECT payment_id FROM payments WHERE notes='" . $conn->real_escape_string('INV-PMT-' . $id) . "' LIMIT 1");
-    if ($pmtCheck && $pmtCheck->num_rows === 0) {
-      $pmtMethod = 'PayMongo';
-      $pmtStatus = 'paid';
-      $pmtNote = 'INV-PMT-' . $id;
-      // booking_id = 0 for invoice payments; admin page will need to handle this
-      $pmtStmt = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (0, ?, ?, ?, ?, ?)");
-      $pmtStmt->bind_param('sdsss', $date, $amount, $pmtMethod, $pmtStatus, $pmtNote);
-      $pmtStmt->execute();
-      $pmtStmt->close();
+      if ($isPaid) {
+        $paid_method = format_payment_method($pmRow['payment_method'] ?: 'PayMongo');
+        $paid_link_id = $pmRow['paymongo_link_id'];
+        $paid_amount = (float) $pmRow['amount'];
+        $paid_pm_row = $pmRow;
+        break;
+      }
+    } catch (Throwable $e) {
+      error_log('[check_paid] PayMongo poll failed for ' . $pmRow['paymongo_link_id'] . ': ' . $e->getMessage());
     }
-
-    // 4. Log transaction (skip if already recorded)
-    $invRef = 'INV-PMT-' . $id;
-    $txCheck = $conn->query("SELECT id FROM transactions WHERE reference_no='" . $conn->real_escape_string($invRef) . "' LIMIT 1");
-    if ($txCheck && $txCheck->num_rows === 0) {
-      $desc = 'PayMongo payment for Invoice #' . $id;
-      $cat = 'Invoice Revenue';
-      $typ = 'Income';
-      $notes = '';
-      $propId = 'NULL';
-      $recBy = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 'NULL';
-      $safeRef = $conn->real_escape_string($invRef);
-      $safeDesc = $conn->real_escape_string($desc);
-      $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by) VALUES ('$safeRef','$safeDesc','$cat','$typ',$amount,'$date',$propId,'$notes',$recBy)");
-    }
-
-    json_response(true, 'Payment confirmed.', ['is_paid' => true]);
-
-  } catch (Throwable $e) {
-    error_log('[check_paid] PayMongo poll failed: ' . $e->getMessage());
-    json_response(true, 'Poll failed.', ['is_paid' => false]);
   }
+
+  if (!$paid_link_id) {
+    json_response(true, 'Not paid yet.', ['is_paid' => false]);
+  }
+
+  // ── Payment confirmed — sync everything ───────────────────────────────
+  $paidAt = date('Y-m-d H:i:s');
+  $date = date('Y-m-d');
+
+  // 1. Mark the paid paymongo_payments row
+  $updPm = $conn->prepare("UPDATE paymongo_payments SET status='paid', paymongo_payment_id=?, paid_at=? WHERE paymongo_link_id=?");
+  $updPm->bind_param('sss', $paymentId, $paidAt, $paid_link_id);
+  $updPm->execute();
+  $updPm->close();
+
+  // 2. Expire all OTHER pending links for this invoice (so tenant can't pay twice)
+  $expStmt = $conn->prepare("
+        UPDATE paymongo_payments
+        SET    status = 'cancelled'
+        WHERE  reference_id   = ?
+          AND  reference_type = 'invoice'
+          AND  paymongo_link_id != ?
+          AND  status NOT IN ('paid','expired','failed','cancelled')
+    ");
+  $expStmt->bind_param('is', $id, $paid_link_id);
+  $expStmt->execute();
+  $expStmt->close();
+
+  // 3. Mark invoice Paid
+  $updInv = $conn->prepare("UPDATE invoices SET status='Paid' WHERE id=? AND status!='Paid'");
+  $updInv->bind_param('i', $id);
+  $updInv->execute();
+  $updInv->close();
+
+  // 4. Insert into payments table — now with the correct payment_method
+  $pmtNote = 'INV-PMT-' . $id;
+  $pmtCheck = $conn->prepare("SELECT payment_id FROM payments WHERE notes = ? LIMIT 1");
+  $pmtCheck->bind_param('s', $pmtNote);
+  $pmtCheck->execute();
+  $pmtCheck->store_result();
+  $pmtExists = $pmtCheck->num_rows > 0;
+  $pmtCheck->close();
+
+  if (!$pmtExists) {
+    $pmtStatus = 'paid';
+    $pmtStmt = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (NULL, ?, ?, ?, ?, ?)");
+    $pmtStmt->bind_param('sdsss', $date, $paid_amount, $paid_method, $pmtStatus, $pmtNote);
+    $pmtStmt->execute();
+    if ($pmtStmt->errno) {
+      error_log('[check_paid] payments INSERT error: ' . $pmtStmt->error);
+    }
+    $pmtStmt->close();
+  }
+
+  // 5. Log transaction — with correct payment method in description
+  $invRef = 'INV-PMT-' . $id;
+  $txCheck = $conn->prepare("SELECT id FROM transactions WHERE reference_no = ? LIMIT 1");
+  $txCheck->bind_param('s', $invRef);
+  $txCheck->execute();
+  $txCheck->store_result();
+  $txExists = $txCheck->num_rows > 0;
+  $txCheck->close();
+
+  if (!$txExists) {
+    $desc = 'PayMongo payment (' . $paid_method . ') for Invoice #' . $id;
+    $cat = 'Invoice Revenue';
+    $typ = 'Income';
+    $notes = '';
+    $recBy = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
+
+    $safeRef = $conn->real_escape_string($invRef);
+    $safeDesc = $conn->real_escape_string($desc);
+    $safeCat = $conn->real_escape_string($cat);
+    $safeNotes = $conn->real_escape_string($notes);
+    $recBySQL = ($recBy !== null) ? (int) $recBy : 'NULL';
+    $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by)
+                  VALUES ('$safeRef','$safeDesc','$safeCat','$typ',$paid_amount,'$date',NULL,'$safeNotes',$recBySQL)");
+  }
+
+  json_response(true, 'Payment confirmed.', ['is_paid' => true, 'payment_method' => $paid_method]);
 }
 
 /* ─── GET STATS (live stat card refresh) ─────────────────────────────── */

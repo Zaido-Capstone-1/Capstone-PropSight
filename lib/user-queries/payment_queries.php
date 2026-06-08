@@ -29,7 +29,7 @@ $invPayRes = mysqli_query($conn, "
         pp.id          AS payment_id,
         pp.paid_at     AS payment_date,
         pp.amount      AS amount_paid,
-        'PayMongo'     AS payment_method,
+        COALESCE(NULLIF(pp.payment_method, ''), 'PayMongo') AS payment_method,
         'paid'         AS payment_status,
         NULL           AS booking_id,
         CONCAT('Invoice ', i.invoice_no) AS unit_label,
@@ -97,6 +97,22 @@ while ($r = mysqli_fetch_assoc($refundsRes)) {
     }
 }
 
+/* ── Normalize payment method display label ── */
+function normalizeMethod(string $m): string
+{
+    $map = [
+        'gcash' => 'GCash',
+        'paymaya' => 'Maya',
+        'maya' => 'Maya',
+        'paymongo' => 'PayMongo',
+        'bank' => 'Bank',
+        'cash' => 'Cash',
+        'card' => 'Card',
+    ];
+    $key = strtolower(trim($m));
+    return $map[$key] ?? ucfirst($m);
+}
+
 /* ── Build unified timeline (payments + refunds), newest first ── */
 $unified = [];
 foreach ($bills as $b) {
@@ -107,7 +123,7 @@ foreach ($bills as $b) {
         'property_name' => $b['property_name'] ?? '—',
         'unit_label' => $b['unit_label'] ?? '',
         'nights' => (int) ($b['nights'] ?? 0),
-        'method' => $b['payment_method'] ?: 'N/A',
+        'method' => $b['payment_method'] ? normalizeMethod($b['payment_method']) : 'N/A',
         'amount' => $b['amount_paid'],
         'status' => $b['payment_status'],
         'payment_id' => $b['payment_id'],
@@ -124,7 +140,7 @@ foreach ($refunds as $rf) {
         'property_name' => $rf['property_name'] ?? '—',
         'unit_label' => $rf['unit_label'] ?? '',
         'nights' => null,
-        'method' => $rf['refund_method'] ?: ($rf['payment_method'] ?: 'N/A'),
+        'method' => $rf['refund_method'] ? normalizeMethod($rf['refund_method']) : ($rf['payment_method'] ? normalizeMethod($rf['payment_method']) : 'N/A'),
         'amount' => $rf['refund_amount'],
         'status' => $rf['refund_status'],
         'payment_id' => $rf['payment_id'],
@@ -139,7 +155,7 @@ $methodTotals = [];
 foreach ($bills as $b) {
     if ($b['payment_status'] !== 'paid')
         continue;
-    $m = $b['payment_method'] ?: 'Other';
+    $m = $b['payment_method'] ? normalizeMethod($b['payment_method']) : 'Other';
     $methodTotals[$m] = ($methodTotals[$m] ?? 0) + $b['amount_paid'];
 }
 arsort($methodTotals);

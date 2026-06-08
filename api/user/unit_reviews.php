@@ -8,9 +8,9 @@ require_once __DIR__ . '/../../includes/session.php';
 require_once __DIR__ . '/../../includes/db.php';
 require_not_blacklisted();
 
-$unitId = (int)($_GET['unit_id'] ?? 0);
-$page   = max(1, (int)($_GET['page'] ?? 1));
-$limit  = max(1, min(20, (int)($_GET['limit'] ?? 5)));
+$unitId = (int) ($_GET['unit_id'] ?? 0);
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$limit = max(1, min(20, (int) ($_GET['limit'] ?? 5)));
 $offset = ($page - 1) * $limit;
 
 if (!$unitId) {
@@ -19,8 +19,10 @@ if (!$unitId) {
 }
 
 // Total count
-$total = (int)(mysqli_fetch_assoc(mysqli_query($conn,
-    "SELECT COUNT(*) AS c FROM booking_reviews WHERE unit_id = $unitId"))['c'] ?? 0);
+$total = (int) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
+    "SELECT COUNT(*) AS c FROM booking_reviews WHERE unit_id = $unitId"
+))['c'] ?? 0);
 
 // Reviews with reviewer name
 $res = mysqli_query($conn, "
@@ -39,19 +41,20 @@ $res = mysqli_query($conn, "
 
 $reviews = [];
 while ($row = mysqli_fetch_assoc($res)) {
+    fmt_dt_row($row);
     $reviews[] = [
-        'rating'   => (int)$row['rating'],
-        'comment'  => $row['comment'],
-        'author'   => trim($row['first_name'] . ' ' . mb_substr($row['last_name'], 0, 1) . '.'),
-        'date'     => date('F Y', strtotime($row['created_at'])),
+        'rating' => (int) $row['rating'],
+        'comment' => $row['comment'],
+        'author' => trim($row['first_name'] . ' ' . mb_substr($row['last_name'], 0, 1) . '.'),
+        'date' => date('F Y', strtotime($row['created_at'])),
     ];
 }
 
 echo json_encode([
-    'success'    => true,
-    'reviews'    => $reviews,
-    'total'      => $total,
-    'page'       => $page,
-    'limit'      => $limit,
-    'total_pages' => (int)ceil($total / $limit),
+    'success' => true,
+    'reviews' => $reviews,
+    'total' => $total,
+    'page' => $page,
+    'limit' => $limit,
+    'total_pages' => (int) ceil($total / $limit),
 ]);

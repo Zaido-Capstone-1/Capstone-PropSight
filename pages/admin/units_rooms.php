@@ -42,7 +42,7 @@ require_once '../../lib/admin-queries/units_rooms_queries.php';
       </button>
     </div>
   </div>
-  
+
   <div class="cards-area">
 
     <div class="stat-row">
@@ -192,6 +192,8 @@ require_once '../../lib/admin-queries/units_rooms_queries.php';
             $imgs[] = $row['image_path'];
           $thumb = $imgs[0] ?? null;
 
+          $real_status = $unit['real_status'] ?? $unit['status'] ?? 'vacant';
+          $has_tenant = in_array($real_status, ['occupied', 'booked']);
           $unit_json = htmlspecialchars(json_encode([
             'unit_id' => $uid,
             'unit_number' => $unit['unit_number'] ?? '',
@@ -201,11 +203,13 @@ require_once '../../lib/admin-queries/units_rooms_queries.php';
             'unit_type' => $unit['unit_type'] ?? '',
             'floor' => $unit['floor'] ?? '',
             'rent_amount' => $unit['rent_amount'] ?? 0,
-            'status' => $unit['real_status'] ?? $unit['status'] ?? '',
-            'tenant_name' => $unit['tenant_name'] ?? '',
-            'tenant_email' => $unit['tenant_email'] ?? '',
-            'tenant_photo' => $unit['tenant_photo'] ?? '',
-            'description'  => $unit['description'] ?? '',
+            'status' => $real_status,
+            'tenant_name' => $has_tenant ? ($unit['tenant_name'] ?? '') : '',
+            'tenant_email' => $has_tenant ? ($unit['tenant_email'] ?? '') : '',
+            'tenant_photo' => $has_tenant ? ($unit['tenant_photo'] ?? '') : '',
+            'description' => $unit['description'] ?? '',
+            'season' => $unit['season'] ?? 'Low',
+            'max_guests' => (int) ($unit['max_guests'] ?? 1),
             'images' => $imgs,
           ]), ENT_QUOTES);
 
@@ -253,7 +257,33 @@ require_once '../../lib/admin-queries/units_rooms_queries.php';
                   <span style="font-size:12px;">No photos added</span>
                 </div>
               <?php endif; ?>
-              <span class="status-pill <?= $status ?>"><?= ucfirst($status) ?></span>
+              <?php
+              $availLabel = match ($status) {
+                'vacant' => 'AVAILABLE',
+                'booked' => 'BOOKED',
+                'occupied' => 'OCCUPIED',
+                'maintenance' => 'MAINTENANCE',
+                default => strtoupper($status),
+              };
+              $availBg = match ($status) {
+                'vacant' => 'rgba(22,163,74,0.9)',
+                'booked' => 'rgba(37,99,235,0.9)',
+                'occupied' => 'rgba(185,28,28,0.85)',
+                'maintenance' => 'rgba(180,83,9,0.88)',
+                default => 'rgba(100,116,139,0.85)',
+              };
+              $availColor = match ($status) {
+                'vacant' => '#fff',
+                'booked' => '#fff',
+                'occupied' => '#fecaca',
+                'maintenance' => '#fef3c7',
+                default => '#fff',
+              };
+              ?>
+              <span
+                style="font-family:'DM Sans',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.09em;padding:3px 9px;border-radius:99px;background:<?= $availBg ?>;color:<?= $availColor ?>;position:absolute;top:10px;right:10px;z-index:8;">
+                <?= $availLabel ?>
+              </span>
             </div>
 
             <div class="body">
@@ -330,6 +360,12 @@ require_once '../../lib/admin-queries/units_rooms_queries.php';
                 <div class="price">
                   <span class="price-value">₱<?= number_format((float) $unit['rent_amount'], 0) ?></span>
                   <span class="price-label">/ Night</span>
+                  <?php
+                  $s = $unit['season'] ?? 'Low';
+                  $sColor = ['Peak' => '#E74C3C', 'High' => '#deaf37', 'Low' => '#2ECC71'][$s] ?? '#2ECC71';
+                  ?>
+                  <span
+                    style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;"><?= $s ?></span>
                 </div>
                 <div class="card-actions">
                   <button class="btn-view view-unit-btn" data-unit="<?= $unit_json ?>">

@@ -217,6 +217,20 @@ const STATUS_CONFIG = {
   maintenance: { color: '#dc2626', bg: '#fee2e2', border: '#fca5a5', label: 'Maintenance', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>' },
 };
 
+// ── Season config ───────────────────────────────────────────────────────────
+const SEASON_MULTIPLIERS = { 0:1.30,1:1.30,2:1.10,3:1.15,4:1.15,5:0.80,6:0.80,7:0.80,8:0.80,9:0.80,10:1.15,11:1.30 };
+const SEASON_LABELS      = { 0:'Peak',1:'Peak',2:'High',3:'High',4:'High',5:'Low',6:'Low',7:'Low',8:'Low',9:'Low',10:'High',11:'Peak' };
+const SEASON_STYLE = {
+  Peak: { color:'#E74C3C', bg:'#E74C3C20', label:'Peak Season'   },
+  High: { color:'#deaf37', bg:'#deaf3720', label:'High Season'   },
+  Low:  { color:'#2ECC71', bg:'#2ECC7120', label:'Low Season'    },
+};
+function getCurrentSeason() {
+  const m = new Date().getMonth(); // 0-11
+  const label = SEASON_LABELS[m] || 'Low';
+  return { month: m, label, ...SEASON_STYLE[label] };
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // VIEW MODAL – improved layout
 // ═══════════════════════════════════════════════════════════════════════════
@@ -255,17 +269,11 @@ async function openViewModal(unit) {
             ${images.length} photos
           </span>` : ''}
 
-        <!-- Status badge -->
-        <span style="position:absolute;top:14px;right:14px;display:inline-flex;align-items:center;gap:5px;background:${sc.color};color:#fff;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:5px 11px;border-radius:99px;box-shadow:0 2px 8px rgba(0,0,0,.2);">
-          ${sc.icon} ${sc.label}
-        </span>
+        <!-- Status badge top-right removed -->
       </div>`
     : `<div style="height:200px;background:linear-gradient(135deg,#f1f5f9 0%,#e2e8f0 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#94a3b8;flex-shrink:0;position:relative;">
         <svg fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" style="width:42px;height:42px;opacity:.3;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         <span style="font-size:12px;font-weight:500;">No photos for this unit</span>
-        <span style="position:absolute;top:14px;right:14px;display:inline-flex;align-items:center;gap:5px;background:${sc.color};color:#fff;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:5px 11px;border-radius:99px;">
-          ${sc.icon} ${sc.label}
-        </span>
       </div>`;
 
   // Gallery JS state (window-scoped for inline onclick handlers)
@@ -341,9 +349,16 @@ async function openViewModal(unit) {
               ${unit.unit_type ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-soft);">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/></svg>
                 ${unit.unit_type}</span>` : ''}
-              <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;background:${sc.bg};border:1px solid ${sc.border};font-size:11px;font-weight:600;color:${sc.color};">
-                ${sc.icon} ${sc.label}
-              </span>
+              ${(function(){
+                const STATUS_BADGE = {
+                  vacant:      { bg:'rgba(22,163,74,0.9)',   color:'#fff',     lbl:'AVAILABLE' },
+                  booked:      { bg:'rgba(37,99,235,0.9)',   color:'#fff',     lbl:'BOOKED'      },
+                  occupied:    { bg:'rgba(185,28,28,0.85)',  color:'#fecaca',  lbl:'OCCUPIED'    },
+                  maintenance: { bg:'rgba(180,83,9,0.88)',   color:'#fef3c7',  lbl:'MAINTENANCE' },
+                };
+                const sb = STATUS_BADGE[status] || STATUS_BADGE.occupied;
+                return '<span style="font-family:DM Sans,sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.09em;padding:3px 9px;border-radius:99px;background:'+sb.bg+';color:'+sb.color+';">'+sb.lbl+'</span>';
+              })()}
             </div>
           </div>
           <div style="text-align:right;flex-shrink:0;background:linear-gradient(135deg,var(--primary-soft,#eef2ff),#e0e7ff);padding:10px 14px;border-radius:12px;border:1px solid #c7d2fe;">
@@ -382,6 +397,16 @@ async function openViewModal(unit) {
               <div class="vm-info-cell-label">Rent / Night</div>
               <div class="vm-info-cell-value" style="color:var(--primary,#6366f1);">₱${Number(unit.rent_amount).toLocaleString('en-US',{minimumFractionDigits:0})}</div>
             </div>
+            <div class="vm-info-cell">
+              <div class="vm-info-cell-label">Max Guests</div>
+              <div class="vm-info-cell-value">${unit.max_guests || '—'} guest${(unit.max_guests||0)>1?'s':''}</div>
+            </div>
+            <div class="vm-info-cell">
+              <div class="vm-info-cell-label">Season</div>
+              <div class="vm-info-cell-value" id="vm-season-badge" style="display:flex;align-items:center;gap:6px;">
+                ${(function(){ const key=unit.season||'Low'; const s=SEASON_STYLE[key]||SEASON_STYLE.Low; return '<span style="background:'+s.bg+';color:'+s.color+';padding:3px 12px;border-radius:99px;font-size:12px;font-weight:700;">'+s.label+'</span>'; })()}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -402,20 +427,26 @@ async function openViewModal(unit) {
         <!-- Tenant -->
         <div style="margin-bottom:6px;">
           <div class="vm-section-title">Tenant</div>
-          ${(status === 'occupied' || unit.tenant_name) && unit.tenant_name
+          ${(status === 'occupied' || status === 'booked') && unit.tenant_name
             ? `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg,#f8fafc);border-radius:12px;border:1px solid var(--border,#e2e8f0);">
                 ${unit.tenant_photo
-                  ? `<img src="${(window.APP_BASE||'')}/${unit.tenant_photo}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid #e2e8f0;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                     <div style="display:none;width:42px;height:42px;border-radius:50%;background:#dbeafe;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1d4ed8;flex-shrink:0;">${initials}</div>`
-                  : `<div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#dbeafe,#bfdbfe);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1d4ed8;flex-shrink:0;border:2px solid #93c5fd;">${initials}</div>`}
+                  ? `<img src="../../${unit.tenant_photo}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid #e2e8f0;"
+                       onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                     <div style="display:none;width:42px;height:42px;border-radius:50%;background:#1a2744;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#c9a84c;flex-shrink:0;">${initials}</div>`
+                  : `<div style="width:42px;height:42px;border-radius:50%;background:#1a2744;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#c9a84c;flex-shrink:0;">${initials}</div>`}
                 <div style="min-width:0;">
                   <div style="font-size:14px;font-weight:700;color:var(--text);">${unit.tenant_name}</div>
                   ${unit.tenant_email ? `<div style="font-size:12px;color:var(--text-soft);margin-top:2px;">${unit.tenant_email}</div>` : ''}
                 </div>
-                <span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;background:#dcfce7;border:1px solid #86efac;font-size:11px;font-weight:600;color:#16a34a;">
-                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:11px;height:11px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  Active
-                </span>
+                ${status === 'occupied'
+                  ? `<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;background:#dcfce7;border:1px solid #86efac;color:#16a34a;font-family:'DM Sans',sans-serif;font-size:0.58rem;font-weight:800;letter-spacing:0.09em;">
+                      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:11px;height:11px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      ACTIVE
+                    </span>`
+                  : `<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;background:#dbeafe;border:1px solid #93c5fd;color:#1d4ed8;font-family:'DM Sans',sans-serif;font-size:0.58rem;font-weight:800;letter-spacing:0.09em;">
+                      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:11px;height:11px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      BOOKED
+                    </span>`}
               </div>`
             : `<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#f8fafc;border-radius:12px;border:1.5px dashed #e2e8f0;">
                 <div style="width:38px;height:38px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -461,16 +492,39 @@ async function openViewModal(unit) {
             <input id="ve-rent" type="number" style="${INP}" min="0" step="0.01" placeholder="0.00" value="${unit.rent_amount || ''}">
           </div>
           <div>
+            <label style="${LBL}">Max Guests</label>
+            <input id="ve-max-guests" type="number" style="${INP}" min="1" max="20" placeholder="e.g. 2" value="${unit.max_guests || ''}">
+          </div>
+          <div>
             <label style="${LBL}">Status</label>
-            <select id="ve-status" style="${INP}">
-              <option value="vacant"${status==='vacant'?' selected':''}>Vacant</option>
-              <option value="occupied"${status==='occupied'?' selected':''}>Occupied</option>
-              <option value="maintenance"${status==='maintenance'?' selected':''}>Maintenance</option>
+            ${status === 'occupied'
+              ? `<div style="${INP}background:var(--bg,#f8fafc);color:var(--text-soft);cursor:not-allowed;display:flex;align-items:center;gap:6px;opacity:.75;">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px;flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Occupied
+                  <input type="hidden" id="ve-status" value="occupied">
+                </div>`
+              : `<select id="ve-status" style="${INP}">
+                  <option value="vacant"${status==='vacant'?' selected':''}>Vacant</option>
+                  <option value="maintenance"${status==='maintenance'?' selected':''}>Maintenance</option>
+                </select>`}
+          </div>
+          <div>
+            <label style="${LBL}">Season</label>
+            <select id="ve-season" style="${INP}">
+              <option value="Peak"${(unit.season||'Low')==='Peak'?' selected':''}>Peak Season</option>
+              <option value="High"${(unit.season||'Low')==='High'?' selected':''}>High Season</option>
+              <option value="Low"${(unit.season||'Low')==='Low'?' selected':''}>Low Season</option>
             </select>
           </div>
           <div style="grid-column:1/-1;">
             <label style="${LBL}">Tenant Name</label>
-            <input id="ve-tenant" type="text" style="${INP}" placeholder="Full name" value="${unit.tenant_name || ''}">
+            ${status === 'occupied'
+              ? `<div style="${INP}background:var(--bg,#f8fafc);color:var(--text-soft);cursor:not-allowed;display:flex;align-items:center;gap:6px;opacity:.75;">
+                  <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px;flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  ${unit.tenant_name || '—'}
+                  <input type="hidden" id="ve-tenant" value="${unit.tenant_name || ''}">
+                </div>`
+              : `<input id="ve-tenant" type="text" style="${INP}" placeholder="Full name" value="${unit.tenant_name || ''}">`}
           </div>
           <div style="grid-column:1/-1;">
             <label style="${LBL}">Description</label>
@@ -740,7 +794,9 @@ async function openViewModal(unit) {
         fd.append('unit_type',        document.getElementById('ve-unit-type').value);
         fd.append('floor',            document.getElementById('ve-floor').value);
         fd.append('rent_amount',      document.getElementById('ve-rent').value);
+        fd.append('max_guests',       document.getElementById('ve-max-guests').value || 1);
         fd.append('status',           document.getElementById('ve-status').value);
+        fd.append('season',           document.getElementById('ve-season').value);
         fd.append('tenant_name',      document.getElementById('ve-tenant').value.trim());
         fd.append('description',      document.getElementById('ve-description').value.trim());
 
@@ -771,6 +827,8 @@ async function openViewModal(unit) {
             floor:       updatedUnit.floor        ?? unit.floor,
             rent_amount: updatedUnit.rent_amount  ?? unit.rent_amount,
             status:      updatedUnit.status       || unit.status,
+            season:      updatedUnit.season       || unit.season || 'Low',
+            max_guests:  updatedUnit.max_guests   ?? unit.max_guests ?? 1,
             tenant_name: updatedUnit.tenant_name  || '',
             description: updatedUnit.description  || '',
             images:      freshImgs,
@@ -898,16 +956,16 @@ document.getElementById('open-add-unit-modal').addEventListener('click', () => {
         <input type="number" id="m-rent" min="0" step="0.01" placeholder="0.00">
       </div>
       <div class="form-group">
-        <label>Status</label>
-        <select id="m-status">
-          <option value="vacant">Vacant</option>
-          <option value="occupied">Occupied</option>
-          <option value="maintenance">Maintenance</option>
+        <label>Season</label>
+        <select id="m-season">
+          <option value="Low">Low Season</option>
+          <option value="High">High Season</option>
+          <option value="Peak">Peak Season</option>
         </select>
       </div>
-      <div class="form-group full">
-        <label>Tenant Name</label>
-        <input type="text" id="m-tenant" placeholder="Full name">
+      <div class="form-group">
+        <label>Max Guests</label>
+        <input type="number" id="m-max-guests" min="1" max="20" placeholder="e.g. 2">
       </div>
       <div class="form-group full">
         <label>Description</label>
@@ -1056,8 +1114,8 @@ document.getElementById('open-add-unit-modal').addEventListener('click', () => {
           fd.append('unit_type', bd.querySelector('#m-unit-type').value);
           fd.append('floor', bd.querySelector('#m-floor').value);
           fd.append('rent_amount', bd.querySelector('#m-rent').value);
-          fd.append('status', bd.querySelector('#m-status').value);
-          fd.append('tenant_name', bd.querySelector('#m-tenant').value.trim());
+          fd.append('season', bd.querySelector('#m-season').value);
+          fd.append('max_guests', bd.querySelector('#m-max-guests').value || 1);
           fd.append('description', bd.querySelector('#m-description').value.trim());
           getCheckedAmenityIds(bd).forEach(id => fd.append('amenity_ids[]', id));
           files.forEach(f => fd.append('unit_images[]', f));

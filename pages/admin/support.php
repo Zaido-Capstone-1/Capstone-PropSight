@@ -216,6 +216,14 @@ include '../../lib/admin-queries/support_queries.php';
                                             onclick="openTicketModal(<?= (int) $tk['ticket_id'] ?>, <?= htmlspecialchars(json_encode($tk), ENT_QUOTES) ?>)">
                                             View
                                         </button>
+                                        <button class="ts-btn ts-btn-delete"
+                                            onclick="deleteTicket(<?= (int) $tk['ticket_id'] ?>)" title="Delete">
+                                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                                                width="13" height="13">
+                                                <polyline points="3 6 5 6 21 6" />
+                                                <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -264,7 +272,6 @@ include '../../lib/admin-queries/support_queries.php';
     <div class="sm-modal-overlay" id="ticketModal">
         <div class="sm-modal">
 
-            <!-- Header with avatar -->
             <div class="sm-modal-head">
                 <div class="sm-modal-head-info">
                     <div class="sm-modal-head-avatar" id="ticketModalAvatar"></div>
@@ -282,23 +289,18 @@ include '../../lib/admin-queries/support_queries.php';
                 </button>
             </div>
 
-            <!-- 4-column info strip (filled by JS) -->
             <div class="sm-detail-grid" id="ticketDetailGrid"></div>
 
-            <!-- Scrollable body: thread + reply -->
             <div class="sm-modal-body">
 
-                <!-- Conversation thread -->
                 <div>
                     <div class="sm-section-label">Conversation</div>
                     <div class="sm-msg-thread" id="ticketMsgThread">
                         <div style="text-align:center;color:var(--text-soft,#94a3b8);padding:20px;font-size:0.84rem;">
-                            Loading messages…
-                        </div>
+                            Loading messages…</div>
                     </div>
                 </div>
 
-                <!-- Reply + status -->
                 <div>
                     <div class="sm-section-label">Reply &amp; Update Status</div>
                     <div class="sm-reply-area">
@@ -332,7 +334,25 @@ include '../../lib/admin-queries/support_queries.php';
                 </div>
 
             </div>
+        </div>
+    </div>
 
+    <!-- Confirmation Modal -->
+    <div class="confirm-modal-overlay" id="confirmModal">
+        <div class="confirm-modal">
+            <div class="confirm-modal-icon">
+                <svg fill="none" stroke-width="2" viewBox="0 0 24 24">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" />
+                </svg>
+            </div>
+            <div class="confirm-modal-title">Delete Ticket?</div>
+            <div class="confirm-modal-msg"><strong>This ticket and all its messages will be permanently
+                    removed.</strong><br>This cannot be undone.</div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+                <button class="confirm-btn-delete" id="confirmDeleteBtn">Delete</button>
+            </div>
         </div>
     </div>
 </div>

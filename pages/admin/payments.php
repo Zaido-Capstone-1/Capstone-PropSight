@@ -303,7 +303,12 @@ endif;
                                 $badge = $p['payment_status'] === 'paid' ? 'success' : ($p['payment_status'] === 'late' ? 'danger' : 'pending');
                                 $label = $p['payment_status'] === 'paid' ? 'Paid' : ($p['payment_status'] === 'late' ? 'Overdue' : 'Pending');
                                 $display_name = $p['full_name'] ?? $p['tenant_name'] ?? '—';
-                                $initial = strtoupper(mb_substr($display_name, 0, 1));
+                                // Two-letter initials: first letter of each word (e.g. "Jr Marticio" → "JM")
+                                $name_parts = explode(' ', trim($display_name));
+                                $initial = strtoupper(mb_substr($name_parts[0] ?? '', 0, 1));
+                                if (count($name_parts) > 1) {
+                                    $initial .= strtoupper(mb_substr(end($name_parts), 0, 1));
+                                }
                                 $payment_num = '#PAY-' . str_pad($p['payment_id'], 3, '0', STR_PAD_LEFT);
                                 $month_val = substr($p['payment_date'], 0, 7);
                                 $search_val = strtolower($p['payment_id'] . ' ' . $display_name . ' ' . ($p['unit_number'] ?? ''));
@@ -317,12 +322,21 @@ endif;
                                     <td>
                                         <div style="display:flex;align-items:center;gap:8px;">
                                             <?php if (!empty($p['profile_photo'])): ?>
-                                                <img src="../../<?= htmlspecialchars($p['profile_photo']) ?>" alt="<?= $initial ?>"
-                                                    style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;"
+                                                <img src="../../<?= htmlspecialchars($p['profile_photo']) ?>"
+                                                    alt="<?= htmlspecialchars($initial) ?>"
+                                                    style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block;"
                                                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                                                <div class="avatar" style="display:none;"><?= $initial ?></div>
+                                                <div style="display:none;width:36px;height:36px;border-radius:50%;flex-shrink:0;
+                                                            background:linear-gradient(135deg,#0f2744,#1a3a6b);color:#e8c86a;
+                                                            font-weight:700;font-size:0.82rem;
+                                                            align-items:center;justify-content:center;"><?= $initial ?>
+                                                </div>
                                             <?php else: ?>
-                                                <div class="avatar"><?= $initial ?></div>
+                                                <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;
+                                                            background:linear-gradient(135deg,#0f2744,#1a3a6b);color:#e8c86a;
+                                                            font-weight:700;font-size:0.82rem;display:flex;
+                                                            align-items:center;justify-content:center;"><?= $initial ?>
+                                                </div>
                                             <?php endif; ?>
                                             <span><?= htmlspecialchars($display_name) ?></span>
                                         </div>

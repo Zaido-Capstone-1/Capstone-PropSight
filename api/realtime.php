@@ -30,10 +30,10 @@ $page = trim($_GET['page'] ?? 'dashboard');
 
 // Validate / normalise since timestamp
 if (!$since || !strtotime($since)) {
-    $since = date('Y-m-d H:i:s', strtotime('-30 seconds'));
+    $since = gmdate('Y-m-d H:i:s', strtotime('-30 seconds'));
 }
 $sinceEsc = mysqli_real_escape_string($conn, $since);
-$now = date('Y-m-d H:i:s');
+$now = gmdate('Y-m-d H:i:s') . '+00:00';  // UTC, tagged for JS
 
 $payload = ['success' => true, 'ts' => $now, 'role' => $role];
 
@@ -89,6 +89,7 @@ if ($role === 'admin') {
     $newBookings = [];
     while ($r = mysqli_fetch_assoc($newBookingsRes))
         $newBookings[] = $r;
+    fmt_dt_rows($newBookings);
     $payload['new_bookings'] = $newBookings;
 
     // ── Unread messages count (messages sent TO admin, not yet read) ──
@@ -121,7 +122,7 @@ if ($role === 'admin') {
             'id' => 'msg-' . (int) $n['id'],
             'type' => 'message',
             'text' => 'New message from ' . trim((string) ($n['actor'] ?? 'User')),
-            'ts' => (string) ($n['created_at'] ?? $now),
+            'ts' => fmt_dt((string) ($n['created_at'] ?? '')),
             'path' => 'messages.php',
         ];
     }
@@ -136,26 +137,27 @@ if ($role === 'admin') {
             'id' => 'booking-' . (int) $n['booking_id'],
             'type' => 'booking',
             'text' => 'Pending booking #' . str_pad((string) $n['booking_id'], 4, '0', STR_PAD_LEFT),
-            'ts' => (string) ($n['created_at'] ?? $now),
+            'ts' => fmt_dt((string) ($n['created_at'] ?? '')),
             'path' => 'reservations.php?status=pending',
         ];
     }
     $adminTaskNotifRes = mysqli_query(
         $conn,
-        "SELECT request_id, issue_description, request_date FROM maintenance_requests
+        "SELECT request_id, issue_description, created_at FROM maintenance_requests
          WHERE request_status IN ('open','in_progress')
-         ORDER BY request_date DESC LIMIT 5"
+         ORDER BY created_at DESC LIMIT 5"
     );
     while ($adminTaskNotifRes && ($n = mysqli_fetch_assoc($adminTaskNotifRes))) {
         $adminNotifs[] = [
             'id' => 'task-' . (int) $n['request_id'],
             'type' => 'task',
             'text' => 'Task: ' . trim((string) ($n['issue_description'] ?: 'Maintenance request')),
-            'ts' => (string) ($n['request_date'] ?? $now),
+            'ts' => fmt_dt((string) ($n['created_at'] ?? '')),
             'path' => 'task_summary.php?status=open',
         ];
     }
-    usort($adminNotifs, fn($a, $b) => strtotime($b['ts']) <=> strtotime($a['ts']));
+    usort($adminNotifs, function ($a, $b) {
+        return strtotime(str_replace('+00:00', '', $b['ts'])) <=> strtotime(str_replace('+00:00', '', $a['ts'])); });
     $payload['admin_notifications'] = array_slice($adminNotifs, 0, 10);
     $payload['admin_notif_count'] = count($payload['admin_notifications']);
     // Only return messages FROM others (not sent by this admin) to avoid
@@ -175,6 +177,7 @@ if ($role === 'admin') {
         $newMsgs = [];
         while ($r = mysqli_fetch_assoc($newMsgRes))
             $newMsgs[] = $r;
+        fmt_dt_rows($newMsgs);
         $payload['new_messages'] = $newMsgs;
     }
 
@@ -198,6 +201,7 @@ if ($role === 'admin') {
         $ci = [];
         while ($r = mysqli_fetch_assoc($ciRes))
             $ci[] = $r;
+        fmt_dt_rows($ci);
         $payload['checkin_updates'] = $ci;
     }
 
@@ -224,6 +228,7 @@ if ($role === 'admin') {
         $act = [];
         while ($r = mysqli_fetch_assoc($actRes))
             $act[] = $r;
+        fmt_dt_rows($act);
         $payload['recent_activity'] = $act;
 
         // Revenue KPI
@@ -334,21 +339,24 @@ if ($role === 'admin') {
         $taskRes = mysqli_query(
             $conn,
             "SELECT 
+                m.request_id,
                 m.issue_description AS title, 
                 p.property_name, 
                 m.priority, 
                 m.request_status AS status,
-                m.request_date
+                m.request_date,
+                m.created_at
             FROM maintenance_requests m
             LEFT JOIN units u ON u.unit_id = m.unit_id
             LEFT JOIN properties p ON p.property_id = u.property_id
             WHERE m.request_status NOT IN ('completed', 'closed')
-            ORDER BY m.request_date DESC
+            ORDER BY m.created_at DESC
             LIMIT 5"
         );
         $tasks = [];
         while ($taskRes && ($r = mysqli_fetch_assoc($taskRes)))
             $tasks[] = $r;
+        fmt_dt_rows($tasks);
         $payload['task_summary'] = $tasks;
 
         // Right panel recent transaction activity
@@ -362,6 +370,7 @@ if ($role === 'admin') {
         $rightPanelActivity = [];
         while ($rpActRes && ($r = mysqli_fetch_assoc($rpActRes)))
             $rightPanelActivity[] = $r;
+        fmt_dt_rows($rightPanelActivity);
         $payload['right_panel_activity'] = $rightPanelActivity;
     }
 
@@ -397,6 +406,7 @@ if ($role === 'admin') {
     $bkChanges = [];
     while ($r = mysqli_fetch_assoc($bkRes))
         $bkChanges[] = $r;
+    fmt_dt_rows($bkChanges);
     $payload['booking_updates'] = $bkChanges;
 
     // ── User booking stats ─────────────────────────────
@@ -479,6 +489,7 @@ if ($role === 'admin') {
     $notifs = [];
     while ($r = mysqli_fetch_assoc($notifRes))
         $notifs[] = $r;
+    fmt_dt_rows($notifs);
     $payload['notifications'] = $notifs;
 
     // Real total unread count (all types except booking)
@@ -514,6 +525,7 @@ if ($role === 'admin') {
         $uNewMsgs = [];
         while ($r = mysqli_fetch_assoc($uNewMsgRes))
             $uNewMsgs[] = $r;
+        fmt_dt_rows($uNewMsgs);
         if ($uNewMsgs)
             $payload['new_messages'] = $uNewMsgs;
     }

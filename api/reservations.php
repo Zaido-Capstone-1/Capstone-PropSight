@@ -121,8 +121,13 @@ if ($method === 'GET') {
     $listStmt->execute();
     $res = $listStmt->get_result();
     $bookings = [];
-    while ($row = $res->fetch_assoc())
+    while ($row = $res->fetch_assoc()) {
+
+        fmt_dt_row($row);
+
         $bookings[] = $row;
+
+    }
     $listStmt->close();
 
     $countSql = "SELECT COUNT(*) AS c FROM bookings b

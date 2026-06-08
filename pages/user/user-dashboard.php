@@ -37,7 +37,6 @@ $loyaltyProgressPct = $loyaltyNextTier
     : 100;
 $loyaltyPtsToNext = $loyaltyNextTier ? max(0, $loyaltyNextMin - $loyaltyPoints) : 0;
 
-// Perks per tier
 // Redeemable rewards — show up to 3, sorted by points_cost ASC
 $_rewardsRes = mysqli_query($conn, "SELECT name, description, points_cost FROM loyalty_rewards WHERE is_active=1 ORDER BY points_cost ASC LIMIT 3");
 $loyaltyRewards = [];
@@ -128,7 +127,10 @@ function nightsBetween($in, $out)
 }
 function formatDate($d)
 {
-    return date('M j, Y', strtotime($d));
+    if (empty($d) || $d === '0000-00-00' || $d === '0000-00-00 00:00:00') return '—';
+    $ts = strtotime($d);
+    if ($ts === false || $ts <= 0) return '—';
+    return date('M j, Y', $ts);
 }
 function unitTypeToCategory($type)
 {
@@ -344,7 +346,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         <?php elseif ($key === 'messages'): ?>
                             <span class="sb-badge-pill nav-badge" data-rt="messages"
                                 style="display:none;background:#ef4444;"></span>
-                            <span class="sb-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            <span class="sb-chevron" data-msg-chevron><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
                                     <polyline points="9 18 15 12 9 6" />
                                 </svg></span>
@@ -479,7 +481,9 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
     <?php if ($activeBooking): ?>
         <div class="booking-banner" id="rt-active-booking-wrap"
             data-booking-id="<?php echo (int) $activeBooking['booking_id']; ?>"
-            data-unit-id="<?php echo (int) $activeBooking['unit_id']; ?>">
+            data-unit-id="<?php echo (int) $activeBooking['unit_id']; ?>"
+            data-checkin="<?php echo htmlspecialchars($activeBooking['checkin_date'] ?? ''); ?>"
+            data-checkout="<?php echo htmlspecialchars($activeBooking['checkout_date'] ?? ''); ?>">
             <div class="booking-banner-inner reveal">
                 <div class="bbl">
                     <div class="bb-icon">
@@ -494,7 +498,9 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                             <?php echo htmlspecialchars($activeBooking['unit_name'] ?? $activeBooking['unit_number']); ?> —
                             <?php echo htmlspecialchars($activeBooking['property_name']); ?>
                         </div>
-                        <div class="bb-dates">Check-in: <?php echo formatDate($activeBooking['checkin_date']); ?><span
+                        <div class="bb-dates"
+                            data-checkin="<?php echo htmlspecialchars($activeBooking['checkin_date'] ?? ''); ?>"
+                            data-checkout="<?php echo htmlspecialchars($activeBooking['checkout_date'] ?? ''); ?>">Check-in: <?php echo formatDate($activeBooking['checkin_date']); ?><span
                                 class="bb-date-sep"> &nbsp;·&nbsp; </span>Check-out:
                             <?php echo formatDate($activeBooking['checkout_date']); ?>
                         </div>
@@ -844,7 +850,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                                     <div
                                         style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6);color:#fff;">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                             stroke-width="1.5">
                                             <rect x="3" y="3" width="18" height="18" rx="2" />
                                             <circle cx="8.5" cy="8.5" r="1.5" />

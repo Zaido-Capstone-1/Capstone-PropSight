@@ -27,6 +27,7 @@ function getFinancialDataFromDB(mysqli $conn, int $year): array
 {
     $monthlyIncome = array_fill(0, 12, 0.0);
     $monthlyExpenses = array_fill(0, 12, 0.0);
+    $monthlyRefunds = array_fill(0, 12, 0.0);
     $monthlyMaint = array_fill(0, 12, 0.0);
     $monthlyUtil = array_fill(0, 12, 0.0);
     $monthlySal = array_fill(0, 12, 0.0);
@@ -65,6 +66,17 @@ function getFinancialDataFromDB(mysqli $conn, int $year): array
     }
     $stmt->close();
 
+    $stmt = $conn->prepare(
+        "SELECT MONTH(refund_date)-1 AS m, COALESCE(SUM(refund_amount),0) AS v
+         FROM refunds WHERE refund_status IN ('completed','processing') AND YEAR(refund_date)=? GROUP BY m"
+    );
+    $stmt->bind_param('i', $year);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($r = $res->fetch_assoc())
+        $monthlyRefunds[(int) $r['m']] = (float) $r['v'];
+    $stmt->close();
+
     $totalIncome = array_sum($monthlyIncome);
     $revenue_mix = [];
     $stmt = $conn->prepare(
@@ -92,7 +104,8 @@ function getFinancialDataFromDB(mysqli $conn, int $year): array
         $m = $i - 1;
         $rev = $monthlyIncome[$m];
         $exp = $monthlyExpenses[$m];
-        $pft = $rev - $exp;
+        $ref = $monthlyRefunds[$m];
+        $pft = $rev - $exp - $ref;
         $margin = $rev > 0 ? round($pft / $rev * 100, 1) : 0;
         $vs_prior = '—';
         if ($prev_profit !== null && $prev_profit != 0) {
@@ -103,6 +116,7 @@ function getFinancialDataFromDB(mysqli $conn, int $year): array
             $month_names[$i],
             '₱ ' . number_format($rev, 0),
             '₱ ' . number_format($exp, 0),
+            '₱ ' . number_format($ref, 0),
             '₱ ' . number_format($pft, 0),
             $margin . '%',
             $vs_prior,
@@ -113,6 +127,7 @@ function getFinancialDataFromDB(mysqli $conn, int $year): array
     return [
         'revenue' => array_values($monthlyIncome),
         'expenses' => array_values($monthlyExpenses),
+        'refunds' => array_values($monthlyRefunds),
         'maintenance' => array_values($monthlyMaint),
         'utilities' => array_values($monthlyUtil),
         'salaries' => array_values($monthlySal),
@@ -142,7 +157,15 @@ function calculateStatsFromDB(mysqli $conn, int $year): array
     $totalExpenses = (float) ($stmt->get_result()->fetch_assoc()['v'] ?? 0);
     $stmt->close();
 
-    $netProfit = $totalIncome - $totalExpenses;
+    $stmt = $conn->prepare(
+        "SELECT COALESCE(SUM(refund_amount),0) AS v FROM refunds WHERE refund_status IN ('completed','processing') AND YEAR(refund_date)=?"
+    );
+    $stmt->bind_param('i', $year);
+    $stmt->execute();
+    $totalRefunds = (float) ($stmt->get_result()->fetch_assoc()['v'] ?? 0);
+    $stmt->close();
+
+    $netProfit = $totalIncome - $totalExpenses - $totalRefunds;
     $roi = $totalIncome > 0 ? round($netProfit / $totalIncome * 100, 1) : 0;
 
     $stmt = $conn->prepare(
@@ -165,6 +188,7 @@ function calculateStatsFromDB(mysqli $conn, int $year): array
     return [
         'total_revenue' => $totalIncome,
         'total_expenses' => $totalExpenses,
+        'total_refunds' => $totalRefunds,
         'net_profit' => $netProfit,
         'roi' => $roi,
         'revenue_growth' => $prevInc > 0 ? round(($totalIncome - $prevInc) / $prevInc * 100, 1) : 0,
@@ -185,4 +209,4 @@ $financial_data = getFinancialDataFromDB($conn, $selected_year);
 $stats = calculateStatsFromDB($conn, $selected_year);
 
 if (!$financial_data)
-    $financial_data = ['revenue' => [], 'expenses' => [], 'maintenance' => [], 'utilities' => [], 'salaries' => [], 'admin' => [], 'revenue_mix' => [], 'pnl_summary' => []];
+    $financial_data = ['revenue' => [], 'expenses' => [], 'refunds' => [], 'maintenance' => [], 'utilities' => [], 'salaries' => [], 'admin' => [], 'revenue_mix' => [], 'pnl_summary' => []];

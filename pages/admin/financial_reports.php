@@ -80,6 +80,20 @@ require_once '../../lib/admin-queries/financial_reports_queries.php';  // ← al
         </div>
       </div>
 
+      <div class="stat-card sc-red">
+        <div class="stat-card-left">
+          <div class="stat-label">Total Refunds (YTD)</div>
+          <div class="stat-value" id="totalRefunds"><?php echo formatCurrency($stats['total_refunds']); ?></div>
+          <span class="stat-trend neutral" id="refundsNote">Completed &amp; Processing</span>
+        </div>
+        <div class="stat-icon-wrap red">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="1 4 1 10 7 10" />
+            <path d="M3.51 15a9 9 0 1 0 .49-3.67" />
+          </svg>
+        </div>
+      </div>
+
       <div class="stat-card sc-blue">
         <div class="stat-card-left">
           <div class="stat-label">Net Profit (YTD)</div>
@@ -156,6 +170,7 @@ require_once '../../lib/admin-queries/financial_reports_queries.php';  // ← al
               <th>Month</th>
               <th>Revenue</th>
               <th>Expenses</th>
+              <th>Refunds</th>
               <th>Net Profit</th>
               <th>Margin</th>
               <th>vs Prior Month</th>
@@ -165,33 +180,34 @@ require_once '../../lib/admin-queries/financial_reports_queries.php';  // ← al
             <?php if (!empty($financial_data['pnl_summary'])): ?>
               <?php foreach ($financial_data['pnl_summary'] as $row):
                 $isEmpty = $row[1] === '₱ 0' && $row[2] === '₱ 0';
-                $margin = (float) $row[4];
+                $margin = (float) $row[5];
                 $marginColor = $margin >= 80 ? '#2ECC71' : ($margin >= 50 ? '#2563c4' : ($margin > 0 ? '#deaf37' : '#94a3b8'));
                 ?>
                 <tr style="<?= $isEmpty ? 'opacity:0.4;' : '' ?>">
                   <td style="font-weight:600;"><?= htmlspecialchars($row[0]) ?></td>
                   <td style="color:var(--success);font-weight:600;"><?= htmlspecialchars($row[1]) ?></td>
                   <td style="color:var(--danger);"><?= htmlspecialchars($row[2]) ?></td>
-                  <td style="font-weight:700;"><?= htmlspecialchars($row[3]) ?></td>
+                  <td style="color:var(--danger);"><?= htmlspecialchars($row[3]) ?></td>
+                  <td style="font-weight:700;"><?= htmlspecialchars($row[4]) ?></td>
                   <td>
                     <?php if (!$isEmpty): ?>
                       <span
                         style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:<?= $marginColor ?>18;color:<?= $marginColor ?>;">
-                        <?= htmlspecialchars($row[4]) ?>
+                        <?= htmlspecialchars($row[5]) ?>
                       </span>
                     <?php else: ?>
                       <span style="color:#94a3b8;">—</span>
                     <?php endif; ?>
                   </td>
                   <td
-                    style="color:<?= str_contains($row[5], '▲') ? 'var(--success)' : (str_contains($row[5], '▼') ? 'var(--danger)' : 'var(--text-soft)') ?>;font-weight:600;">
-                    <?= htmlspecialchars($row[5]) ?>
+                    style="color:<?= str_contains($row[6], '▲') ? 'var(--success)' : (str_contains($row[6], '▼') ? 'var(--danger)' : 'var(--text-soft)') ?>;font-weight:600;">
+                    <?= htmlspecialchars($row[6]) ?>
                   </td>
                 </tr>
               <?php endforeach; ?>
             <?php else: ?>
               <tr>
-                <td colspan="6" style="text-align:center;padding:20px;color:var(--text-soft);">
+                <td colspan="7" style="text-align:center;padding:20px;color:var(--text-soft);">
                   No data available for <?= $selected_year ?>
                 </td>
               </tr>

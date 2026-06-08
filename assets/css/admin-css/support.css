@@ -76,7 +76,6 @@
     color: #16a34a;
 }
 
-/* ── Subject cell ───────────────────────────────────────────────── */
 .subject-cell {
     max-width: 260px;
 }
@@ -98,7 +97,6 @@
     display: block;
 }
 
-/* ── User cell ──────────────────────────────────────────────────── */
 .user-cell {
     display: flex;
     align-items: center;
@@ -134,11 +132,13 @@
 .user-name {
     font-weight: 600;
     font-size: 0.84rem;
+    text-align: left !important;
 }
 
 .user-email {
     font-size: 0.74rem;
     color: var(--text-soft, #6b7280);
+    text-align: left !important;
 }
 
 .tkt-id {
@@ -146,7 +146,6 @@
     font-weight: 600;
 }
 
-/* ── Badges ─────────────────────────────────────────────────────── */
 .badge-open {
     background: #fef2f2;
     color: #ef4444;
@@ -182,7 +181,6 @@
     color: #16a34a;
 }
 
-/* ── Pagination ─────────────────────────────────────────────────── */
 .sm-page-btn {
     padding: 6px 14px;
     border: 1.5px solid var(--border, #e5e7eb);
@@ -208,6 +206,7 @@
     pointer-events: none;
 }
 
+/* ═══ REDESIGNED TICKET MODAL ═══ */
 .sm-modal-overlay {
     position: fixed;
     inset: 0;
@@ -229,7 +228,6 @@
     pointer-events: all;
 }
 
-/* ── Modal shell ── */
 .sm-modal {
     background: var(--card-bg, #fff);
     border-radius: 20px;
@@ -238,9 +236,7 @@
     max-height: 88vh;
     display: flex;
     flex-direction: column;
-    box-shadow:
-        0 0 0 1px rgba(10, 22, 40, 0.07),
-        0 24px 64px rgba(10, 22, 40, 0.22);
+    box-shadow: 0 0 0 1px rgba(10, 22, 40, .07), 0 24px 64px rgba(10, 22, 40, .22);
     overflow: hidden;
     transform: translateY(10px) scale(0.98);
     transition: transform 0.22s ease;
@@ -250,7 +246,6 @@
     transform: translateY(0) scale(1);
 }
 
-/* ── Header ── */
 .sm-modal-head {
     display: flex;
     align-items: flex-start;
@@ -352,7 +347,6 @@
     color: #fff;
 }
 
-/* ── Detail grid (2×2 info cards) ── */
 .sm-detail-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -392,7 +386,6 @@
     margin-top: 2px;
 }
 
-/* ── Scrollable body ── */
 .sm-modal-body {
     flex: 1;
     overflow-y: auto;
@@ -402,7 +395,6 @@
     gap: 18px;
 }
 
-/* ── Section label ── */
 .sm-section-label {
     font-size: 0.65rem;
     font-weight: 700;
@@ -422,7 +414,6 @@
     background: var(--border, #e5e7eb);
 }
 
-/* ── Message thread ── */
 .sm-msg-thread {
     display: flex;
     flex-direction: column;
@@ -486,7 +477,6 @@
     padding: 0 2px;
 }
 
-/* ── Reply area ── */
 .sm-reply-area {
     display: flex;
     flex-direction: column;
@@ -520,7 +510,6 @@
     color: var(--text-soft, #94a3b8);
 }
 
-/* ── Status + send row ── */
 .sm-status-row {
     display: flex;
     align-items: center;
@@ -553,7 +542,6 @@
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
 }
 
-/* ── Action buttons ── */
 .sm-action-btn {
     display: inline-flex;
     align-items: center;
@@ -594,7 +582,6 @@
     background: var(--gray-light, #f8fafc);
 }
 
-/* ── Responsive ── */
 @media (max-width: 600px) {
     .sm-modal {
         border-radius: 16px;
@@ -705,7 +692,6 @@
 
     .sm-modal {
         max-width: 95vw;
-        padding: 20px 18px;
     }
 
     .card-header-with-filters {
@@ -762,7 +748,6 @@
     }
 }
 
-/* ── Ticket table footer ── */
 #sptTableFoot td {
     padding: 0;
     border-top: 1.5px solid var(--border, #e5e7eb);
@@ -859,7 +844,6 @@
     user-select: none;
 }
 
-/* ── Payments-style custom dropdown ── */
 .inv-status-dropdown-wrap {
     position: relative;
 }
@@ -934,7 +918,7 @@
     cursor: pointer;
     border-radius: 7px;
     text-align: left;
-    transition: background .12s;
+    transition: background .12px;
     white-space: nowrap;
     box-sizing: border-box;
 }
@@ -955,4 +939,161 @@
     border-radius: 50%;
     flex-shrink: 0;
     display: inline-block;
+}
+
+/* ── Delete button ── */
+.ts-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 11px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: all .14s;
+    white-space: nowrap;
+}
+
+.ts-btn-delete {
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 5px 8px;
+}
+
+.ts-btn-delete:hover {
+    background: #fecaca;
+}
+
+/* ═══ CONFIRMATION MODAL ═══ */
+.confirm-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 22, 40, 0.5);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+}
+
+.confirm-modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.confirm-modal {
+    background: var(--card-bg, #fff);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 0 0 1px rgba(10, 22, 40, .07), 0 20px 50px rgba(10, 22, 40, .22);
+    overflow: hidden;
+    transform: translateY(8px) scale(0.97);
+    transition: transform 0.18s ease;
+}
+
+.confirm-modal-overlay.open .confirm-modal {
+    transform: translateY(0) scale(1);
+}
+
+.confirm-modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #fee2e2;
+    margin: 32px auto 18px;
+}
+
+.confirm-modal-icon svg {
+    width: 26px;
+    height: 26px;
+    color: #dc2626;
+    stroke: #dc2626;
+}
+
+.confirm-modal-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark, #0a1628);
+    text-align: center;
+    padding: 0 28px;
+    margin-bottom: 8px;
+}
+
+.confirm-modal-msg {
+    font-size: 0.83rem;
+    color: var(--text-soft, #64748b);
+    text-align: center;
+    padding: 0 28px 28px;
+    line-height: 1.6;
+}
+
+.confirm-modal-msg strong {
+    color: var(--text-dark, #0a1628);
+    font-weight: 600;
+}
+
+.confirm-modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 24px 28px;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.confirm-btn-cancel {
+    flex: none;
+    padding: 8px 22px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    background: var(--card-bg, #fff);
+    color: var(--text-dark, #0a1628);
+    border: 1.5px solid var(--border, #e0e0e0);
+    border-radius: 8px;
+    transition: all 0.14s;
+}
+
+.confirm-btn-cancel:hover {
+    background: var(--hover, #f1f5f9);
+    border-color: #bbb;
+}
+
+.confirm-btn-delete {
+    flex: none;
+    padding: 8px 22px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    transition: background 0.14s, transform 0.12s;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.30);
+}
+
+.confirm-btn-delete:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+}
+
+.confirm-btn-delete:active {
+    transform: translateY(0);
 }

@@ -52,11 +52,17 @@ $dbPriority = $priorityMap[$priority] ?? 'medium';
 
 $fullDescription = mysqli_real_escape_string($conn, "[{$issueType}] {$subject}\n\n{$message}");
 $dbPriority = mysqli_real_escape_string($conn, $dbPriority);
-$today = date('Y-m-d');
+// Use client's local date if provided (avoids UTC offset issues for non-UTC users)
+$clientDate = trim($input['client_date'] ?? '');
+if ($clientDate && preg_match('/^\d{4}-\d{2}-\d{2}$/', $clientDate)) {
+    $today = $clientDate;
+} else {
+    $today = gmdate('Y-m-d');
+}
 
 $insert = mysqli_query($conn, "
     INSERT INTO maintenance_requests (tenant_id, unit_id, issue_description, request_status, priority, request_date)
-    VALUES ($tenantId, $unitId, '$fullDescription', 'pending', '$dbPriority', '$today')
+    VALUES ($tenantId, $unitId, '$fullDescription', 'open', '$dbPriority', '$today')
 ");
 
 if ($insert) {

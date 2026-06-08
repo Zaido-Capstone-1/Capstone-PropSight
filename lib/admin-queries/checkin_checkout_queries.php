@@ -38,7 +38,7 @@ $stmt = $conn->prepare(
     "SELECT b.booking_id, b.checkin_date, b.checkout_date, b.status, b.guests,
             CONCAT(u.first_name,' ',u.last_name) AS guest_name, u.email,
             COALESCE(un.unit_name, CONCAT(p.property_name,' — ',un.unit_number)) AS unit_label,
-            p.property_name, b.checkout_status
+            p.property_name, b.checkout_status, b.checkin_status
      FROM   bookings b
      JOIN   users u  ON u.user_id  = b.user_id
      JOIN   units un ON un.unit_id = b.unit_id

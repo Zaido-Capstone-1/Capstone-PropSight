@@ -302,10 +302,6 @@ function fmtPeso(v) {
 }
 
 function refreshPaymentsTable() {
-    // Reset month filter to 'all' so deleted records don't leave an empty view
-    document.getElementById('monthPickerValue').value = 'all';
-    document.getElementById('monthPickerLabel').textContent = 'All Time';
-
     fetch('../../api/payments.php?status=all&month=all&_=' + Date.now(), { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
@@ -327,17 +323,20 @@ function renderPaymentsTable(payments) {
     }
 
     const badgeMap = { paid: ['success', 'Paid'], pending: ['pending', 'Pending'], late: ['danger', 'Overdue'] };
+    const avatarStyle = 'width:36px;height:36px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#0f2744,#1a3a6b);color:#e8c86a;font-weight:700;font-size:0.82rem;display:flex;align-items:center;justify-content:center;';
 
     tbody.innerHTML = payments.map(p => {
         const [badgeCls, badgeLabel] = badgeMap[p.payment_status] || ['pending', p.payment_status];
         const displayName = p.full_name || p.tenant_name || '—';
-        const initial = displayName.charAt(0).toUpperCase();
+        const parts = displayName.trim().split(' ').filter(Boolean);
+        const initial = (parts[0] ? parts[0][0].toUpperCase() : '') + (parts.length > 1 ? parts[parts.length - 1][0].toUpperCase() : '');
         const monthVal = (p.payment_date || '').substring(0, 7);
         const searchVal = (p.payment_id + ' ' + displayName + ' ' + (p.unit_number || '')).toLowerCase();
-        const photoHtml = p.profile_photo
-            ? `<img src="../../${p.profile_photo}" alt="${initial}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-               <div class="avatar" style="display:none;">${initial}</div>`
-            : `<div class="avatar">${initial}</div>`;
+        const hasPhoto = p.profile_photo && p.profile_photo !== 'null' && p.profile_photo.trim() !== '';
+        const photoHtml = hasPhoto
+            ? `<img src="../../${p.profile_photo}" alt="${initial}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+               <div style="${avatarStyle}display:none;">${initial}</div>`
+            : `<div style="${avatarStyle}">${initial}</div>`;
         const payDate = p.payment_date ? new Date(p.payment_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
         const payNum = '#PAY-' + String(p.payment_id).padStart(3, '0');
         const dataJson = JSON.stringify(p).replace(/"/g, '&quot;');

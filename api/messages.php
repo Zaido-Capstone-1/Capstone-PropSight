@@ -78,8 +78,10 @@ if ($method === 'GET') {
             ORDER BY m.created_at ASC
         ");
         $msgs = [];
-        while ($row = mysqli_fetch_assoc($res))
+        while ($row = mysqli_fetch_assoc($res)) {
+            fmt_dt_row($row);
             $msgs[] = $row;
+        }
 
         $userRow = mysqli_fetch_assoc(mysqli_query(
             $conn,
@@ -117,8 +119,10 @@ if ($method === 'GET') {
             ORDER BY m.created_at ASC
         ");
         $msgs = [];
-        while ($row = mysqli_fetch_assoc($res))
+        while ($row = mysqli_fetch_assoc($res)) {
+            fmt_dt_row($row);
             $msgs[] = $row;
+        }
 
         echo json_encode(['success' => true, 'messages' => $msgs, 'ts' => gmdate('Y-m-d H:i:s')]);
         exit;

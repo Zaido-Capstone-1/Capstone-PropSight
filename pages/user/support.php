@@ -257,7 +257,9 @@ $faqs = [
                                 <div style="flex:1;min-width:0;">
                                     <div class="ticket-subject"><?php echo $mDesc; ?></div>
                                     <div class="ticket-meta">
-                                        <?php echo date('M j, Y', strtotime($mr['request_date'])); ?> &middot;
+                                        <span class="ps-date" data-date="<?php echo htmlspecialchars($mr['request_date']); ?>">
+                                            <?php echo htmlspecialchars($mr['request_date']); ?>
+                                        </span> &middot;
                                         <span class="ticket-num">Priority: <?php echo ucfirst($mr['priority']); ?></span>
                                     </div>
                                 </div>

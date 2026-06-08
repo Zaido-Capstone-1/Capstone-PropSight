@@ -72,6 +72,7 @@ while ($r = mysqli_fetch_assoc($bRes)) {
         $st = 'upcoming';
     $r['_display_status'] = $st;
     $r['_raw_status'] = $r['status'];
+        fmt_dt_row($r);
     $bookings[] = $r;
 }
 

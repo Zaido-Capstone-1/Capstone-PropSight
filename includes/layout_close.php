@@ -57,6 +57,7 @@
   });
 </script>
 <script src="../../assets/js/admin/admin-actions.js"></script>
+<script src="../../assets/js/datetime.js"></script>
 <script src="../../assets/js/toast.js"></script>
 <script>window._psToastReady = true;</script>
 <script>

@@ -130,7 +130,7 @@ function renderMessages(msgs, clearFirst = false) {
 
     msgs.forEach(m => {
         const mine = parseInt(m.from_user) === window.__PS_USER_MSG__.userId;
-        const d = new Date((m.created_at || '').replace(' ', 'T') + 'Z');
+        const d = psDate(m.created_at);
         const dateStr = d.toLocaleDateString('en-PH', {
             weekday: 'long',
             month: 'long',
@@ -769,7 +769,7 @@ function refreshThreadBadges() {
                 // Update timestamp
                 const time = thread.querySelector('.ti-time');
                 if (time && t.last_time) {
-                    const d = new Date((t.last_time || '').replace(' ', 'T') + 'Z');
+                    const d = psDate(t.last_time);
                     time.textContent = isNaN(d) ? '' :
                         (Date.now() - d < 86400000)
                             ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

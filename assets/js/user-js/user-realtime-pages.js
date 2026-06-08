@@ -38,7 +38,11 @@
 
     function _fmtDate(iso) {
         if (!iso) return '';
-        const d = new Date(iso + 'T00:00:00');
+        // Strip any timezone suffix (e.g. "+00:00") — fmt_dt_rows() in the API
+        // appends "+00:00" to DATE columns, which breaks new Date(iso + 'T00:00:00').
+        const datePart = String(iso).slice(0, 10);
+        const d = new Date(datePart + 'T00:00:00');
+        if (isNaN(d.getTime())) return String(iso);
         return d.toLocaleDateString('en-US', {
             month: 'short',
             day: '2-digit',

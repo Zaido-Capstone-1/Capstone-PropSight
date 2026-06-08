@@ -121,9 +121,9 @@ function renderMsgs(msgs, clearFirst) {
     msgs.forEach(m => {
         const mine = parseInt(m.from_user) === ADMIN_ID;
         // MySQL returns "YYYY-MM-DD HH:MM:SS" — replace space with T so all browsers parse it correctly
-        const d = new Date((m.created_at || '').replace(' ', 'T') + 'Z');
-        const dateStr = isNaN(d) ? '' : d.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' });
-        const timeStr = isNaN(d) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const d = psDate(m.created_at);
+        const dateStr = d ? d.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' }) : '';
+        const timeStr = d ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
         if (dateStr !== lastDate) {
             const div = document.createElement('div');
             div.className = 'msg-date-label';
@@ -614,7 +614,7 @@ function refreshThreadBadges() {
                 // Update timestamp
                 const time = thread.querySelector('.msg-thread-time');
                 if (time && t.last_time) {
-                    const d = new Date((t.last_time || '').replace(' ', 'T') + 'Z');
+                    const d = psDate(t.last_time);
                     time.textContent = isNaN(d) ? '' :
                         (Date.now() - d < 86400000)
                             ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

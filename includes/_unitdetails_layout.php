@@ -59,17 +59,8 @@
                     </div>
                 </div>
                 <div class="sb-right">
-                    <?php if ($key === 'bookings'): ?>
-                        <span class="sb-badge-pill nav-badge" data-rt="bookings"
-                            style="<?php echo $item['badge'] ? '' : 'display:none;'; ?>background:#ef4444;">
-                            <?php echo $item['badge'] ?? '0'; ?>
-                        </span>
-                        <span class="sb-chevron" <?php echo $item['badge'] ? 'style="display:none;"' : ''; ?>
-                            data-bookings-chevron>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="9 18 15 12 9 6" />
-                            </svg>
-                        </span>
+                    <?php if ($item['badge']): ?>
+                        <span class="sb-badge-pill"><?php echo $item['badge']; ?></span>
                     <?php elseif ($key === 'messages'): ?>
                         <span class="sb-badge-pill nav-badge" data-rt="messages"
                             style="display:none;background:#ef4444;"></span>
@@ -77,10 +68,6 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="9 18 15 12 9 6" />
                             </svg>
-                        </span>
-                    <?php elseif ($item['badge']): ?>
-                        <span class="sb-badge-pill">
-                            <?php echo $item['badge']; ?>
                         </span>
                     <?php else: ?>
                         <span class="sb-chevron">

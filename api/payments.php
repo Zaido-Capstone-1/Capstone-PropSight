@@ -69,8 +69,10 @@ if ($method === 'GET') {
 
     $res = mysqli_query($conn, $sql);
     $records = [];
-    while ($row = mysqli_fetch_assoc($res))
+    while ($row = mysqli_fetch_assoc($res)) {
+        fmt_dt_row($row);
         $records[] = $row;
+    }
 
     // 6-month trend
     $trend = [];
@@ -120,7 +122,6 @@ if ($method === 'POST') {
 
         if (mysqli_query($conn, $sql)) {
             $newId = mysqli_insert_id($conn);
-            // Also create a transaction entry
             $ref = 'PMT-' . $newId;
             mysqli_query($conn, "INSERT INTO transactions (reference_no,description,category,type,amount,transaction_date,booking_id)
                 VALUES ('$ref','Payment #$newId for Booking #$booking_id','Room Revenue','Income',$amount,'$dateEsc',$booking_id)");
@@ -166,6 +167,18 @@ if ($method === 'POST') {
             echo json_encode(['success' => false, 'message' => 'Invalid ID.']);
             exit;
         }
+
+        $pRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT booking_id, notes FROM payments WHERE payment_id=$pid LIMIT 1"));
+        if ($pRow) {
+            $notes = $pRow['notes'] ?? '';
+            if (str_starts_with($notes, 'INV-PMT-')) {
+                $txRef = mysqli_real_escape_string($conn, $notes);
+            } else {
+                $txRef = 'PMT-' . $pid;
+            }
+            mysqli_query($conn, "DELETE FROM transactions WHERE reference_no = '$txRef'");
+        }
+
         if (mysqli_query($conn, "DELETE FROM payments WHERE payment_id=$pid")) {
             echo json_encode(['success' => true, 'message' => 'Payment deleted.']);
         } else {

@@ -707,9 +707,15 @@ nav a.active {
     font-size: .64rem;
     font-weight: 700;
     padding: 2px 8px;
+    min-width: 20px;
+    height: 20px;
     border-radius: var(--r-pill);
     background: var(--navy-800);
     color: var(--sand);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .sb-chevron svg {

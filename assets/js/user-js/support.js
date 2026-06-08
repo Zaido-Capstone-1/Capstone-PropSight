@@ -269,7 +269,7 @@ function loadAndOpenTicket(ticketId) {
                                 <span class="ticket-msg-role">${Number(msg.is_admin) ? 'Support' : 'You'}</span>
                                 <span>${escHtml(msg.sender_name || (Number(msg.is_admin) ? 'Support Team' : 'You'))}</span>
                                 <span>·</span>
-                                <span>${escHtml(msg.created_at || '')}</span>
+                                <span>${psFmtDateTime(msg.created_at)}</span>
                             </div>
                             <div class="ticket-msg-body">${escHtml(msg.body || '')}</div>
                         </div>
@@ -394,7 +394,7 @@ window.addEventListener('ps:new_messages', function (e) {
                         <span class="ticket-msg-role">Support</span>
                         <span>${escHtml(msg.sender_name || 'Support Team')}</span>
                         <span>·</span>
-                        <span>${escHtml(msg.created_at || 'Just now')}</span>
+                        <span>${msg.created_at ? psFmtDateTime(msg.created_at) : 'Just now'}</span>
                     </div>
                     <div class="ticket-msg-body">${escHtml(msg.body || msg.message || '')}</div>`;
                 msgEl.style.background = '#eff6ff';
@@ -455,10 +455,13 @@ function submitMaintenance() {
         return new Promise(resolve => setTimeout(resolve, remaining));
     };
 
+    // Pass client's local date so server stores the correct date regardless of UTC offset
+    const clientDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local tz
+
     fetch('../../api/submit_maintenance.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ issue_type: issueType, subject, message, priority })
+        body: JSON.stringify({ issue_type: issueType, subject, message, priority, client_date: clientDate })
     })
         .then(r => r.json())
         .then(async (data) => {
@@ -623,6 +626,8 @@ function submitModalMaintenance() {
     fd.append('priority', priority);
     fd.append('message', message);
     fd.append('issue_type', issueType);
+    // Pass client's local date so server stores the correct date regardless of UTC offset
+    fd.append('client_date', new Date().toLocaleDateString('en-CA')); // YYYY-MM-DD in local tz
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
 
     const apiUrl = window.__PS_USER_SUPPORT_API__ ?? '../../api/user/support.php';

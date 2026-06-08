@@ -14,7 +14,7 @@ if ($_SESSION['role'] !== 'admin') {
 }
 
 $period = $_GET['period'] ?? '12months'; // 12months | 6months | thisyear
-$now    = new DateTime();
+$now = new DateTime();
 
 switch ($period) {
     case '6months':
@@ -27,31 +27,41 @@ switch ($period) {
         $from = (clone $now)->modify('-12 months')->format('Y-m-01');
 }
 $fromEsc = mysqli_real_escape_string($conn, $from);
-$year    = (int)$now->format('Y');
+$year = (int) $now->format('Y');
 
 // ── Total Revenue ─────────────────────────────────────────────
-$rev = (float)(mysqli_fetch_assoc(mysqli_query($conn,
+$rev = (float) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
     "SELECT COALESCE(SUM(amount),0) AS v FROM transactions
-     WHERE type='Income' AND transaction_date >= '$fromEsc'"))['v'] ?? 0);
+     WHERE type='Income' AND transaction_date >= '$fromEsc'"
+))['v'] ?? 0);
 
-$revPrev = (float)(mysqli_fetch_assoc(mysqli_query($conn,
+$revPrev = (float) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
     "SELECT COALESCE(SUM(amount),0) AS v FROM transactions
      WHERE type='Income' AND transaction_date >= DATE_SUB('$fromEsc', INTERVAL 12 MONTH)
-       AND transaction_date < '$fromEsc'"))['v'] ?? 0);
+       AND transaction_date < '$fromEsc'"
+))['v'] ?? 0);
 
 // ── Bookings ──────────────────────────────────────────────────
-$totalBookings = (int)(mysqli_fetch_assoc(mysqli_query($conn,
-    "SELECT COUNT(*) AS c FROM bookings WHERE created_at >= '$fromEsc'"))['c'] ?? 0);
+$totalBookings = (int) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
+    "SELECT COUNT(*) AS c FROM bookings WHERE created_at >= '$fromEsc'"
+))['c'] ?? 0);
 
-$cancelledBookings = (int)(mysqli_fetch_assoc(mysqli_query($conn,
-    "SELECT COUNT(*) AS c FROM bookings WHERE status='cancelled' AND created_at >= '$fromEsc'"))['c'] ?? 0);
+$cancelledBookings = (int) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
+    "SELECT COUNT(*) AS c FROM bookings WHERE status='cancelled' AND created_at >= '$fromEsc'"
+))['c'] ?? 0);
 
 $cancelRate = $totalBookings > 0 ? round(($cancelledBookings / $totalBookings) * 100, 1) : 0;
 
 // ── Occupancy ─────────────────────────────────────────────────
-$totalUnits    = (int)(mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM units"))['c'] ?? 1);
-$occupiedUnits = (int)(mysqli_fetch_assoc(mysqli_query($conn,
-    "SELECT COUNT(*) AS c FROM units WHERE status='occupied'"))['c'] ?? 0);
+$totalUnits = (int) (mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM units"))['c'] ?? 1);
+$occupiedUnits = (int) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
+    "SELECT COUNT(*) AS c FROM units WHERE status='occupied'"
+))['c'] ?? 0);
 $occupancyRate = $totalUnits > 0 ? round(($occupiedUnits / $totalUnits) * 100) : 0;
 
 // ── Revenue by Property ───────────────────────────────────────
@@ -66,7 +76,10 @@ $revByPropRes = mysqli_query($conn, "
     LIMIT 8
 ");
 $revByProp = [];
-while ($row = mysqli_fetch_assoc($revByPropRes)) $revByProp[] = $row;
+while ($row = mysqli_fetch_assoc($revByPropRes)) {
+    fmt_dt_row($row);
+    $revByProp[] = $row;
+}
 
 // ── Monthly Occupancy ─────────────────────────────────────────
 $monthlyOccRes = mysqli_query($conn, "
@@ -82,7 +95,10 @@ $monthlyOccRes = mysqli_query($conn, "
     ORDER BY yr, mn
 ");
 $monthlyOcc = [];
-while ($row = mysqli_fetch_assoc($monthlyOccRes)) $monthlyOcc[] = $row;
+while ($row = mysqli_fetch_assoc($monthlyOccRes)) {
+    fmt_dt_row($row);
+    $monthlyOcc[] = $row;
+}
 
 // ── Revenue Trend (monthly) ───────────────────────────────────
 $revTrendRes = mysqli_query($conn, "
@@ -98,7 +114,8 @@ $revTrendRes = mysqli_query($conn, "
     ORDER BY yr, mn
 ");
 $revTrend = [];
-while ($row = mysqli_fetch_assoc($revTrendRes)) $revTrend[] = $row;
+while ($row = mysqli_fetch_assoc($revTrendRes))
+    $revTrend[] = $row;
 
 // ── Top Units by Revenue ──────────────────────────────────────
 $topUnitsRes = mysqli_query($conn, "
@@ -116,7 +133,8 @@ $topUnitsRes = mysqli_query($conn, "
     LIMIT 5
 ");
 $topUnits = [];
-while ($row = mysqli_fetch_assoc($topUnitsRes)) $topUnits[] = $row;
+while ($row = mysqli_fetch_assoc($topUnitsRes))
+    $topUnits[] = $row;
 
 // ── Revenue pct change ────────────────────────────────────────
 $revChange = $revPrev > 0 ? round((($rev - $revPrev) / $revPrev) * 100, 1) : ($rev > 0 ? 100 : 0);
@@ -124,18 +142,18 @@ $revChange = $revPrev > 0 ? round((($rev - $revPrev) / $revPrev) * 100, 1) : ($r
 echo json_encode([
     'success' => true,
     'kpis' => [
-        'total_revenue'   => $rev,
-        'revenue_change'  => $revChange,
-        'occupancy_rate'  => $occupancyRate,
-        'total_bookings'  => $totalBookings,
+        'total_revenue' => $rev,
+        'revenue_change' => $revChange,
+        'occupancy_rate' => $occupancyRate,
+        'total_bookings' => $totalBookings,
         'cancellation_rate' => $cancelRate,
-        'total_units'     => $totalUnits,
-        'occupied_units'  => $occupiedUnits,
+        'total_units' => $totalUnits,
+        'occupied_units' => $occupiedUnits,
     ],
     'charts' => [
         'revenue_by_property' => $revByProp,
-        'monthly_occupancy'   => $monthlyOcc,
-        'revenue_trend'       => $revTrend,
+        'monthly_occupancy' => $monthlyOcc,
+        'revenue_trend' => $revTrend,
     ],
     'top_units' => $topUnits,
 ]);

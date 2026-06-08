@@ -43,15 +43,16 @@ for ($i = -3; $i <= 3; $i++) {
 $schedule = [];
 $scheduleRes = mysqli_query(
   $conn,
-  "SELECT m.request_id, m.issue_description, m.priority, m.request_status, m.request_date, p.property_name
+  "SELECT m.request_id, m.issue_description, m.priority, m.request_status, m.request_date, m.created_at, p.property_name
    FROM maintenance_requests m
    LEFT JOIN units u ON u.unit_id = m.unit_id
    LEFT JOIN properties p ON p.property_id = u.property_id
    WHERE m.request_status IN ('open','pending','in_progress')
-   ORDER BY m.request_date ASC
+   ORDER BY m.created_at DESC
    LIMIT 4"
 );
 while ($scheduleRes && ($row = mysqli_fetch_assoc($scheduleRes))) {
+  fmt_dt_row($row);
   $schedule[] = $row;
 }
 
@@ -64,6 +65,7 @@ $activityRes = mysqli_query(
    LIMIT 5"
 );
 while ($activityRes && ($row = mysqli_fetch_assoc($activityRes))) {
+  fmt_dt_row($row);
   $activities[] = $row;
 }
 
@@ -80,11 +82,12 @@ $notifMsgRes = mysqli_query(
    LIMIT 5"
 );
 while ($notifMsgRes && ($n = mysqli_fetch_assoc($notifMsgRes))) {
+  fmt_dt_row($n);
   $notifications[] = [
     'id' => 'msg-' . (int) $n['id'],
     'type' => 'message',
     'text' => 'New message from ' . trim((string) ($n['actor'] ?? 'User')),
-    'ts' => (string) ($n['created_at'] ?? date('Y-m-d H:i:s')),
+    'ts' => (string) ($n['created_at'] ?? gmdate('Y-m-d H:i:s')),
     'path' => 'messages.php',
   ];
 }
@@ -98,21 +101,22 @@ $notifBookingRes = mysqli_query(
    LIMIT 5"
 );
 while ($notifBookingRes && ($n = mysqli_fetch_assoc($notifBookingRes))) {
+  fmt_dt_row($n);
   $notifications[] = [
     'id' => 'booking-' . (int) $n['booking_id'],
     'type' => 'booking',
     'text' => 'Pending booking #' . str_pad((string) $n['booking_id'], 4, '0', STR_PAD_LEFT),
-    'ts' => (string) ($n['created_at'] ?? date('Y-m-d H:i:s')),
+    'ts' => (string) ($n['created_at'] ?? gmdate('Y-m-d H:i:s')),
     'path' => 'reservations.php?status=pending',
   ];
 }
 
 $notifTaskRes = mysqli_query(
   $conn,
-  "SELECT request_id, issue_description, request_date
+  "SELECT request_id, issue_description, created_at
    FROM maintenance_requests
    WHERE request_status IN ('open','in_progress')
-   ORDER BY request_date DESC
+   ORDER BY created_at DESC
    LIMIT 5"
 );
 while ($notifTaskRes && ($n = mysqli_fetch_assoc($notifTaskRes))) {
@@ -120,13 +124,13 @@ while ($notifTaskRes && ($n = mysqli_fetch_assoc($notifTaskRes))) {
     'id' => 'task-' . (int) $n['request_id'],
     'type' => 'task',
     'text' => 'Task: ' . trim((string) ($n['issue_description'] ?: 'Maintenance request')),
-    'ts' => (string) ($n['request_date'] ?? date('Y-m-d H:i:s')),
+    'ts' => !empty($n['created_at']) ? $n['created_at'] . '+00:00' : gmdate('Y-m-d H:i:s') . '+00:00',
     'path' => 'task_summary.php?status=open',
   ];
 }
 
 usort($notifications, function ($a, $b) {
-  return strtotime($b['ts']) <=> strtotime($a['ts']);
+  return strtotime(str_replace('+00:00', '', $b['ts'])) <=> strtotime(str_replace('+00:00', '', $a['ts']));
 });
 $notifications = array_slice($notifications, 0, 5);
 
@@ -185,7 +189,8 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
       </svg>
-      <span class="notif-dot" id="adminNotifDot" style="<?= empty($notifications) ? 'display:none;' : '' ?>"><?= count($notifications) ?></span>
+      <span class="notif-dot" id="adminNotifDot"
+        style="<?= empty($notifications) ? 'display:none;' : '' ?>"><?= count($notifications) ?></span>
     </div>
 
     <div id="adminNotifDropdown"
@@ -206,8 +211,21 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
               data-path="<?= htmlspecialchars($n['path'] ?? '') ?>"
               style="padding:10px 12px;border-bottom:1px solid #f8fafc;cursor:pointer;">
               <div style="font-size:12px;color:#0f172a;line-height:1.35;"><?= htmlspecialchars($n['text']) ?></div>
-              <div style="font-size:11px;color:#94a3b8;margin-top:2px;">
-                <?= htmlspecialchars(date('M j, g:i A', strtotime($n['ts']))) ?>
+              <div style="font-size:11px;color:#94a3b8;margin-top:2px;" data-ts="<?= htmlspecialchars($n['ts']) ?>">
+                <?php
+                // Relative time — computed in PHP for initial render, JS re-renders on load
+                $_ts_raw = str_replace('+00:00', '', $n['ts']);
+                $_epoch = strtotime($_ts_raw);
+                $_sec = max(0, time() - $_epoch);
+                if ($_sec < 60)
+                  echo 'Just now';
+                elseif ($_sec < 3600)
+                  echo floor($_sec / 60) . 'm ago';
+                elseif ($_sec < 86400)
+                  echo floor($_sec / 3600) . 'h ago';
+                else
+                  echo floor($_sec / 86400) . 'd ago';
+                ?>
               </div>
             </div>
           <?php endforeach; ?>
@@ -255,22 +273,48 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
         </div>
       <?php else: ?>
         <?php foreach ($schedule as $slot):
-          $slotTs = !empty($slot['request_date']) ? strtotime($slot['request_date']) : false;
-          $timeLabel = $slotTs ? date('g:i a', $slotTs) : '--';
+          // Use created_at for time display — convert UTC to local PHT (Asia/Manila)
+          $timeLabel = '--';
+          if (!empty($slot['created_at'])) {
+            try {
+              $utcDt = new DateTime(str_replace('+00:00', '', $slot['created_at']), new DateTimeZone('UTC'));
+              $utcDt->setTimezone(new DateTimeZone('Asia/Manila'));
+              $timeLabel = $utcDt->format('g:i a');
+            } catch (Exception $e) {
+              $timeLabel = '--';
+            }
+          }
           $prio = strtolower((string) ($slot['priority'] ?? 'pending'));
           $eventClass = $prio === 'high' || $prio === 'urgent' || ($slot['request_status'] ?? '') === 'open'
             ? 'coral'
             : (($slot['request_status'] ?? '') === 'in_progress' ? 'teal' : 'dark');
           ?>
+          <?php
+          // Extract task type from [Type] prefix, same as JS normalizeTask()
+          $rawDesc = (string) ($slot['issue_description'] ?? '');
+          preg_match('/^\[([^\]]+)\]/', $rawDesc, $typeMatch);
+          $taskType = strtolower($typeMatch ? $typeMatch[1] : 'other');
+          $taskTypeLabel = ucfirst($taskType);
+          $propName = htmlspecialchars($slot['property_name'] ?? '');
+
+          // Icons matching right-panel.js lookup map
+          $taskIcons = [
+            'plumbing' => '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3-3a1 1 0 0 0 0-1.4l-1.6-1.6a1 1 0 0 0-1.4 0l-3 3z"/><path d="M3 21l9.3-9.3"/><path d="M9.4 14.6 3 21"/></svg>',
+            'electrical' => '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+            'air conditioning' => '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07"/></svg>',
+            'furniture' => '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>',
+            'other' => '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+          ];
+          $taskIcon = $taskIcons[$taskType] ?? $taskIcons['other'];
+          ?>
           <div class="schedule-slot">
             <div class="time-col"><?= htmlspecialchars($timeLabel) ?></div>
             <div class="event-card <?= $eventClass ?>">
-              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              <?= htmlspecialchars($slot['issue_description'] ?: 'Maintenance Task') ?>
+              <?= $taskIcon ?>
+              <?= htmlspecialchars($taskTypeLabel) ?>
+              <?php if ($propName): ?>
+                <span style="opacity:.7;font-size:.8em;">· <?= $propName ?></span>
+              <?php endif; ?>
             </div>
           </div>
         <?php endforeach; ?>
@@ -296,7 +340,8 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
             </div>
             <div class="activity-info">
               <div class="activity-name"><?= htmlspecialchars($name) ?></div>
-              <div class="activity-date"><?= htmlspecialchars(date('d F Y', strtotime($a['transaction_date'] ?? 'now'))) ?>
+              <div class="activity-date">
+                <?= htmlspecialchars($a['transaction_date'] ? date('d F Y', strtotime(str_replace('+00:00', '', $a['transaction_date']))) : '—') ?>
               </div>
             </div>
             <div class="activity-amount" style="<?= $isExpense ? 'color:var(--danger);' : '' ?>">

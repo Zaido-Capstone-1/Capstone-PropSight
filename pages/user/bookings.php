@@ -426,11 +426,10 @@ $status_map = [
                 ['location_rating', 'Location'],
                 ['value_rating', 'Value'],
                 ['comfort', 'Comfort'],
-            ] as [$key, $label, $icon]): ?>
+            ] as [$key, $label]): ?>
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;" id="catrow-<?= $key ?>">
-                    <span
-                        style="width:100px;font-size:0.8rem;color:var(--ink-soft);flex-shrink:0;display:flex;align-items:center;gap:6px;">
-                        <span style="font-size:1rem;"><?= $icon ?></span><?= $label ?>
+                    <span style="width:100px;font-size:0.8rem;color:var(--ink-soft);flex-shrink:0;">
+                        <?= $label ?>
                     </span>
                     <div style="display:flex;gap:5px;" id="catstars-<?= $key ?>">
                         <?php for ($s = 1; $s <= 5; $s++): ?>

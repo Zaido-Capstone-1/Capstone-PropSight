@@ -23,8 +23,8 @@ $property_id = (int) ($_POST['property_id'] ?? 0);
 $unit_type = trim($_POST['unit_type'] ?? '');
 $floor = (int) ($_POST['floor'] ?? 0);
 $rent_amount = (float) ($_POST['rent_amount'] ?? 0);
-$status = trim($_POST['status'] ?? 'vacant');
-$tenant_name = trim($_POST['tenant_name'] ?? '');
+$season = trim($_POST['season'] ?? 'Low');
+$max_guests = max(1, (int) ($_POST['max_guests'] ?? 1));
 $description = trim($_POST['description'] ?? '');
 if (mb_strlen($description) > 500)
     $description = mb_substr($description, 0, 500);
@@ -39,9 +39,9 @@ if ($property_id <= 0) {
     exit;
 }
 
-$allowed_statuses = ['occupied', 'vacant', 'maintenance'];
-if (!in_array($status, $allowed_statuses))
-    $status = 'vacant';
+$allowed_seasons = ['Peak', 'High', 'Low'];
+if (!in_array($season, $allowed_seasons))
+    $season = 'Low';
 
 $check = $conn->prepare("SELECT property_id, property_name FROM properties WHERE property_id = ?");
 if (!$check) {
@@ -79,14 +79,14 @@ if ($unit_number !== '') {
 $display_name = $unit_number !== '' ? $unit_number : ($unit_name !== '' ? $unit_name : 'New unit');
 
 $stmt = $conn->prepare("
-    INSERT INTO units (property_id, unit_number, unit_name, unit_type, floor, rent_amount, status, tenant_name, description)
+    INSERT INTO units (property_id, unit_number, unit_name, unit_type, floor, rent_amount, season, max_guests, description)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ");
 if (!$stmt) {
     echo json_encode(['status' => 'error', 'message' => 'Prepare failed: ' . $conn->error]);
     exit;
 }
-$stmt->bind_param('isssidss' . 's', $property_id, $unit_number, $unit_name, $unit_type, $floor, $rent_amount, $status, $tenant_name, $description);
+$stmt->bind_param('isssidssi', $property_id, $unit_number, $unit_name, $unit_type, $floor, $rent_amount, $season, $max_guests, $description);
 
 if (!$stmt->execute()) {
     $err = $stmt->error;
@@ -215,8 +215,9 @@ echo json_encode([
         'unit_type' => $unit_type,
         'floor' => $floor,
         'rent_amount' => $rent_amount,
-        'status' => $status,
-        'tenant_name' => $tenant_name,
+        'status' => 'vacant',
+        'season' => $season,
+        'max_guests' => $max_guests,
         'description' => $description,
         'images' => $saved_images,
         'amenities' => $saved_amenity_ids,

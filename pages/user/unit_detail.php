@@ -87,15 +87,7 @@ $statusLabel = match ($unit['status']) {
 $statusBadgeClass = $isVacant ? 'avail-yes' : ($isBooked ? 'avail-booked' : 'avail-no');
 
 $priceNum = (float) $unit['rent_amount'];
-$seasonality = [0 => 1.30, 1 => 1.30, 2 => 1.10, 3 => 1.15, 4 => 1.15, 5 => 0.80, 6 => 0.80, 7 => 0.80, 8 => 0.80, 9 => 0.80, 10 => 1.15, 11 => 1.30];
-$seasonLabel = [0 => 'Peak', 1 => 'Peak', 2 => 'High', 3 => 'High', 4 => 'High', 5 => 'Low', 6 => 'Low', 7 => 'Low', 8 => 'Low', 9 => 'Low', 10 => 'High', 11 => 'Peak'];
-$seasonColor = ['Peak' => '#E74C3C', 'High' => '#deaf37', 'Low' => '#2ECC71'];
-$curMonth = (int) date('n') - 1;
-$multiplier = $seasonality[$curMonth];
-$adjRate = (int) round($priceNum * $multiplier);
-$price = '₱' . number_format($adjRate);
-$curLabel = $seasonLabel[$curMonth];
-$curColor = $seasonColor[$curLabel];
+$price = '₱' . number_format((int) $priceNum);
 $ratingValue = isset($unit['rating']) && $unit['rating'] !== null ? round((float) $unit['rating'], 1) : null;
 $cityPart = !empty($unit['city']) ? ', ' . $unit['city'] : '';
 $locationStr = ($unit['property_name'] ?? '') . $cityPart;
@@ -134,62 +126,14 @@ $sidebarPhoto = $dashboardPhoto;
 $active_nav = 'dashboard';
 
 $nav_items = [
-    'profile' => [
-        'label' => 'View Profile',
-        'sub' => 'Personal details & preferences',
-        'href' => 'profile.php',
-        'badge' => null,
-        'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',
-    ],
-    'bookings' => [
-        'label' => 'My Bookings',
-        'sub' => 'View and manage reservations',
-        'href' => 'bookings.php',
-        'badge' => $_activeBookingCount,
-        'icon' => '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
-    ],
-    'payment' => [
-        'label' => 'Payment History',
-        'sub' => 'View transactions & refunds',
-        'href' => 'payment.php',
-        'badge' => null,
-        'icon' => '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>',
-    ],
-    'saved' => [
-        'label' => 'Saved Rooms',
-        'sub' => 'Rooms on your wishlist',
-        'href' => 'saved.php',
-        'badge' => $_savedCount,
-        'icon' => '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>',
-    ],
-    'loyalty' => [
-        'label' => 'Loyalty Points',
-        'sub' => $_loyaltySub,
-        'href' => 'loyalty.php',
-        'badge' => null,
-        'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>',
-    ],
-    'settings' => [
-        'label' => 'Settings',
-        'sub' => 'Notifications, privacy, security',
-        'href' => 'settings.php',
-        'badge' => null,
-        'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>',
-    ],
-    'messages' => [
-        'label' => 'Messages',
-        'sub' => 'Chat with the property team',
-        'href' => 'messages.php',
-        'badge' => null,
-        'icon' => '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>',
-    ],
-    'support' => [
-        'label' => 'Support & Help',
-        'sub' => 'FAQs and contact staff',
-        'href' => 'support.php',
-        'badge' => null,
-        'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
-    ],
+    'profile' => ['label' => 'View Profile', 'sub' => 'Personal details & preferences', 'href' => 'profile.php', 'badge' => null, 'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
+    'bookings' => ['label' => 'My Bookings', 'sub' => 'View and manage reservations', 'href' => 'bookings.php', 'badge' => $_activeBookingCount, 'icon' => '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'],
+    'payment' => ['label' => 'Payment History', 'sub' => 'View transactions & refunds', 'href' => 'payment.php', 'badge' => null, 'icon' => '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'],
+    'saved' => ['label' => 'Saved Rooms', 'sub' => 'Rooms on your wishlist', 'href' => 'saved.php', 'badge' => $_savedCount, 'icon' => '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>'],
+    'loyalty' => ['label' => 'Loyalty Points', 'sub' => $_loyaltySub, 'href' => 'loyalty.php', 'badge' => null, 'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'],
+    'settings' => ['label' => 'Settings', 'sub' => 'Notifications, privacy, security', 'href' => 'settings.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
+    'messages' => ['label' => 'Messages', 'sub' => 'Chat with the property team', 'href' => 'messages.php', 'badge' => null, 'icon' => '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>'],
+    'support' => ['label' => 'Support & Help', 'sub' => 'FAQs and contact staff', 'href' => 'support.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
 ];
 ?>
 <!DOCTYPE html>
@@ -198,7 +142,10 @@ $nav_items = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo ud_esc($unitTitle); ?> — PropSight</title>
+    <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">
+    <title>
+        <?php echo ud_esc($unitTitle); ?> — PropSight
+    </title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap"
@@ -213,7 +160,6 @@ $nav_items = [
 </head>
 
 <body>
-
     <!-- HEADER -->
     <header id="hdr">
         <a href="user-dashboard.php" class="logo">
@@ -225,13 +171,32 @@ $nav_items = [
         </a>
         <nav>
             <?php foreach ($top_nav_items as $item): ?>
-                <a href="<?php echo ud_esc($item['href']); ?>"><?php echo ud_esc($item['label']); ?></a>
+                <a href="<?php echo ud_esc($item['href']); ?>">
+                    <?php echo ud_esc($item['label']); ?>
+                </a>
             <?php endforeach; ?>
         </nav>
         <div class="header-right">
             <a href="user-dashboard.php#browse" class="btn-browse" style="text-decoration:none;">Browse Rooms</a>
+            <!-- notification bell -->
+            <div style="position:relative;display:inline-flex;align-items:center;">
+                <button id="notifBellBtn" aria-label="Notifications" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;
+                           color:var(--text-soft);display:flex;align-items:center;justify-content:center;
+                           transition:background 0.2s;" onmouseenter="this.style.background='var(--blue-50,#eff6ff)'"
+                    onmouseleave="this.style.background='none'">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="width:20px;height:20px;">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                    <span data-rt="notif-count" style="display:none;position:absolute;top:2px;right:2px;
+                           font-size:0.62rem;background:#ef4444;color:#fff;border-radius:99px;
+                           min-width:15px;height:15px;padding:0 3px;
+                           align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
+                </button>
+            </div>
             <div class="btn-profile-wrap">
-                <button class="btn-profile" id="profileBtn">
+                <button class="btn-profile" id="profileBtn" aria-label="My Profile">
                     <?php if ($dashboardPhoto): ?>
                         <img src="<?php echo ud_esc($dashboardPhoto); ?>" alt="Profile"
                             onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
@@ -240,6 +205,10 @@ $nav_items = [
                         <?php echo $initials; ?>
                     </span>
                 </button>
+                <span id="profileActivityBadge" style="display:none;position:absolute;top:-4px;right:-4px;
+                    min-width:17px;height:17px;background:#ef4444;color:#fff;border-radius:99px;
+                    font-size:0.62rem;font-weight:700;padding:0 4px;align-items:center;justify-content:center;
+                    border:2px solid var(--surface,#fff);pointer-events:none;z-index:10;line-height:1;">0</span>
                 <span class="profile-dot"></span>
             </div>
             <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
@@ -248,7 +217,6 @@ $nav_items = [
 
     <?php require '../../includes/_unitdetails_layout.php'; ?>
 
-    <!-- BREADCRUMB -->
     <div class="ud-breadcrumb">
         <button class="ud-back-btn" onclick="history.back()" title="Go back">
             <i class="ti ti-arrow-left"></i>
@@ -409,10 +377,8 @@ $nav_items = [
                         <div class="ud-price-label">Nightly rate</div>
                         <div class="ud-price-amount">
                             <?php echo $price; ?><sub>/night</sub>
-                            <span
-                                style="background:<?php echo $curColor; ?>20;color:<?php echo $curColor; ?>;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:8px;vertical-align:middle;">
-                                <?php echo $curLabel; ?>
-                            </span>
+                            <?php $s=$unit['season']??'Low';$sColor=['Peak'=>'#E74C3C','High'=>'#deaf37','Low'=>'#2ECC71'][$s]??'#2ECC71'; ?>
+                            <span style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:8px;vertical-align:middle;"><?= $s ?> Season</span>
                         </div>
                         <div class="ud-price-meta">
                             <i class="ti ti-map-pin"></i>
@@ -536,8 +502,7 @@ $nav_items = [
                                         $pct = $cat['avg'] > 0 ? round(($cat['avg'] / 5) * 100) : 0; ?>
                                         <div class="ud-rbar-row">
                                             <span class="ud-rbar-label">
-                                                <span
-                                                    style="margin-right:4px;"><?php echo $cat['icon']; ?></span><?php echo $cat['label']; ?>
+                                                <?php echo $cat['label']; ?>
                                             </span>
                                             <div class="ud-rbar-track">
                                                 <div class="ud-rbar-fill" style="width:<?php echo $pct; ?>%"></div>
@@ -638,10 +603,8 @@ $nav_items = [
                 <div class="ud-bc-header">
                     <div class="ud-bc-price">
                         <?php echo $price; ?><span class="ud-bc-per"> / night</span>
-                        <span
-                            style="background:<?php echo $curColor; ?>20;color:<?php echo $curColor; ?>;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:8px;vertical-align:middle;">
-                            <?php echo $curLabel; ?>
-                        </span>
+                        <?php $s=$unit['season']??'Low';$sColor=['Peak'=>'#E74C3C','High'=>'#deaf37','Low'=>'#2ECC71'][$s]??'#2ECC71'; ?>
+                        <span style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:6px;vertical-align:middle;"><?= $s ?> Season</span>
                     </div>
                     <?php if ($ratingValue !== null): ?>
                         <div class="ud-bc-rating">
@@ -875,26 +838,13 @@ $nav_items = [
         </section>
     <?php endif; ?>
 
-    <!-- TOAST -->
-    <div id="toast" role="status" aria-live="polite" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);
-                background:#282c35;border:1px solid rgba(255,255,255,0.1);color:#e8eaf0;
-                padding:10px 20px;border-radius:40px;font-family:'DM Sans',sans-serif;
-                font-size:.8rem;font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,.4);z-index:600;
-                transition:transform .38s cubic-bezier(.4,0,.2,1),opacity .38s;
-                opacity:0;white-space:nowrap;display:flex;align-items:center;gap:8px;">
-        <i class="ti ti-check" style="font-size:13px;color:#4caf85"></i>
-        <span id="toastMsg"></span>
-    </div>
-
     <!-- MOBILE + DESKTOP STICKY FLOAT BAR -->
     <div class="ud-float-bar" id="udFloatBar">
         <div class="ud-float-left">
             <div class="ud-float-price">
                 <?php echo $price; ?><sub>/night</sub>
-                <span
-                    style="background:<?php echo $curColor; ?>20;color:<?php echo $curColor; ?>;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;">
-                    <?php echo $curLabel; ?>
-                </span>
+                <?php $s=$unit['season']??'Low';$sColor=['Peak'=>'#E74C3C','High'=>'#deaf37','Low'=>'#2ECC71'][$s]??'#2ECC71'; ?>
+                <span style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;"><?= $s ?> Season</span>
             </div>
             <div class="ud-float-dates" id="udFloatDates">Select dates to see total</div>
         </div>
@@ -1009,10 +959,7 @@ $nav_items = [
                             <div class="bm-review-row"><span class="bm-review-key">Price/night</span><span
                                     class="bm-review-val" id="rv-rent">—</span>
                             </div>
-                            <div class="bm-review-row" id="rv-season-row" style="display:none">
-                                <span class="bm-review-key">Season</span>
-                                <span class="bm-review-val" id="rv-season">—</span>
-                            </div>
+
                         </div>
                         <div class="bm-review-block">
                             <div class="bm-review-label">Charges due today</div>
@@ -1186,9 +1133,7 @@ $nav_items = [
                     <div class="bm-total-row"><span class="bm-total-label">Total due now</span><span
                             class="bm-total-amount" id="sb-total">—</span>
                     </div>
-                    <div style="font-size:0.72rem;color:#6b7280;margin-top:8px;font-style:italic">Price seasonality
-                        applies</div>
-                    <div id="sb-season-breakdown" style="margin-top:4px"></div>
+
                     <div class="bm-hold-notice">Your booking is held for <strong>30 minutes</strong>.</div>
                 </div>
                 <div class="bm-footer-wrap" id="bmFooter">
@@ -1366,10 +1311,59 @@ $nav_items = [
         })();
     </script>
     <script src="../../assets/js/user-js/script.js"></script>
-    <script src="../../assets/js/toast.js"></script>
     <script src="../../assets/js/user-js/saved.js"></script>
     <script src="../../assets/js/user-js/unit_detail_additions.js"></script>
     <script src="../../assets/js/user-js/card-checkout.js"></script>
+
+    <script>
+        function openSidebar() {
+            document.getElementById('sidebarOverlay').classList.add('open');
+            document.getElementById('profileSidebar').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeSidebar() {
+            document.getElementById('sidebarOverlay').classList.remove('open');
+            document.getElementById('profileSidebar').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        document.getElementById('profileBtn').addEventListener('click', openSidebar);
+        document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+
+        const hdr = document.getElementById('hdr');
+        window.addEventListener('scroll', () => hdr.classList.toggle('scrolled', scrollY > 20));
+
+        const burger = document.getElementById('hamburger');
+        const mob = document.getElementById('mobileNav');
+        let mobOpen = false;
+        burger.addEventListener('click', () => {
+            mobOpen = !mobOpen;
+            mob.classList.toggle('open', mobOpen);
+            const s = burger.querySelectorAll('span');
+            if (mobOpen) {
+                s[0].style.transform = 'translateY(6.5px) rotate(45deg)';
+                s[1].style.opacity = '0';
+                s[2].style.transform = 'translateY(-6.5px) rotate(-45deg)';
+            } else { burger.querySelectorAll('span').forEach(s => { s.style.transform = ''; s.style.opacity = ''; }); }
+        });
+
+        function showToast(msg, type) {
+            if (type === true) type = 'error';
+            if (type === false || !type) type = 'success';
+            if (window._psToastReady) { window.showToast(msg, type); return; }
+            setTimeout(() => showToast(msg, type), 80);
+        }
+
+        const revObs = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revObs.unobserve(e.target); } });
+        }, { threshold: 0.08, rootMargin: '0px 0px -28px 0px' });
+        document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+    </script>
+
+    <script src="../../assets/js/toast.js"></script>
+    <script>window._psToastReady = true;</script>
+    <script src="../../assets/js/realtime.js"></script>
+    <script src="../../assets/js/user-js/user-realtime-pages.js"></script>
 </body>
 
 </html>

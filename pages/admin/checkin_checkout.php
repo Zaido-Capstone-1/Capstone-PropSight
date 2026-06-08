@@ -266,6 +266,7 @@ require_once '../../lib/admin-queries/checkin_checkout_queries.php';
                         <?php foreach ($checkins as $row):
                             [$label, $cls] = ciStatusLabel($row);
                             $isDone = ($row['checkin_status'] ?? '') === 'done';
+                            $isPast = $selected_date < date('Y-m-d');
                             $nights = (int) ((strtotime($row['checkout_date']) - strtotime($row['checkin_date'])) / 86400);
                             ?>
                             <div class="guest-row" id="ci-row-<?= $row['booking_id'] ?>">

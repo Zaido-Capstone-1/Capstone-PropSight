@@ -75,12 +75,12 @@ while ($row = $result->fetch_assoc()) {
         $row['ref_number'],
         $row['tenant'],
         $row['unit'],
-        $row['payment_date'],
+        fmt_dt($row['payment_date']),
         $row['amount_paid'],
         $row['payment_method'],
         ucfirst($row['payment_status']),
         $row['notes'],
-        $row['created_at'],
+        fmt_dt($row['created_at']),
     ]);
 }
 

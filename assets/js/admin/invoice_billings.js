@@ -51,10 +51,9 @@
      * Reads the currently visible rows, paginates them, updates tfoot.
      */
     function paginateInvoices() {
-        // Visible = not hidden by filters, not already paginated-hidden
-        const visible = rows.filter(r =>
-            r.style.display !== 'none' && !r.classList.contains('inv-paginated-hidden')
-        );
+        // Visible = rows the filter says should show (data-filter-visible="1")
+        // Never read style.display here — pagination itself sets that
+        const visible = rows.filter(r => r.dataset.filterVisible !== '0');
 
         const total = visible.length;
         const totalPages = Math.max(1, Math.ceil(total / INV_PER_PAGE));
@@ -149,12 +148,17 @@
         let count = 0;
 
         rows.forEach(row => {
+            // Clear pagination state so filter sees all rows cleanly
             row.classList.remove('inv-paginated-hidden');
+            row.style.display = '';
+
             const show =
                 (!q || (row.dataset.search ?? '').includes(q)) &&
                 (!status || row.dataset.status === status) &&
                 (!month || row.dataset.month === month);
 
+            // Mark filter visibility on a data attribute — pagination reads this
+            row.dataset.filterVisible = show ? '1' : '0';
             row.style.display = show ? '' : 'none';
             if (show) count++;
         });
@@ -476,14 +480,27 @@
         try {
             const data = await post({ action: 'send', id: sendingId });
             if (data.success) {
+                const justSentId = sendingId;
                 closeSendModal();
-                updateRowBadge(sendingId, 'Sent');
+                // Update the table row badge in-place immediately
+                updateRowBadge(justSentId, 'Sent');
+                // Update the view modal badge if it is currently open for this invoice
+                const vi_badge = $('vi_badge_header');
+                if (vi_badge && viewModal?.classList.contains('open')) {
+                    const openRow = document.querySelector(`tr[data-id="${justSentId}"]`);
+                    if (openRow) {
+                        vi_badge.textContent = 'Sent';
+                        vi_badge.className = 'inv-badge inv-badge--header ' + statusClass('Sent');
+                    }
+                }
+                // Re-apply filters so row visibility is consistent with active filter,
+                // but only after the badge dataset has already been updated above
                 applyFilters();
                 await refreshStats();
-                toast('Invoice sent! Email with payment link delivered to tenant.', 'success');
+                toast('Invoice sent! Email with payment links delivered to tenant.', 'success');
                 // Start polling so the badge auto-updates once tenant pays
                 if (data.invoice_id) {
-                    startInvoicePaymentPoll(sendingId, data.invoice_id);
+                    startInvoicePaymentPoll(justSentId, data.invoice_id);
                 }
             } else {
                 showSendError(data.message || 'Failed to send invoice.');

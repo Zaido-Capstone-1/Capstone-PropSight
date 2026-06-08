@@ -39,8 +39,13 @@ if ($method === 'GET') {
         ORDER BY u.created_at DESC
     ");
     $guests = [];
-    while ($row = mysqli_fetch_assoc($res))
+    while ($row = mysqli_fetch_assoc($res)) {
+
+        fmt_dt_row($row);
+
         $guests[] = $row;
+
+    }
 
     $stats = [
         'total' => (int) (mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM users WHERE role='user'"))['c'] ?? 0),

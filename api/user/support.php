@@ -32,8 +32,13 @@ if ($method === 'GET') {
             ORDER BY t.created_at DESC
         ");
         $tickets = [];
-        while ($row = mysqli_fetch_assoc($res))
+        while ($row = mysqli_fetch_assoc($res)) {
+
+            fmt_dt_row($row);
+
             $tickets[] = $row;
+
+        }
         echo json_encode(['success' => true, 'tickets' => $tickets]);
         exit;
     }
@@ -63,8 +68,13 @@ if ($method === 'GET') {
         $msgStmt->execute();
         $res = $msgStmt->get_result();
         $msgs = [];
-        while ($row = mysqli_fetch_assoc($res))
+        while ($row = mysqli_fetch_assoc($res)) {
+
+            fmt_dt_row($row);
+
             $msgs[] = $row;
+
+        }
         $msgStmt->close();
         echo json_encode(['success' => true, 'ticket' => $ticket, 'messages' => $msgs]);
         exit;
@@ -212,7 +222,12 @@ if ($method === 'POST') {
         $unitId = $bookingRow ? (int) $bookingRow['unit_id'] : null;
 
         // Insert into maintenance_requests (shows in admin Task Summary)
-        $today = date('Y-m-d');
+        // Use client's local date if provided to avoid UTC offset issues
+        $clientDate = trim($_POST['client_date'] ?? '');
+        $today = ($clientDate && preg_match('/^\d{4}-\d{2}-\d{2}$/', $clientDate))
+            ? $clientDate
+            : gmdate('Y-m-d');
+
         if ($unitId) {
             $mStmt = $conn->prepare(
                 "INSERT INTO maintenance_requests (unit_id, issue_description, priority, request_status, request_date)

@@ -36,8 +36,13 @@ if ($method === 'GET') {
         $stmt->execute();
         $res = $stmt->get_result();
         $msgs = [];
-        while ($row = $res->fetch_assoc())
+        while ($row = $res->fetch_assoc()) {
+
+            fmt_dt_row($row);
+
             $msgs[] = $row;
+
+        }
         $stmt->close();
 
         echo json_encode(['success' => true, 'messages' => $msgs]);

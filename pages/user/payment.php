@@ -238,7 +238,7 @@ require_once '../../lib/user-queries/payment_queries.php';
                                         <?php if ($isPayment): ?>
                                             <button class="btn-secondary" style="font-size:.7rem;padding:5px 12px;"
                                                 onclick="downloadInvoice(<?php echo $row['booking_id']; ?>,this)">
-                                                Invoice
+                                                Receipt
                                             </button>
 
                                             <?php

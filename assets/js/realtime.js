@@ -307,7 +307,7 @@
 
         if (!items.length) return;
 
-        // Live-inject into open dropdown
+        // Live-inject into open dropdown — skip message and support/ticket types
         const drop = document.getElementById('notifDropdown');
         if (drop && drop.style.display === 'block') {
             const list = document.getElementById('rt-notif-list');
@@ -315,6 +315,7 @@
             if (list) {
                 if (empty) empty.style.display = 'none';
                 items.forEach(n => {
+                    if (['message', 'support', 'ticket'].includes(n.type)) return;
                     if (list.querySelector(`[data-notif-id="${n.id}"]`)) return;
                     const div = _buildNotifItem(n);
                     list.prepend(div);
@@ -322,17 +323,13 @@
             }
         }
 
-        // Toast for truly new notifications
-        if (typeof showToast === 'function') {
-            items.forEach(n => {
-                if (n.type === 'booking') return;
-                if (!_seenNotifs.has(String(n.id))) {
-                    _seenNotifs.add(String(n.id));
-                    _persistSeenNotifs();
-                    showToast(n.title + (n.body ? ': ' + n.body : ''), 'info');
-                }
-            });
-        }
+        // Mark seen — no toast
+        items.forEach(n => {
+            if (!_seenNotifs.has(String(n.id))) {
+                _seenNotifs.add(String(n.id));
+                _persistSeenNotifs();
+            }
+        });
     });
 
     /* ────────────────────────────────────────────────────
@@ -658,6 +655,8 @@
                 const preview = thread.querySelector('.thread-preview');
                 if (preview) preview.textContent = m.body || m.subject || 'New message';
             }
+
+
         });
     });
 
@@ -903,7 +902,7 @@
     function _relativeTime(ts) {
         if (!ts) return '';
         const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
-        if (diff < 60) return 'just now';
+        if (diff < 60) return 'Just Now';
         if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
         if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
         return Math.floor(diff / 86400) + 'd ago';

@@ -9,7 +9,12 @@
   }
 
   function fmtDate(ts) {
-    const d = ts ? new Date(ts) : new Date();
+    if (!ts) return '—';
+    const s = String(ts);
+    // DATE-only values (no T separator) — anchor at noon local to avoid UTC rollback
+    const isDateOnly = /^\d{4}-\d{2}-\d{2}([+Z].*)?$/.test(s) && !s.includes('T');
+    const d = isDateOnly ? new Date(s.slice(0, 10) + 'T12:00:00') : psDate(ts);
+    if (!d || isNaN(d.getTime())) return '—';
     return d.toLocaleDateString('en-PH', {
       day: '2-digit',
       month: 'long',
@@ -18,11 +23,12 @@
   }
 
   function relativeTime(ts) {
-    if (!ts) return 'just now';
-    const d = new Date(String(ts).replace(' ', 'T'));
-    if (Number.isNaN(d.getTime())) return 'just now';
+    if (!ts) return 'Just Now';
+    // psDate() from datetime.js correctly converts UTC "+00:00" timestamps to local time
+    const d = psDate(ts);
+    if (!d) return 'Just Now';
     const sec = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
-    if (sec < 60) return 'just now';
+    if (sec < 60) return 'Just Now';
     if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
     if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
     return `${Math.floor(sec / 86400)}d ago`;
@@ -47,8 +53,15 @@
   const notifDot = document.getElementById('adminNotifDot');
   const notifList = document.getElementById('adminNotifList');
   const notifMarkAll = document.getElementById('adminNotifMarkAll');
+  // Persist dismissed non-message notifications (task/booking) across page loads
+  const _dismissedNotifs = new Set(
+    JSON.parse(sessionStorage.getItem('ps_dismissed_notifs') || '[]')
+  );
+
   const notifState = new Map(
-    (window.__PS_RIGHT_PANEL__.notifications).map(n => [String(n.id), n])
+    (window.__PS_RIGHT_PANEL__.notifications)
+      .filter(n => !_dismissedNotifs.has(String(n.id)))
+      .map(n => [String(n.id), n])
   );
 
   function renderNotifs() {
@@ -117,6 +130,9 @@
           body: fd
         }).catch(() => {});
       }
+      // Persist dismissal so it survives page navigation
+      _dismissedNotifs.add(String(notifId));
+      sessionStorage.setItem('ps_dismissed_notifs', JSON.stringify([..._dismissedNotifs]));
       notifState.delete(String(notifId));
       renderNotifs();
     }
@@ -134,6 +150,8 @@
       body: fd
     }).catch(() => {});
     notifState.clear();
+    _dismissedNotifs.clear();
+    sessionStorage.removeItem('ps_dismissed_notifs');
     renderNotifs();
     if (notifDot) {
       notifDot.style.display = 'none';
@@ -172,6 +190,7 @@
       priority: String(t.priority || '').toLowerCase(),
       status: String(t.status || t.request_status || 'pending').toLowerCase(),
       request_date: String(t.request_date || ''),
+      created_at: t.created_at || null,
     };
   }
 
@@ -194,14 +213,9 @@
     }
 
     scheduleWrap.innerHTML = sameDay.map(t => {
-      const raw = String(t.request_date || '');
-      const d = raw ? new Date(raw.replace(' ', 'T')) : null;
-      const time = d && !Number.isNaN(d.getTime()) ?
-        d.toLocaleTimeString([], {
-          hour: 'numeric',
-          minute: '2-digit'
-        }).toLowerCase() :
-        '--';
+      // Use created_at for time if available, else '--'
+      const _tsd = t.created_at ? psDate(t.created_at) : null;
+      const time = _tsd ? _tsd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--';
       const eventClass = (t.priority === 'high' || t.priority === 'urgent' || t.status === 'open') ?
         'coral' :
         (t.status === 'in_progress' ? 'teal' : 'dark');
@@ -370,9 +384,17 @@
       notifDot.textContent = count > 0 ? (count > 99 ? '99+' : count) : '';
     }
     items.forEach(n => {
-      if (n && n.id) notifState.set(String(n.id), n);
+      if (n && n.id && !_dismissedNotifs.has(String(n.id))) {
+        notifState.set(String(n.id), n);
+      }
     });
     renderNotifs();
   });
+
+  // renderNotifs() immediately — right-panel.js loads at </body> so DOM is ready.
+  // DOMContentLoaded may have already fired; calling directly ensures dismissed
+  // notifications are removed from the badge and list on every page load.
+  renderNotifs();
+  setInterval(renderNotifs, 60000);
 
 })();

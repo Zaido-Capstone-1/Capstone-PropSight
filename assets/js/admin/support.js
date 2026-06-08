@@ -55,6 +55,21 @@ function openTicketModal(ticketId, data) {
         'Ticket #TKT-' + String(ticketId).padStart(5, '0');
     document.getElementById('ticketModalSub').textContent = data.subject || '';
 
+    // ── Avatar (initials or photo) ───────────────────────────────
+    const avatarEl = document.getElementById('ticketModalAvatar');
+    if (avatarEl) {
+        const nameParts = (data.user_name || '').trim().split(/\s+/).filter(Boolean);
+        const initials  = nameParts.slice(0, 2).map(w => w[0].toUpperCase()).join('') || '?';
+        const photo     = data.user_photo || '';
+        if (photo) {
+            avatarEl.innerHTML = `<img src="../../${esc(photo)}" alt="${esc(initials)}"
+                style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+                onerror="this.style.display='none';this.parentElement.textContent='${esc(initials)}';">`;
+        } else {
+            avatarEl.textContent = initials;
+        }
+    }
+
     document.getElementById('ticketDetailGrid').innerHTML = `
         <div class="sm-detail-item">
             <div class="sm-field-label">Guest</div>
@@ -71,7 +86,7 @@ function openTicketModal(ticketId, data) {
         </div>
         <div class="sm-detail-item">
             <div class="sm-field-label">Submitted</div>
-            <div class="val">${esc(data.created_at ? data.created_at.slice(0, 10) : '—')}</div>
+            <div class="val">${psFmtDate(data.created_at)}</div>
         </div>
     `;
 
@@ -100,11 +115,12 @@ async function loadTicketMessages(ticketId) {
 
         wrap.innerHTML = data.messages.map(m => {
             const isAdmin = m.is_admin == 1;
+            const ts = psFmtDateTime(m.created_at);
             return `
                 <div>
                     <div class="sm-msg-bubble ${isAdmin ? 'admin' : 'user'}">${esc(m.body || '')}</div>
                     <div class="sm-msg-meta" style="text-align:${isAdmin ? 'right' : 'left'};color:var(--text-soft,#6b7280);">
-                        ${esc(m.sender_name || (isAdmin ? 'Admin' : 'Guest'))} · ${m.created_at ? m.created_at.slice(0, 16) : ''}
+                        ${esc(m.sender_name || (isAdmin ? 'Admin' : 'Guest'))} · ${ts}
                     </div>
                 </div>`;
         }).join('');
@@ -186,25 +202,21 @@ async function updateTicketStatus() {
                 open:        'stat-spt-open',
                 in_progress: 'stat-spt-progress',
                 resolved:    'stat-spt-resolved',
-                closed:      null,   // no dedicated card
+                closed:      null,
             };
 
             if (oldStatus && oldStatus !== status) {
-                // Decrement old status card
                 const oldId = statMap[oldStatus];
                 if (oldId) {
                     const el = document.getElementById(oldId);
                     if (el) el.textContent = Math.max(0, parseInt(el.textContent, 10) - 1);
                 }
 
-                // Increment new status card
                 const newId = statMap[status];
                 if (newId) {
                     const el = document.getElementById(newId);
                     if (el) el.textContent = parseInt(el.textContent, 10) + 1;
                 }
-
-                // Total stays the same (status change, not deletion)
             }
 
             showToast('Status updated to: ' + status.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()));
@@ -270,7 +282,7 @@ function paginateSpt() {
     });
 
     renderSptFoot(total, totalPages, start, end);
-}   
+}
 
 function renderSptFoot(total, totalPages, start, end) {
     const foot = document.getElementById('sptTableFoot');
@@ -347,14 +359,37 @@ document.addEventListener('click', function (e) {
 document.getElementById('sptSearch')?.addEventListener('input', applySptFilters);
 
 applySptFilters();
+
 function ucFirst(str) {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-async function deleteTicket(ticketId) {
-    if (!confirm('Delete this support ticket and all its messages? This cannot be undone.')) return;
+let _pendingDeleteId = null;
 
+function deleteTicket(ticketId) {
+    _pendingDeleteId = ticketId;
+    document.getElementById('confirmModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    document.getElementById('confirmDeleteBtn').onclick = async () => {
+        closeConfirmModal();
+        await _doDeleteTicket(_pendingDeleteId);
+        _pendingDeleteId = null;
+    };
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+// Close confirm modal on backdrop click
+document.getElementById('confirmModal')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('confirmModal')) closeConfirmModal();
+});
+
+async function _doDeleteTicket(ticketId) {
     const fd = new FormData();
     fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
     fd.append('action', 'delete');
@@ -365,18 +400,15 @@ async function deleteTicket(ticketId) {
         const data = await res.json();
 
         if (data.success) {
-            const row = document.querySelector(`#sptTableBody tr[data-status]`)
-                ? (() => {
-                    // find the row whose View button references this ticketId
-                    for (const btn of document.querySelectorAll('#sptTableBody button[onclick*="openTicketModal"]')) {
-                        if (btn.getAttribute('onclick').includes(`openTicketModal(${ticketId},`)) return btn.closest('tr');
-                    }
-                    return null;
-                })()
-                : null;
+            let row = null;
+            for (const btn of document.querySelectorAll('#sptTableBody button[onclick*="deleteTicket"]')) {
+                if (btn.getAttribute('onclick').includes(`deleteTicket(${ticketId})`)) {
+                    row = btn.closest('tr');
+                    break;
+                }
+            }
 
             if (row) {
-                // Adjust stat cards
                 const oldStatus = row.dataset.status;
                 const statMap = { open: 'stat-spt-open', in_progress: 'stat-spt-progress', resolved: 'stat-spt-resolved' };
                 const cardId = statMap[oldStatus];

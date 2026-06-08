@@ -17,8 +17,13 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'GET') {
     $res = $conn->query("SELECT * FROM loyalty_rewards ORDER BY points_cost ASC");
     $rewards = [];
-    while ($row = $res->fetch_assoc())
+    while ($row = $res->fetch_assoc()) {
+
+        fmt_dt_row($row);
+
         $rewards[] = $row;
+
+    }
     ob_clean();
     echo json_encode(['success' => true, 'rewards' => $rewards]);
     exit;

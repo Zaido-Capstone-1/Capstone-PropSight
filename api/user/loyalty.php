@@ -100,8 +100,13 @@ if ($method === 'GET') {
     $histStmt->execute();
     $histRes = $histStmt->get_result();
     $history = [];
-    while ($row = mysqli_fetch_assoc($histRes))
+    while ($row = mysqli_fetch_assoc($histRes)) {
+
+        fmt_dt_row($row);
+
         $history[] = $row;
+
+    }
     $histStmt->close();
 
     // Rewards catalogue from DB (active only)

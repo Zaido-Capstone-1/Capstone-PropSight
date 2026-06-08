@@ -46,8 +46,10 @@ if ($method === 'GET') {
             ORDER BY last_time DESC
         ");
         $threads = [];
-        while ($row = mysqli_fetch_assoc($res))
+        while ($row = mysqli_fetch_assoc($res)) {
+            fmt_dt_row($row);
             $threads[] = $row;
+        }
 
         // Also get list of admins user hasn't messaged yet (so they can start a new thread)
         $adminRes = mysqli_query(
@@ -90,8 +92,10 @@ if ($method === 'GET') {
         $convStmt->execute();
         $res = $convStmt->get_result();
         $msgs = [];
-        while ($row = mysqli_fetch_assoc($res))
+        while ($row = mysqli_fetch_assoc($res)) {
+            fmt_dt_row($row);
             $msgs[] = $row;
+        }
         $convStmt->close();
 
         $adminStmt = $conn->prepare(
@@ -136,11 +140,13 @@ if ($method === 'GET') {
         $pollStmt->execute();
         $res = $pollStmt->get_result();
         $msgs = [];
-        while ($row = mysqli_fetch_assoc($res))
+        while ($row = mysqli_fetch_assoc($res)) {
+            fmt_dt_row($row);
             $msgs[] = $row;
+        }
         $pollStmt->close();
 
-        echo json_encode(['success' => true, 'messages' => $msgs, 'ts' => gmdate('Y-m-d H:i:s')]);
+        echo json_encode(['success' => true, 'messages' => $msgs, 'ts' => gmdate('Y-m-d\TH:i:s') . '+00:00']);
         exit;
     }
 
@@ -252,7 +258,7 @@ if ($method === 'POST') {
 
         if ($insStmt->execute()) {
             $newId = $insStmt->insert_id;
-            $now = gmdate('Y-m-d H:i:s');
+            $now = gmdate('Y-m-d\TH:i:s') . '+00:00';
             $insStmt->close();
 
             // Notify admin

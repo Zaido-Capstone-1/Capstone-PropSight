@@ -128,10 +128,18 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
                 $rid = (int) $task['request_id'];
                 ?>
                 <tr data-id="<?= $rid ?>" data-status="<?= htmlspecialchars($task['request_status']) ?>"
-                  data-search="<?= strtolower(htmlspecialchars(($task['issue_description'] ?? '') . ' ' . ($task['property_name'] ?? ''))) ?>">
+                  data-search="<?= strtolower(htmlspecialchars(($task['issue_description'] ?? '') . ' ' . ($task['property_name'] ?? ''))) ?>"
+                  data-task="<?= htmlspecialchars(json_encode($task), ENT_QUOTES) ?>">
                   <td class="ts-id muted">#<?= str_pad($rid, 4, '0', STR_PAD_LEFT) ?></td>
                   <td class="ts-desc">
-                    <?= htmlspecialchars(mb_strimwidth($task['issue_description'] ?? 'Maintenance Task', 0, 60, '…')) ?>
+                    <?php
+                    $desc = $task['issue_description'] ?? 'Maintenance Task';
+                    if (preg_match('/^\[([^\]]+)\]/', $desc, $m)) {
+                      echo htmlspecialchars($m[1]);
+                    } else {
+                      echo htmlspecialchars(mb_strimwidth($desc, 0, 30, '…'));
+                    }
+                    ?>
                   </td>
                   <td class="muted"><?= htmlspecialchars($task['property_name'] ?? '—') ?></td>
                   <td><span class="badge <?= $pri['cls'] ?>"><?= $pri['label'] ?></span></td>
@@ -142,7 +150,7 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
                   <td>
                     <div class="ts-actions">
                       <button class="ts-btn ts-btn-view"
-                        onclick="openTaskModal(<?= $rid ?>, <?= htmlspecialchars(json_encode($task), ENT_QUOTES) ?>)"
+                        onclick="openTaskModal(<?= $rid ?>, JSON.parse(this.closest('tr').dataset.task))"
                         title="View & Update">
                         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="13" height="13">
                           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -203,33 +211,26 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
   </div>
 </div>
 
+<!-- Task Modal -->
 <div class="sm-modal-overlay" id="taskModal">
   <div class="sm-modal">
-
-    <!-- Header -->
     <div class="sm-modal-head">
       <div>
         <div class="sm-modal-title" id="taskModalTitle">Task Details</div>
         <div class="sm-modal-sub" id="taskModalSub"></div>
       </div>
-      <button class="sm-modal-close" onclick="closeTaskModal()" title="Close">
-        <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="15" height="15">
+      <button class="sm-modal-close" onclick="closeTaskModal()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
           <line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" />
         </svg>
       </button>
     </div>
-
-    <!-- 4-column meta strip (filled by JS) -->
     <div class="sm-modal-meta" id="taskDetailGrid"></div>
-
-    <!-- Full description block (filled by JS) -->
     <div class="sm-modal-desc" id="taskDescBlock" style="display:none;">
       <div class="sm-modal-desc-label">Issue Description</div>
       <div class="sm-modal-desc-text" id="taskDescText"></div>
     </div>
-
-    <!-- Footer: status update -->
     <div class="sm-modal-footer">
       <div class="sm-footer-row">
         <div class="sm-status-wrap">
@@ -243,16 +244,10 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
           </select>
         </div>
         <div class="sm-footer-btns">
-          <button class="sm-btn-primary" onclick="updateTaskStatus()">
-            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="13" height="13">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            Save Status
-          </button>
+          <button class="sm-btn-primary" onclick="updateTaskStatus()">Save Status</button>
         </div>
       </div>
     </div>
-
   </div>
 </div>
 

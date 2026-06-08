@@ -37,12 +37,18 @@ $unit_type = trim($_POST['unit_type'] ?? '');
 $floor = (int) ($_POST['floor'] ?? 0);
 $rent_amount = (float) ($_POST['rent_amount'] ?? 0);
 $status = trim($_POST['status'] ?? 'vacant');
+$season = trim($_POST['season'] ?? 'Low');
+$max_guests = max(1, (int) ($_POST['max_guests'] ?? 1));
 $tenant_name = trim($_POST['tenant_name'] ?? '');
 $description = mb_substr(trim($_POST['description'] ?? ''), 0, 500);
 
 $allowed_statuses = ['occupied', 'vacant', 'maintenance'];
 if (!in_array($status, $allowed_statuses))
     $status = 'vacant';
+
+$allowed_seasons = ['Peak', 'High', 'Low'];
+if (!in_array($season, $allowed_seasons))
+    $season = 'Low';
 
 // Amenity IDs – only allow IDs belonging to this unit's property
 $raw_amenities = array_map('intval', (array) ($_POST['amenity_ids'] ?? []));
@@ -72,6 +78,8 @@ try {
             floor       = ?,
             rent_amount = ?,
             status      = ?,
+            season      = ?,
+            max_guests  = ?,
             tenant_name = ?,
             description = ?
         WHERE unit_id = ?
@@ -79,13 +87,15 @@ try {
     if (!$stmt)
         throw new Exception('Prepare failed: ' . $conn->error);
     $stmt->bind_param(
-        'sssidsssi',
+        'sssidssissi',
         $unit_number,
         $unit_name,
         $unit_type,
         $floor,
         $rent_amount,
         $status,
+        $season,
+        $max_guests,
         $tenant_name,
         $description,
         $unit_id

@@ -172,9 +172,10 @@ function openTaskModal(taskId, data) {
     const priColor  = priorityColors[pri] || '#d97706';
     const statColor = statusColors[sv]   || '#6b7280';
  
-    // Format date nicely
+    // Format date — request_date is YYYY-MM-DD (date only, no time)
+    // Append T12:00:00 to avoid UTC-midnight timezone rollback issues
     const reqDate = data.request_date
-        ? new Date(data.request_date).toLocaleDateString('en-US',
+        ? new Date(data.request_date + 'T12:00:00').toLocaleDateString(undefined,
             { month: 'short', day: 'numeric', year: 'numeric' })
         : '—';
  

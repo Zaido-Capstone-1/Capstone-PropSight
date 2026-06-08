@@ -43,6 +43,7 @@ function db_query($conn, string $sql, array $params = []): array
     $result = $st->get_result();
     $rows = [];
     while ($row = $result->fetch_assoc()) {
+        fmt_dt_row($row);
         $rows[] = $row;
     }
     $st->close();

@@ -76,8 +76,13 @@ if ($method === 'GET') {
         WHERE YEAR(transaction_date)=$year
         GROUP BY m ORDER BY m
     ");
-    while ($row = mysqli_fetch_assoc($mRes))
+    while ($row = mysqli_fetch_assoc($mRes)) {
+
+        fmt_dt_row($row);
+
         $monthly[] = $row;
+
+    }
 
     echo json_encode([
         'success' => true,

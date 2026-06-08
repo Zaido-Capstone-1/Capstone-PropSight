@@ -327,11 +327,11 @@ window.addEventListener('ps:recent_activity', e => {
   }
 
   function relativeTime(ts) {
-    if (!ts) return 'just now';
+    if (!ts) return 'Just Now';
     const d = new Date(ts);
-    if (Number.isNaN(d.getTime())) return 'just now';
+    if (Number.isNaN(d.getTime())) return 'Just Now';
     const sec = Math.floor((Date.now() - d.getTime()) / 1000);
-    if (sec < 60) return 'just now';
+    if (sec < 60) return 'Just Now';
     if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
     if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
     return `${Math.floor(sec / 86400)}d ago`;

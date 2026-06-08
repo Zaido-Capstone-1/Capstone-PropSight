@@ -70,6 +70,7 @@ function getUserBookings($conn, $user_id)
 
         $row['_display_status'] = $status;
         $row['_raw_status'] = $row['status'];
+        fmt_dt_row($row);
         $bookings[] = $row;
     }
 

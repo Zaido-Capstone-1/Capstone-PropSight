@@ -38,8 +38,13 @@ if ($method === 'GET') {
         ORDER BY FIELD(u.role,'admin','manager','frontdesk','accounting','maintenance'), u.first_name
     ");
     $staff = [];
-    while ($row = mysqli_fetch_assoc($res))
+    while ($row = mysqli_fetch_assoc($res)) {
+
+        fmt_dt_row($row);
+
         $staff[] = $row;
+
+    }
 
     // Counts are always from the full unfiltered set so stat cards stay accurate
     $countRes = mysqli_query($conn, "SELECT role, COUNT(*) as cnt FROM users WHERE role != 'user' GROUP BY role");

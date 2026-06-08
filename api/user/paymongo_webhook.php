@@ -2,6 +2,17 @@
 require_once '../../includes/db.php';
 require_once '../../includes/paymongo.php';
 
+function format_payment_method(string $method): string
+{
+    return match (strtolower(trim($method))) {
+        'gcash' => 'GCash',
+        'paymaya', 'maya' => 'Maya',
+        'card' => 'Card',
+        'dob', 'online_banking', 'bank_transfer' => 'Bank Transfer',
+        default => ucfirst($method) ?: 'PayMongo',
+    };
+}
+
 $rawBody = file_get_contents('php://input');
 $sigHeader = $_SERVER['HTTP_PAYMONGO_SIGNATURE'] ?? '';
 $secret = $_ENV['PAYMONGO_WEBHOOK_SECRET'] ?? getenv('PAYMONGO_WEBHOOK_SECRET');
@@ -18,10 +29,11 @@ $sigValid = false;
 $sigParts = [];
 foreach (explode(',', $sigHeader) as $part) {
     $kv = explode('=', $part, 2);
-    if (count($kv) === 2) $sigParts[$kv[0]] = $kv[1];
+    if (count($kv) === 2)
+        $sigParts[$kv[0]] = $kv[1];
 }
 if (!empty($sigParts['t']) && !empty($sigParts['te'])) {
-    $toSign   = $sigParts['t'] . '.' . $rawBody;
+    $toSign = $sigParts['t'] . '.' . $rawBody;
     $expected = hash_hmac('sha256', $toSign, $secret);
     $sigValid = hash_equals($expected, $sigParts['te']);
 }
@@ -43,12 +55,24 @@ error_log('PayMongo Webhook: ' . json_encode([
     'event' => $event,
 ]));
 
-if ($type === 'link.payment.paid') {
-    $linkId = $data['attributes']['links'][0]['id'] ?? null;
-    error_log('PayMongo link.payment.paid - linkId: ' . ($linkId ?? 'NULL'));
+// Handle both link.payment.paid (GCash/Maya/Online Banking) and checkout_session.payment.paid (Card)
+$isLinkPaid = ($type === 'link.payment.paid');
+$isCheckoutPaid = ($type === 'checkout_session.payment.paid');
+
+if ($isLinkPaid || $isCheckoutPaid) {
+
+    // Resolve the PayMongo record ID depending on event type
+    if ($isLinkPaid) {
+        $linkId = $data['attributes']['links'][0]['id'] ?? null;
+        error_log('PayMongo link.payment.paid - linkId: ' . ($linkId ?? 'NULL'));
+    } else {
+        // checkout_session.payment.paid — data IS the checkout session object
+        $linkId = $data['id'] ?? null;
+        error_log('PayMongo checkout_session.payment.paid - sessionId: ' . ($linkId ?? 'NULL'));
+    }
 
     if (!$linkId) {
-        error_log('PayMongo webhook: linkId not found in webhook data');
+        error_log('PayMongo webhook: linkId/sessionId not found in webhook data');
         http_response_code(200);
         exit;
     }
@@ -70,59 +94,130 @@ if ($type === 'link.payment.paid') {
     $bookingId = (int) $row['booking_id'];
     $amount = (float) $row['amount'];
     $paidAt = date('Y-m-d H:i:s');
-    $paymentId = $data['id'] ?? null;
-    // AFTER — read from bookings where it's reliably saved by book_unit.php
-    $bkMethodStmt = $conn->prepare("SELECT payment_method FROM bookings WHERE booking_id = ? LIMIT 1");
-    $bkMethodStmt->bind_param('i', $bookingId);
-    $bkMethodStmt->execute();
-    $bkMethodRow = $bkMethodStmt->get_result()->fetch_assoc();
-    $bkMethodStmt->close();
-    $paymentMethod = $bkMethodRow['payment_method'] ?? '';
+    // For checkout sessions the payment ID lives inside the payment intent
+    if ($isCheckoutPaid) {
+        $paymentId = $data['attributes']['payment_intent']['attributes']['payments'][0]['id']
+            ?? $data['attributes']['payment_intent']['id']
+            ?? $data['id']
+            ?? null;
+    } else {
+        $paymentId = $data['id'] ?? null;
+    }
 
-    error_log("PayMongo: Processing payment - bookingId: $bookingId, amount: $amount, paymentId: $paymentId");
+    // ── Resolve the actual payment method ────────────────────────────────
+    // Priority 1: stored in paymongo_payments.payment_method (set by invoice.php or create_paymongo_link.php)
+    // Priority 2: from the PayMongo payment object's source.type
+    // Priority 3: from bookings table (legacy booking flow)
+    $paymentMethod = $row['payment_method'] ?? '';
 
-    $upd = $conn->prepare("UPDATE paymongo_payments SET status='paid', paymongo_payment_id=?, paid_at=? WHERE paymongo_link_id=?");
-    $upd->bind_param('sss', $paymentId, $paidAt, $linkId);
+    if (empty($paymentMethod)) {
+        // For link.payment.paid: source type is under data.attributes.source.type
+        // For checkout_session.payment.paid: payment method is under
+        //   data.attributes.payment_intent.attributes.payment_method_used
+        if ($isCheckoutPaid) {
+            $paymentMethod = $data['attributes']['payment_intent']['attributes']['payment_method_used']
+                ?? $data['attributes']['payment_method_used']
+                ?? 'card';
+        } else {
+            $pmSourceType = $data['attributes']['source']['type'] ?? '';
+            if ($pmSourceType) {
+                $paymentMethod = $pmSourceType;
+            }
+        }
+    }
+
+    if (empty($paymentMethod) && $bookingId > 0) {
+        // Fallback: read from bookings for the legacy non-invoice flow
+        $bkMethodStmt = $conn->prepare("SELECT payment_method FROM bookings WHERE booking_id = ? LIMIT 1");
+        $bkMethodStmt->bind_param('i', $bookingId);
+        $bkMethodStmt->execute();
+        $bkMethodRow = $bkMethodStmt->get_result()->fetch_assoc();
+        $bkMethodStmt->close();
+        $paymentMethod = $bkMethodRow['payment_method'] ?? 'PayMongo';
+    }
+
+    if (empty($paymentMethod)) {
+        $paymentMethod = 'PayMongo';
+    }
+    // Normalise to display name before saving
+    $paymentMethod = format_payment_method($paymentMethod);
+
+    error_log("PayMongo: Processing payment - bookingId: $bookingId, amount: $amount, paymentId: $paymentId, method: $paymentMethod");
+
+    // Mark this link as paid (save the resolved method too)
+    $upd = $conn->prepare("UPDATE paymongo_payments SET status='paid', paymongo_payment_id=?, paid_at=?, payment_method=? WHERE paymongo_link_id=?");
+    $upd->bind_param('ssss', $paymentId, $paidAt, $paymentMethod, $linkId);
     $upd->execute();
     $upd->close();
 
-    // Invoice payment: update invoices.status + log transaction, skip booking logic
+    // ── Invoice payment ───────────────────────────────────────────────────
     if (($row['reference_type'] ?? '') === 'invoice') {
         $invoiceId = (int) ($row['reference_id'] ?? 0);
         if ($invoiceId) {
+            // Mark invoice Paid
             $invUpd = $conn->prepare("UPDATE invoices SET status = 'Paid' WHERE id = ? AND status != 'Paid'");
             $invUpd->bind_param('i', $invoiceId);
             $invUpd->execute();
             $invUpd->close();
 
-            $date    = date('Y-m-d');
-            $invRef  = 'INV-PMT-' . $invoiceId;
+            // Expire/cancel all OTHER pending links for this invoice
+            // so the tenant cannot pay again through a different method button
+            $expStmt = $conn->prepare("
+                UPDATE paymongo_payments
+                SET    status = 'cancelled'
+                WHERE  reference_id   = ?
+                  AND  reference_type = 'invoice'
+                  AND  paymongo_link_id != ?
+                  AND  status NOT IN ('paid','expired','failed','cancelled')
+            ");
+            $expStmt->bind_param('is', $invoiceId, $linkId);
+            $expStmt->execute();
+            $expStmt->close();
 
-            // Insert into payments table (so admin payments page shows it)
+            $date = date('Y-m-d');
+            $invRef = 'INV-PMT-' . $invoiceId;
+
+            // Insert into payments table with the correct payment method
             $pmtNote = $invRef;
-            $pmtChk  = $conn->query("SELECT payment_id FROM payments WHERE notes='" . $conn->real_escape_string($pmtNote) . "' LIMIT 1");
-            if ($pmtChk && $pmtChk->num_rows === 0) {
-                $pmtMethod = 'PayMongo'; $pmtStatus = 'paid';
-                $ps = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (0, ?, ?, ?, ?, ?)");
-                $ps->bind_param('sdsss', $date, $amount, $pmtMethod, $pmtStatus, $pmtNote);
-                $ps->execute(); $ps->close();
+            $pmtChk = $conn->prepare("SELECT payment_id FROM payments WHERE notes = ? LIMIT 1");
+            $pmtChk->bind_param('s', $pmtNote);
+            $pmtChk->execute();
+            $pmtChk->store_result();
+            $pmtExists = $pmtChk->num_rows > 0;
+            $pmtChk->close();
+
+            if (!$pmtExists) {
+                $pmtStatus = 'paid';
+                $ps = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (NULL, ?, ?, ?, ?, ?)");
+                $ps->bind_param('sdsss', $date, $amount, $paymentMethod, $pmtStatus, $pmtNote);
+                $ps->execute();
+                $ps->close();
             }
 
-            // Insert into transactions
-            $txChk = $conn->query("SELECT id FROM transactions WHERE reference_no='" . $conn->real_escape_string($invRef) . "' LIMIT 1");
-            if ($txChk && $txChk->num_rows === 0) {
-                $desc = 'PayMongo payment for Invoice #' . $invoiceId;
+            // Insert into transactions with the correct payment method in description
+            $txChk = $conn->prepare("SELECT id FROM transactions WHERE reference_no = ? LIMIT 1");
+            $txChk->bind_param('s', $invRef);
+            $txChk->execute();
+            $txChk->store_result();
+            $txExists = $txChk->num_rows > 0;
+            $txChk->close();
+
+            if (!$txExists) {
+                $desc = 'PayMongo payment (' . $paymentMethod . ') for Invoice #' . $invoiceId;
                 $safeRef = $conn->real_escape_string($invRef);
                 $safeDesc = $conn->real_escape_string($desc);
-                $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by) VALUES ('$safeRef','$safeDesc','Invoice Revenue','Income',$amount,'$date',NULL,'',NULL)");
-                }
-            error_log('[webhook] Invoice #' . $invoiceId . ' marked Paid via PayMongo link ' . $linkId);
+                $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by)
+                              VALUES ('$safeRef','$safeDesc','Invoice Revenue','Income',$amount,'$date',NULL,'',NULL)");
+            }
+
+            error_log('[webhook] Invoice #' . $invoiceId . ' marked Paid via PayMongo link ' . $linkId . ' method: ' . $paymentMethod);
         }
         http_response_code(200);
         echo 'ok';
         exit;
     }
 
+    // ── Regular booking payment ───────────────────────────────────────────
     $ins = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (?, ?, ?, ?, 'paid', ?)");
     $paymentDatetime = date('Y-m-d H:i:s');
     $date = date('Y-m-d');
@@ -140,7 +235,7 @@ if ($type === 'link.payment.paid') {
     $ins->close();
 
     $ref = 'PMT-' . $newPaymentId;
-    $desc = 'PayMongo payment for Booking #' . $bookingId;
+    $desc = 'PayMongo payment (' . $paymentMethod . ') for Booking #' . $bookingId;
     $cat = 'Room Revenue';
     $typ = 'Income';
     $txStmt = $conn->prepare("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, booking_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -172,7 +267,7 @@ if ($type === 'link.payment.paid') {
             $ciDate = date('M j', strtotime($bkInfoNotif['checkin_date']));
             $coDate = date('M j, Y', strtotime($bkInfoNotif['checkout_date']));
             $ntTitle2 = "Payment confirmed: $bkRef2";
-            $ntBody2 = "$gName booked $uLabel2 · $ciDate–$coDate (PayMongo payment received).";
+            $ntBody2 = "$gName booked $uLabel2 · $ciDate–$coDate (PayMongo payment received via $paymentMethod).";
             $ntLink2 = 'pages/admin/reservations.php';
             $admins2 = $conn->query("SELECT user_id FROM users WHERE role='admin' LIMIT 20");
             while ($adm2 = $admins2->fetch_assoc()) {
@@ -238,6 +333,7 @@ if ($type === 'link.payment.paid') {
                                 <tr><td style='padding:5px 0;color:#6b7280;'>Check-in</td><td style='text-align:right;'>{$checkin}</td></tr>
                                 <tr><td style='padding:5px 0;color:#6b7280;'>Check-out</td><td style='text-align:right;'>{$checkout}</td></tr>
                                 <tr><td style='padding:5px 0;color:#6b7280;'>Amount Paid</td><td style='text-align:right;font-weight:700;color:#16a34a;'>{$amt}</td></tr>
+                                <tr><td style='padding:5px 0;color:#6b7280;'>Payment Method</td><td style='text-align:right;'>" . htmlspecialchars($paymentMethod) . "</td></tr>
                             </table>
                         </div>
                         <p style='color:#6b7280;font-size:13px;margin:0;'>If you have questions, please contact us.</p>
@@ -270,27 +366,31 @@ if ($type === 'payment.failed') {
         $bookingId = (int) $row['booking_id'];
         $failRowId = (int) $row['id'];
 
+        // For invoice links, only mark this specific link as failed — don't cancel siblings
         $failStmt = $conn->prepare("UPDATE paymongo_payments SET status='failed' WHERE id=?");
         $failStmt->bind_param('i', $failRowId);
         $failStmt->execute();
         $failStmt->close();
 
-        $cancelStmt = $conn->prepare("UPDATE bookings SET status='cancelled' WHERE booking_id=? AND status='pending'");
-        $cancelStmt->bind_param('i', $bookingId);
-        $cancelStmt->execute();
-        $cancelStmt->close();
+        // Only cancel the booking for non-invoice payment failures
+        if (($row['reference_type'] ?? '') !== 'invoice' && $bookingId > 0) {
+            $cancelStmt = $conn->prepare("UPDATE bookings SET status='cancelled' WHERE booking_id=? AND status='pending'");
+            $cancelStmt->bind_param('i', $bookingId);
+            $cancelStmt->execute();
+            $cancelStmt->close();
 
-        $unitSelStmt = $conn->prepare("SELECT unit_id FROM bookings WHERE booking_id=? LIMIT 1");
-        $unitSelStmt->bind_param('i', $bookingId);
-        $unitSelStmt->execute();
-        $unitRow = $unitSelStmt->get_result()->fetch_assoc();
-        $unitSelStmt->close();
-        if ($unitRow) {
-            $unitId = (int) $unitRow['unit_id'];
-            $vacantStmt = $conn->prepare("UPDATE units SET status='vacant' WHERE unit_id=? AND status!='maintenance'");
-            $vacantStmt->bind_param('i', $unitId);
-            $vacantStmt->execute();
-            $vacantStmt->close();
+            $unitSelStmt = $conn->prepare("SELECT unit_id FROM bookings WHERE booking_id=? LIMIT 1");
+            $unitSelStmt->bind_param('i', $bookingId);
+            $unitSelStmt->execute();
+            $unitRow = $unitSelStmt->get_result()->fetch_assoc();
+            $unitSelStmt->close();
+            if ($unitRow) {
+                $unitId = (int) $unitRow['unit_id'];
+                $vacantStmt = $conn->prepare("UPDATE units SET status='vacant' WHERE unit_id=? AND status!='maintenance'");
+                $vacantStmt->bind_param('i', $unitId);
+                $vacantStmt->execute();
+                $vacantStmt->close();
+            }
         }
     }
 }
