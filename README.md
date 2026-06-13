@@ -1,6 +1,6 @@
-# PropSight — Property Management & Booking Platform
+# PropSight — Apartment Rental & Property Management System
 
-PropSight is a full-stack web application for property owners and managers to list, manage, and accept bookings for rental units. It provides a guest-facing booking experience alongside a comprehensive admin back-office for managing properties, reservations, payments, staff, and reporting.
+PropSight is a PHP-based web application for managing apartment rentals. It provides a tenant-facing portal for browsing units and managing bookings, and a full admin back-office for properties, reservations, payments, maintenance, and reporting.
 
 Developed as a capstone project for the Bachelor of Science in Information Technology program.
 
@@ -8,27 +8,45 @@ Developed as a capstone project for the Bachelor of Science in Information Techn
 
 ## Features
 
-### Guest / User Portal
-- **Unit browsing & booking** — Search available units, view details, and submit booking requests
-- **Booking management** — View upcoming and past bookings, cancel reservations, download receipts
-- **Payments** — Pay for bookings, manage saved payment methods
-- **Loyalty rewards** — Earn and redeem points across bookings
-- **Messaging & support** — Contact property staff and submit support tickets
-- **Profile & settings** — Edit personal info, upload ID for verification, manage email preferences
-- **Saved units** — Bookmark favourite units for later
+### Tenant / User Portal
+- **Unit browsing** — Browse available units with details, photos, amenities, and reviews
+- **Booking** — Submit booking requests with date selection and payment method choice
+- **Payments** — Pay via GCash, Maya, Bank Transfer, Cash, or Card (PayMongo Checkout)
+- **Booking management** — View active and past bookings, download receipts, cancel reservations, request refunds, extend stays
+- **Unit reviews** — Submit and view reviews for booked units
+- **Loyalty rewards** — Earn points per booking; redeem points for voucher discounts
+- **Saved units** — Bookmark units for later
+- **Messaging** — Message property management directly
+- **Support tickets** — Submit and track support requests
+- **Notifications** — In-app notifications for booking and payment updates
+- **Profile & settings** — Edit profile, upload a government ID for verification, change password, manage email preferences, delete account
+- **Nearby places** — View nearby points of interest for a unit
 
 ### Admin Back-Office
-- **Dashboard** — Occupancy overview, recent activity, real-time polling updates
-- **Properties & units** — Add/edit/delete properties and rooms; upload images, set amenities and pricing
-- **Reservations & calendar** — View all reservations, block dates, manage check-in / check-out
-- **Guests & clients** — Guest list, blacklist management
-- **Payments & transactions** — Track all payments, export CSV reports
-- **Invoices & billing** — Generate and email invoices via PHPMailer (SMTP)
-- **Expenses** — Log operational expenses per property
-- **Financial & occupancy reports** — Revenue summaries, occupancy rates, booking analytics
-- **Staff & roles** — Manage staff accounts and role-based access (admin / accounting / manager)
-- **Messages** — Internal messaging between admin and guests
+- **Dashboard** — Live KPI cards (occupancy, revenue, bookings), revenue vs. expenses chart, task summary with scrollable maintenance list, real-time activity feed, right-panel calendar with schedule and recent transactions
+- **Properties & units** — Add, edit, and delete properties and rooms; manage amenities and per-unit pricing; upload property images
+- **Reservations** — View all reservations, filter by status, approve or reject pending bookings
+- **Calendar** — Visual monthly calendar with blocked date management
+- **Check-in / Check-out** — Process tenant arrivals and departures; sync unit statuses automatically
+- **Task summary** — Maintenance request board with priority sorting (urgent → high → medium → low) and status tracking (open, in progress, pending, completed, closed)
+- **Invoices & billing** — Generate invoices, send via email (PHPMailer SMTP), track billing status; supports per-method payment buttons in emails
+- **Payments** — Full payment ledger with CSV export
+- **Transactions** — Income and expense transaction log
+- **Refunds** — Review and process tenant refund requests via PayMongo
+- **Expenses** — Log and categorise operational expenses per property
+- **Financial reports** — Revenue summaries and year-over-year comparisons
+- **Booking reports** — Booking trends, cancellation rates
+- **Occupancy reports** — Unit occupancy rates by property and period
+- **Analytics** — Aggregated property analytics
+- **Guests & clients** — Tenant directory, guest blacklist management
+- **ID verification** — Review and approve/reject tenant government ID uploads
+- **Messages** — Two-way messaging with tenants
+- **Support** — Manage and respond to tenant support tickets (with real-time badge count in sidebar)
+- **Loyalty rewards** — Configure point earn rates, view tenant point balances, manage vouchers
+- **Staff & roles** — Create and manage staff accounts with role-based access (admin, accounting, manager)
+- **Notifications** — DB-backed admin notification system with dismissable dropdown and real-time polling
 - **Settings** — Platform-wide configuration
+- **Backup** — Database backup utility
 
 ---
 
@@ -36,45 +54,86 @@ Developed as a capstone project for the Bachelor of Science in Information Techn
 
 | Layer | Technology |
 |---|---|
-| Frontend | HTML5, CSS3, JavaScript, Chart.js |
-| Backend | PHP 8+ |
-| Database | MySQL (via MySQLi with prepared statements) |
-| Mail | PHPMailer (SMTP / Gmail TLS) |
-| Environment | vlucas/phpdotenv (.env file) |
+| Language | PHP 8+ |
+| Database | MySQL / MariaDB via MySQLi (prepared statements) |
+| Frontend | HTML5, CSS3, Vanilla JavaScript, Chart.js |
+| Payments | PayMongo (Checkout Sessions for card; payment links for GCash / Maya) |
+| Email | PHPMailer (SMTP / Gmail TLS) |
+| Environment | vlucas/phpdotenv |
 | Auth | PHP sessions with role-based access control |
+| Local server | XAMPP (Apache + MySQL) |
 
 ---
 
-## Setup
+## Project Structure
+
+```
+PropSight-Capstone/
+├── api/
+│   ├── admin/              # Admin-only API endpoints (role-gated)
+│   └── user/               # Authenticated tenant API endpoints
+├── assets/
+│   ├── css/
+│   │   ├── admin-css/      # Admin back-office stylesheets
+│   │   └── user-css/       # Tenant portal stylesheets
+│   └── js/
+│       ├── admin/          # Admin page JS modules
+│       └── user-js/        # Tenant portal JS modules
+├── includes/               # Shared PHP includes
+│   ├── db.php              # MySQLi connection
+│   ├── session.php         # Session + CSRF helpers
+│   ├── paymongo.php        # PayMongo API wrapper
+│   ├── email_service.php   # PHPMailer wrapper
+│   ├── right_panel.php     # Dashboard right panel (calendar, schedule, activity)
+│   ├── sidebar.php         # Admin sidebar with live notification badge
+│   ├── admin_notif_helpers.php  # Admin notification DB helpers
+│   └── unit_status_sync.php    # Auto-sync unit statuses from bookings
+├── lib/
+│   ├── admin-queries/      # Admin page data queries
+│   └── user-queries/       # User page data queries
+├── pages/
+│   ├── admin/              # Admin back-office pages
+│   └── user/               # Tenant portal pages
+├── process/                # Auth flows (login, register, OTP, password reset)
+├── uploads/                # User-uploaded files (unit images, profile photos, IDs)
+├── vendor/                 # Composer dependencies
+├── config.php              # App bootstrap (loads .env, sets timezone)
+├── index.php               # Entry point / login page
+├── verify.php              # Email verification page
+├── reset_password.php      # Password reset page
+├── .env.example            # Environment variable template
+└── .env                    # Local environment config (not committed)
+```
+
+---
+
+## Setup (XAMPP)
 
 ### Requirements
-- PHP 8.0+
-- MySQL 5.7+ or MariaDB
-- A web server (Apache with `mod_rewrite`, or Nginx)
-- Composer (for PHPMailer and dotenv)
+- XAMPP (PHP 8.0+, Apache, MySQL)
+- Composer
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repo-url>
-   cd propsight
+1. **Clone or copy** the project into your XAMPP `htdocs` folder:
+   ```
+   C:\xampp\htdocs\PropSight-Capstone\
    ```
 
-2. **Install dependencies**
+2. **Install Composer dependencies:**
    ```bash
    composer install
    ```
 
-3. **Configure environment**
+3. **Create your environment file:**
    ```bash
    cp .env.example .env
    ```
-   Then edit `.env` and fill in your database credentials and mail settings:
-   ```
+   Fill in `.env` with your local values:
+   ```env
    DB_SERVER=localhost
-   DB_USERNAME=your_db_user
-   DB_PASSWORD=your_db_password
+   DB_USERNAME=root
+   DB_PASSWORD=
    DB_NAME=propsight
 
    MAIL_HOST=smtp.gmail.com
@@ -82,60 +141,50 @@ Developed as a capstone project for the Bachelor of Science in Information Techn
    MAIL_USERNAME=your@gmail.com
    MAIL_PASSWORD=your_app_password
    MAIL_FROM_NAME=PropSight
+   MAIL_FROM_EMAIL=your@gmail.com
    MAIL_ENCRYPTION=tls
-   ```
-   > **Never commit `.env` to version control.** It is in `.gitignore`.
 
-4. **Import the database schema**
+   PAYMONGO_SECRET_KEY=sk_test_...
+   PAYMONGO_PUBLIC_KEY=pk_test_...
+   ```
+
+4. **Import the database** via phpMyAdmin or CLI:
    ```bash
-   mysql -u root -p < database/propsight.sql
+   mysql -u root -p propsight < database/propsight.sql
    ```
 
-5. **Set upload directory permissions**
-   ```bash
-   chmod -R 755 uploads/
+5. **Start Apache and MySQL** in XAMPP Control Panel.
+
+6. **Visit the app:**
+   ```
+   http://localhost/PropSight-Capstone/
    ```
 
-6. **Configure your web server** to point to the project root. If using Apache, the included `.htaccess` handles routing.
+---
 
-7. **Visit the app** in your browser and log in with your admin credentials.
+## Payment Methods
+
+| Method | Provider | Notes |
+|---|---|---|
+| Card | PayMongo Checkout Session | Redirects to hosted checkout page |
+| GCash | PayMongo Payment Link | Sends link via in-app flow |
+| Maya | PayMongo Payment Link | Sends link via in-app flow |
+| Bank Transfer | Manual | Recorded manually by admin |
+| Cash | Manual | Recorded manually by admin |
 
 ---
 
 ## Security Notes
 
-- All database queries use **prepared statements** (no raw `$_GET`/`$_POST` in queries).
-- Admin API endpoints enforce **`role = admin`** session checks before executing any action.
-- Database credentials are loaded from **`.env`** via Dotenv — never hardcoded.
-- File uploads are validated by **MIME type** (not just extension).
-- CSRF token protection is implemented in `includes/session.php` and required on destructive POST endpoints.
-- Session cookie hardening (`HttpOnly`, `Secure`, `SameSite=Lax`) should be configured in `session_set_cookie_params()` inside `config.php` before production deployment.
-
----
-
-## Project Structure
-
-```
-propsight/
-├── api/
-│   ├── admin/          # Admin-only API endpoints (role-gated)
-│   └── user/           # Authenticated user API endpoints
-├── assets/
-│   ├── css/            # Stylesheets (admin + user)
-│   └── js/             # JavaScript modules
-├── includes/           # Shared PHP includes (session, db, layout)
-├── pages/
-│   ├── admin/          # Admin back-office pages
-│   └── user/           # Guest-facing portal pages
-├── uploads/            # User-uploaded files (images, IDs)
-├── vendor/             # Composer dependencies
-├── config.php          # App configuration (loads .env)
-├── .env.example        # Environment template
-└── index.php           # Login / entry point
-```
+- All database queries use **prepared statements** — no raw user input in SQL.
+- Admin endpoints enforce **`role = admin`** session checks.
+- Credentials and API keys are stored in **`.env`** — never hardcoded.
+- File uploads are validated by **MIME type**, not file extension.
+- PayMongo webhooks validate **request signatures** before processing.
+- Rate limiting is applied on sensitive endpoints via `includes/rate_limiter.php`.
 
 ---
 
 ## Disclaimer
 
-This project was developed for academic purposes as part of a capstone project in the Bachelor of Science in Information Technology program. It is not intended for production use without a full security review.
+This project was developed for academic purposes as a capstone project for the Bachelor of Science in Information Technology program. It is not intended for production use without a thorough security review and hardening.
