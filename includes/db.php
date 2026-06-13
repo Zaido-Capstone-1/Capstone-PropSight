@@ -25,8 +25,7 @@ if (!function_exists('fmt_dt')) {
             'booked_at',
             'payment_date',
             'refund_date',
-            'checkin_date',
-            'checkout_date',
+            // checkin_date and checkout_date are plain DATE columns — no timezone suffix needed
             'transaction_date',
             'expense_date',
             'request_date',

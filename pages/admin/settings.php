@@ -194,6 +194,58 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
             </div>
         </div>
 
+
+        <!-- ── Backup & Recovery ────────────────────────────────── -->
+        <div class="card">
+            <div class="card-header"
+                style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                <div>
+                    <span class="card-title" style="display:block;margin-bottom:4px;">Backup &amp; Recovery</span>
+                    <p style="font-size:12px;color:var(--text-soft);margin:0;">Generate a full SQL snapshot of the
+                        database. Each backup can be downloaded or used to restore data.</p>
+                </div>
+                <button onclick="generateBackup()" id="generateBackupBtn"
+                    style="display:inline-flex;align-items:center;gap:7px;padding:9px 18px;background:var(--blue-500,#3b82f6);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;margin-left:16px;">
+                    <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
+                        height="14">
+                        <ellipse cx="12" cy="5" rx="9" ry="3" />
+                        <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5" />
+                        <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3" />
+                    </svg>
+                    Generate Backup
+                </button>
+            </div>
+
+            <!-- Backup list -->
+            <div id="backupList" style="margin-top:16px;">
+                <div style="text-align:center;padding:32px 16px;color:var(--text-soft);font-size:13px;">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" width="32" height="32"
+                        style="opacity:.3;display:block;margin:0 auto 10px;">
+                        <ellipse cx="12" cy="5" rx="9" ry="3" />
+                        <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5" />
+                        <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3" />
+                    </svg>
+                    Loading backups…
+                </div>
+            </div>
+
+            <!-- Warning -->
+            <div
+                style="display:flex;align-items:flex-start;gap:8px;padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:9px;margin-top:14px;">
+                <svg fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"
+                    style="flex-shrink:0;margin-top:1px;">
+                    <path
+                        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <span style="font-size:11.5px;color:#92400e;line-height:1.5;">
+                    Restoring will <strong>permanently overwrite</strong> all current data. Always generate a fresh
+                    backup before restoring.
+                </span>
+            </div>
+        </div>
+
     </div>
 </div>
 <script>

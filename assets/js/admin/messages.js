@@ -33,7 +33,12 @@ function loadConversation(userId, name, email, photo) {
     activeUserId = userId;
     activeUserName = name;
     // Save active conversation to restore on reload
-    sessionStorage.setItem('ps_active_user', JSON.stringify({ userId, name, email, photo }));
+    sessionStorage.setItem('ps_active_user', JSON.stringify({
+        userId,
+        name,
+        email,
+        photo
+    }));
     // Fire mark-as-read immediately so badge clears on next page load
     fetch(`${ADMIN_API}?action=mark_read&user_id=${userId}`).catch(() => {});
 
@@ -50,9 +55,9 @@ function loadConversation(userId, name, email, photo) {
         if (badge) badge.remove();
     }
 
-    const avatarHtml = photo
-        ? `<img src="${escHtml(photo)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<div class=\'avatar\'>${escHtml(name[0].toUpperCase())}</div>'">`
-        : name[0].toUpperCase();
+    const avatarHtml = photo ?
+        `<img src="${escHtml(photo)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<div class=\'avatar\'>${escHtml(name[0].toUpperCase())}</div>'">` :
+        name[0].toUpperCase();
 
     const pane = document.getElementById('msgPane');
     pane.innerHTML = `
@@ -93,7 +98,10 @@ function loadConversation(userId, name, email, photo) {
     fetch(`${ADMIN_API}?action=conversation&user_id=${userId}`)
         .then(r => r.json())
         .then(data => {
-            if (!data.success) { document.getElementById('msgBody').innerHTML = `<p style="padding:20px;color:red;">${escHtml(data.message)}</p>`; return; }
+            if (!data.success) {
+                document.getElementById('msgBody').innerHTML = `<p style="padding:20px;color:red;">${escHtml(data.message)}</p>`;
+                return;
+            }
             const msgs = data.messages || [];
             renderMsgs(msgs, true);
             lastMsgTs = msgs.length ? msgs[msgs.length - 1].created_at : new Date().toISOString().slice(0, 19).replace('T', ' ');
@@ -106,13 +114,19 @@ function loadConversation(userId, name, email, photo) {
             checkSeen();
             startPoll();
         })
-        .catch(() => { const b = document.getElementById('msgBody'); if (b) b.innerHTML = '<p style="padding:20px;color:red;">Network error.</p>'; });
+        .catch(() => {
+            const b = document.getElementById('msgBody');
+            if (b) b.innerHTML = '<p style="padding:20px;color:red;">Network error.</p>';
+        });
 }
 
 function renderMsgs(msgs, clearFirst) {
     const body = document.getElementById('msgBody');
     if (!body) return;
-    if (clearFirst) { body.innerHTML = ''; body.dataset.lastDate = ''; }
+    if (clearFirst) {
+        body.innerHTML = '';
+        body.dataset.lastDate = '';
+    }
     if (clearFirst && !msgs.length) {
         body.innerHTML = '<p style="padding:20px;text-align:center;color:#aaa;font-size:13px;">No messages yet. Say hello!</p>';
         return;
@@ -122,8 +136,15 @@ function renderMsgs(msgs, clearFirst) {
         const mine = parseInt(m.from_user) === ADMIN_ID;
         // MySQL returns "YYYY-MM-DD HH:MM:SS" — replace space with T so all browsers parse it correctly
         const d = psDate(m.created_at);
-        const dateStr = d ? d.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' }) : '';
-        const timeStr = d ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+        const dateStr = d ? d.toLocaleDateString('en-PH', {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric'
+        }) : '';
+        const timeStr = d ? d.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : '';
         if (dateStr !== lastDate) {
             const div = document.createElement('div');
             div.className = 'msg-date-label';
@@ -135,8 +156,18 @@ function renderMsgs(msgs, clearFirst) {
         bub.className = `msg-bubble ${mine ? 'me' : 'them'}`;
         bub.dataset.msgId = m.message_id;
         bub.dataset.body = m.body || '';
+
+        // Quote block for replied messages
+        const quoteHtml = m.parent_body ?
+            `<div class="bubble-reply-quote">↩ ${escHtml(m.parent_sender_name ? m.parent_sender_name.split(' ')[0] + ': ' : '')}${escHtml(String(m.parent_body).slice(0, 80))}${String(m.parent_body).length > 80 ? '…' : ''}</div>` :
+            '';
         const bodyText = m.body && m.body !== '📎 Attachment' ? `<div class="bubble">${escHtml(m.body)}</div>` : '';
-        bub.innerHTML = `${bodyText}${m.attachment_url ? renderAdminAttachment(m.attachment_url, m.message_id) : ''}<div class="btime">${timeStr}</div>
+
+        bub.innerHTML = `
+            ${quoteHtml}
+            ${bodyText}
+            ${m.attachment_url ? renderAdminAttachment(m.attachment_url, m.message_id) : ''}
+            <div class="btime">${timeStr}</div>
             <div class="bubble-menu-btn" onclick="toggleBubbleMenu(this, ${m.message_id}, ${mine}, '${escHtml(m.body || '')}')">&#8942;</div>`;
         body.appendChild(bub);
     });
@@ -203,18 +234,21 @@ function unsentMessage(msgId) {
     fd.append('action', 'unsend');
     fd.append('message_id', msgId);
     fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
-    fetch(ADMIN_API, { method: 'POST', body: fd })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            const bub = document.querySelector(`.msg-bubble[data-msg-id="${msgId}"]`);
-            if (bub) bub.remove();
-            updateSeenIndicator();
-        } else {
-            showToast(data.message || 'Failed to unsend.', 'error');
-        }
-    })
-    .catch(() => showToast('Network error.', 'error'));
+    fetch(ADMIN_API, {
+            method: 'POST',
+            body: fd
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const bub = document.querySelector(`.msg-bubble[data-msg-id="${msgId}"]`);
+                if (bub) bub.remove();
+                updateSeenIndicator();
+            } else {
+                showToast(data.message || 'Failed to unsend.', 'error');
+            }
+        })
+        .catch(() => showToast('Network error.', 'error'));
 }
 
 function renderAdminAttachment(url, messageId) {
@@ -264,7 +298,9 @@ function openImageModal(src) {
             wrap.addEventListener('mouseleave', () => overlay.style.opacity = '0');
         }
 
-        modal.addEventListener('click', () => { modal.style.display = 'none'; });
+        modal.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
         document.body.appendChild(modal);
     }
     document.getElementById('ps-img-modal-img').src = src;
@@ -288,7 +324,10 @@ function handleAdminAttach(input) {
     const file = input.files[0];
     const preview = document.getElementById('adminAttachPreview');
     const nameEl = document.getElementById('adminAttachName');
-    if (file) { nameEl.textContent = file.name; preview.style.display = 'flex'; }
+    if (file) {
+        nameEl.textContent = file.name;
+        preview.style.display = 'flex';
+    }
 }
 
 function clearAdminAttach() {
@@ -307,25 +346,37 @@ function sendMsg() {
 
     // Optimistic bubble
     const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeStr = now.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
     const msgBody = document.getElementById('msgBody');
     const ph = msgBody?.querySelector('p[style*="text-align:center"]');
     if (ph) ph.remove();
+    // Capture reply quote before cancelling
+    const replyPreviewEl = document.getElementById('replyPreview');
+    const replyQuoteHtml = replyPreviewEl ?
+        `<div class="bubble-reply-quote">${replyPreviewEl.querySelector('span')?.textContent || ''}</div>` :
+        '';
+
     const bub = document.createElement('div');
     bub.className = 'msg-bubble me';
     bub.style.opacity = '.65';
-    let previewHtml = bodyTxt ? `<div class="bubble">${escHtml(bodyTxt)}</div>` : '';
+    let innerHtml = replyQuoteHtml;
+    innerHtml += bodyTxt ? `<div class="bubble">${escHtml(bodyTxt)}</div>` : '';
     if (file) {
         if (file.type.startsWith('image/')) {
             const tmpUrl = URL.createObjectURL(file);
-            previewHtml += `<img src="${tmpUrl}" style="max-width:220px;max-height:200px;border-radius:8px;margin-top:6px;display:block;opacity:.5;">`;
+            innerHtml += `<img src="${tmpUrl}" style="max-width:220px;max-height:200px;border-radius:8px;margin-top:6px;display:block;opacity:.5;">`;
         } else {
-            previewHtml += `<div style="font-size:12px;margin-top:6px;opacity:.5;">📎 ${escHtml(file.name)}</div>`;
+            innerHtml += `<div style="font-size:12px;margin-top:6px;opacity:.5;">📎 ${escHtml(file.name)}</div>`;
         }
     }
-    previewHtml += `<div class="btime">${timeStr}</div>`;
-    bub.innerHTML = previewHtml;
-    if (msgBody) { msgBody.appendChild(bub); msgBody.scrollTop = msgBody.scrollHeight; }
+    bub.innerHTML = `${innerHtml}<div class="btime">${timeStr}</div>`;
+    if (msgBody) {
+        msgBody.appendChild(bub);
+        msgBody.scrollTop = msgBody.scrollHeight;
+    }
 
     const fd = new FormData();
     fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
@@ -334,9 +385,15 @@ function sendMsg() {
     fd.append('body', bodyTxt);
     if (file) fd.append('attachment', file);
     const replyPreview = document.getElementById('replyPreview');
-    if (replyPreview) { fd.append('reply_to', replyPreview.dataset.replyTo); cancelReply(); }
+    if (replyPreview) {
+        fd.append('reply_to', replyPreview.dataset.replyTo);
+        cancelReply();
+    }
 
-    fetch(ADMIN_API, { method: 'POST', body: fd })
+    fetch(ADMIN_API, {
+            method: 'POST',
+            body: fd
+        })
         .then(r => r.json())
         .then(d => {
             bub.style.opacity = '';
@@ -365,12 +422,19 @@ function sendMsg() {
                 showToast(d.message || 'Failed to send.', 'error');
             }
         })
-        .catch(() => { bub.remove(); showToast('Network error.', 'error'); });
+        .catch(() => {
+            bub.remove();
+            showToast('Network error.', 'error');
+        });
 }
 
 let isPolling = false;
+
 function startPoll() {
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+    }
     pollTimer = setInterval(() => {
         if (!activeUserId || !lastMsgTs || document.hidden || isPolling) return;
         isPolling = true;
@@ -387,11 +451,20 @@ function startPoll() {
                 // Check seen status on every poll tick
                 checkSeen();
             })
-            .catch(() => { })
-            .finally(() => { isPolling = false; });
+            .catch(() => {})
+            .finally(() => {
+                isPolling = false;
+            });
     }, 2000);
 }
-function stopPoll() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } stopSeenCheck(); }
+
+function stopPoll() {
+    if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+    }
+    stopSeenCheck();
+}
 
 // ── Seen / delivered indicator ───────────────────────────────
 function updateSeenIndicator() {
@@ -428,7 +501,10 @@ function startSeenCheck() {
 }
 
 function stopSeenCheck() {
-    if (seenCheckTimer) { clearInterval(seenCheckTimer); seenCheckTimer = null; }
+    if (seenCheckTimer) {
+        clearInterval(seenCheckTimer);
+        seenCheckTimer = null;
+    }
 }
 
 function checkSeen() {
@@ -452,7 +528,10 @@ function updateThreadPreview(userId, body) {
         const preview = item.querySelector('.thread-preview');
         if (preview) preview.textContent = body.slice(0, 50);
         const time = item.querySelector('.msg-thread-time');
-        if (time) time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (time) time.textContent = new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
         const list = document.querySelector('.msg-threads');
         if (list) list.prepend(item);
     }
@@ -466,7 +545,9 @@ function openNewMessage() {
         modal = document.createElement('div');
         modal.id = 'ps-msg-modal';
         modal.className = 'msg-modal-overlay';
-        modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+        modal.addEventListener('click', e => {
+            if (e.target === modal) modal.classList.remove('open');
+        });
         document.body.appendChild(modal);
     }
     modal.innerHTML = `
@@ -491,7 +572,11 @@ function openNewMessage() {
         const subj = document.getElementById('nm_subj').value;
         const body = document.getElementById('nm_body').value;
         const errEl = document.getElementById('nm_err');
-        if (!body.trim()) { errEl.textContent = 'Message is required.'; errEl.style.display = 'block'; return; }
+        if (!body.trim()) {
+            errEl.textContent = 'Message is required.';
+            errEl.style.display = 'block';
+            return;
+        }
         errEl.style.display = 'none';
         document.getElementById('nm_send').textContent = 'Sending…';
         const fd = new FormData();
@@ -500,7 +585,10 @@ function openNewMessage() {
         fd.append('subject', subj);
         fd.append('body', body);
         fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
-        fetch(ADMIN_API, { method: 'POST', body: fd })
+        fetch(ADMIN_API, {
+                method: 'POST',
+                body: fd
+            })
             .then(r => r.json())
             .then(data => {
                 modal.classList.remove('open');
@@ -530,7 +618,10 @@ function openNewMessage() {
                     modal.style.display = 'flex';
                 }
             })
-            .catch(() => { showToast('Network error.', 'error'); modal.style.display = 'flex'; });
+            .catch(() => {
+                showToast('Network error.', 'error');
+                modal.style.display = 'flex';
+            });
     };
 }
 
@@ -545,7 +636,10 @@ window.addEventListener('ps:new_messages', e => {
             const preview = thread.querySelector('.thread-preview');
             if (preview) preview.textContent = (m.body || '').slice(0, 50);
             const time = thread.querySelector('.msg-thread-time');
-            if (time) time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (time) time.textContent = new Date().toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
             // Only show badge if this conversation is NOT currently open
             if (fromId !== activeUserId) {
                 thread.classList.add('has-unread');
@@ -553,7 +647,12 @@ window.addEventListener('ps:new_messages', e => {
                 if (badge) badge.textContent = (parseInt(badge.textContent) || 0) + 1;
                 else {
                     const meta = thread.querySelector('.msg-thread-meta');
-                    if (meta) { const b = document.createElement('div'); b.className = 'msg-unread'; b.textContent = '1'; meta.appendChild(b); }
+                    if (meta) {
+                        const b = document.createElement('div');
+                        b.className = 'msg-unread';
+                        b.textContent = '1';
+                        meta.appendChild(b);
+                    }
                 }
             }
         }
@@ -571,9 +670,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const saved = sessionStorage.getItem('ps_active_user');
     if (saved) {
         try {
-            const { userId, name, email, photo } = JSON.parse(saved);
+            const {
+                userId,
+                name,
+                email,
+                photo
+            } = JSON.parse(saved);
             setTimeout(() => loadConversation(userId, name, email, photo), 100);
-        } catch(e) { sessionStorage.removeItem('ps_active_user'); }
+        } catch (e) {
+            sessionStorage.removeItem('ps_active_user');
+        }
     }
 });
 /* ── Thread-list badge poller ───────────────────────────────
@@ -590,7 +696,10 @@ function startThreadPoll() {
 }
 
 function stopThreadPoll() {
-    if (threadPollTimer) { clearInterval(threadPollTimer); threadPollTimer = null; }
+    if (threadPollTimer) {
+        clearInterval(threadPollTimer);
+        threadPollTimer = null;
+    }
 }
 
 function refreshThreadBadges() {
@@ -616,9 +725,15 @@ function refreshThreadBadges() {
                 if (time && t.last_time) {
                     const d = psDate(t.last_time);
                     time.textContent = isNaN(d) ? '' :
-                        (Date.now() - d < 86400000)
-                            ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                            : d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+                        (Date.now() - d < 86400000) ?
+                        d.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }) :
+                        d.toLocaleDateString('en-PH', {
+                            month: 'short',
+                            day: 'numeric'
+                        });
                 }
 
                 // Badge — skip if this thread is currently open (mark_read already fired)

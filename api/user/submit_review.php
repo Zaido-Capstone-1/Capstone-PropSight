@@ -16,10 +16,6 @@ $userId = (int) $_SESSION['user_id'];
 $bookingId = (int) ($_POST['booking_id'] ?? 0);
 $rating = (int) ($_POST['rating'] ?? 0);
 $comment = trim((string) ($_POST['comment'] ?? ''));
-$cleanliness = min(5, max(1, (float) ($_POST['cleanliness'] ?? 3)));
-$locationRating = min(5, max(1, (float) ($_POST['location_rating'] ?? 3)));
-$valueRating = min(5, max(1, (float) ($_POST['value_rating'] ?? 3)));
-$comfort = min(5, max(1, (float) ($_POST['comfort'] ?? 3)));
 
 if ($bookingId <= 0) {
     echo json_encode(['success' => false, 'message' => 'Invalid booking.']);
@@ -60,25 +56,11 @@ try {
         INSERT INTO booking_reviews (booking_id, unit_id, user_id, rating, comment)
         VALUES (?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
-            rating=VALUES(rating),
-            comment=VALUES(comment),
-            updated_at=CURRENT_TIMESTAMP
-    ";
-    $upsertStmt = $conn->prepare($upsertSql);
-    if (!$upsertStmt) {
-        throw new Exception('Could not prepare review statement.');
-    }
-    $upsertSql = "
-        INSERT INTO booking_reviews (booking_id, unit_id, user_id, rating, comment, cleanliness, location_rating, value_rating, comfort)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
             rating=VALUES(rating), comment=VALUES(comment),
-            cleanliness=VALUES(cleanliness), location_rating=VALUES(location_rating),
-            value_rating=VALUES(value_rating), comfort=VALUES(comfort),
             updated_at=CURRENT_TIMESTAMP
     ";
     $upsertStmt = $conn->prepare($upsertSql);
-    $upsertStmt->bind_param('iiiisdddd', $bookingId, $unitId, $userId, $rating, $comment, $cleanliness, $locationRating, $valueRating, $comfort);
+    $upsertStmt->bind_param('iiiis', $bookingId, $unitId, $userId, $rating, $comment);
     if (!$upsertStmt->execute()) {
         $upsertStmt->close();
         throw new Exception('Could not save review: ' . mysqli_error($conn));
@@ -103,4 +85,3 @@ try {
     mysqli_rollback($conn);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
-

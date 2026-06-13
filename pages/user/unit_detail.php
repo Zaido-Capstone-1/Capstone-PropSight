@@ -22,7 +22,7 @@ $_SESSION['id_verified'] = $_idRow['id_verified'] ?? 'none';
 
 // ── Review pagination params (needed before queries file) ─────────────────────
 $reviewPage = max(1, (int) ($_GET['rp'] ?? 1));
-$reviewLimit = 4;
+$reviewLimit = 5;
 $reviewOffset = ($reviewPage - 1) * $reviewLimit;
 
 // ── All SQL queries ───────────────────────────────────────────────────────────
@@ -157,6 +157,66 @@ $nav_items = [
     <link rel="stylesheet" href="../../assets/css/user-css/unit_detail.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        /* Sidebar must always sit above the sticky float bar (z-index:400) */
+        .sidebar-overlay {
+            z-index: 499 !important;
+        }
+
+        .profile-sidebar {
+            z-index: 500 !important;
+        }
+
+        /* Leaflet custom property marker - remove default white box */
+        .ud-prop-marker {
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Star distribution filter */
+        .ud-star-dist {
+            flex: 1;
+            min-width: 160px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .ud-star-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            color: var(--ud-text-mid, #64748b);
+            transition: background .15s, color .15s;
+            width: 100%;
+            text-align: left;
+        }
+
+        .ud-star-row:hover {
+            background: rgba(201, 168, 76, 0.08);
+            color: #c9a84c;
+        }
+
+        .ud-star-lbl {
+            min-width: 32px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .ud-star-row:hover .ud-star-lbl,
+        .ud-star-row.active .ud-star-lbl {
+            color: #c9a84c;
+        }
+    </style>
 </head>
 
 <body>
@@ -377,8 +437,11 @@ $nav_items = [
                         <div class="ud-price-label">Nightly rate</div>
                         <div class="ud-price-amount">
                             <?php echo $price; ?><sub>/night</sub>
-                            <?php $s=$unit['season']??'Low';$sColor=['Peak'=>'#E74C3C','High'=>'#deaf37','Low'=>'#2ECC71'][$s]??'#2ECC71'; ?>
-                            <span style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:8px;vertical-align:middle;"><?= $s ?> Season</span>
+                            <?php $s = $unit['season'] ?? 'Low';
+                            $sColor = ['Peak' => '#E74C3C', 'High' => '#deaf37', 'Low' => '#2ECC71'][$s] ?? '#2ECC71'; ?>
+                            <span
+                                style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:8px;vertical-align:middle;"><?= $s ?>
+                                Season</span>
                         </div>
                         <div class="ud-price-meta">
                             <i class="ti ti-map-pin"></i>
@@ -496,97 +559,99 @@ $nav_items = [
                                         </div>
                                     </div>
                                 </div>
-                                <div class="ud-rating-bars">
-                                    <?php
-                                    foreach ($catAverages as $cat):
-                                        $pct = $cat['avg'] > 0 ? round(($cat['avg'] / 5) * 100) : 0; ?>
-                                        <div class="ud-rbar-row">
-                                            <span class="ud-rbar-label">
-                                                <?php echo $cat['label']; ?>
-                                            </span>
-                                            <div class="ud-rbar-track">
-                                                <div class="ud-rbar-fill" style="width:<?php echo $pct; ?>%"></div>
-                                            </div>
-                                            <span
-                                                class="ud-rbar-pct"><?php echo $cat['avg'] > 0 ? number_format($cat['avg'], 1) : '–'; ?></span>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-
-                        <div class="ud-reviews-list">
-                            <?php foreach ($reviews as $rv): ?>
-                                <div class="ud-review-card">
-                                    <div class="ud-rv-top">
-                                        <div class="ud-rv-avatar">
-                                            <?php echo strtoupper(mb_substr($rv['reviewer'], 0, 1)); ?>
-                                        </div>
-                                        <div class="ud-rv-info">
-                                            <div class="ud-rv-name"><?php echo ud_esc($rv['reviewer']); ?></div>
-                                            <div class="ud-rv-date">
-                                                <?php echo date('F Y', strtotime($rv['created_at'])); ?>
-                                            </div>
-                                        </div>
-                                        <div class="ud-rv-stars">
-                                            <?php for ($s = 1; $s <= 5; $s++): ?>
-                                                <span class="<?php echo $s <= (int) $rv['rating'] ? 'sf' : 'se'; ?>">★</span>
-                                            <?php endfor; ?>
-                                        </div>
-                                    </div>
-                                    <?php if (!empty($rv['comment'])): ?>
-                                        <p class="ud-rv-body"><?php echo ud_esc($rv['comment']); ?></p>
-                                    <?php endif; ?>
-                                    <?php
-                                    $rvCats = [
-                                        ['label' => 'Cleanliness', 'val' => $rv['cleanliness'] ?? null],
-                                        ['label' => 'Location', 'val' => $rv['location_rating'] ?? null],
-                                        ['label' => 'Value', 'val' => $rv['value_rating'] ?? null],
-                                        ['label' => 'Comfort', 'val' => $rv['comfort'] ?? null],
-                                    ];
-                                    $hasAnyCat = array_filter($rvCats, fn($c) => $c['val'] !== null);
-                                    if ($hasAnyCat): ?>
-                                        <div class="ud-rv-cats">
-                                            <?php foreach ($rvCats as $c):
-                                                if ($c['val'] === null)
-                                                    continue;
-                                                $v = round((float) $c['val']); ?>
-                                                <div class="ud-rv-cat-pill">
-                                                    <span class="ud-rv-cat-label"><?php echo $c['label']; ?></span>
-                                                    <span class="ud-rv-cat-stars">
-                                                        <?php for ($s = 1; $s <= 5; $s++): ?>
-                                                            <span class="<?php echo $s <= $v ? 'sf' : 'se'; ?>">★</span>
-                                                        <?php endfor; ?>
-                                                    </span>
-                                                    <span
-                                                        class="ud-rv-cat-num"><?php echo number_format((float) $c['val'], 1); ?></span>
+                                <div class="ud-star-dist" id="udStarDist">
+                                    <?php foreach ([5, 4, 3, 2, 1] as $star):
+                                        $cnt = $starDist[$star] ?? 0;
+                                        $pct = $totalReviews > 0 ? round(($cnt / $totalReviews) * 100) : 0;
+                                        ?>
+                                        <button class="ud-star-row" onclick="udFilterByStars(<?= $unit_id ?>, <?= $star ?>)"
+                                            data-star="<?= $star ?>" title="Show <?= $star ?>-star reviews">
+                                            <span class="ud-star-lbl"><?= $star ?> ★</span>
+                                            <div class="ud-rbar-track" style="flex:1;">
+                                                <div class="ud-rbar-fill"
+                                                    style="width:<?= $pct ?>%;background:<?= $pct > 0 ? '#c9a84c' : '#e2e8f0' ?>;transition:width .3s;">
                                                 </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
+                                            </div>
+                                            <span class="ud-star-cnt"
+                                                style="min-width:24px;text-align:right;font-size:12px;color:#64748b;"><?= $cnt ?></span>
+                                        </button>
+                                    <?php endforeach; ?>
+                                    <button class="ud-star-row ud-star-all" id="udStarAllBtn"
+                                        onclick="udFilterByStars(<?= $unit_id ?>, 0)"
+                                        style="display:none;justify-content:center;color:#1a2744;font-weight:600;font-size:12px;padding:6px 0;">
+                                        Show all reviews
+                                    </button>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
-
-                        <?php if ($totalReviewPages > 1): ?>
-                            <div class="ud-reviews-pager">
-                                <?php if ($reviewPage > 1): ?>
-                                    <a href="?id=<?php echo $unit_id; ?>&rp=<?php echo $reviewPage - 1; ?>#reviews"
-                                        class="ud-pager-btn">
-                                        <i class="ti ti-arrow-left"></i> Prev
-                                    </a>
-                                <?php endif; ?>
-                                <span class="ud-pager-label">
-                                    Page <?php echo $reviewPage; ?> of <?php echo $totalReviewPages; ?>
-                                </span>
-                                <?php if ($reviewPage < $totalReviewPages): ?>
-                                    <a href="?id=<?php echo $unit_id; ?>&rp=<?php echo $reviewPage + 1; ?>#reviews"
-                                        class="ud-pager-btn">
-                                        Next <i class="ti ti-arrow-right"></i>
-                                    </a>
-                                <?php endif; ?>
                             </div>
                         <?php endif; ?>
+
+                        <div id="udReviewsContainer">
+                            <div class="ud-reviews-list" id="udReviewsList">
+                                <?php foreach ($reviews as $rv): ?>
+                                    <div class="ud-review-card">
+                                        <div class="ud-rv-top">
+                                            <?php
+                                            $rvInitials = strtoupper(mb_substr($rv['reviewer'], 0, 1));
+                                            $rvParts = explode(' ', trim($rv['reviewer']));
+                                            if (count($rvParts) >= 2)
+                                                $rvInitials = strtoupper(mb_substr($rvParts[0], 0, 1) . mb_substr($rvParts[1], 0, 1));
+                                            $rvPhoto = !empty($rv['reviewer_photo']) ? '../../' . htmlspecialchars($rv['reviewer_photo']) : '';
+                                            ?>
+                                            <div class="ud-rv-avatar"
+                                                style="position:relative;width:42px;height:42px;border-radius:50%;flex-shrink:0;overflow:hidden;background:#1a2744;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#c9a84c;">
+                                                <?php if ($rvPhoto): ?>
+                                                    <img src="<?= $rvPhoto ?>" alt="<?= ud_esc($rv['reviewer']) ?>"
+                                                        style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;"
+                                                        onerror="this.style.display='none'">
+                                                <?php endif; ?>
+                                                <?= $rvInitials ?>
+                                            </div>
+                                            <div class="ud-rv-info">
+                                                <div class="ud-rv-name"><?php echo ud_esc($rv['reviewer']); ?></div>
+                                                <div class="ud-rv-date">
+                                                    <?php echo date('M j, Y', strtotime($rv['created_at'])); ?>
+                                                </div>
+                                            </div>
+                                            <div class="ud-rv-stars">
+                                                <?php for ($s = 1; $s <= 5; $s++): ?>
+                                                    <span class="<?php echo $s <= (int) $rv['rating'] ? 'sf' : 'se'; ?>">★</span>
+                                                <?php endfor; ?>
+                                            </div>
+                                        </div>
+                                        <?php if (!empty($rv['comment'])): ?>
+                                            <p class="ud-rv-body"><?php echo ud_esc($rv['comment']); ?></p>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+
+                            <?php if ($totalReviews > 5): ?>
+                                <div id="udSeeMoreWrap" style="text-align:center;margin-top:16px;">
+                                    <button class="ud-pager-btn" id="udSeeMoreBtn"
+                                        onclick="udSeeMoreReviews(<?= $unit_id ?>, <?= $totalReviews ?>)"
+                                        style="padding:8px 24px;font-weight:600;">
+                                        See More (<?= $totalReviews - 5 ?> more)
+                                    </button>
+                                </div>
+                                <div id="udHideWrap" style="text-align:center;margin-top:16px;display:none;">
+                                    <button class="ud-pager-btn" id="udHideBtn" onclick="udHideReviews(<?= $unit_id ?>)"
+                                        style="padding:8px 24px;font-weight:600;">
+                                        <i class="ti ti-chevron-up"></i> Hide
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="ud-reviews-pager" id="udReviewsPager" style="display:none;"
+                                data-unit="<?= $unit_id ?>" data-page="1" data-total="1">
+                                <button class="ud-pager-btn" id="udRvPrev" disabled style="opacity:.4;pointer-events:none;">
+                                    <i class="ti ti-arrow-left"></i> Prev
+                                </button>
+                                <span class="ud-pager-label" id="udRvPageLabel">Page 1 of 1</span>
+                                <button class="ud-pager-btn" id="udRvNext" disabled style="opacity:.4;pointer-events:none;">
+                                    Next <i class="ti ti-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div><!-- /udReviewsContainer -->
 
                     <?php endif; ?>
                 </div>
@@ -603,18 +668,27 @@ $nav_items = [
                 <div class="ud-bc-header">
                     <div class="ud-bc-price">
                         <?php echo $price; ?><span class="ud-bc-per"> / night</span>
-                        <?php $s=$unit['season']??'Low';$sColor=['Peak'=>'#E74C3C','High'=>'#deaf37','Low'=>'#2ECC71'][$s]??'#2ECC71'; ?>
-                        <span style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:6px;vertical-align:middle;"><?= $s ?> Season</span>
+                        <?php $s = $unit['season'] ?? 'Low';
+                        $sColor = ['Peak' => '#E74C3C', 'High' => '#deaf37', 'Low' => '#2ECC71'][$s] ?? '#2ECC71'; ?>
+                        <span
+                            style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;margin-left:6px;vertical-align:middle;"><?= $s ?>
+                            Season</span>
                     </div>
                     <?php if ($ratingValue !== null): ?>
                         <div class="ud-bc-rating">
-                            <span class="ud-bc-stars">★★★★★</span>
+                            <span class="ud-bc-stars"><?php
+                            $rounded = round((float) $ratingValue);
+                            for ($s = 1; $s <= 5; $s++):
+                                echo '<span style="color:' . ($s <= $rounded ? '#d97706' : '#d1d5db') . ';">★</span>';
+                            endfor;
+                            ?></span>
                             <strong><?php echo number_format($ratingValue, 1); ?></strong>
                             <span>· <?php echo $totalReviews; ?> review<?php echo $totalReviews !== 1 ? 's' : ''; ?></span>
                         </div>
                     <?php else: ?>
                         <div class="ud-bc-rating">
-                            <span style="opacity:0.5;font-size:10px;">★★★★★</span>
+                            <span><?php for ($s = 1; $s <= 5; $s++)
+                                echo '<span style="color:#d1d5db;">★</span>'; ?></span>
                             <span style="font-size:0.65rem;opacity:0.6;margin-left:4px;">No ratings yet</span>
                         </div>
                     <?php endif; ?>
@@ -634,11 +708,14 @@ $nav_items = [
                                 <label>Guests</label>
                                 <div
                                     style="font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;color:#0c1a2e">
-                                    <span id="udGCount">2</span> guest<span id="udGPlural">s</span>
+                                    <span id="udGCount"><?php echo (int) ($unit['max_guests'] ?? 1); ?></span> guest<span
+                                        id="udGPlural"><?php echo (int) ($unit['max_guests'] ?? 1) !== 1 ? 's' : ''; ?></span><span
+                                        id="udGExtra"
+                                        style="display:none;color:#deaf37;font-size:.75rem;margin-left:4px;"></span>
                                 </div>
                             </div>
                             <div class="ud-guests-ctl">
-                                <button class="ud-g-btn" id="udGMinus">−</button>
+                                <button class="ud-g-btn" id="udGMinus" disabled style="opacity:0.4;">−</button>
                                 <button class="ud-g-btn" id="udGPlus">+</button>
                             </div>
                         </div>
@@ -647,7 +724,7 @@ $nav_items = [
                     <div class="ud-avail-note<?php echo !$isVacant ? ' unavail' : ''; ?>" id="udAvailNote">
                         <?php if ($isVacant): ?>
                             <i class="ti ti-circle-check"></i>
-                            <span>Available from <?php echo date('M j, Y'); ?>. Deposit is 50% of stay.</span>
+                            <span>Ready to book — secure your dates before someone else does.</span>
                         <?php elseif ($isBooked): ?>
                             <i class="ti ti-calendar-event"></i>
                             <span>This unit has been booked and is awaiting check-in.</span>
@@ -656,7 +733,7 @@ $nav_items = [
                             <span>This unit is currently occupied by a guest.</span>
                         <?php elseif ($isMaintenance): ?>
                             <i class="ti ti-tool"></i>
-                            <span>This unit is under maintenance.</span>
+                            <span>This unit is under maintenance and will be available soon.</span>
                         <?php else: ?>
                             <i class="ti ti-circle-x"></i>
                             <span>Unit is currently <?php echo ud_esc($unit['status']); ?>.</span>
@@ -689,6 +766,8 @@ $nav_items = [
                         </div>
                         <div class="ud-pb-total"><span>Total</span><span id="udTotalDue">—</span></div>
                     </div>
+                    <div id="udGuestSurcharge"
+                        style="display:none;font-size:12px;color:#deaf37;margin-top:4px;font-weight:600;"></div>
 
                     <!-- Social proof nudge -->
                     <?php if ($bookingCount >= 5): ?>
@@ -708,20 +787,26 @@ $nav_items = [
                     <?php endif; ?>
 
                     <?php if ($isVacant && !$hasActiveBooking): ?>
-                        <button class="ud-book-btn" id="udBookBtn2"
+                        <button class="ud-book-btn" id="udBookBtn2" disabled style="opacity:0.5;cursor:not-allowed;"
                             onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
                             Book Now
                         </button>
+                        <p class="ud-book-note" id="udBookHint" style="color:#64748b;font-style:italic;">
+                            <i class="ti ti-info-circle"></i> Select your check-in &amp; check-out dates to continue
+                        </p>
                     <?php elseif ($hasActiveBooking): ?>
                         <button class="ud-book-btn" disabled
                             style="background:#112240!important;color:#e8c882!important;cursor:default;">
                             <i class="ti ti-circle-check"></i> Already Booked
                         </button>
                     <?php elseif ($isBooked || $isOccupied): ?>
-                        <button class="ud-book-btn" id="udBookBtn2"
+                        <button class="ud-book-btn" id="udBookBtn2" disabled style="opacity:0.5;cursor:not-allowed;"
                             onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
                             <i class="ti ti-calendar-plus"></i> Book a Future Date
                         </button>
+                        <p class="ud-book-note" id="udBookHint" style="color:#64748b;font-style:italic;">
+                            <i class="ti ti-info-circle"></i> Select your check-in &amp; check-out dates to continue
+                        </p>
                     <?php elseif ($isMaintenance): ?>
                         <button class="ud-book-btn ud-book-btn--disabled" disabled
                             style="background:#9ca3af!important;color:#fff!important;">
@@ -843,8 +928,11 @@ $nav_items = [
         <div class="ud-float-left">
             <div class="ud-float-price">
                 <?php echo $price; ?><sub>/night</sub>
-                <?php $s=$unit['season']??'Low';$sColor=['Peak'=>'#E74C3C','High'=>'#deaf37','Low'=>'#2ECC71'][$s]??'#2ECC71'; ?>
-                <span style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;"><?= $s ?> Season</span>
+                <?php $s = $unit['season'] ?? 'Low';
+                $sColor = ['Peak' => '#E74C3C', 'High' => '#deaf37', 'Low' => '#2ECC71'][$s] ?? '#2ECC71'; ?>
+                <span
+                    style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;"><?= $s ?>
+                    Season</span>
             </div>
             <div class="ud-float-dates" id="udFloatDates">Select dates to see total</div>
         </div>
@@ -853,7 +941,7 @@ $nav_items = [
                 <i class="ti ti-share"></i>
             </button>
             <?php if ($isVacant && !$hasActiveBooking): ?>
-                <button class="ud-float-btn" id="udFloatBtn"
+                <button class="ud-float-btn" id="udFloatBtn" disabled style="opacity:0.5;cursor:not-allowed;"
                     onclick='openBookingModalFromDetail(<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>)'>
                     Book Now
                 </button>
@@ -958,6 +1046,9 @@ $nav_items = [
                             </div>
                             <div class="bm-review-row"><span class="bm-review-key">Price/night</span><span
                                     class="bm-review-val" id="rv-rent">—</span>
+                            </div>
+                            <div class="bm-review-row" style="display:none;"><span class="bm-review-key">Guest
+                                    surcharge</span><span class="bm-review-val" id="rv-guest-surcharge">—</span>
                             </div>
 
                         </div>
@@ -1128,6 +1219,9 @@ $nav_items = [
                         <div class="bm-summary-row"><span class="bm-summary-key">Price per night</span><span
                                 class="bm-summary-val" id="sb-rent">—</span>
                         </div>
+                        <div class="bm-summary-row" style="display:none;"><span class="bm-summary-key">Guest
+                                surcharge</span><span class="bm-summary-val" id="sb-guest-surcharge"></span>
+                        </div>
                     </div>
                     <div class="bm-summary-divider"></div>
                     <div class="bm-total-row"><span class="bm-total-label">Total due now</span><span
@@ -1184,6 +1278,7 @@ $nav_items = [
         window.UD_UNIT = {
             lat: <?php echo (float) ($unit['latitude'] ?? 0); ?>,
             lng: <?php echo (float) ($unit['longitude'] ?? 0); ?>,
+            title: <?php echo json_encode($unitTitle); ?>,
             priceNum: <?php echo (float) $unit['rent_amount']; ?>,
             maxGuests: <?php echo (int) ($unit['max_guests'] ?? 6); ?>,
             seasonality: { 0: 1.30, 1: 1.30, 2: 1.10, 3: 1.15, 4: 1.15, 5: 0.80, 6: 0.80, 7: 0.80, 8: 0.80, 9: 0.80, 10: 1.15, 11: 1.30 },
@@ -1239,6 +1334,15 @@ $nav_items = [
 
             function renderNearby(places, refLat, refLng) {
                 const list = document.getElementById('udNearbyList');
+                // Store globally for map modal
+                window._udNearbyPlaces = places;
+                window._udGetLabel = getLabel;
+
+                // If map modal already open and initialised, add markers now
+                if (window._udModalMapReady) {
+                    window._udPlotNearbyMarkers?.();
+                }
+
                 if (!places.length) {
                     list.innerHTML = '<p class="ud-nearby-empty">No nearby places found.</p>';
                     return;
@@ -1330,8 +1434,7 @@ $nav_items = [
         document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
 
-        const hdr = document.getElementById('hdr');
-        window.addEventListener('scroll', () => hdr.classList.toggle('scrolled', scrollY > 20));
+        window.addEventListener('scroll', () => document.getElementById('hdr').classList.toggle('scrolled', scrollY > 20));
 
         const burger = document.getElementById('hamburger');
         const mob = document.getElementById('mobileNav');

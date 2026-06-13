@@ -228,7 +228,7 @@ $active_page = 'dashboard';
               <div class="task-header">
                 <div class="card-head-main">
                   <span class="card-title">Task Summary</span>
-                  <span class="card-head-meta"><?= $taskOpenCount ?> urgent · <?= $taskInProgressCount ?> in
+                  <span class="card-head-meta"><?= $taskUrgentCount ?> urgent · <?= $taskInProgressCount ?> in
                     progress</span>
                 </div>
               </div>
@@ -278,21 +278,22 @@ $active_page = 'dashboard';
       </div>
     </div>
   </div>
+</body>
 
-  <?php include '../../includes/right_panel.php'; ?>
+<?php include '../../includes/right_panel.php'; ?>
 
-  <script>
-    window.__PS_DASHBOARD__ = {
-      currentYear: <?= (int) $currentYear ?>,
-      chartLabels: <?= json_encode($chartLabels) ?>,
-      revData: <?= json_encode($revData) ?>,
-      expData: <?= json_encode($expData) ?>,
-      occupiedUnits: <?= $occupiedUnits ?>,
-      vacantUnits: <?= $vacantUnits ?>,
-      maintenanceUnits: <?= $maintenanceUnits ?>
-    };
-  </script>
-  <script>window.PS_RT_PAGE = 'dashboard';</script>
-  <script src="../../assets/js/admin/dashboard.js"></script>
+<script>
+  window.__PS_DASHBOARD__ = {
+    currentYear: <?= (int) $currentYear ?>,
+    chartLabels: <?= json_encode($chartLabels) ?>,
+    revData: <?= json_encode($revData) ?>,
+    expData: <?= json_encode($expData) ?>,
+    occupiedUnits: <?= $occupiedUnits ?>,
+    vacantUnits: <?= $vacantUnits ?>,
+    maintenanceUnits: <?= $maintenanceUnits ?>
+  };
+</script>
+<script>window.PS_RT_PAGE = 'dashboard';</script>
+<script src="../../assets/js/admin/dashboard.js"></script>
 
-  <?php include '../../includes/layout_close_noclose.php'; ?>
+<?php include '../../includes/layout_close_noclose.php'; ?>

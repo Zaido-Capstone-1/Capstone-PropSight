@@ -81,9 +81,14 @@ if ($method === 'GET') {
         $markStmt->close();
 
         $convStmt = $conn->prepare("
-            SELECT m.*, CONCAT(u.first_name,' ',u.last_name) AS sender_name
+            SELECT m.*,
+                   CONCAT(u.first_name,' ',u.last_name) AS sender_name,
+                   p.body AS parent_body,
+                   CONCAT(pu.first_name,' ',pu.last_name) AS parent_sender_name
             FROM messages m
             JOIN users u ON u.user_id = m.from_user
+            LEFT JOIN messages p ON p.message_id = m.parent_id
+            LEFT JOIN users pu ON pu.user_id = p.from_user
             WHERE (m.from_user=? AND m.to_user=?)
                OR (m.from_user=? AND m.to_user=?)
             ORDER BY m.created_at ASC
@@ -128,9 +133,14 @@ if ($method === 'GET') {
         $markStmt->close();
 
         $pollStmt = $conn->prepare("
-            SELECT m.*, CONCAT(u.first_name,' ',u.last_name) AS sender_name
+            SELECT m.*,
+                   CONCAT(u.first_name,' ',u.last_name) AS sender_name,
+                   p.body AS parent_body,
+                   CONCAT(pu.first_name,' ',pu.last_name) AS parent_sender_name
             FROM messages m
             JOIN users u ON u.user_id = m.from_user
+            LEFT JOIN messages p ON p.message_id = m.parent_id
+            LEFT JOIN users pu ON pu.user_id = p.from_user
             WHERE ((m.from_user=? AND m.to_user=?)
                 OR (m.from_user=? AND m.to_user=?))
               AND m.created_at > ?
@@ -251,10 +261,18 @@ if ($method === 'POST') {
         if (!$body)
             $body = '📎 Attachment';
 
-        $insStmt = $conn->prepare(
-            'INSERT INTO messages (from_user, to_user, subject, body, attachment_url) VALUES (?, ?, ?, ?, ?)'
-        );
-        $insStmt->bind_param('iisss', $userId, $toAdmin, $subject, $body, $attachmentUrl);
+        $replyTo = isset($_POST['reply_to']) ? (int) $_POST['reply_to'] : null;
+        if ($replyTo) {
+            $insStmt = $conn->prepare(
+                'INSERT INTO messages (from_user, to_user, subject, body, attachment_url, parent_id) VALUES (?, ?, ?, ?, ?, ?)'
+            );
+            $insStmt->bind_param('iisssi', $userId, $toAdmin, $subject, $body, $attachmentUrl, $replyTo);
+        } else {
+            $insStmt = $conn->prepare(
+                'INSERT INTO messages (from_user, to_user, subject, body, attachment_url) VALUES (?, ?, ?, ?, ?)'
+            );
+            $insStmt->bind_param('iisss', $userId, $toAdmin, $subject, $body, $attachmentUrl);
+        }
 
         if ($insStmt->execute()) {
             $newId = $insStmt->insert_id;
@@ -277,6 +295,16 @@ if ($method === 'POST') {
             $notifStmt->bind_param('isss', $toAdmin, $notifTitle, $bodyPreview, $notifLink);
             $notifStmt->execute();
             $notifStmt->close();
+            require_once __DIR__ . '/../../includes/admin_notif_helpers.php';
+            upsert_notif(
+                $conn,
+                $toAdmin,
+                'message',
+                'msg-' . $newId,
+                $notifTitle . ': ' . mb_substr($bodyPreview, 0, 80),
+                'messages.php',
+                gmdate('Y-m-d H:i:s')
+            );
 
             echo json_encode([
                 'success' => true,

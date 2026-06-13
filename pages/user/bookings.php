@@ -416,39 +416,6 @@ $status_map = [
             </div>
         </div>
 
-        <div style="margin-bottom:20px;">
-            <div
-                style="font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-mid);margin-bottom:14px;">
-                Rate by Category
-            </div>
-            <?php foreach ([
-                ['cleanliness', 'Cleanliness'],
-                ['location_rating', 'Location'],
-                ['value_rating', 'Value'],
-                ['comfort', 'Comfort'],
-            ] as [$key, $label]): ?>
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;" id="catrow-<?= $key ?>">
-                    <span style="width:100px;font-size:0.8rem;color:var(--ink-soft);flex-shrink:0;">
-                        <?= $label ?>
-                    </span>
-                    <div style="display:flex;gap:5px;" id="catstars-<?= $key ?>">
-                        <?php for ($s = 1; $s <= 5; $s++): ?>
-                            <svg data-key="<?= $key ?>" data-val="<?= $s ?>" onclick="setCatRating('<?= $key ?>', <?= $s ?>)"
-                                onmouseover="hoverCatRating('<?= $key ?>', <?= $s ?>)" onmouseout="resetCatHover('<?= $key ?>')"
-                                viewBox="0 0 24 24"
-                                style="width:26px;height:26px;fill:#e2e8f0;stroke:#cbd5e1;stroke-width:1.5;cursor:pointer;transition:fill 0.12s,transform 0.12s;border-radius:4px;">
-                                <polygon
-                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                            </svg>
-                        <?php endfor; ?>
-                    </div>
-                    <input type="hidden" id="cat-<?= $key ?>" value="3">
-                    <span id="cat-<?= $key ?>-val"
-                        style="font-size:0.8rem;font-weight:700;color:var(--teal);width:22px;text-align:right;">3</span>
-                </div>
-            <?php endforeach; ?>
-        </div>
-
         <!-- Review Text -->
         <div class="form-field" style="margin-bottom:18px;">
             <label

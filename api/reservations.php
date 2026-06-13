@@ -103,6 +103,7 @@ if ($method === 'GET') {
             DATEDIFF(b.checkout_date, b.checkin_date) AS nights,
             CONCAT(u2.first_name,' ',u2.last_name)    AS user_name,
             u2.email AS user_email, u2.phone AS user_phone,
+            u2.profile_photo AS user_photo,
             un.unit_name, un.unit_number, un.unit_id,
             p.property_name, p.property_id
         FROM bookings b

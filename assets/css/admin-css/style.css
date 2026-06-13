@@ -1253,6 +1253,23 @@ textarea {
   flex-direction: column;
   gap: 14px;
   margin: 20px 0 18px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.schedule-list::-webkit-scrollbar {
+  width: 4px;
+}
+.schedule-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.schedule-list::-webkit-scrollbar-thumb {
+  background: var(--blue-100);
+  border-radius: 99px;
+}
+.schedule-list::-webkit-scrollbar-thumb:hover {
+  background: var(--blue-400);
 }
 
 .schedule-slot {
@@ -1327,6 +1344,23 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 11px;
+  max-height: 310px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.activity-list::-webkit-scrollbar {
+  width: 4px;
+}
+.activity-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.activity-list::-webkit-scrollbar-thumb {
+  background: var(--blue-100);
+  border-radius: 99px;
+}
+.activity-list::-webkit-scrollbar-thumb:hover {
+  background: var(--blue-400);
 }
 
 .activity-item {
@@ -1645,6 +1679,23 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 9px;
+  max-height: 310px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.task-list::-webkit-scrollbar {
+  width: 4px;
+}
+.task-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.task-list::-webkit-scrollbar-thumb {
+  background: var(--blue-100);
+  border-radius: 99px;
+}
+.task-list::-webkit-scrollbar-thumb:hover {
+  background: var(--blue-400);
 }
 
 .task-item {

@@ -44,13 +44,23 @@ function psSameDay(a, b) {
  * Anchors to T12:00:00 to prevent UTC midnight timezone rollback.
  */
 document.addEventListener('DOMContentLoaded', function () {
+    // .ps-date: show date in local timezone (e.g. "Jun 8, 2026")
     document.querySelectorAll('.ps-date[data-date]').forEach(function (el) {
         const raw = el.dataset.date;
         if (!raw) return;
-        // Append T12:00:00 so any timezone won't shift the date
-        const d = new Date(raw + 'T12:00:00');
-        if (!isNaN(d.getTime())) {
+        const d = psDate(raw) || new Date(raw + 'T12:00:00');
+        if (d && !isNaN(d.getTime())) {
             el.textContent = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+    });
+
+    // .ps-time: show time only in local timezone (e.g. "3:17 AM")
+    document.querySelectorAll('.ps-time[data-date]').forEach(function (el) {
+        const raw = el.dataset.date;
+        if (!raw) return;
+        const d = psDate(raw);
+        if (d && !isNaN(d.getTime())) {
+            el.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
     });
 });

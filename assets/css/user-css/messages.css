@@ -315,6 +315,7 @@
     flex-direction: column;
     max-width: 68%;
     margin-bottom: 6px;
+    position: relative;
 }
 
 .msg-bubble.me {
@@ -615,14 +616,50 @@
     user-select: none;
 }
 
-.msg-bubble.them .bubble-menu-btn {
-    background: rgba(0, 0, 0, 0.08);
-    color: #475569;
-    right: -28px;
+.msg-bubble.me .bubble-menu-btn {
+    right: auto;
+    left: -26px;
     top: 6px;
+    background: rgba(0, 0, 0, 0.12);
+    color: #fff;
 }
 
-.msg-bubble:hover .bubble-menu-btn {
+.msg-bubble.them .bubble-menu-btn {
+    background: rgba(0, 0, 0, 0.08);
+    color: #334155;
+    right: -24px;
+    left: auto;
+    top: 4px;
+}
+
+/* Extend hover area of .them bubbles rightward to cover the button */
+.msg-bubble.them::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -30px;
+    width: 30px;
+    height: 100%;
+}
+
+/* Extend hover area of .me bubbles leftward to cover the button */
+.msg-bubble.me::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -40px;
+    width: 40px;
+    height: 100%;
+}
+
+.msg-bubble.them .bubble-menu {
+    left: 0;
+    right: auto;
+    top: 28px;
+}
+
+.msg-bubble:hover .bubble-menu-btn,
+.bubble-menu-btn:hover {
     display: block;
 }
 
@@ -665,4 +702,37 @@
 /* Make bubbles relative for menu positioning */
 .msg-bubble {
     position: relative;
+}
+
+/* ── Reply quote — standalone block above the bubble ── */
+.bubble-reply-quote {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.05);
+    border-left: 3px solid #94a3b8;
+    border-radius: 6px;
+    padding: 5px 10px;
+    margin-bottom: 3px;
+    font-size: .72rem;
+    color: #64748b;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
+    align-self: flex-start;
+}
+
+.msg-bubble.me .bubble-reply-quote {
+    align-self: flex-end;
+    border-left-color: #93c5fd;
+    background: rgba(147, 197, 253, 0.15);
+    color: #93c5fd;
+}
+
+.msg-bubble.me .bubble-menu {
+    right: auto;
+    left: 0;
+    top: 28px;
 }

@@ -137,22 +137,24 @@ $taskRes = $conn->query(
      LEFT JOIN units u ON u.unit_id = m.unit_id
      LEFT JOIN properties p ON p.property_id = u.property_id
      WHERE m.request_status NOT IN ('completed', 'closed')
-     ORDER BY m.request_date DESC
-     LIMIT 5"
+     ORDER BY FIELD(m.priority,'urgent','high','medium','normal','low'), m.request_date DESC"
 );
 $tasks = [];
 while ($r = $taskRes->fetch_assoc())
     $tasks[] = $r;
 
-$taskOpenCount = 0;
+$taskUrgentCount = 0;
 $taskInProgressCount = 0;
 foreach ($tasks as $t) {
     $s = strtolower(trim((string) ($t['status'] ?? '')));
-    if ($s === 'open')
-        $taskOpenCount++;
+    $p = strtolower(trim((string) ($t['priority'] ?? '')));
+    if (in_array($p, ['urgent', 'high'], true))
+        $taskUrgentCount++;
     if ($s === 'in_progress')
         $taskInProgressCount++;
 }
+// keep legacy alias so the view template still compiles if referenced elsewhere
+$taskOpenCount = $taskUrgentCount;
 
 // ── Available years for chart switcher ────────────────────────────────────
 $years = [];
@@ -173,7 +175,7 @@ if (!in_array($currentYear, $years, true))
 
 // ── UI maps ────────────────────────────────────────────────────────────────
 $taskStatusMap = [
-    'open' => ['bg' => 'var(--danger-light)', 'color' => 'var(--danger)', 'label' => 'Urgent'],
+    'open' => ['bg' => 'var(--danger-light)', 'color' => 'var(--danger)', 'label' => 'Open'],
     'in_progress' => ['bg' => 'var(--blue-50)', 'color' => 'var(--blue-500)', 'label' => 'In Progress'],
     'pending' => ['bg' => 'var(--pending-light)', 'color' => 'var(--accent-dk)', 'label' => 'Pending'],
     'completed' => ['bg' => 'var(--success-light)', 'color' => 'var(--success)', 'label' => 'Done'],

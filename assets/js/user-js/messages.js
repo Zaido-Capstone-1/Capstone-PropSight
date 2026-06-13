@@ -153,8 +153,15 @@ function renderMessages(msgs, clearFirst = false) {
         bubble.className = `msg-bubble ${mine ? 'me' : 'them'}`;
         bubble.dataset.msgId = m.message_id;
         bubble.dataset.body = m.body || '';
+
+        // Quote block for replied messages
+        const quoteHtml = m.parent_body
+            ? `<div class="bubble-reply-quote">↩ ${escHtml(m.parent_sender_name ? m.parent_sender_name.split(' ')[0] + ': ' : '')}${escHtml(String(m.parent_body).slice(0, 80))}${String(m.parent_body).length > 80 ? '…' : ''}</div>`
+            : '';
         const bodyText = m.body && m.body !== '📎 Attachment' ? `<div class="bubble-text">${escHtml(m.body)}</div>` : '';
+
         bubble.innerHTML = `
+            ${quoteHtml}
             ${bodyText}
             ${m.attachment_url ? renderAttachment(m.attachment_url, m.message_id) : ''}
             <div class="bubble-time">${timeStr}</div>
@@ -347,20 +354,26 @@ function sendMsg() {
     const placeholder = chatBody.querySelector('div[style*="text-align:center"]');
     if (placeholder) placeholder.remove();
 
+    // Capture reply quote BEFORE cancelling the preview
+    const replyPreviewEl = document.getElementById('replyPreview');
+    const replyQuoteHtml = replyPreviewEl
+        ? `<div class="bubble-reply-quote">${replyPreviewEl.querySelector('span')?.textContent || ''}</div>`
+        : '';
+
     const bubble = document.createElement('div');
     bubble.className = 'msg-bubble me sending';
     bubble.id = tempId;
-    let previewHtml = body ? `<div class="bubble-text">${escHtml(body)}</div>` : '';
+    let innerHtml = replyQuoteHtml;
+    innerHtml += body ? `<div class="bubble-text">${escHtml(body)}</div>` : '';
     if (file) {
         if (file.type.startsWith('image/')) {
             const tmpUrl = URL.createObjectURL(file);
-            previewHtml += `<img src="${tmpUrl}" style="max-width:220px;max-height:200px;border-radius:8px;margin-top:6px;display:block;opacity:.5;">`;
+            innerHtml += `<img src="${tmpUrl}" style="max-width:220px;max-height:200px;border-radius:8px;margin-top:6px;display:block;opacity:.5;">`;
         } else {
-            previewHtml += `<div style="font-size:12px;margin-top:6px;opacity:.5;">📎 ${escHtml(file.name)}</div>`;
+            innerHtml += `<div style="font-size:12px;margin-top:6px;opacity:.5;">📎 ${escHtml(file.name)}</div>`;
         }
     }
-    previewHtml += `<div class="bubble-time">${timeStr}</div>`;
-    bubble.innerHTML = previewHtml;
+    bubble.innerHTML = `${innerHtml}<div class="bubble-time">${timeStr}</div>`;
     chatBody.appendChild(bubble);
     chatBody.scrollTop = chatBody.scrollHeight;
 

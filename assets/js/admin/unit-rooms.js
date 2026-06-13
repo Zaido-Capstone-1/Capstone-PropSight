@@ -357,7 +357,7 @@ async function openViewModal(unit) {
                   maintenance: { bg:'rgba(180,83,9,0.88)',   color:'#fef3c7',  lbl:'MAINTENANCE' },
                 };
                 const sb = STATUS_BADGE[status] || STATUS_BADGE.occupied;
-                return '<span style="font-family:DM Sans,sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.09em;padding:3px 9px;border-radius:99px;background:'+sb.bg+';color:'+sb.color+';">'+sb.lbl+'</span>';
+                return '<span style="font-family:DM Sans,sans-serif;font-size:0.58rem;font-weight:800;letter-spacing:0.09em;padding:3px 9px;border-radius:99px;background:'+sb.bg+';color:'+sb.color+';">'+sb.lbl+'</span>';
               })()}
             </div>
           </div>
@@ -497,11 +497,11 @@ async function openViewModal(unit) {
           </div>
           <div>
             <label style="${LBL}">Status</label>
-            ${status === 'occupied'
+            ${(status === 'occupied' || status === 'booked')
               ? `<div style="${INP}background:var(--bg,#f8fafc);color:var(--text-soft);cursor:not-allowed;display:flex;align-items:center;gap:6px;opacity:.75;">
                   <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px;flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  Occupied
-                  <input type="hidden" id="ve-status" value="occupied">
+                  ${status === 'occupied' ? 'Occupied' : 'Booked'}
+                  <input type="hidden" id="ve-status" value="${status}">
                 </div>`
               : `<select id="ve-status" style="${INP}">
                   <option value="vacant"${status==='vacant'?' selected':''}>Vacant</option>
@@ -518,7 +518,7 @@ async function openViewModal(unit) {
           </div>
           <div style="grid-column:1/-1;">
             <label style="${LBL}">Tenant Name</label>
-            ${status === 'occupied'
+            ${(status === 'occupied' || status === 'booked')
               ? `<div style="${INP}background:var(--bg,#f8fafc);color:var(--text-soft);cursor:not-allowed;display:flex;align-items:center;gap:6px;opacity:.75;">
                   <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px;flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   ${unit.tenant_name || '—'}

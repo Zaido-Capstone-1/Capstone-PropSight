@@ -166,13 +166,6 @@ function openReviewModal(roomName, bookingId, bookingIdx) {
     document.getElementById('reviewRoomName').textContent = roomName;
     document.getElementById('reviewError').style.display = 'none';
     updateStars(0);
-    ['cleanliness', 'location_rating', 'value_rating', 'comfort'].forEach(k => {
-        const hidden = document.getElementById('cat-' + k);
-        const valEl = document.getElementById('cat-' + k + '-val');
-        if (hidden) hidden.value = 3;
-        if (valEl) valEl.textContent = '3';
-        updateCatStars(k, 3);
-    });
     openModal('reviewModal');
 }
 
@@ -189,28 +182,6 @@ function resetHover() {
     updateStars(selectedRating);
 }
 
-const _catRatings = { cleanliness: 3, location_rating: 3, value_rating: 3, comfort: 3 };
-
-function setCatRating(key, val) {
-    _catRatings[key] = val;
-    const hidden = document.getElementById('cat-' + key);
-    const valEl  = document.getElementById('cat-' + key + '-val');
-    if (hidden) hidden.value = val;
-    if (valEl)  valEl.textContent = val;
-    updateCatStars(key, val);
-}
-function hoverCatRating(key, val) { updateCatStars(key, val); }
-function resetCatHover(key) { updateCatStars(key, _catRatings[key]); }
-function updateCatStars(key, val) {
-    const container = document.getElementById('catstars-' + key);
-    if (!container) return;
-    container.querySelectorAll('svg').forEach((s, i) => {
-        const active = i < val;
-        s.style.fill      = active ? 'var(--gold, #f59e0b)'   : '#e2e8f0';
-        s.style.stroke    = active ? 'var(--gold-dk, #b45309)' : '#cbd5e1';
-        s.style.transform = active ? 'scale(1.12)' : 'scale(1)';
-    });
-}
 
 function updateStars(val) {
     document.querySelectorAll('#starRating svg').forEach((s, i) => {
@@ -245,10 +216,6 @@ function submitReview() {
     fd.append('booking_id', String(reviewBookingId));
     fd.append('rating', String(selectedRating));
     fd.append('comment', document.getElementById('reviewText').value.trim());
-    fd.append('cleanliness', document.getElementById('cat-cleanliness')?.value || 3);
-    fd.append('location_rating', document.getElementById('cat-location_rating')?.value || 3);
-    fd.append('value_rating', document.getElementById('cat-value_rating')?.value || 3);
-    fd.append('comfort', document.getElementById('cat-comfort')?.value || 3);
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
 
     fetch('../../api/user/submit_review.php', {

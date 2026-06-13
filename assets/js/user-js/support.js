@@ -84,7 +84,7 @@ function prependTicketToList(subject, ticketRef) {
     newTicket.innerHTML = `
         <div>
             <div class="ticket-subject">${escHtml(subject)}</div>
-            <div class="ticket-meta">Submitted just now · <span class="ticket-num">${escHtml(ticketRef)}</span></div>
+            <div class="ticket-meta">Submitted Just now · <span class="ticket-num">${escHtml(ticketRef)}</span></div>
         </div>
         <span class="badge badge-gold" style="margin-left:auto;">Open</span>`;
 

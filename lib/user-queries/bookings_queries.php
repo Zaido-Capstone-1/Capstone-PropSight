@@ -9,11 +9,11 @@ function getBookingStats($conn, $user_id)
     $uid = (int) $user_id;
 
     $query = "SELECT
-        SUM(status IN('confirmed','pending'))                AS upcoming,
-        SUM(status='active')                                 AS active_cnt,
-        SUM(status='completed')                              AS completed,
-        SUM(status='cancelled')                              AS cancelled,
-        COALESCE(SUM(CASE WHEN status NOT IN('cancelled') THEN total_amount END),0) AS total_spent
+        SUM(status IN('confirmed','pending','active'))         AS upcoming,
+        SUM(status='active')                                  AS active_cnt,
+        SUM(status='completed')                               AS completed,
+        SUM(status='cancelled')                               AS cancelled,
+        COALESCE(SUM(CASE WHEN status IN('completed','active') THEN total_amount END),0) AS total_spent
     FROM bookings 
     WHERE user_id=$uid";
 

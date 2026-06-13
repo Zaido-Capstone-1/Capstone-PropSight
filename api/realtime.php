@@ -76,6 +76,7 @@ if ($role === 'admin') {
             DATEDIFF(b.checkout_date, b.checkin_date) AS nights,
             CONCAT(u2.first_name,' ',u2.last_name)    AS user_name,
             u2.email AS user_email, u2.phone AS user_phone,
+            u2.profile_photo AS user_photo,
             un.unit_name, un.unit_number, un.unit_id,
             p.property_name, p.property_id
          FROM bookings b
@@ -106,60 +107,32 @@ if ($role === 'admin') {
     ));
     $payload['open_support_tickets'] = (int) ($supportRow['c'] ?? 0);
 
-    // ── Admin notifications (messages + pending bookings + tasks) ─────
+    // ── Admin notifications — read from admin_notifications table ────────
+    // Sync sources first so new events appear without page reload
+    require_once __DIR__ . '/../includes/admin_notif_helpers.php';
+    sync_notifications($conn, $userId);
+
     $adminNotifs = [];
-    $adminMsgNotifRes = mysqli_query(
+    $_anRes = mysqli_query(
         $conn,
-        "SELECT m.message_id AS id, m.created_at,
-                CONCAT(u.first_name,' ',u.last_name) AS actor
-         FROM messages m
-         JOIN users u ON u.user_id = m.from_user
-         WHERE m.to_user = $userId AND m.is_read = 0
-         ORDER BY m.created_at DESC LIMIT 5"
+        "SELECT id, type, ref_id, text, path, ts
+         FROM admin_notifications
+         WHERE admin_id = $userId AND is_read = 0
+         ORDER BY ts DESC LIMIT 10"
     );
-    while ($adminMsgNotifRes && ($n = mysqli_fetch_assoc($adminMsgNotifRes))) {
+    while ($_anRes && ($n = mysqli_fetch_assoc($_anRes))) {
+        fmt_dt_row($n);
         $adminNotifs[] = [
-            'id' => 'msg-' . (int) $n['id'],
-            'type' => 'message',
-            'text' => 'New message from ' . trim((string) ($n['actor'] ?? 'User')),
-            'ts' => fmt_dt((string) ($n['created_at'] ?? '')),
-            'path' => 'messages.php',
+            'id' => $n['ref_id'],
+            'db_id' => (int) $n['id'],
+            'type' => $n['type'],
+            'text' => $n['text'],
+            'ts' => $n['ts'],
+            'path' => $n['path'] ?? '',
         ];
     }
-    $adminBookingNotifRes = mysqli_query(
-        $conn,
-        "SELECT booking_id, created_at FROM bookings
-         WHERE status = 'pending'
-         ORDER BY created_at DESC LIMIT 5"
-    );
-    while ($adminBookingNotifRes && ($n = mysqli_fetch_assoc($adminBookingNotifRes))) {
-        $adminNotifs[] = [
-            'id' => 'booking-' . (int) $n['booking_id'],
-            'type' => 'booking',
-            'text' => 'Pending booking #' . str_pad((string) $n['booking_id'], 4, '0', STR_PAD_LEFT),
-            'ts' => fmt_dt((string) ($n['created_at'] ?? '')),
-            'path' => 'reservations.php?status=pending',
-        ];
-    }
-    $adminTaskNotifRes = mysqli_query(
-        $conn,
-        "SELECT request_id, issue_description, created_at FROM maintenance_requests
-         WHERE request_status IN ('open','in_progress')
-         ORDER BY created_at DESC LIMIT 5"
-    );
-    while ($adminTaskNotifRes && ($n = mysqli_fetch_assoc($adminTaskNotifRes))) {
-        $adminNotifs[] = [
-            'id' => 'task-' . (int) $n['request_id'],
-            'type' => 'task',
-            'text' => 'Task: ' . trim((string) ($n['issue_description'] ?: 'Maintenance request')),
-            'ts' => fmt_dt((string) ($n['created_at'] ?? '')),
-            'path' => 'task_summary.php?status=open',
-        ];
-    }
-    usort($adminNotifs, function ($a, $b) {
-        return strtotime(str_replace('+00:00', '', $b['ts'])) <=> strtotime(str_replace('+00:00', '', $a['ts'])); });
-    $payload['admin_notifications'] = array_slice($adminNotifs, 0, 10);
-    $payload['admin_notif_count'] = count($payload['admin_notifications']);
+    $payload['admin_notifications'] = $adminNotifs;
+    $payload['admin_notif_count'] = count($adminNotifs);
     // Only return messages FROM others (not sent by this admin) to avoid
     // double-rendering with the page's own optimistic send + poll.
     if ($page === 'messages') {
@@ -413,11 +386,12 @@ if ($role === 'admin') {
     $statsRow = mysqli_fetch_assoc(mysqli_query(
         $conn,
         "SELECT
-            COUNT(*)                              AS total,
-            SUM(status IN('confirmed','pending')) AS upcoming,
-            SUM(status='active')                  AS active_cnt,
-            SUM(status='completed')               AS completed,
-            SUM(status='cancelled')               AS cancelled
+            COUNT(*)                                        AS total,
+            SUM(status IN('confirmed','pending','active'))  AS upcoming,
+            SUM(status='active')                            AS active_cnt,
+            SUM(status='completed')                         AS completed,
+            SUM(status='cancelled')                         AS cancelled,
+            COALESCE(SUM(CASE WHEN status IN('completed','active') THEN total_amount END),0) AS total_spent
          FROM bookings WHERE user_id = $userId"
     ));
     $payload['booking_stats'] = $statsRow;
@@ -448,6 +422,7 @@ if ($role === 'admin') {
         'loyalty_points' => $loyaltyPoints,
         'loyalty_tier' => $loyaltyTier,
         'saved_count' => (int) ($savedRow['c'] ?? 0),
+        'total_spent' => (float) ($statsRow['total_spent'] ?? 0),
     ];
 
     if ($page === 'dashboard') {

@@ -1,4 +1,16 @@
 (function () {
+
+  // Safe wrapper — psDate may not be loaded yet if datetime.js loads after right-panel.js
+  function _psDate(ts) {
+    if (!ts) return null;
+    if (typeof window.psDate === 'function') return window.psDate(ts);
+    // Fallback: strip +00:00 suffix, parse as UTC
+    const s = String(ts).replace(' ', 'T');
+    const clean = s.replace(/[+-]\d{2}:\d{2}$/, '');
+    const d = new Date(clean.includes('T') ? clean + 'Z' : clean);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
   function escHtml(str) {
     return String(str || '')
       .replace(/&/g, '&amp;')
@@ -13,7 +25,7 @@
     const s = String(ts);
     // DATE-only values (no T separator) — anchor at noon local to avoid UTC rollback
     const isDateOnly = /^\d{4}-\d{2}-\d{2}([+Z].*)?$/.test(s) && !s.includes('T');
-    const d = isDateOnly ? new Date(s.slice(0, 10) + 'T12:00:00') : psDate(ts);
+    const d = isDateOnly ? new Date(s.slice(0, 10) + 'T12:00:00') : _psDate(ts);
     if (!d || isNaN(d.getTime())) return '—';
     return d.toLocaleDateString('en-PH', {
       day: '2-digit',
@@ -23,12 +35,12 @@
   }
 
   function relativeTime(ts) {
-    if (!ts) return 'Just Now';
-    // psDate() from datetime.js correctly converts UTC "+00:00" timestamps to local time
-    const d = psDate(ts);
-    if (!d) return 'Just Now';
+    if (!ts) return 'Just now';
+    // _psDate() from datetime.js correctly converts UTC "+00:00" timestamps to local time
+    const d = _psDate(ts);
+    if (!d) return 'Just now';
     const sec = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
-    if (sec < 60) return 'Just Now';
+    if (sec < 60) return 'Just now';
     if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
     if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
     return `${Math.floor(sec / 86400)}d ago`;
@@ -53,15 +65,10 @@
   const notifDot = document.getElementById('adminNotifDot');
   const notifList = document.getElementById('adminNotifList');
   const notifMarkAll = document.getElementById('adminNotifMarkAll');
-  // Persist dismissed non-message notifications (task/booking) across page loads
-  const _dismissedNotifs = new Set(
-    JSON.parse(sessionStorage.getItem('ps_dismissed_notifs') || '[]')
-  );
 
+  // notifState is keyed by ref_id (e.g. 'task-11'), value includes db_id for API calls
   const notifState = new Map(
-    (window.__PS_RIGHT_PANEL__.notifications)
-      .filter(n => !_dismissedNotifs.has(String(n.id)))
-      .map(n => [String(n.id), n])
+    (window.__PS_RIGHT_PANEL__.notifications).map(n => [String(n.id), n])
   );
 
   function renderNotifs() {
@@ -77,12 +84,17 @@
       return;
     }
     if (notifDot) {
+      const _total = notifState.size;
       notifDot.style.display = 'flex';
-      notifDot.textContent = items.length > 99 ? '99+' : items.length;
+      notifDot.textContent = _total > 99 ? '99+' : _total;
     }
     if (notifList) {
       notifList.innerHTML = items.map(n => `
-          <div class="rp-notif-item" data-notif-id="${escHtml(n.id)}" data-path="${escHtml(n.path || '')}" style="padding:10px 12px;border-bottom:1px solid #f8fafc;cursor:pointer;">
+          <div class="rp-notif-item"
+            data-notif-id="${escHtml(n.id)}"
+            data-db-id="${escHtml(String(n.db_id || ''))}"
+            data-path="${escHtml(n.path || '')}"
+            style="padding:10px 12px;border-bottom:1px solid #f8fafc;cursor:pointer;">
             <div style="font-size:12px;color:#0f172a;line-height:1.35;">${escHtml(n.text || '')}</div>
             <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${escHtml(relativeTime(n.ts))}</div>
           </div>
@@ -105,6 +117,15 @@
     notifBtn.addEventListener('click', e => {
       e.stopPropagation();
       const isOpen = notifDrop.style.display === 'none' || notifDrop.style.display === '';
+      if (isOpen) {
+        // Position below the bell button, respecting viewport edges
+        const rect = notifBtn.getBoundingClientRect();
+        notifDrop.style.top = (rect.bottom + 6) + 'px';
+        const dropW = Math.min(300, window.innerWidth - 16);
+        const rightEdge = window.innerWidth - rect.right;
+        notifDrop.style.right = Math.max(8, rightEdge - (rect.width / 2)) + 'px';
+        notifDrop.style.left = 'auto';
+      }
       notifDrop.style.display = isOpen ? 'block' : 'none';
     });
     document.addEventListener('click', () => {
@@ -117,22 +138,21 @@
     const item = e.target.closest('.rp-notif-item');
     if (!item) return;
     const notifId = item.dataset.notifId || '';
-    const path = item.dataset.path || '';
+    const dbId    = item.dataset.dbId || '';
+    const path    = item.dataset.path || '';
 
-    // Mark as read in DB for message-type notifications
     if (notifId) {
-      if (notifId.startsWith('msg-')) {
+      // Mark as read in admin_notifications table via DB id
+      if (dbId) {
         const fd = new FormData();
         fd.append('action', 'mark_read');
-        fd.append('id', notifId.replace('msg-', ''));
-        fetch('../../api/messages.php', {
-          method: 'POST',
-          body: fd
+        fd.append('id', dbId);
+        // keepalive: true guarantees delivery even during page navigation,
+        // and unlike sendBeacon it correctly sends session cookies
+        fetch('../../api/admin/notifications.php', {
+          method: 'POST', body: fd, keepalive: true
         }).catch(() => {});
       }
-      // Persist dismissal so it survives page navigation
-      _dismissedNotifs.add(String(notifId));
-      sessionStorage.setItem('ps_dismissed_notifs', JSON.stringify([..._dismissedNotifs]));
       notifState.delete(String(notifId));
       renderNotifs();
     }
@@ -141,17 +161,11 @@
   });
 
   notifMarkAll?.addEventListener('click', () => {
-    // Mark all unread messages to this admin as read in DB
     const fd = new FormData();
-    fd.append('action', 'mark_all_admin_read');
-    if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
-    fetch('../../api/messages.php', {
-      method: 'POST',
-      body: fd
-    }).catch(() => {});
+    fd.append('action', 'mark_all_read');
+    fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
+    fetch('../../api/admin/notifications.php', { method: 'POST', body: fd }).catch(() => {});
     notifState.clear();
-    _dismissedNotifs.clear();
-    sessionStorage.removeItem('ps_dismissed_notifs');
     renderNotifs();
     if (notifDot) {
       notifDot.style.display = 'none';
@@ -214,7 +228,7 @@
 
     scheduleWrap.innerHTML = sameDay.map(t => {
       // Use created_at for time if available, else '--'
-      const _tsd = t.created_at ? psDate(t.created_at) : null;
+      const _tsd = t.created_at ? _psDate(t.created_at) : null;
       const time = _tsd ? _tsd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--';
       const eventClass = (t.priority === 'high' || t.priority === 'urgent' || t.status === 'open') ?
         'coral' :
@@ -334,67 +348,28 @@
     }).join('');
   });
 
-  window.addEventListener('ps:new_messages', e => {
-    const msgs = Array.isArray(e.detail) ? e.detail : [];
-    msgs.forEach(m => {
-      addNotif({
-        id: `msg-${m.id || m.message_id || Date.now()}`,
-        type: 'message',
-        text: `New message from ${m.sender_name || 'User'}`,
-        ts: m.created_at || new Date().toISOString(),
-        path: 'messages.php'
-      });
-    });
-  });
+  // ps:new_messages — notifications handled exclusively via ps:admin_notifications
 
-  window.addEventListener('ps:new_bookings', e => {
-    const bookings = Array.isArray(e.detail) ? e.detail : [];
-    bookings.forEach(b => {
-      if (String(b.status || '').toLowerCase() !== 'pending') return;
-      addNotif({
-        id: `booking-${b.booking_id}`,
-        type: 'booking',
-        text: `Pending booking #${String(b.booking_id || '').padStart(4, '0')}`,
-        ts: b.created_at || new Date().toISOString(),
-        path: 'reservations.php?status=pending'
-      });
-    });
-  });
+  // ps:new_bookings — notifications handled exclusively via ps:admin_notifications
 
-  window.addEventListener('ps:task_summary', e => {
-    const tasks = Array.isArray(e.detail) ? e.detail : [];
-    tasks.slice(0, 2).forEach(t => {
-      if (!['open', 'in_progress'].includes(String(t.status || '').toLowerCase())) return;
-      addNotif({
-        id: `task-live-${(t.request_id || t.title || '').toString().replace(/\s+/g, '-').toLowerCase()}`,
-        type: 'task',
-        text: `Task update: ${t.title || 'Maintenance request'}`,
-        ts: t.request_date || new Date().toISOString(),
-        path: 'task_summary.php?status=open'
-      });
-    });
-  });
+  // ps:task_summary — schedule/calendar only, NOT notifications
+  // Notifications come exclusively from admin_notifications DB table via ps:admin_notifications
 
   // ── Wire realtime admin_notifications poll → bell badge ──────────
   window.addEventListener('ps:admin_notifications', e => {
     const items = Array.isArray(e.detail?.items) ? e.detail.items : [];
-    const count = e.detail?.count ?? items.length;
-    if (notifDot) {
-      notifDot.style.display = count > 0 ? 'flex' : 'none';
-      notifDot.textContent = count > 0 ? (count > 99 ? '99+' : count) : '';
-    }
+    // Rebuild notifState from DB response (already filtered is_read=0)
+    notifState.clear();
     items.forEach(n => {
-      if (n && n.id && !_dismissedNotifs.has(String(n.id))) {
-        notifState.set(String(n.id), n);
-      }
+      if (n && n.id) notifState.set(String(n.id), n);
     });
+    // renderNotifs() updates both list and badge from notifState — single source of truth
     renderNotifs();
   });
 
-  // renderNotifs() immediately — right-panel.js loads at </body> so DOM is ready.
-  // DOMContentLoaded may have already fired; calling directly ensures dismissed
-  // notifications are removed from the badge and list on every page load.
+  // Render immediately — right-panel.js loads at </body> so DOM is ready
   renderNotifs();
+  // Refresh relative timestamps every minute
   setInterval(renderNotifs, 60000);
 
 })();

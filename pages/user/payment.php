@@ -161,8 +161,9 @@ require_once '../../lib/user-queries/payment_queries.php';
                                 $isPayment = $row['type'] === 'payment';
                                 $isRefund = $row['type'] === 'refund';
 
-                                $dateDisp = date('M j, Y', strtotime($row['date']));
-                                $timeDisp = date('g:i A', strtotime($row['date']));
+                                // Use data-ts + JS psDate() for correct local timezone display
+                                $dateDisp = htmlspecialchars($row['date'] ?? '');
+                                $timeDisp = htmlspecialchars($row['date'] ?? '');
                                 $searchStr = strtolower(
                                     ($row['property_name'] ?? '') . ' ' .
                                     ($row['unit_label'] ?? '') . ' ' .
@@ -196,13 +197,21 @@ require_once '../../lib/user-queries/payment_queries.php';
                                     : '₱' . number_format($row['amount'], 2);
 
                                 /* Sub-line under property */
-                                if ($isPayment && $row['nights'] !== null) {
-                                    $nights = $row['nights'];
-                                    $subLine = htmlspecialchars($row['unit_label']) . ' · ' . $nights . ' night' . ($nights !== 1 ? 's' : '');
+                                $unitLbl = trim((string) ($row['unit_label'] ?? ''));
+                                $isInvoicePayment = $isPayment && str_starts_with($unitLbl, 'Invoice ');
+                                $isBookingPayment = $isPayment && str_starts_with($unitLbl, 'Booking #');
+                                if ($isInvoicePayment) {
+                                    // Invoice payment: show invoice number
+                                    $subLine = htmlspecialchars($unitLbl);
+                                } elseif ($isBookingPayment) {
+                                    // Booking payment: show "Booking #BK-000027 · 7 nights"
+                                    $nights = (int) ($row['nights'] ?? 0);
+                                    $nightsStr = $nights . ' night' . ($nights !== 1 ? 's' : '');
+                                    $subLine = htmlspecialchars($unitLbl) . ' · ' . $nightsStr;
                                 } elseif ($isRefund && $row['reason']) {
                                     $subLine = '<span title="' . htmlspecialchars($row['reason']) . '" class="refund-reason-col">' . htmlspecialchars($row['reason']) . '</span>';
                                 } else {
-                                    $subLine = htmlspecialchars($row['unit_label']);
+                                    $subLine = htmlspecialchars($unitLbl);
                                 }
                                 ?>
                                 <tr data-type="<?php echo $row['type']; ?>"
@@ -210,8 +219,10 @@ require_once '../../lib/user-queries/payment_queries.php';
                                     data-search="<?php echo htmlspecialchars($searchStr); ?>">
 
                                     <td style="white-space:nowrap;">
-                                        <div style="font-size:.82rem;color:var(--ink-mid);"><?php echo $dateDisp; ?></div>
-                                        <div style="font-size:.7rem;color:var(--ink-faint);"><?php echo $timeDisp; ?></div>
+                                        <div class="ps-date" data-date="<?php echo $dateDisp; ?>"
+                                            style="font-size:.82rem;color:var(--ink-mid);"></div>
+                                        <div class="ps-time" data-date="<?php echo $timeDisp; ?>"
+                                            style="font-size:.7rem;color:var(--ink-faint);"></div>
                                     </td>
 
                                     <td><?php echo $typePill; ?></td>
@@ -269,9 +280,9 @@ require_once '../../lib/user-queries/payment_queries.php';
                                             <?php endif; ?>
 
                                         <?php elseif ($row['processed_date']): ?>
-                                            <span style="font-size:.72rem;color:var(--ink-faint);">
-                                                <?php echo date('M j, Y', strtotime($row['processed_date'])); ?>
-                                            </span>
+                                            <span class="ps-date"
+                                                data-date="<?php echo htmlspecialchars($row['processed_date']); ?>"
+                                                style="font-size:.72rem;color:var(--ink-faint);"></span>
                                         <?php endif; ?>
                                     </td>
                                 </tr>

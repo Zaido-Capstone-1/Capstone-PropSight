@@ -118,6 +118,20 @@ $notifStmt = $conn->prepare(
 $notifStmt->bind_param('isss', $userId, $notifTitle, $notifBody, $notifLink);
 $notifStmt->execute();
 $notifStmt->close();
+// Notify all admins instantly
+require_once __DIR__ . '/../../includes/admin_notif_helpers.php';
+$_adminsRes = mysqli_query($conn, "SELECT user_id FROM users WHERE role='admin' AND is_active=1");
+while ($_adm = mysqli_fetch_assoc($_adminsRes)) {
+    upsert_notif(
+        $conn,
+        (int) $_adm['user_id'],
+        'id_verification',
+        'id-' . $userId,
+        'ID submitted for review by user #' . $userId,
+        'id_verification.php',
+        gmdate('Y-m-d H:i:s')
+    );
+}
 
 echo json_encode([
     'success' => true,

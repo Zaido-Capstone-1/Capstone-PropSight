@@ -7,7 +7,7 @@ $userId = (int) $_SESSION['user_id'];
 $bRes = mysqli_query($conn, "
     SELECT py.payment_id, py.payment_date, py.amount_paid, py.payment_method, py.payment_status,
         b.booking_id,
-        COALESCE(u.unit_name, u.unit_number, '—') AS unit_label,
+        CONCAT('Booking #BK-', LPAD(b.booking_id, 6, '0')) AS unit_label,
         DATEDIFF(b.checkout_date, b.checkin_date)  AS nights,
         p.property_name,
     COALESCE(pp.paid_at, py.payment_date) AS sort_datetime
@@ -29,7 +29,13 @@ $invPayRes = mysqli_query($conn, "
         pp.id          AS payment_id,
         pp.paid_at     AS payment_date,
         pp.amount      AS amount_paid,
-        COALESCE(NULLIF(pp.payment_method, ''), 'PayMongo') AS payment_method,
+        CASE
+            WHEN pp.payment_method != '' AND pp.payment_method IS NOT NULL THEN pp.payment_method
+            WHEN pp.paymongo_link_id LIKE 'gcash%' THEN 'gcash'
+            WHEN pp.paymongo_link_id LIKE 'maya%' THEN 'maya'
+            WHEN pp.paymongo_link_id LIKE 'card%' THEN 'card'
+            ELSE ''
+        END AS payment_method,
         'paid'         AS payment_status,
         NULL           AS booking_id,
         CONCAT('Invoice ', i.invoice_no) AS unit_label,

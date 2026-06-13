@@ -127,9 +127,11 @@ function nightsBetween($in, $out)
 }
 function formatDate($d)
 {
-    if (empty($d) || $d === '0000-00-00' || $d === '0000-00-00 00:00:00') return '—';
+    if (empty($d) || $d === '0000-00-00' || $d === '0000-00-00 00:00:00')
+        return '—';
     $ts = strtotime($d);
-    if ($ts === false || $ts <= 0) return '—';
+    if ($ts === false || $ts <= 0)
+        return '—';
     return date('M j, Y', $ts);
 }
 function unitTypeToCategory($type)
@@ -500,8 +502,9 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         </div>
                         <div class="bb-dates"
                             data-checkin="<?php echo htmlspecialchars($activeBooking['checkin_date'] ?? ''); ?>"
-                            data-checkout="<?php echo htmlspecialchars($activeBooking['checkout_date'] ?? ''); ?>">Check-in: <?php echo formatDate($activeBooking['checkin_date']); ?><span
-                                class="bb-date-sep"> &nbsp;·&nbsp; </span>Check-out:
+                            data-checkout="<?php echo htmlspecialchars($activeBooking['checkout_date'] ?? ''); ?>">Check-in:
+                            <?php echo formatDate($activeBooking['checkin_date']); ?><span class="bb-date-sep">
+                                &nbsp;·&nbsp; </span>Check-out:
                             <?php echo formatDate($activeBooking['checkout_date']); ?>
                         </div>
                     </div>
@@ -621,15 +624,10 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         $propName = htmlspecialchars($unit['property_name'] ?? '');
                         $cityPart = !empty($unit['city']) ? ', ' . $unit['city'] : '';
                         $baseRate = (float) $unit['rent_amount'];
-                        $seasonality = [0 => 1.30, 1 => 1.30, 2 => 1.10, 3 => 1.15, 4 => 1.15, 5 => 0.80, 6 => 0.80, 7 => 0.80, 8 => 0.80, 9 => 0.80, 10 => 1.15, 11 => 1.30];
-                        $seasonLabel = [0 => 'Peak', 1 => 'Peak', 2 => 'High', 3 => 'High', 4 => 'High', 5 => 'Low', 6 => 'Low', 7 => 'Low', 8 => 'Low', 9 => 'Low', 10 => 'High', 11 => 'Peak'];
+                        $price = '₱' . number_format((int) $baseRate);
+                        $unitSeason = $unit['season'] ?? 'Low';
                         $seasonColor = ['Peak' => '#E74C3C', 'High' => '#deaf37', 'Low' => '#2ECC71'];
-                        $curMonth = (int) date('n') - 1; // 0-indexed
-                        $multiplier = $seasonality[$curMonth];
-                        $adjRate = (int) round($baseRate * $multiplier);
-                        $price = '₱' . number_format($adjRate);
-                        $curLabel = $seasonLabel[$curMonth];
-                        $curColor = $seasonColor[$curLabel];
+                        $curColor = $seasonColor[$unitSeason] ?? '#2ECC71';
                         $amenities = $amenitiesMap[$unit['unit_id']] ?? [];
                         $imgSrc = $unit['image_path']
                             ? '../../' . ltrim($unit['image_path'], '/')
@@ -651,8 +649,8 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                             'location' => ($unit['property_name'] ?? '') . $cityPart,
                             'address' => trim(($unit['address'] ?? '') . $cityPart),
                             'city' => $unit['city'] ?? '',
-                            'price' => '₱' . number_format($adjRate),
-                            'priceNum' => $baseRate, // keep base for seasonal calc in JS
+                            'price' => $price,
+                            'priceNum' => $baseRate,
                             'rating' => $ratingValue,
                             'guests' => 2,
                             'view' => $unit['unit_type'] ?? 'Standard',
@@ -751,10 +749,9 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                 <div class="room-price-row">
                                     <div class="room-price">
                                         <?php echo $price; ?> <sub>/ night</sub>
+                                        <?php $sColor = $seasonColor[$unitSeason] ?? '#2ECC71'; ?>
                                         <span
-                                            style="background:<?php echo $curColor; ?>20;color:<?php echo $curColor; ?>;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;">
-                                            <?php echo $curLabel; ?>
-                                        </span>
+                                            style="background:<?php echo $sColor; ?>20;color:<?php echo $sColor; ?>;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;"><?php echo $unitSeason; ?></span>
                                     </div>
                                     <div style="display:flex;gap:8px;align-items:center;" data-action-buttons>
                                         <button class="btn-view-details"

@@ -66,6 +66,20 @@ $insert = mysqli_query($conn, "
 ");
 
 if ($insert) {
+    $requestId = mysqli_insert_id($conn);
+    require_once __DIR__ . '/../includes/admin_notif_helpers.php';
+    $_ar = mysqli_query($conn, "SELECT user_id FROM users WHERE role='admin' AND is_active=1");
+    while ($_adm = mysqli_fetch_assoc($_ar)) {
+        upsert_notif(
+            $conn,
+            (int) $_adm['user_id'],
+            'maintenance',
+            'task-' . $requestId,
+            'Task: ' . mb_substr($fullDescription, 0, 80),
+            'task_summary.php?status=open',
+            gmdate('Y-m-d H:i:s')
+        );
+    }
     echo json_encode(['success' => true, 'message' => 'Maintenance request submitted successfully.']);
 } else {
     echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($conn)]);

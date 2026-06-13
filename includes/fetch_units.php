@@ -1,6 +1,6 @@
 <?php
 
-include_once __DIR__ . '/db.php'; 
+include_once __DIR__ . '/db.php';
 
 // Ensure unit availability stays synced with actual bookings, including future pending/confirmed/active reservations.
 mysqli_query($conn, "
@@ -58,6 +58,8 @@ $unitsSql = "
         u.floor,
         u.rent_amount,
         u.status,
+        u.season,
+        u.max_guests,
         u.description,
         p.property_name,
         p.city,
@@ -89,7 +91,7 @@ $amenitiesSql = "
     JOIN   amenities a ON a.amenity_id = ua.amenity_id
     ORDER  BY ua.unit_id
 ";
-$amenResult   = mysqli_query($conn, $amenitiesSql);
+$amenResult = mysqli_query($conn, $amenitiesSql);
 $amenitiesMap = [];
 while ($row = mysqli_fetch_assoc($amenResult)) {
     $amenitiesMap[$row['unit_id']][] = [

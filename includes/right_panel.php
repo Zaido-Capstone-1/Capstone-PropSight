@@ -72,67 +72,27 @@ while ($activityRes && ($row = mysqli_fetch_assoc($activityRes))) {
 $adminId = (int) ($_SESSION['user_id'] ?? 0);
 $notifications = [];
 
-$notifMsgRes = mysqli_query(
+// ── Read from admin_notifications table (DB-backed, dismissable) ──────────────
+require_once __DIR__ . '/admin_notif_helpers.php';
+
+$_notifRes = mysqli_query(
   $conn,
-  "SELECT m.message_id AS id, m.created_at, CONCAT(u.first_name, ' ', u.last_name) AS actor
-   FROM messages m
-   JOIN users u ON u.user_id = m.from_user
-   WHERE m.to_user = $adminId AND m.is_read = 0
-   ORDER BY m.created_at DESC
-   LIMIT 5"
+  "SELECT id, type, ref_id, text, path, ts
+     FROM admin_notifications
+     WHERE admin_id = $adminId AND is_read = 0
+     ORDER BY ts DESC LIMIT 5"
 );
-while ($notifMsgRes && ($n = mysqli_fetch_assoc($notifMsgRes))) {
+while ($_notifRes && ($n = mysqli_fetch_assoc($_notifRes))) {
   fmt_dt_row($n);
   $notifications[] = [
-    'id' => 'msg-' . (int) $n['id'],
-    'type' => 'message',
-    'text' => 'New message from ' . trim((string) ($n['actor'] ?? 'User')),
-    'ts' => (string) ($n['created_at'] ?? gmdate('Y-m-d H:i:s')),
-    'path' => 'messages.php',
+    'id' => $n['ref_id'],
+    'db_id' => (int) $n['id'],
+    'type' => $n['type'],
+    'text' => $n['text'],
+    'ts' => $n['ts'],
+    'path' => $n['path'] ?? '',
   ];
 }
-
-$notifBookingRes = mysqli_query(
-  $conn,
-  "SELECT booking_id, created_at
-   FROM bookings
-   WHERE status = 'pending'
-   ORDER BY created_at DESC
-   LIMIT 5"
-);
-while ($notifBookingRes && ($n = mysqli_fetch_assoc($notifBookingRes))) {
-  fmt_dt_row($n);
-  $notifications[] = [
-    'id' => 'booking-' . (int) $n['booking_id'],
-    'type' => 'booking',
-    'text' => 'Pending booking #' . str_pad((string) $n['booking_id'], 4, '0', STR_PAD_LEFT),
-    'ts' => (string) ($n['created_at'] ?? gmdate('Y-m-d H:i:s')),
-    'path' => 'reservations.php?status=pending',
-  ];
-}
-
-$notifTaskRes = mysqli_query(
-  $conn,
-  "SELECT request_id, issue_description, created_at
-   FROM maintenance_requests
-   WHERE request_status IN ('open','in_progress')
-   ORDER BY created_at DESC
-   LIMIT 5"
-);
-while ($notifTaskRes && ($n = mysqli_fetch_assoc($notifTaskRes))) {
-  $notifications[] = [
-    'id' => 'task-' . (int) $n['request_id'],
-    'type' => 'task',
-    'text' => 'Task: ' . trim((string) ($n['issue_description'] ?: 'Maintenance request')),
-    'ts' => !empty($n['created_at']) ? $n['created_at'] . '+00:00' : gmdate('Y-m-d H:i:s') . '+00:00',
-    'path' => 'task_summary.php?status=open',
-  ];
-}
-
-usort($notifications, function ($a, $b) {
-  return strtotime(str_replace('+00:00', '', $b['ts'])) <=> strtotime(str_replace('+00:00', '', $a['ts']));
-});
-$notifications = array_slice($notifications, 0, 5);
 
 function rp_activity_icon_svg(string $desc, bool $isExpense): string
 {
@@ -208,7 +168,7 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
         <?php else: ?>
           <?php foreach ($notifications as $n): ?>
             <div class="rp-notif-item" data-notif-id="<?= htmlspecialchars($n['id']) ?>"
-              data-path="<?= htmlspecialchars($n['path'] ?? '') ?>"
+              data-db-id="<?= (int) ($n['db_id'] ?? 0) ?>" data-path="<?= htmlspecialchars($n['path'] ?? '') ?>"
               style="padding:10px 12px;border-bottom:1px solid #f8fafc;cursor:pointer;">
               <div style="font-size:12px;color:#0f172a;line-height:1.35;"><?= htmlspecialchars($n['text']) ?></div>
               <div style="font-size:11px;color:#94a3b8;margin-top:2px;" data-ts="<?= htmlspecialchars($n['ts']) ?>">

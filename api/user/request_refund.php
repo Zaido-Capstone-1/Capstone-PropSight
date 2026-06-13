@@ -126,16 +126,23 @@ $ntTitle = "Refund Request — $bkRef";
 $ntBody = "A guest has requested a refund of $amtFmt for booking $bkRef.";
 $ntLink = 'pages/admin/refunds.php';
 
+require_once __DIR__ . '/../../includes/admin_notif_helpers.php';
 $admins = $conn->query("SELECT user_id, first_name, email FROM users WHERE role='admin' AND is_active=1 LIMIT 20");
 while ($adm = $admins->fetch_assoc()) {
-    // In-app notification
     $aId = (int) $adm['user_id'];
     $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
     $n->bind_param('isss', $aId, $ntTitle, $ntBody, $ntLink);
     $n->execute();
     $n->close();
-
-
+    upsert_notif(
+        $conn,
+        $aId,
+        'refund',
+        'refund-' . $bookingId,
+        $ntTitle . ': ' . mb_substr($ntBody, 0, 80),
+        'refunds.php',
+        gmdate('Y-m-d H:i:s')
+    );
 }
 
 // ── 6. Confirmation email to user ─────────────────────────────────────────────

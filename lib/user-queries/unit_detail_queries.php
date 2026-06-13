@@ -11,7 +11,12 @@
 $unit = mysqli_fetch_assoc(mysqli_query(
     $conn,
     "SELECT u.*, p.property_name, p.address, p.city, p.latitude, p.longitude,
-            ROUND(AVG(r.rating),1) AS rating
+            ROUND(AVG(r.rating),1) AS rating,
+            CASE
+                WHEN EXISTS (SELECT 1 FROM bookings b WHERE b.unit_id = u.unit_id AND b.status = 'active'      LIMIT 1) THEN 'occupied'
+                WHEN EXISTS (SELECT 1 FROM bookings b WHERE b.unit_id = u.unit_id AND b.status = 'confirmed'   LIMIT 1) THEN 'booked'
+                ELSE u.status
+            END AS real_status
      FROM units u
      LEFT JOIN properties p ON p.property_id = u.property_id
      LEFT JOIN booking_reviews r ON r.unit_id = u.unit_id
@@ -22,6 +27,8 @@ if (!$unit) {
     header('Location: user-dashboard.php');
     exit;
 }
+// Use real_status as the working status throughout this page
+$unit['status'] = $unit['real_status'] ?? $unit['status'];
 
 // ── 2. Unit images ────────────────────────────────────────────────────────────
 $_imagesRes = mysqli_query(
@@ -54,8 +61,8 @@ $totalReviewPages = max(1, (int) ceil($totalReviews / $reviewLimit));
 $_reviewsRes = mysqli_query(
     $conn,
     "SELECT r.rating, r.comment, r.created_at,
-            r.cleanliness, r.location_rating, r.value_rating, r.comfort,
-            CONCAT(u.first_name,' ',LEFT(u.last_name,1),'.') AS reviewer
+            CONCAT(u.first_name,' ',LEFT(u.last_name,1),'.') AS reviewer,
+            u.profile_photo AS reviewer_photo
      FROM booking_reviews r
      JOIN users u ON u.user_id = r.user_id
      WHERE r.unit_id = $unit_id ORDER BY r.created_at DESC
@@ -124,21 +131,16 @@ $ratingBreakdown = mysqli_fetch_assoc(mysqli_query(
     "SELECT ROUND(AVG(rating), 1) AS overall FROM booking_reviews WHERE unit_id = $unit_id"
 ));
 
-// ── Category averages ─────────────────────────────────────────────────────────
-$_catRow = mysqli_fetch_assoc(mysqli_query(
+// ── Star distribution (for filter UI) ────────────────────────────────────────
+$_starRes = mysqli_query(
     $conn,
-    "SELECT ROUND(AVG(cleanliness),1)     AS avg_cleanliness,
-            ROUND(AVG(location_rating),1) AS avg_location,
-            ROUND(AVG(value_rating),1)    AS avg_value,
-            ROUND(AVG(comfort),1)         AS avg_comfort
-     FROM booking_reviews WHERE unit_id = $unit_id"
-));
-$catAverages = [
-    ['label' => 'Cleanliness', 'avg' => (float) ($_catRow['avg_cleanliness'] ?? 0)],
-    ['label' => 'Location', 'avg' => (float) ($_catRow['avg_location'] ?? 0)],
-    ['label' => 'Value', 'avg' => (float) ($_catRow['avg_value'] ?? 0)],
-    ['label' => 'Comfort', 'avg' => (float) ($_catRow['avg_comfort'] ?? 0)],
-];
+    "SELECT ROUND(rating) AS star, COUNT(*) AS cnt
+     FROM booking_reviews WHERE unit_id = $unit_id
+     GROUP BY ROUND(rating) ORDER BY star DESC"
+);
+$starDist = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+while ($sr = mysqli_fetch_assoc($_starRes))
+    $starDist[(int) $sr['star']] = (int) $sr['cnt'];
 
 // ── 13. Similar units ─────────────────────────────────────────────────────────
 $_similarRes = mysqli_query(

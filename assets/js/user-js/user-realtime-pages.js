@@ -537,7 +537,7 @@
                 div.className = 'ticket-reply admin-reply';
                 div.style.cssText = 'padding:10px 14px;border-radius:10px;background:var(--blue-50,#eff6ff);margin:8px 0;font-size:0.88rem;';
                 div.innerHTML =
-                    '<strong style="font-size:0.78rem;color:var(--ink-faint,#6b7280);">Support · just now</strong>' +
+                    '<strong style="font-size:0.78rem;color:var(--ink-faint,#6b7280);">Support · Just now</strong>' +
                     '<p style="margin:4px 0 0;">' + _esc(msg.body || '') + '</p>';
                 modalBody.appendChild(div);
                 modalBody.scrollTop = modalBody.scrollHeight;
@@ -601,6 +601,13 @@
         document.querySelectorAll('[data-rt-user="booking_total"]').forEach(function (el) {
             el.textContent = map.total;
         });
+        // Update total_spent stat card
+        if (s.total_spent !== undefined) {
+            var spent = parseFloat(s.total_spent) || 0;
+            document.querySelectorAll('[data-rt-stat="total_spent"]').forEach(function (el) {
+                el.textContent = '₱' + spent.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            });
+        }
     });
 
     /* ═══════════════════════════════════════════════════════

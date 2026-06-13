@@ -34,6 +34,20 @@ if ($idStatus !== 'approved') {
 
 $user_id = $_SESSION['user_id'];
 
+// ── Advisory lock: prevents duplicate rows from simultaneous requests ──────
+$lockName = 'book_unit_user_' . $user_id;
+$lockResult = $conn->query("SELECT GET_LOCK('" . $conn->real_escape_string($lockName) . "', 5)");
+$lockRow = $lockResult ? $lockResult->fetch_row() : null;
+if (!$lockRow || !$lockRow[0]) {
+    ob_clean();
+    echo json_encode(['success' => false, 'message' => 'Could not acquire booking lock. Please try again.']);
+    exit;
+}
+// Ensure lock is released on any exit path
+register_shutdown_function(function () use ($conn, $lockName) {
+    $conn->query("SELECT RELEASE_LOCK('" . $conn->real_escape_string($lockName) . "')");
+});
+
 $check = $conn->prepare("
     SELECT booking_id, checkin_date, checkout_date, status, unit_id
     FROM bookings 
@@ -241,6 +255,7 @@ try {
             " ($nights nights)";
         $notifLink = 'pages/admin/reservations.php';
 
+        require_once __DIR__ . '/../../includes/admin_notif_helpers.php';
         $admins = $conn->query("SELECT user_id FROM users WHERE role='admin' LIMIT 20");
         while ($adm = $admins->fetch_assoc()) {
             $adminId = (int) $adm['user_id'];
@@ -251,6 +266,15 @@ try {
             $adminNotifStmt->bind_param('isss', $adminId, $notifTitle, $notifBody, $notifLink);
             $adminNotifStmt->execute();
             $adminNotifStmt->close();
+            upsert_notif(
+                $conn,
+                $adminId,
+                'new_booking',
+                'booking-' . $bookingId,
+                $notifTitle . ': ' . mb_substr($notifBody, 0, 80),
+                'reservations.php?status=pending',
+                gmdate('Y-m-d H:i:s')
+            );
         }
 
         $userNotifTitle = "Booking submitted: $bkRef";

@@ -70,9 +70,14 @@ if ($method === 'GET') {
         );
 
         $res = mysqli_query($conn, "
-            SELECT m.*, CONCAT(u.first_name,' ',u.last_name) AS sender_name
+            SELECT m.*,
+                   CONCAT(u.first_name,' ',u.last_name) AS sender_name,
+                   p.body AS parent_body,
+                   CONCAT(pu.first_name,' ',pu.last_name) AS parent_sender_name
             FROM messages m
             JOIN users u ON u.user_id = m.from_user
+            LEFT JOIN messages p ON p.message_id = m.parent_id
+            LEFT JOIN users pu ON pu.user_id = p.from_user
             WHERE (m.from_user=$adminId AND m.to_user=$userId)
                OR (m.from_user=$userId  AND m.to_user=$adminId)
             ORDER BY m.created_at ASC
@@ -110,9 +115,14 @@ if ($method === 'GET') {
         );
 
         $res = mysqli_query($conn, "
-            SELECT m.*, CONCAT(u.first_name,' ',u.last_name) AS sender_name
+            SELECT m.*,
+                   CONCAT(u.first_name,' ',u.last_name) AS sender_name,
+                   p.body AS parent_body,
+                   CONCAT(pu.first_name,' ',pu.last_name) AS parent_sender_name
             FROM messages m
             JOIN users u ON u.user_id = m.from_user
+            LEFT JOIN messages p ON p.message_id = m.parent_id
+            LEFT JOIN users pu ON pu.user_id = p.from_user
             WHERE ((m.from_user=$adminId AND m.to_user=$userId)
                 OR (m.from_user=$userId  AND m.to_user=$adminId))
               AND m.created_at > '$sinceEsc'
@@ -244,12 +254,18 @@ if ($method === 'POST') {
         if (!$body)
             $body = mysqli_real_escape_string($conn, '📎 Attachment');
 
-        $sql = "INSERT INTO messages (from_user, to_user, subject, body, attachment_url)
-                VALUES ($adminId, $toUser, '$subject', '$body', $attachmentUrl)";
+        $replyTo = isset($_POST['reply_to']) ? (int) $_POST['reply_to'] : 0;
+        if ($replyTo) {
+            $sql = "INSERT INTO messages (from_user, to_user, subject, body, attachment_url, parent_id)
+                    VALUES ($adminId, $toUser, '$subject', '$body', $attachmentUrl, $replyTo)";
+        } else {
+            $sql = "INSERT INTO messages (from_user, to_user, subject, body, attachment_url)
+                    VALUES ($adminId, $toUser, '$subject', '$body', $attachmentUrl)";
+        }
 
         if (mysqli_query($conn, $sql)) {
             $newId = mysqli_insert_id($conn);
-            $now = gmdate('Y-m-d H:i:s');
+            $now = gmdate('Y-m-d\\TH:i:s') . '+00:00';
             $bodyPreview = mb_strimwidth(trim($_POST['body'] ?? '📎 Attachment'), 0, 100, '...');
             $bodyEsc = mysqli_real_escape_string($conn, $bodyPreview);
 

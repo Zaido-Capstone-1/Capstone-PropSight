@@ -116,6 +116,7 @@ try {
         $ntTitle = "Booking cancelled: $bkRef";
         $ntBody = "$guestName cancelled their booking for $unitLabel.";
         $ntLink = 'pages/admin/reservations.php';
+        require_once __DIR__ . '/../../includes/admin_notif_helpers.php';
         $admins = mysqli_query($conn, "SELECT user_id FROM users WHERE role='admin' LIMIT 20");
         while ($adm = mysqli_fetch_assoc($admins)) {
             $aId = (int) $adm['user_id'];
@@ -126,6 +127,15 @@ try {
             $adminNotifStmt->bind_param('isss', $aId, $ntTitle, $ntBody, $ntLink);
             $adminNotifStmt->execute();
             $adminNotifStmt->close();
+            upsert_notif(
+                $conn,
+                $aId,
+                'cancellation',
+                'cancel-' . $bookingId,
+                $ntTitle . ': ' . mb_substr($ntBody, 0, 80),
+                'reservations.php',
+                gmdate('Y-m-d H:i:s')
+            );
         }
 
         // Confirm to the user

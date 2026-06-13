@@ -125,6 +125,13 @@ function escHtml(s) {
     return String(s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(String(iso).slice(0, 10) + 'T00:00:00');
+    if (isNaN(d.getTime())) return String(iso);
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
 }
 
 /* ─── Action buttons HTML ────────────────────────────────────────────────── */
@@ -277,7 +284,7 @@ function rowHtml(b, isNew) {
     const nameParts = (b.user_name || '?').trim().split(/\s+/).slice(0, 2);
     const init = nameParts.map(w => w[0].toUpperCase()).join('');
     const avatarHtml = b.user_photo
-        ? `<img src="${(window.APP_BASE || '')}/${b.user_photo}" class="guest-avatar-img"
+        ? `<img src="../../${b.user_photo}" class="guest-avatar-img"
             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
        <div class="guest-avatar" style="display:none;">${init}</div>`
         : `<div class="guest-avatar">${init}</div>`;
@@ -296,8 +303,8 @@ function rowHtml(b, isNew) {
         <div class="unit-name">${escHtml(b.unit_name)}</div>
         <div class="unit-prop">${escHtml(b.property_name)}</div>
     </td>
-    <td>${escHtml(b.checkin_date)}</td>
-    <td>${escHtml(b.checkout_date)}</td>
+    <td>${fmtDate(b.checkin_date)}</td>
+    <td>${fmtDate(b.checkout_date)}</td>
     <td style="text-align:center;font-weight:700;">${b.nights}</td>
     <td><span class="amount-cell">₱${Number(b.total_amount).toLocaleString('en-PH', { maximumFractionDigits: 0 })}</span></td>
     <td><span class="res-badge ${BADGE_CLS[b.status] || 'res-badge-pending'}">${BADGE_LBL[b.status] || b.status}</span></td>
@@ -541,8 +548,7 @@ applyFilter();
                         sourceRows.unshift(b);
                     });
 
-                    applyFilter();
-                    if (currentPage === 1) _injectNewRows(newOnes);
+                    applyFilter();   // re-renders full table — don't also call _injectNewRows
                 }
 
                 if (data.stats) _applyStats(data.stats);
@@ -567,8 +573,7 @@ window.addEventListener('ps:new_bookings', e => {
     if (!newOnes.length) return;
 
     newOnes.forEach(b => { knownIds.add(String(b.booking_id)); sourceRows.unshift(b); });
-    applyFilter();
-    if (currentPage === 1) _injectNewRows(newOnes);
+    applyFilter();   // re-renders the full table — don't also call _injectNewRows (would duplicate the row)
     _refreshStatsOnly();
 });
 

@@ -116,7 +116,7 @@
       var _html = '';
       for (var _i = 0; _i < _arr.length; _i++) {
         var _n = _arr[_i];
-        _html += '<div class="mobile-notif-item" data-id="' + _esc(_n.id) + '" data-path="' + _esc(_n.path || '') + '">' +
+        _html += '<div class="mobile-notif-item" data-id="' + _esc(_n.id) + '" data-db-id="' + _esc(String(_n.db_id || '')) + '" data-path="' + _esc(_n.path || '') + '">' +
           '<div class="mobile-notif-item-text">' + _esc(_n.text || _n.title || '') + '</div>' +
           '<div class="mobile-notif-item-time">' + _esc(_rel(_n.ts)) + '</div></div>';
       }
@@ -149,13 +149,13 @@
         var _item = e.target.closest ? e.target.closest('.mobile-notif-item') : null;
         if (!_item) return;
         var _id = _item.getAttribute('data-id') || '';
+        var _dbId = _item.getAttribute('data-db-id') || '';
         var _path = _item.getAttribute('data-path') || '';
-        if (_id && _id.indexOf('msg-') === 0) {
+        if (_dbId) {
           var _fd = new FormData();
           _fd.append('action', 'mark_read');
-          _fd.append('id', _id.replace('msg-', ''));
-          if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(_fd);
-          fetch('../../api/messages.php', { method: 'POST', body: _fd }).catch(function () { });
+          _fd.append('id', _dbId);
+          fetch('../../api/admin/notifications.php', { method: 'POST', body: _fd, keepalive: true }).catch(function () { });
         }
         if (_id) { _st.delete(_id); _render(); }
         if (_path) window.location.href = _path;
@@ -165,9 +165,8 @@
     if (_bellMark) {
       _bellMark.addEventListener('click', function () {
         var _fd = new FormData();
-        _fd.append('action', 'mark_all_admin_read');
-        if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(_fd);
-        fetch('../../api/messages.php', { method: 'POST', body: _fd }).catch(function () { });
+        _fd.append('action', 'mark_all_read');
+        fetch('../../api/admin/notifications.php', { method: 'POST', body: _fd }).catch(function () { });
         _st.clear(); _render();
         _bellDrop.style.display = 'none';
       });
@@ -175,27 +174,12 @@
 
     window.addEventListener('ps:admin_notifications', function (e) {
       var _items = (e.detail && Array.isArray(e.detail.items)) ? e.detail.items : [];
+      // Rebuild from DB — clear first so dismissed items don't return
+      _st.clear();
       for (var _j = 0; _j < _items.length; _j++) { if (_items[_j] && _items[_j].id) _st.set(String(_items[_j].id), _items[_j]); }
       _render();
     });
-    window.addEventListener('ps:new_messages', function (e) {
-      var _msgs = Array.isArray(e.detail) ? e.detail : [];
-      for (var _k = 0; _k < _msgs.length; _k++) {
-        var _m = _msgs[_k], _key = 'msg-' + (_m.id || _m.message_id || Date.now());
-        _st.set(_key, { id: _key, type: 'message', text: 'New message from ' + (_m.sender_name || 'User'), ts: _m.created_at || new Date().toISOString(), path: 'messages.php' });
-      }
-      _render();
-    });
-    window.addEventListener('ps:new_bookings', function (e) {
-      var _bks = Array.isArray(e.detail) ? e.detail : [];
-      for (var _l = 0; _l < _bks.length; _l++) {
-        var _b = _bks[_l];
-        if (String(_b.status || '').toLowerCase() !== 'pending') continue;
-        var _bkey = 'booking-' + _b.booking_id;
-        _st.set(_bkey, { id: _bkey, type: 'booking', text: 'Pending booking #' + String(_b.booking_id || '').padStart(4, '0'), ts: _b.created_at || new Date().toISOString(), path: 'reservations.php?status=pending' });
-      }
-      _render();
-    });
+    // ps:new_messages and ps:new_bookings removed — handled by ps:admin_notifications from DB
   })();
 </script>
 </body>
