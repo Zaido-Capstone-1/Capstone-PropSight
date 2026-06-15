@@ -1,4 +1,4 @@
-  /*
+/*
   * unit_detail.css — PropSight
   * v7: Light theme — converted from dark v6
   */
@@ -1406,7 +1406,7 @@
   }
 
   .ud-pb-note {
-    font-size: 0.63rem;
+    font-size: 0.70rem;
     color: var(--ud-text-soft);
     margin-top: 4px;
     text-align: right;
@@ -1471,17 +1471,25 @@
     transform: translateY(-1px);
   }
 
+  .ud-book-btn:focus-visible {
+    outline: 2px solid #c9a84c;
+    outline-offset: 3px;
+  }
+
   .ud-book-btn--disabled,
-  .ud-book-btn:disabled {
-    background: var(--ud-surface2) !important;
-    color: var(--ud-text-soft) !important;
+  .ud-book-btn:disabled,
+  .ud-book-btn[aria-disabled="true"] {
+    background: #112240 !important;
+    color: #e8c882 !important;
+    opacity: 0.5;
     cursor: not-allowed !important;
     transform: none !important;
+    pointer-events: none;
   }
 
   .ud-book-note {
     font-family: "DM Sans", sans-serif;
-    font-size: 0.63rem;
+    font-size: 0.70rem;
     color: var(--ud-text-soft);
     text-align: center;
     margin: 0 0 4px;
@@ -2249,11 +2257,22 @@
     transform: translateY(-1px);
   }
 
-  .ud-float-btn:disabled {
-    background: var(--ud-surface2);
-    color: var(--ud-text-soft);
+  .ud-float-btn:disabled,
+  .ud-float-btn[aria-disabled="true"] {
+    background: #112240;
+    color: #e8c882;
     cursor: not-allowed;
+    opacity: 0.5;
+    pointer-events: none;
   }
+
+@media (max-width: 767px) {
+  .ud-float-btn[aria-disabled="true"] {
+    opacity: 1 !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+  }
+}
 
   /* ═══════════════════════════════════════════════════════════════════════════
     UTILITIES

@@ -174,7 +174,7 @@ body {
 
 @media(max-width:520px) {
     .qa-grid {
-        grid-template-columns: 1fr
+        grid-template-columns: repeat(2, 1fr)
     }
 }
 
@@ -1777,22 +1777,39 @@ body {
     }
 
     .history-item {
-        grid-template-columns: 1fr;
+        grid-template-columns: 80px 1fr auto;
         grid-template-areas:
-            "img"
-            "info"
-            "right";
+            "img info right";
+        align-items: stretch;
     }
 
     .history-img {
-        width: 100%;
-        height: 110px;
+        width: 80px;
+        height: auto;
+        min-height: 90px;
     }
 
     .history-room {
+        font-size: .8rem;
         white-space: normal;
         overflow: visible;
         text-overflow: clip;
+    }
+
+    .history-prop {
+        font-size: .7rem;
+    }
+
+    .history-dates {
+        font-size: .68rem;
+    }
+
+    .history-nights {
+        font-size: .62rem;
+    }
+
+    .history-price {
+        font-size: .85rem;
     }
 }
 
@@ -1916,14 +1933,15 @@ body {
 
 @media(max-width:600px) {
     .bb-date-sep {
-        display: block;
-        height: 0;
-        overflow: hidden;
-        font-size: 0;
+        display: none;
     }
 
-    .bb-date-sep::before {
-        content: '';
-        display: block;
+    .bb-dates {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 2px 8px;
+        font-size: .7rem;
+        line-height: 1.5;
     }
 }

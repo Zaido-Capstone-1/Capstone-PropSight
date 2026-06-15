@@ -502,7 +502,10 @@
         };
         Object.entries(map).forEach(([k, v]) => {
             document.querySelectorAll(`[data-rt-stat="${k}"]`).forEach(el => {
-                el.textContent = v;
+                // Only overwrite if new value > 0, or element already shows 0
+                // Prevents zeroing out correct PHP-rendered values on first poll
+                const cur = parseInt(el.textContent, 10) || 0;
+                if (v > 0 || cur === 0) el.textContent = v;
             });
         });
     }

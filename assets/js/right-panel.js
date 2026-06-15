@@ -65,47 +65,80 @@
   const notifDot = document.getElementById('adminNotifDot');
   const notifList = document.getElementById('adminNotifList');
   const notifMarkAll = document.getElementById('adminNotifMarkAll');
+  const notifViewMoreWrap = document.getElementById('adminNotifViewMore');
+  const notifViewMoreBtn = document.getElementById('adminNotifViewMoreBtn');
 
   // notifState is keyed by ref_id (e.g. 'task-11'), value includes db_id for API calls
   const notifState = new Map(
     (window.__PS_RIGHT_PANEL__.notifications).map(n => [String(n.id), n])
   );
 
+  // True unread total — independent of notifState's list (which is capped),
+  // so the badge always reflects the real DB count.
+  let unreadCount = window.__PS_RIGHT_PANEL__.notifUnreadCount || 0;
+
+  // Pagination — "View more" loads additional pages of notifPageSize items.
+  const notifPageSize = window.__PS_RIGHT_PANEL__.notifPageSize || 10;
+  let notifOffset = notifState.size;
+  let notifHasMore = !!window.__PS_RIGHT_PANEL__.notifHasMore;
+  let notifLoadingMore = false;
+
   function renderNotifs() {
     const items = [...notifState.values()]
-      .sort((a, b) => new Date(b.ts) - new Date(a.ts))
-      .slice(0, 5);
-    if (!items.length) {
-      if (notifDot) {
+      .sort((a, b) => new Date(b.ts) - new Date(a.ts));
+    if (notifDot) {
+      if (unreadCount > 0) {
+        notifDot.style.display = 'flex';
+        notifDot.textContent = unreadCount > 99 ? '99+' : unreadCount;
+      } else {
         notifDot.style.display = 'none';
         notifDot.textContent = '';
       }
-      if (notifList) notifList.innerHTML = '<div style="padding:14px 12px;color:#94a3b8;font-size:12px;">No new notifications.</div>';
+    }
+    if (notifViewMoreWrap) {
+      notifViewMoreWrap.style.display = notifHasMore ? '' : 'none';
+    }
+    if (notifViewMoreBtn) {
+      notifViewMoreBtn.textContent = notifLoadingMore ? 'Loading…' : 'View more';
+      notifViewMoreBtn.disabled = notifLoadingMore;
+    }
+    if (!items.length) {
+      if (notifList) notifList.innerHTML = '<div style="padding:14px 12px;color:#94a3b8;font-size:12px;">No notifications yet.</div>';
       return;
     }
-    if (notifDot) {
-      const _total = notifState.size;
-      notifDot.style.display = 'flex';
-      notifDot.textContent = _total > 99 ? '99+' : _total;
-    }
     if (notifList) {
-      notifList.innerHTML = items.map(n => `
+      notifList.innerHTML = items.map(n => {
+        const isRead = n.is_read == 1;
+        const itemStyle = isRead
+          ? 'padding:10px 12px;border-bottom:1px solid #f8fafc;cursor:pointer;opacity:0.6;'
+          : 'padding:10px 12px;border-bottom:1px solid #f8fafc;cursor:pointer;background:#eff6ff;';
+        const textStyle = isRead
+          ? 'font-size:12px;color:#64748b;font-weight:400;line-height:1.35;'
+          : 'font-size:12px;color:#0f172a;font-weight:600;line-height:1.35;';
+        return `
           <div class="rp-notif-item"
             data-notif-id="${escHtml(n.id)}"
             data-db-id="${escHtml(String(n.db_id || ''))}"
             data-path="${escHtml(n.path || '')}"
-            style="padding:10px 12px;border-bottom:1px solid #f8fafc;cursor:pointer;">
-            <div style="font-size:12px;color:#0f172a;line-height:1.35;">${escHtml(n.text || '')}</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${escHtml(relativeTime(n.ts))}</div>
+            data-is-read="${isRead ? '1' : '0'}"
+            style="${itemStyle}">
+            <div style="display:flex;align-items:flex-start;gap:6px;">
+              ${isRead ? '' : '<span style="flex:0 0 6px;width:6px;height:6px;border-radius:50%;background:#2563eb;margin-top:5px;"></span>'}
+              <div style="flex:1;min-width:0;">
+                <div style="${textStyle}">${escHtml(n.text || '')}</div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${escHtml(relativeTime(n.ts))}</div>
+              </div>
+            </div>
           </div>
-        `).join('');
+        `;
+      }).join('');
     }
   }
 
   function addNotif(item) {
     if (!item || !item.id) return;
     notifState.set(String(item.id), item);
-    while (notifState.size > 20) {
+    while (notifState.size > 50) {
       const oldest = [...notifState.values()].sort((a, b) => new Date(a.ts) - new Date(b.ts))[0];
       if (!oldest) break;
       notifState.delete(String(oldest.id));
@@ -140,8 +173,9 @@
     const notifId = item.dataset.notifId || '';
     const dbId    = item.dataset.dbId || '';
     const path    = item.dataset.path || '';
+    const wasRead = item.dataset.isRead === '1';
 
-    if (notifId) {
+    if (notifId && !wasRead) {
       // Mark as read in admin_notifications table via DB id
       if (dbId) {
         const fd = new FormData();
@@ -153,7 +187,9 @@
           method: 'POST', body: fd, keepalive: true
         }).catch(() => {});
       }
-      notifState.delete(String(notifId));
+      const existing = notifState.get(String(notifId));
+      if (existing) existing.is_read = 1;
+      unreadCount = Math.max(0, unreadCount - 1);
       renderNotifs();
     }
 
@@ -165,12 +201,31 @@
     fd.append('action', 'mark_all_read');
     fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
     fetch('../../api/admin/notifications.php', { method: 'POST', body: fd }).catch(() => {});
-    notifState.clear();
+    notifState.forEach(n => { n.is_read = 1; });
+    unreadCount = 0;
     renderNotifs();
-    if (notifDot) {
-      notifDot.style.display = 'none';
-      notifDot.textContent = '';
+  });
+
+  notifViewMoreBtn?.addEventListener('click', async () => {
+    if (notifLoadingMore || !notifHasMore) return;
+    notifLoadingMore = true;
+    renderNotifs();
+    try {
+      const res = await fetch(`../../api/admin/notifications.php?action=list&offset=${notifOffset}&limit=${notifPageSize}`);
+      const data = await res.json();
+      if (data && data.success) {
+        (data.notifications || []).forEach(n => {
+          if (n && n.id) notifState.set(String(n.id), n);
+        });
+        notifOffset += (data.notifications || []).length;
+        notifHasMore = !!data.has_more;
+        if (Number.isFinite(data.unread_count)) unreadCount = data.unread_count;
+      }
+    } catch (_) {
+      // leave hasMore as-is; user can retry
     }
+    notifLoadingMore = false;
+    renderNotifs();
   });
 
   const monthEl = document.getElementById('rt-cal-month');
@@ -358,12 +413,23 @@
   // ── Wire realtime admin_notifications poll → bell badge ──────────
   window.addEventListener('ps:admin_notifications', e => {
     const items = Array.isArray(e.detail?.items) ? e.detail.items : [];
-    // Rebuild notifState from DB response (already filtered is_read=0)
-    notifState.clear();
+    // The poll only returns the first page (most recent `notifPageSize`
+    // items, read+unread). Replace just that slice in notifState so any
+    // additional pages loaded via "View more" stay intact.
+    const freshIds = new Set(items.map(n => String(n.id)));
+    const sorted = [...notifState.values()].sort((a, b) => new Date(b.ts) - new Date(a.ts));
+    sorted.slice(0, notifPageSize).forEach(n => {
+      if (!freshIds.has(String(n.id))) notifState.delete(String(n.id));
+    });
+    const newCount = items.filter(n => n && n.id && !notifState.has(String(n.id))).length;
     items.forEach(n => {
       if (n && n.id) notifState.set(String(n.id), n);
     });
-    // renderNotifs() updates both list and badge from notifState — single source of truth
+    // Keep "View more" offset aligned when brand-new items shift the list
+    notifOffset += newCount;
+    // True unread total from the server — independent of the list's LIMIT
+    unreadCount = Number.isFinite(e.detail?.count) ? e.detail.count : unreadCount;
+    // renderNotifs() updates both list and badge — single source of truth
     renderNotifs();
   });
 

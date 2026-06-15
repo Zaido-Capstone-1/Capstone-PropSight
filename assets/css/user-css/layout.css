@@ -756,7 +756,7 @@ nav a.active {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(105deg, rgba(8,18,38,0.88) 0%, rgba(12,28,55,0.78) 50%, rgba(18,42,72,0.65) 100%);
+    background: linear-gradient(105deg, rgba(8, 18, 38, 0.88) 0%, rgba(12, 28, 55, 0.78) 50%, rgba(18, 42, 72, 0.65) 100%);
     background-size: cover;
     pointer-events: none;
 }
@@ -1819,7 +1819,11 @@ nav a.active {
     }
 
     .logo-wordmark strong {
-        font-size: 1.2rem;
+        font-size: 1.4rem;
+    }
+
+    .logo-wordmark span {
+        font-size: 0.63rem;
     }
 }
 
@@ -1842,11 +1846,11 @@ nav a.active {
     }
 
     .logo-wordmark strong {
-        font-size: 1rem;
+        font-size: 1.2rem;
     }
 
     .logo-wordmark span {
-        display: none !important;
+        font-size: 0.6rem;
     }
 }
 
@@ -1865,7 +1869,7 @@ nav a.active {
     }
 
     .logo-wordmark span {
-        display: none;
+        font-size: 0.58rem;
     }
 }
 

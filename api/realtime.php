@@ -112,13 +112,23 @@ if ($role === 'admin') {
     require_once __DIR__ . '/../includes/admin_notif_helpers.php';
     sync_notifications($conn, $userId);
 
+    $_anCountRow = mysqli_fetch_assoc(mysqli_query(
+        $conn,
+        "SELECT COUNT(*) AS c FROM admin_notifications WHERE admin_id = $userId AND is_read = 0"
+    ));
+    $adminNotifUnreadCount = (int) ($_anCountRow['c'] ?? 0);
+
+    // First page only — matches the dropdown's initial page size. "View more"
+    // pagination is handled separately via api/admin/notifications.php.
+    $_anPageSize = 10;
+
     $adminNotifs = [];
     $_anRes = mysqli_query(
         $conn,
-        "SELECT id, type, ref_id, text, path, ts
+        "SELECT id, type, ref_id, text, path, ts, is_read
          FROM admin_notifications
-         WHERE admin_id = $userId AND is_read = 0
-         ORDER BY ts DESC LIMIT 10"
+         WHERE admin_id = $userId
+         ORDER BY ts DESC LIMIT $_anPageSize"
     );
     while ($_anRes && ($n = mysqli_fetch_assoc($_anRes))) {
         fmt_dt_row($n);
@@ -129,10 +139,11 @@ if ($role === 'admin') {
             'text' => $n['text'],
             'ts' => $n['ts'],
             'path' => $n['path'] ?? '',
+            'is_read' => (int) $n['is_read'],
         ];
     }
     $payload['admin_notifications'] = $adminNotifs;
-    $payload['admin_notif_count'] = count($adminNotifs);
+    $payload['admin_notif_count'] = $adminNotifUnreadCount;
     // Only return messages FROM others (not sent by this admin) to avoid
     // double-rendering with the page's own optimistic send + poll.
     if ($page === 'messages') {

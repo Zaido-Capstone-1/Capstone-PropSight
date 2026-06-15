@@ -71,7 +71,7 @@ if (!function_exists('sync_notifications')) {
                 $adminId,
                 'new_booking',
                 'booking-' . (int) $row['booking_id'],
-                'Pending booking #' . str_pad((string) $row['booking_id'], 4, '0', STR_PAD_LEFT),
+                'New booking #' . str_pad((string) $row['booking_id'], 4, '0', STR_PAD_LEFT),
                 'reservations.php?status=pending',
                 (string) ($row['created_at'] ?? gmdate('Y-m-d H:i:s'))
             );
@@ -97,11 +97,13 @@ if (!function_exists('sync_notifications')) {
             );
         }
 
-        // ── Prune rows whose source no longer qualifies ───────────────────────
+        // ── Prune rows whose source no longer qualifies (unread only —
+        //    once read, a notification is kept as history and never
+        //    auto-removed) ──────────────────────────────────────────────────
         mysqli_query(
             $conn,
             "DELETE an FROM admin_notifications an
-             WHERE an.admin_id = $adminId AND an.type = 'message'
+             WHERE an.admin_id = $adminId AND an.type = 'message' AND an.is_read = 0
                AND NOT EXISTS (
                  SELECT 1 FROM messages m
                  WHERE m.message_id = CAST(SUBSTRING(an.ref_id, 5) AS UNSIGNED)
@@ -111,7 +113,7 @@ if (!function_exists('sync_notifications')) {
         mysqli_query(
             $conn,
             "DELETE an FROM admin_notifications an
-             WHERE an.admin_id = $adminId AND an.type = 'booking'
+             WHERE an.admin_id = $adminId AND an.type = 'booking' AND an.is_read = 0
                AND an.ref_id LIKE 'booking-%'
                AND NOT EXISTS (
                  SELECT 1 FROM bookings b
@@ -122,11 +124,25 @@ if (!function_exists('sync_notifications')) {
         mysqli_query(
             $conn,
             "DELETE an FROM admin_notifications an
-             WHERE an.admin_id = $adminId AND an.type = 'task'
+             WHERE an.admin_id = $adminId AND an.type = 'task' AND an.is_read = 0
                AND NOT EXISTS (
                  SELECT 1 FROM maintenance_requests m
                  WHERE m.request_id = CAST(SUBSTRING(an.ref_id, 6) AS UNSIGNED)
                    AND m.request_status IN ('open','in_progress')
+               )"
+        );
+
+        // ── Trim old read history beyond 50 rows per admin ─────────────────
+        mysqli_query(
+            $conn,
+            "DELETE an FROM admin_notifications an
+             WHERE an.admin_id = $adminId AND an.is_read = 1
+               AND an.id NOT IN (
+                 SELECT id FROM (
+                   SELECT id FROM admin_notifications
+                   WHERE admin_id = $adminId AND is_read = 1
+                   ORDER BY ts DESC LIMIT 50
+                 ) keep
                )"
         );
     }

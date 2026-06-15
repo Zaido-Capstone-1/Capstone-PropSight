@@ -139,9 +139,63 @@
   /* ── 4. Leaflet Map ──────────────────────────────────────── */
   const mapEl = document.getElementById('guestMap');
   if (mapEl && typeof L !== 'undefined') {
+
+    // Normalize stored nationality values to match GeoJSON country names.
+    // The GeoJSON uses non-standard names for several countries (e.g. "USA"
+    // instead of "United States"), so we map common variants here.
+    const NATIONALITY_MAP = {
+      // United States variants
+      'United States':                   'USA',
+      'United States of America':        'USA',
+      'American':                        'USA',
+      'US':                              'USA',
+      'U.S.':                            'USA',
+      'U.S.A.':                          'USA',
+      // Serbia
+      'Serbia':                          'Republic of Serbia',
+      // Congo variants
+      'Congo':                           'Republic of the Congo',
+      'DR Congo':                        'Democratic Republic of the Congo',
+      'DRC':                             'Democratic Republic of the Congo',
+      'Democratic Republic of Congo':    'Democratic Republic of the Congo',
+      // Tanzania
+      'Tanzania':                        'United Republic of Tanzania',
+      // Ivory Coast
+      'Cote d\'Ivoire':                  'Ivory Coast',
+      "Côte d'Ivoire":                   'Ivory Coast',
+      // Timor-Leste
+      'Timor-Leste':                     'East Timor',
+      // South Korea variants
+      'Korea':                           'South Korea',
+      'Republic of Korea':               'South Korea',
+      // North Korea variants
+      "Democratic People's Republic of Korea": 'North Korea',
+      // Russia variants
+      'Russian Federation':              'Russia',
+      // Iran variants
+      'Islamic Republic of Iran':        'Iran',
+      // Syria variants
+      'Syrian Arab Republic':            'Syria',
+      // Vietnam variants
+      'Viet Nam':                        'Vietnam',
+      // Myanmar/Burma
+      'Burma':                           'Myanmar',
+      // Czechia
+      'Czechia':                         'Czech Republic',
+      // North Macedonia
+      'North Macedonia':                 'Macedonia',
+      // Eswatini
+      'Eswatini':                        'Swaziland',
+      // Bolivia
+      'Plurinational State of Bolivia':  'Bolivia',
+      // Venezuela
+      'Bolivarian Republic of Venezuela': 'Venezuela',
+    };
+
     const bookingData = {};
     D.demographics.forEach(d => {
-      bookingData[d.nationality] = { bookings: d.bookings, guests: d.guests, revenue: d.revenue };
+      const geoName = NATIONALITY_MAP[d.nationality] || d.nationality;
+      bookingData[geoName] = { bookings: d.bookings, guests: d.guests, revenue: d.revenue };
     });
     const maxBookings = Math.max(...D.demographics.map(d => d.bookings), 1);
     function getColor(b) {
@@ -159,8 +213,9 @@
       maxBounds: [[-90, -180], [90, 180]], maxBoundsViscosity: 1.0
     }).setView([20, 100], 2);
     L.control.zoom({ position: 'topright' }).addTo(map);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors', opacity: 0.4, noWrap: true
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap contributors © CARTO', opacity: 0.4, noWrap: true,
+      subdomains: 'abcd', maxZoom: 19
     }).addTo(map);
     fetch('../../assets/data/world.geojson')
       .then(r => r.json())

@@ -75,12 +75,23 @@ $notifications = [];
 // ── Read from admin_notifications table (DB-backed, dismissable) ──────────────
 require_once __DIR__ . '/admin_notif_helpers.php';
 
+// True unread total — independent of the LIST limit below, so the badge
+// always reflects the real count even if there are more than 10 unread.
+$_notifCountRow = mysqli_fetch_assoc(mysqli_query(
+  $conn,
+  "SELECT COUNT(*) AS c FROM admin_notifications WHERE admin_id = $adminId AND is_read = 0"
+));
+$notifUnreadCount = (int) ($_notifCountRow['c'] ?? 0);
+
+// Page size for the dropdown — "View more" loads additional pages of this size.
+$_notifPageSize = 10;
+
 $_notifRes = mysqli_query(
   $conn,
-  "SELECT id, type, ref_id, text, path, ts
+  "SELECT id, type, ref_id, text, path, ts, is_read
      FROM admin_notifications
-     WHERE admin_id = $adminId AND is_read = 0
-     ORDER BY ts DESC LIMIT 5"
+     WHERE admin_id = $adminId
+     ORDER BY ts DESC LIMIT $_notifPageSize"
 );
 while ($_notifRes && ($n = mysqli_fetch_assoc($_notifRes))) {
   fmt_dt_row($n);
@@ -91,8 +102,17 @@ while ($_notifRes && ($n = mysqli_fetch_assoc($_notifRes))) {
     'text' => $n['text'],
     'ts' => $n['ts'],
     'path' => $n['path'] ?? '',
+    'is_read' => (int) $n['is_read'],
   ];
 }
+
+// Total notifications (read + unread) — used to know whether "View more" is needed.
+$_notifTotalRow = mysqli_fetch_assoc(mysqli_query(
+  $conn,
+  "SELECT COUNT(*) AS c FROM admin_notifications WHERE admin_id = $adminId"
+));
+$notifTotalCount = (int) ($_notifTotalRow['c'] ?? 0);
+$notifHasMore = $notifTotalCount > count($notifications);
 
 function rp_activity_icon_svg(string $desc, bool $isExpense): string
 {
@@ -141,6 +161,34 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
     border: none !important;
     outline: none !important;
   }
+
+  /* Custom scrollbar for the notification dropdown */
+  #adminNotifDropdown {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  #adminNotifDropdown::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+  #adminNotifDropdown::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  #adminNotifDropdown::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 99px;
+  }
+  #adminNotifDropdown::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+  }
+
+  #adminNotifViewMoreBtn:hover {
+    background: #eff6ff;
+  }
+  #adminNotifViewMoreBtn:disabled {
+    cursor: default;
+    color: #94a3b8;
+  }
 </style>
 <section class="right-panel">
   <div class="right-header" style="position:relative; overflow:visible;">
@@ -150,11 +198,11 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
       </svg>
       <span class="notif-dot" id="adminNotifDot"
-        style="<?= empty($notifications) ? 'display:none;' : '' ?>"><?= count($notifications) ?></span>
+        style="<?= $notifUnreadCount === 0 ? 'display:none;' : '' ?>"><?= $notifUnreadCount > 99 ? '99+' : $notifUnreadCount ?></span>
     </div>
 
     <div id="adminNotifDropdown"
-      style="display:none;position:absolute;top:calc(100% + -20px);left:-230px;width:300px;max-height:360px;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 28px rgba(15,23,42,.18);z-index:99999;">
+      style="display:none;position:absolute;top:calc(100% + -20px);left:-230px;width:300px;max-height:420px;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 28px rgba(15,23,42,.18);z-index:99999;">
       <div
         style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:700;color:#0f172a;display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:0;background:#fff;">
         <span>Notifications</span>
@@ -190,6 +238,11 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
             </div>
           <?php endforeach; ?>
         <?php endif; ?>
+      </div>
+      <div id="adminNotifViewMore" style="<?= $notifHasMore ? '' : 'display:none;' ?>padding:0;text-align:center;border-top:1px solid #f1f5f9;">
+        <button type="button" id="adminNotifViewMoreBtn"
+          style="display:block;width:100%;border:none;background:none;color:#2563eb;font-size:13px;font-weight:600;cursor:pointer;padding:10px 12px;border-radius:0 0 12px 12px;transition:background .12s;">View
+          more</button>
       </div>
     </div>
     <div class="user-info">
@@ -317,6 +370,9 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
 <script>
   window.__PS_RIGHT_PANEL__ = {
     notifications: (<?= json_encode($notifications, JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_APOS) ?> || []),
+    notifUnreadCount: <?= $notifUnreadCount ?>,
+    notifHasMore: <?= $notifHasMore ? 'true' : 'false' ?>,
+    notifPageSize: <?= $_notifPageSize ?>,
     tasks: <?= json_encode($schedule, JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_APOS) ?> || []
   };
 </script>

@@ -586,21 +586,27 @@
      * ═══════════════════════════════════════════════════════ */
     window.addEventListener('ps:booking_stats', function (e) {
         var s = e.detail || {};
-        var map = {
-            upcoming: parseInt(s.upcoming, 10) || 0,
-            active: parseInt(s.active_cnt, 10) || 0,
-            completed: parseInt(s.completed, 10) || 0,
-            cancelled: parseInt(s.cancelled, 10) || 0,
-            total: parseInt(s.total, 10) || 0,
-        };
-        Object.keys(map).forEach(function (k) {
-            document.querySelectorAll('[data-rt-stat="' + k + '"]').forEach(function (el) {
-                el.textContent = map[k];
+
+        // Safe update — only overwrite if new value > 0, or DOM is already showing 0
+        // Prevents the first realtime poll from zeroing out correct PHP-rendered values
+        function safeSet(sel, newVal) {
+            document.querySelectorAll(sel).forEach(function (el) {
+                var cur = parseInt(el.textContent, 10) || 0;
+                if (newVal > 0 || cur === 0) el.textContent = newVal;
             });
-        });
+        }
+
+        safeSet('[data-rt-stat="upcoming"]',  parseInt(s.upcoming,   10) || 0);
+        safeSet('[data-rt-stat="active"]',    parseInt(s.active_cnt, 10) || 0);
+        safeSet('[data-rt-stat="completed"]', parseInt(s.completed,  10) || 0);
+        safeSet('[data-rt-stat="cancelled"]', parseInt(s.cancelled,  10) || 0);
+
+        var total = parseInt(s.total, 10) || 0;
         document.querySelectorAll('[data-rt-user="booking_total"]').forEach(function (el) {
-            el.textContent = map.total;
+            var cur = parseInt(el.textContent, 10) || 0;
+            if (total > 0 || cur === 0) el.textContent = total;
         });
+
         // Update total_spent stat card
         if (s.total_spent !== undefined) {
             var spent = parseFloat(s.total_spent) || 0;

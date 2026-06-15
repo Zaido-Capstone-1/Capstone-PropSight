@@ -3,7 +3,7 @@
  * API: /api/admin/notifications.php
  * Manages admin_notifications table.
  *
- * GET  ?action=list             — return unread notifications for this admin
+ * GET  ?action=list&offset=0&limit=10  — paginated notifications (read+unread) for this admin
  * POST action=mark_read  id=N  — mark one notification as read
  * POST action=mark_all_read    — mark all as read for this admin
  */
@@ -25,12 +25,17 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'GET') {
     sync_notifications($conn, $adminId);
 
+    $limit  = (int) ($_GET['limit'] ?? 20);
+    $offset = (int) ($_GET['offset'] ?? 0);
+    if ($limit  <= 0 || $limit  > 50) $limit  = 20;
+    if ($offset < 0) $offset = 0;
+
     $res = mysqli_query(
         $conn,
         "SELECT id, type, ref_id, text, path, ts, is_read
          FROM admin_notifications
-         WHERE admin_id = $adminId AND is_read = 0
-         ORDER BY ts DESC LIMIT 20"
+         WHERE admin_id = $adminId
+         ORDER BY ts DESC LIMIT $limit OFFSET $offset"
     );
     $notifs = [];
     while ($row = mysqli_fetch_assoc($res)) {
@@ -42,7 +47,17 @@ if ($method === 'GET') {
         mysqli_query($conn, "SELECT COUNT(*) AS c FROM admin_notifications WHERE admin_id=$adminId AND is_read=0")
     )['c'] ?? 0);
 
-    echo json_encode(['success' => true, 'notifications' => $notifs, 'unread_count' => $count]);
+    $total = (int) (mysqli_fetch_assoc(
+        mysqli_query($conn, "SELECT COUNT(*) AS c FROM admin_notifications WHERE admin_id=$adminId")
+    )['c'] ?? 0);
+
+    echo json_encode([
+        'success' => true,
+        'notifications' => $notifs,
+        'unread_count' => $count,
+        'total' => $total,
+        'has_more' => ($offset + count($notifs)) < $total,
+    ]);
     exit;
 }
 

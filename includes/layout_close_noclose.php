@@ -72,6 +72,8 @@
     var _bellDot = document.getElementById('mobileNotifDot');
     var _bellList = document.getElementById('mobileNotifList');
     var _bellMark = document.getElementById('mobileNotifMarkAll');
+    var _bellViewMoreWrap = document.getElementById('mobileNotifViewMore');
+    var _bellViewMoreBtn = document.getElementById('mobileNotifViewMoreBtn');
     if (!_bellBtn || !_bellDrop) return;
 
     function _esc(s) {
@@ -93,14 +95,32 @@
     }
     var _st = window.__mobileNotifs;
 
+    // True unread total — independent of _st's list (which is capped at 15
+    // for display), so the badge always reflects the real DB count.
+    if (typeof window.__mobileNotifUnreadCount !== 'number') {
+      window.__mobileNotifUnreadCount = (window.__PS_RIGHT_PANEL__ && window.__PS_RIGHT_PANEL__.notifUnreadCount) || 0;
+    }
+    // Pagination — "View more" loads additional pages of __mobileNotifPageSize items.
+    if (typeof window.__mobileNotifPageSize !== 'number') {
+      window.__mobileNotifPageSize = (window.__PS_RIGHT_PANEL__ && window.__PS_RIGHT_PANEL__.notifPageSize) || 10;
+    }
+    if (typeof window.__mobileNotifOffset !== 'number') {
+      window.__mobileNotifOffset = _st.size;
+    }
+    if (typeof window.__mobileNotifHasMore !== 'boolean') {
+      window.__mobileNotifHasMore = !!(window.__PS_RIGHT_PANEL__ && window.__PS_RIGHT_PANEL__.notifHasMore);
+    }
+    if (typeof window.__mobileNotifLoadingMore !== 'boolean') {
+      window.__mobileNotifLoadingMore = false;
+    }
+
     function _render() {
       var _arr = [];
       _st.forEach(function (v) { _arr.push(v); });
       _arr.sort(function (a, b) { return new Date(b.ts) - new Date(a.ts); });
-      _arr = _arr.slice(0, 15);
       if (_bellDot) {
-        if (_arr.length) {
-          _bellDot.textContent = _arr.length > 99 ? '99+' : String(_arr.length);
+        if (window.__mobileNotifUnreadCount > 0) {
+          _bellDot.textContent = window.__mobileNotifUnreadCount > 99 ? '99+' : String(window.__mobileNotifUnreadCount);
           _bellDot.style.display = 'flex';
           _bellDot.style.background = '#ef4444';
         } else {
@@ -108,17 +128,30 @@
           _bellDot.style.display = 'none';
         }
       }
+      if (_bellViewMoreWrap) {
+        _bellViewMoreWrap.style.display = window.__mobileNotifHasMore ? '' : 'none';
+      }
+      if (_bellViewMoreBtn) {
+        _bellViewMoreBtn.textContent = window.__mobileNotifLoadingMore ? 'Loading…' : 'View more';
+        _bellViewMoreBtn.disabled = window.__mobileNotifLoadingMore;
+      }
       if (!_bellList) return;
       if (!_arr.length) {
-        _bellList.innerHTML = '<div style="padding:24px 14px;text-align:center;color:#94a3b8;font-size:13px;">No new notifications.</div>';
+        _bellList.innerHTML = '<div style="padding:24px 14px;text-align:center;color:#94a3b8;font-size:13px;">No notifications yet.</div>';
         return;
       }
       var _html = '';
       for (var _i = 0; _i < _arr.length; _i++) {
         var _n = _arr[_i];
-        _html += '<div class="mobile-notif-item" data-id="' + _esc(_n.id) + '" data-db-id="' + _esc(String(_n.db_id || '')) + '" data-path="' + _esc(_n.path || '') + '">' +
+        var _isRead = _n.is_read == 1;
+        var _cls = 'mobile-notif-item ' + (_isRead ? 'is-read' : 'is-unread');
+        var _dot = _isRead ? '' : '<span class="mobile-notif-item-dot"></span>';
+        _html += '<div class="' + _cls + '" data-id="' + _esc(_n.id) + '" data-db-id="' + _esc(String(_n.db_id || '')) + '" data-path="' + _esc(_n.path || '') + '" data-is-read="' + (_isRead ? '1' : '0') + '">' +
+          '<div class="mobile-notif-item-row">' + _dot +
+          '<div style="flex:1;min-width:0;">' +
           '<div class="mobile-notif-item-text">' + _esc(_n.text || _n.title || '') + '</div>' +
-          '<div class="mobile-notif-item-time">' + _esc(_rel(_n.ts)) + '</div></div>';
+          '<div class="mobile-notif-item-time">' + _esc(_rel(_n.ts)) + '</div>' +
+          '</div></div></div>';
       }
       _bellList.innerHTML = _html;
     }
@@ -151,13 +184,18 @@
         var _id = _item.getAttribute('data-id') || '';
         var _dbId = _item.getAttribute('data-db-id') || '';
         var _path = _item.getAttribute('data-path') || '';
-        if (_dbId) {
-          var _fd = new FormData();
-          _fd.append('action', 'mark_read');
-          _fd.append('id', _dbId);
-          fetch('../../api/admin/notifications.php', { method: 'POST', body: _fd, keepalive: true }).catch(function () { });
+        var _wasRead = _item.getAttribute('data-is-read') === '1';
+        if (!_wasRead) {
+          if (_dbId) {
+            var _fd = new FormData();
+            _fd.append('action', 'mark_read');
+            _fd.append('id', _dbId);
+            fetch('../../api/admin/notifications.php', { method: 'POST', body: _fd, keepalive: true }).catch(function () { });
+          }
+          if (_id && _st.has(_id)) { _st.get(_id).is_read = 1; }
+          window.__mobileNotifUnreadCount = Math.max(0, window.__mobileNotifUnreadCount - 1);
+          _render();
         }
-        if (_id) { _st.delete(_id); _render(); }
         if (_path) window.location.href = _path;
       });
     }
@@ -167,16 +205,62 @@
         var _fd = new FormData();
         _fd.append('action', 'mark_all_read');
         fetch('../../api/admin/notifications.php', { method: 'POST', body: _fd }).catch(function () { });
-        _st.clear(); _render();
+        _st.forEach(function (n) { n.is_read = 1; });
+        window.__mobileNotifUnreadCount = 0; _render();
         _bellDrop.style.display = 'none';
+      });
+    }
+
+    if (_bellViewMoreBtn) {
+      _bellViewMoreBtn.addEventListener('click', function () {
+        if (window.__mobileNotifLoadingMore || !window.__mobileNotifHasMore) return;
+        window.__mobileNotifLoadingMore = true;
+        _render();
+        fetch('../../api/admin/notifications.php?action=list&offset=' + window.__mobileNotifOffset + '&limit=' + window.__mobileNotifPageSize)
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data && data.success) {
+              var _list = data.notifications || [];
+              for (var _k = 0; _k < _list.length; _k++) {
+                if (_list[_k] && _list[_k].id) _st.set(String(_list[_k].id), _list[_k]);
+              }
+              window.__mobileNotifOffset += _list.length;
+              window.__mobileNotifHasMore = !!data.has_more;
+              if (typeof data.unread_count === 'number') window.__mobileNotifUnreadCount = data.unread_count;
+            }
+          })
+          .catch(function () { })
+          .finally(function () {
+            window.__mobileNotifLoadingMore = false;
+            _render();
+          });
       });
     }
 
     window.addEventListener('ps:admin_notifications', function (e) {
       var _items = (e.detail && Array.isArray(e.detail.items)) ? e.detail.items : [];
-      // Rebuild from DB — clear first so dismissed items don't return
-      _st.clear();
-      for (var _j = 0; _j < _items.length; _j++) { if (_items[_j] && _items[_j].id) _st.set(String(_items[_j].id), _items[_j]); }
+      // Poll returns only the first page (most recent __mobileNotifPageSize,
+      // read+unread). Replace just that slice so items loaded via "View more"
+      // stay intact.
+      var _freshIds = {};
+      for (var _f = 0; _f < _items.length; _f++) { if (_items[_f] && _items[_f].id) _freshIds[String(_items[_f].id)] = true; }
+      var _sorted = [];
+      _st.forEach(function (v) { _sorted.push(v); });
+      _sorted.sort(function (a, b) { return new Date(b.ts) - new Date(a.ts); });
+      var _pageSize = window.__mobileNotifPageSize || 10;
+      for (var _p = 0; _p < Math.min(_pageSize, _sorted.length); _p++) {
+        var _pid = String(_sorted[_p].id);
+        if (!_freshIds[_pid]) _st.delete(_pid);
+      }
+      var _newCount = 0;
+      for (var _j = 0; _j < _items.length; _j++) {
+        if (_items[_j] && _items[_j].id) {
+          if (!_st.has(String(_items[_j].id))) _newCount++;
+          _st.set(String(_items[_j].id), _items[_j]);
+        }
+      }
+      window.__mobileNotifOffset = (window.__mobileNotifOffset || 0) + _newCount;
+      window.__mobileNotifUnreadCount = (e.detail && typeof e.detail.count === 'number') ? e.detail.count : window.__mobileNotifUnreadCount;
       _render();
     });
     // ps:new_messages and ps:new_bookings removed — handled by ps:admin_notifications from DB

@@ -305,7 +305,7 @@
                 // Property marker — default blue pin + light label above it
                 const propIcon = L.divIcon({
                     className: 'ud-prop-marker',
-                    html: `<div style="background:#fff;color:#1a2744;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.2);border:1.5px solid #c9a84c;font-family:'DM Sans',sans-serif;position:absolute;bottom:40px;left:50%;transform:translateX(-50%);">${u.title || 'Property'}</div>`,
+                    html: `<div style="background:#fff;color:#1a2744;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.2);border:1.5px solid #c9a84c;font-family:'DM Sans',sans-serif;position:absolute;bottom:46px;left:50%;transform:translateX(-50%);">${u.title || 'Property'}</div>`,
                     iconSize: [0, 0],
                     iconAnchor: [0, 0],
                 });
@@ -452,12 +452,17 @@
 
         function _updateBookBtn() {
             const ready = !!(ciEl?.value && coEl?.value && ciEl.value < coEl.value);
+            const isMobile = window.innerWidth < 768;
+
             ['udBookBtn2', 'udFloatBtn'].forEach(id => {
                 const btn = $(id);
                 if (!btn) return;
-                btn.disabled      = !ready;
-                btn.style.opacity = ready ? '' : '0.5';
-                btn.style.cursor  = ready ? '' : 'not-allowed';
+                // On mobile, float bar button is always enabled
+                const effectiveReady = (id === 'udFloatBtn' && isMobile) ? true : ready;
+                btn.setAttribute('aria-disabled', effectiveReady ? 'false' : 'true');
+                btn.style.opacity       = effectiveReady ? '' : '0.45';
+                btn.style.cursor        = effectiveReady ? '' : 'not-allowed';
+                btn.style.pointerEvents = effectiveReady ? '' : 'none';
             });
             const hint = $('udBookHint');
             if (hint) hint.style.display = ready ? 'none' : '';

@@ -106,7 +106,12 @@ if ($_sb_initials === '')
       read</button>
   </div>
   <div id="mobileNotifList">
-    <div style="padding:24px 14px;text-align:center;color:#94a3b8;font-size:13px;">No new notifications.</div>
+    <div style="padding:24px 14px;text-align:center;color:#94a3b8;font-size:13px;">No notifications yet.</div>
+  </div>
+  <div id="mobileNotifViewMore" style="display:none;padding:0;text-align:center;border-top:1px solid #f1f5f9;">
+    <button type="button" id="mobileNotifViewMoreBtn"
+      style="display:block;width:100%;border:none;background:none;color:#2563eb;font-size:14px;font-weight:600;cursor:pointer;padding:12px 14px;border-radius:0 0 14px 14px;transition:background .12s;">View
+      more</button>
   </div>
 </div>
 
@@ -176,6 +181,15 @@ if ($_sb_initials === '')
     background: #f8fafc;
   }
 
+  #mobileNotifViewMoreBtn:hover,
+  #mobileNotifViewMoreBtn:active {
+    background: #eff6ff;
+  }
+  #mobileNotifViewMoreBtn:disabled {
+    cursor: default;
+    color: #94a3b8;
+  }
+
   .mobile-notif-item:last-child {
     border-bottom: none;
   }
@@ -190,6 +204,39 @@ if ($_sb_initials === '')
     font-size: 11px;
     color: #94a3b8;
     margin-top: 3px;
+  }
+
+  /* Unread vs read distinction */
+  .mobile-notif-item.is-unread {
+    background: #eff6ff;
+  }
+
+  .mobile-notif-item.is-unread .mobile-notif-item-text {
+    font-weight: 600;
+  }
+
+  .mobile-notif-item.is-read {
+    opacity: 0.6;
+  }
+
+  .mobile-notif-item.is-read .mobile-notif-item-text {
+    font-weight: 400;
+    color: #64748b;
+  }
+
+  .mobile-notif-item-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .mobile-notif-item-dot {
+    flex: 0 0 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2563eb;
+    margin-top: 5px;
   }
 </style>
 
