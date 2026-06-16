@@ -18,7 +18,8 @@ $userId = (int) $_SESSION['user_id'];
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-    $limit = min(50, (int) ($_GET['limit'] ?? 20));
+    $limit = min(50, max(1, (int) ($_GET['limit'] ?? 10)));
+    $offset = max(0, (int) ($_GET['offset'] ?? 0));
     $unread = isset($_GET['unread_only']);
 
     $where = "user_id=$userId";
@@ -27,7 +28,7 @@ if ($method === 'GET') {
 
     $res = mysqli_query(
         $conn,
-        "SELECT * FROM notifications WHERE $where ORDER BY created_at DESC LIMIT $limit"
+        "SELECT * FROM notifications WHERE $where ORDER BY created_at DESC LIMIT $limit OFFSET $offset"
     );
     $notifs = [];
     while ($row = mysqli_fetch_assoc($res)) {
@@ -40,10 +41,17 @@ if ($method === 'GET') {
         "SELECT COUNT(*) AS c FROM notifications WHERE user_id=$userId AND is_read=0"
     ))['c'] ?? 0);
 
+    $total = (int) (mysqli_fetch_assoc(mysqli_query(
+        $conn,
+        "SELECT COUNT(*) AS c FROM notifications WHERE $where"
+    ))['c'] ?? 0);
+
     echo json_encode([
         'success' => true,
         'notifications' => $notifs,
         'unread_count' => $unreadCount,
+        'total' => $total,
+        'has_more' => ($offset + count($notifs)) < $total,
     ]);
     exit;
 }

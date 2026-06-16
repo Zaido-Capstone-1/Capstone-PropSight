@@ -1207,7 +1207,23 @@ textarea {
   display: flex;
   gap: 2px;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 0;
+}
+
+.cal-day-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.cal-day-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--text-soft);
+  opacity: .6;
+  text-transform: uppercase;
 }
 
 .cal-day {
@@ -1231,10 +1247,18 @@ textarea {
   color: var(--blue-400);
 }
 
+/* "Today" gets a quiet ring so it's findable even when another date is selected */
+.cal-day.today:not(.active) {
+  border-color: var(--blue-300);
+  color: var(--blue-500);
+  font-weight: 700;
+}
+
 .cal-day.active {
   background: var(--blue-400);
   color: white;
   font-weight: 700;
+  box-shadow: 0 4px 12px rgba(37, 99, 196, .28);
 }
 
 .cal-day.has-event::after {
@@ -1245,15 +1269,19 @@ textarea {
   background: var(--gold);
   border-radius: 50%;
   position: absolute;
-  bottom: 1px;
+  bottom: 3px;
+}
+
+.cal-day.active.has-event::after {
+  background: white;
 }
 
 .schedule-list {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin: 20px 0 18px;
-  max-height: 340px;
+  margin: 0;
+  max-height: 270px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -1261,13 +1289,16 @@ textarea {
 .schedule-list::-webkit-scrollbar {
   width: 4px;
 }
+
 .schedule-list::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .schedule-list::-webkit-scrollbar-thumb {
   background: var(--blue-100);
   border-radius: 99px;
 }
+
 .schedule-list::-webkit-scrollbar-thumb:hover {
   background: var(--blue-400);
 }
@@ -1329,38 +1360,44 @@ textarea {
   box-sizing: content-box;
 }
 
-.empty-slot {
-  height: 16px;
+.rp-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 22px 12px;
+  color: var(--text-soft);
+  text-align: center;
+  width: 100%;
+}
+
+.rp-empty-state svg {
+  width: 22px;
+  height: 22px;
+  opacity: .5;
+}
+
+.rp-empty-state span {
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .section-title {
   font-size: 15px;
   font-weight: 700;
   color: var(--text-dark);
-  margin: 18px 0 14px;
+  margin: 0 0 14px;
+}
+
+.right-content .topbar-divider {
+  margin: 18px 0;
 }
 
 .activity-list {
   display: flex;
   flex-direction: column;
   gap: 11px;
-  max-height: 310px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.activity-list::-webkit-scrollbar {
-  width: 4px;
-}
-.activity-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-.activity-list::-webkit-scrollbar-thumb {
-  background: var(--blue-100);
-  border-radius: 99px;
-}
-.activity-list::-webkit-scrollbar-thumb:hover {
-  background: var(--blue-400);
 }
 
 .activity-item {
@@ -1371,19 +1408,25 @@ textarea {
   border-bottom: 1px solid var(--border);
 }
 
+.activity-item:last-child {
+  border-bottom: none;
+}
+
 .activity-avatar {
-  width: 20px;
-  height: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--blue-50);
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-soft);
+  color: var(--blue-500);
 }
 
 .activity-avatar svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   display: block;
 }
 
@@ -1687,13 +1730,16 @@ textarea {
 .task-list::-webkit-scrollbar {
   width: 4px;
 }
+
 .task-list::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .task-list::-webkit-scrollbar-thumb {
   background: var(--blue-100);
   border-radius: 99px;
 }
+
 .task-list::-webkit-scrollbar-thumb:hover {
   background: var(--blue-400);
 }

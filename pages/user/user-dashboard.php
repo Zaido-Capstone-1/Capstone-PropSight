@@ -871,7 +871,8 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                             <line x1="8" y1="2" x2="8" y2="6" />
                                             <line x1="3" y1="10" x2="21" y2="10" />
                                         </svg>
-                                        <span data-field="checkin"><?php echo formatDate($bk['checkin_date']); ?></span> –
+                                        <span data-field="checkin"><?php echo formatDate($bk['checkin_date']); ?></span>
+                                        &nbsp;–&nbsp;
                                         <span data-field="checkout"><?php echo formatDate($bk['checkout_date']); ?></span>
                                         <span class="history-nights">
                                             <svg viewBox="0 0 24 24">

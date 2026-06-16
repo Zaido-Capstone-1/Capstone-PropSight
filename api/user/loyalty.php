@@ -101,11 +101,8 @@ if ($method === 'GET') {
     $histRes = $histStmt->get_result();
     $history = [];
     while ($row = mysqli_fetch_assoc($histRes)) {
-
         fmt_dt_row($row);
-
         $history[] = $row;
-
     }
     $histStmt->close();
 
@@ -117,6 +114,7 @@ if ($method === 'GET') {
     while ($rw = $rwStmt->fetch_assoc())
         $rewards[] = $rw;
 
+    // Vouchers — get_result() called once, not inside while condition
     $voucherStmt = $conn->prepare("
         SELECT reward_name, voucher_code, points_used, status, created_at
         FROM loyalty_redemptions
@@ -126,8 +124,9 @@ if ($method === 'GET') {
     ");
     $voucherStmt->bind_param('i', $userId);
     $voucherStmt->execute();
+    $voucherRes = $voucherStmt->get_result();
     $vouchers = [];
-    while ($row = $voucherStmt->get_result()->fetch_assoc())
+    while ($row = $voucherRes->fetch_assoc())
         $vouchers[] = $row;
     $voucherStmt->close();
 

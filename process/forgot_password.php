@@ -43,7 +43,6 @@ $userRow = mysqli_fetch_assoc(mysqli_query(
   "SELECT user_id, first_name, verification_status, is_active, role FROM users WHERE email='$emailEsc' AND is_active = 1 LIMIT 1"
 ));
 
-// Log the attempt for security monitoring (whether user exists or not)
 $ipAddress = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
 // Additional IP-based rate limiting to prevent abuse
@@ -56,23 +55,11 @@ try {
      WHERE ip_address='$ipEsc' AND attempted_at > DATE_SUB(NOW(), INTERVAL 1 HOUR)"
   ));
 } catch (mysqli_sql_exception $e) {
-  error_log('Password reset rate-limit table missing or unavailable: ' . $e->getMessage());
 }
 
 if ($ipAttempts && $ipAttempts['attempts'] > 10) { // Max 10 attempts per hour per IP
-  error_log("Password reset blocked: Too many attempts from IP $ipAddress");
   json_out(true, "If that email is registered and verified, you'll receive a reset link shortly. Check your inbox (and spam folder).");
 }
-
-// Log the attempt
-$logMessage = sprintf(
-  "[%s] Password reset attempt for email: %s from IP: %s - User %s",
-  date('Y-m-d H:i:s'),
-  $email,
-  $ipAddress,
-  $userRow ? 'found' : 'not found'
-);
-error_log($logMessage);
 
 // Record the attempt for rate limiting
 try {
@@ -82,7 +69,6 @@ try {
      VALUES ('$emailEsc', '$ipEsc', NOW(), " . ($userRow ? 1 : 0) . ")"
   );
 } catch (mysqli_sql_exception $e) {
-  error_log('Password reset attempt log failed: ' . $e->getMessage());
 }
 
 // Rate-limit: if a reset was sent in the last RESET_RATE_LIMIT_MINUTES, silently succeed
@@ -94,7 +80,6 @@ if ($userRow) {
   $isAdmin = isset($userRow['role']) && strtolower($userRow['role']) === 'admin';
 
   if (!$isAdmin && $verificationStatus !== 'Verified') {
-    error_log("Password reset blocked: Email not verified for user ID $userId (status={$verificationStatus})");
     json_out(false, "Your email address needs to be verified before you can reset your password. Check your inbox for the verification link, or contact support.");
   }
 
@@ -206,7 +191,6 @@ HTML;
       $emailSent = $emailService->sendEmail($email, 'Reset Your Password — ' . MAIL_FROM_NAME, $htmlBody, $textBody);
 
       if ($emailSent) {
-        error_log("Password reset email sent successfully to user ID $userId ($email)");
         json_out(true, "Reset link sent! Check your email (and spam folder) for instructions.");
       } else {
         throw new Exception('Email service failed to send message');
@@ -214,7 +198,6 @@ HTML;
 
     } catch (Exception $e) {
       $errorMsg = $e->getMessage();
-      error_log("Password reset mail failed for user ID $userId ($email): " . $errorMsg);
 
       // Provide specific error messages based on the issue
       if (strpos($errorMsg, 'configuration') !== false) {
@@ -229,11 +212,9 @@ HTML;
     }
   } else {
     // Rate limit reached for this user
-    error_log("Password reset rate-limited: User ID $userId tried to reset password too soon");
     json_out(true, "A reset link was recently sent. Please check your email or wait a few minutes before requesting another.");
   }
 } else {
   // Account not found in database
-  error_log("Password reset failed: No active account found for email: $email");
   json_out(false, "No account found with that email address. Please check and try again, or sign up if you don't have an account.");
 }

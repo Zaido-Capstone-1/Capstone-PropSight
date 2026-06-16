@@ -333,9 +333,9 @@ if ($role === 'admin') {
             FROM maintenance_requests m
             LEFT JOIN units u ON u.unit_id = m.unit_id
             LEFT JOIN properties p ON p.property_id = u.property_id
-            WHERE m.request_status NOT IN ('completed', 'closed')
+            WHERE m.request_status IN ('open', 'in_progress')
             ORDER BY m.created_at DESC
-            LIMIT 5"
+            LIMIT 50"
         );
         $tasks = [];
         while ($taskRes && ($r = mysqli_fetch_assoc($taskRes)))
@@ -343,13 +343,21 @@ if ($role === 'admin') {
         fmt_dt_rows($tasks);
         $payload['task_summary'] = $tasks;
 
-        // Right panel recent transaction activity
+        // Right panel recent transaction activity (includes completed refunds)
         $rpActRes = mysqli_query(
             $conn,
-            "SELECT description, amount, type, transaction_date
-             FROM transactions
-             ORDER BY transaction_date DESC, id DESC
-             LIMIT 5"
+            "(SELECT description, amount, type, transaction_date
+                FROM transactions)
+             UNION ALL
+             (SELECT
+                CONCAT('Refund', IF(booking_id IS NOT NULL, CONCAT(' for Booking #', booking_id), '')) AS description,
+                refund_amount AS amount,
+                'Refund' AS type,
+                COALESCE(processed_date, refund_date) AS transaction_date
+              FROM refunds
+              WHERE refund_status = 'completed' AND COALESCE(processed_date, refund_date) IS NOT NULL)
+             ORDER BY transaction_date DESC
+             LIMIT 6"
         );
         $rightPanelActivity = [];
         while ($rpActRes && ($r = mysqli_fetch_assoc($rpActRes)))

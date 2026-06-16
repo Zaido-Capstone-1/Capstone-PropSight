@@ -39,21 +39,6 @@ require_once '../../lib/user-queries/profile_queries.php';
 
 <link rel="stylesheet" href="../../assets/css/user-css/profile.css">
 
-<div class="stat-strip">
-    <div class="stat-box">
-        <div class="stat-num"><?php echo $totalStays; ?></div>
-        <div class="stat-lbl">Total Stays</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-num"><?php echo number_format($loyaltyBal); ?></div>
-        <div class="stat-lbl">Loyalty Points</div>
-    </div>
-    <div class="stat-box">
-        <div class="stat-num"><?php echo $tierName; ?></div>
-        <div class="stat-lbl">Membership Tier</div>
-    </div>
-</div>
-
 <div class="page-two-col">
     <div class="col-main">
 

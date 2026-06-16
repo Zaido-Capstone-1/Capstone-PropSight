@@ -3,12 +3,39 @@ const loginModal = document.getElementById('loginModal');
 function openModal(tab = 'login') {
     loginModal.classList.add('open');
     document.body.style.overflow = 'hidden';
+    clearLoginAlert();
     switchTab(tab);
 }
 
 function closeModal() {
     loginModal.classList.remove('open');
     document.body.style.overflow = '';
+    clearLoginAlert();
+}
+
+function showLoginAlert(message, type = 'error') {
+    const el = document.getElementById('modalAlert');
+    if (!el) return;
+    const isError = type === 'error';
+    el.style.cssText = [
+        'display:block',
+        'margin-bottom:14px',
+        'padding:11px 14px',
+        'border-radius:8px',
+        'font-size:13px',
+        'line-height:1.5',
+        'font-weight:500',
+        isError
+            ? 'background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;'
+            : 'background:#f0fdf4;color:#166534;border:1px solid #86efac;'
+    ].join(';');
+    el.textContent = message;
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function clearLoginAlert() {
+    const el = document.getElementById('modalAlert');
+    if (el) { el.style.display = 'none'; el.textContent = ''; }
 }
 
 function switchTab(tab) {
@@ -509,7 +536,7 @@ async function verifyOtp(attempts = 0, expiresInSeconds = 300) {
     if (attempts >= maxAttempts) {
         otpDeadlineMs = 0;
         hideOtpModal();
-        showToast('Too many incorrect attempts. Please log in again.', 'error');
+        showLoginAlert('Too many incorrect attempts. Please log in again.', 'error');
         return;
     }
 
@@ -520,7 +547,7 @@ async function verifyOtp(attempts = 0, expiresInSeconds = 300) {
     if (secondsLeft <= 0) {
         otpDeadlineMs = 0;
         hideOtpModal();
-        showToast('OTP expired. Please log in again to request a new code.', 'error');
+        showLoginAlert('OTP expired. Please log in again to request a new code.', 'error');
         return;
     }
 
@@ -556,10 +583,10 @@ async function verifyOtp(attempts = 0, expiresInSeconds = 300) {
             }
         } catch {
             hideAuthLoading();
-            showToast('Server error. Please try again.', 'error');
+            showLoginAlert('Server error. Please try again.', 'error');
         }
     }, null, () => {
-        showToast('OTP expired. Please log in again to request a new code.', 'error');
+        showLoginAlert('OTP expired. Please log in again to request a new code.', 'error');
     });
 }
 
@@ -624,22 +651,19 @@ loginForm.addEventListener('submit', async function (e) {
         hideAuthLoading();
 
         if (data.status === 'otp_sent') {
-            showToast(data.message, 'success');
+            clearLoginAlert();
             otpDeadlineMs = 0;
             verifyOtp(0, Number(data.otp_expires_in_seconds) || 300);
         } else if (data.status === 'success') {
-            showToast(data.message, 'success');
-            setTimeout(() => {
-                window.location.href = data.role === 'admin' ?
-                    'pages/admin/index.php' :
-                    'pages/user/user-dashboard.php';
-            }, 1200);
+            window.location.href = data.role === 'admin' ?
+                'pages/admin/index.php' :
+                'pages/user/user-dashboard.php';
         } else {
-            showToast(data.message, 'error');
+            showLoginAlert(data.message, 'error');
         }
     } catch {
         hideAuthLoading();
-        showToast('Server error! Please try again later.', 'error');
+        showLoginAlert('Server error! Please try again later.', 'error');
     }
 });
 
@@ -971,6 +995,46 @@ function closeForgotModal() {
     }
 }
 
+let _forgotSentEmail = null;
+let _forgotSentMessage = null;
+
+function _showForgotSuccess(message) {
+    document.getElementById('forgotFormWrap').innerHTML = `
+        <div style="text-align:center;padding:12px 0 8px;">
+            <div style="width:64px;height:64px;border-radius:50%;background:rgba(34,197,94,0.1);
+                        display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
+                <svg viewBox="0 0 24 24" style="width:30px;height:30px;stroke:#16a34a;fill:none;stroke-width:2.5;">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            </div>
+            <div style="font-size:1.1rem;font-weight:700;color:#111827;margin-bottom:10px;">Check Your Email</div>
+            <p style="font-size:13px;color:#6b7280;line-height:1.7;margin-bottom:20px;">
+                ${message}
+            </p>
+            <button id="backToLoginBtn"
+                    style="background:#1e3a5f;color:#fff;border:none;padding:11px 28px;
+                           border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
+                Back to Login
+            </button>
+        </div>`;
+
+    const backBtn = document.getElementById('backToLoginBtn');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            closeForgotModal();
+            setTimeout(() => openModal('login'), 100);
+        });
+    }
+
+    setTimeout(() => {
+        const forgotModal = document.getElementById('forgotModal');
+        if (forgotModal && forgotModal.classList.contains('open')) {
+            closeForgotModal();
+            setTimeout(() => openModal('login'), 100);
+        }
+    }, 3000);
+}
+
 async function submitForgotPassword() {
     const email = document.getElementById('forgotEmail');
     const alert = document.getElementById('forgotAlert');
@@ -982,6 +1046,12 @@ async function submitForgotPassword() {
         alert.style.cssText = 'display:block;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:12px 14px;border-radius:8px;font-size:13px;';
         alert.textContent = 'Please enter a valid email address.';
         email.focus();
+        return;
+    }
+
+    // If already sent for this email, just show the cached success screen
+    if (_forgotSentEmail && _forgotSentEmail === email.value.trim().toLowerCase()) {
+        _showForgotSuccess(_forgotSentMessage);
         return;
     }
 
@@ -998,44 +1068,9 @@ async function submitForgotPassword() {
         const data = await res.json();
 
         if (data.success) {
-            // Show success and hide the form inputs
-            document.getElementById('forgotFormWrap').innerHTML = `
-                <div style="text-align:center;padding:12px 0 8px;">
-                    <div style="width:64px;height:64px;border-radius:50%;background:rgba(34,197,94,0.1);
-                                display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
-                        <svg viewBox="0 0 24 24" style="width:30px;height:30px;stroke:#16a34a;fill:none;stroke-width:2.5;">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                    </div>
-                    <div style="font-size:1.1rem;font-weight:700;color:#111827;margin-bottom:10px;">Check Your Email</div>
-                    <p style="font-size:13px;color:#6b7280;line-height:1.7;margin-bottom:20px;">
-                        ${data.message}
-                    </p>
-                    <button id="backToLoginBtn"
-                            style="background:#1e3a5f;color:#fff;border:none;padding:11px 28px;
-                                   border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
-                        Back to Login
-                    </button>
-                </div>`;
-
-            // Attach click handler to the back to login button
-            const backBtn = document.getElementById('backToLoginBtn');
-            if (backBtn) {
-                backBtn.addEventListener('click', () => {
-                    closeForgotModal();
-                    // Small delay to ensure modal is closed before opening login
-                    setTimeout(() => openModal('login'), 100);
-                });
-            }
-
-            // Auto-close and redirect after 3 seconds if user doesn't click the button
-            setTimeout(() => {
-                const forgotModal = document.getElementById('forgotModal');
-                if (forgotModal && forgotModal.classList.contains('open')) {
-                    closeForgotModal();
-                    setTimeout(() => openModal('login'), 100);
-                }
-            }, 3000);
+            _forgotSentEmail = email.value.trim().toLowerCase();
+            _forgotSentMessage = data.message;
+            _showForgotSuccess(data.message);
         } else {
             alert.style.cssText = 'display:block;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:12px 14px;border-radius:8px;font-size:13px;';
             alert.textContent = data.message || 'Something went wrong. Please try again.';

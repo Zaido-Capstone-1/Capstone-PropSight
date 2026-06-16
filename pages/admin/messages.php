@@ -115,6 +115,6 @@ include '../../lib/admin-queries/messages_queries.php';
     window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
 </script>
 <script>window.PS_RT_PAGE = 'messages';</script>
-<script src="../../assets/js/admin/messages.js"></script>
+<script src="../../assets/js/admin/messages.js?v=<?= time() ?>"></script>
 
 <?php include '../../includes/layout_close.php'; ?>

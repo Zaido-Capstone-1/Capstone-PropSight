@@ -170,6 +170,9 @@ $status_map = [
                         data-review-rating="<?= (int) ($b['review_rating'] ?? 0) ?>">
                         <div class="bc-top">
                             <div class="bc-img">
+                                <!-- Mobile: status badge overlaid on upper-right of image -->
+                                <span class="bc-img-badge badge <?= $sInfo['class'] ?>"
+                                    data-status="<?= $rawSt ?>"><?= $sInfo['label'] ?></span>
                                 <?php if ($imgSrc): ?>
                                     <img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($b['room_name']) ?>"
                                         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
@@ -179,18 +182,39 @@ $status_map = [
                                 </div>
                             </div>
                             <div class="bc-body">
+                                <!-- Row 1: bc-head (desktop) -->
                                 <div class="bc-head">
                                     <div>
                                         <div class="bc-room"><?= htmlspecialchars($b['room_name']) ?></div>
-                                        <div class="bc-floor"><?= $floorLabel ?></div>
+                                        <div class="bc-floor">
+                                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="11" height="11"
+                                                fill="currentColor" stroke="none">
+                                                <path
+                                                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" />
+                                            </svg>
+                                            <?= $floorLabel ?>
+                                        </div>
                                     </div>
-                                    <div style="display:flex;align-items:center;gap:8px;">
+                                    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
                                         <span class="badge <?= $sInfo['class'] ?> booking-status-badge"
                                             data-status="<?= $rawSt ?>"
                                             data-prev-status="<?= $rawSt ?>"><?= $sInfo['label'] ?></span>
                                         <span class="bc-id"><?= $bookingRef ?></span>
                                     </div>
                                 </div>
+                                <!-- Mobile row 1: location + booking ID -->
+                                <div class="bc-location-row">
+                                    <div class="bc-floor">
+                                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="10" height="10"
+                                            fill="currentColor" stroke="none">
+                                            <path
+                                                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" />
+                                        </svg>
+                                        <?= $floorLabel ?>
+                                    </div>
+                                    <span class="bc-id"><?= $bookingRef ?></span>
+                                </div>
+                                <!-- Row 2: dates -->
                                 <div class="bc-dates">
                                     <div class="bc-date-item">
                                         <svg viewBox="0 0 24 24">
@@ -199,7 +223,8 @@ $status_map = [
                                             <line x1="8" y1="2" x2="8" y2="6" />
                                             <line x1="3" y1="10" x2="21" y2="10" />
                                         </svg>
-                                        Check-in: <strong data-field="checkin"><?= $checkinFmt ?></strong>
+                                        <span class="bc-dl">Check-in:</span> <strong
+                                            data-field="checkin"><?= $checkinFmt ?></strong>
                                     </div>
                                     <div class="bc-date-sep"></div>
                                     <div class="bc-date-item">
@@ -209,7 +234,8 @@ $status_map = [
                                             <line x1="8" y1="2" x2="8" y2="6" />
                                             <line x1="3" y1="10" x2="21" y2="10" />
                                         </svg>
-                                        Check-out: <strong data-field="checkout"><?= $checkoutFmt ?></strong>
+                                        <span class="bc-dl">Check-out:</span> <strong
+                                            data-field="checkout"><?= $checkoutFmt ?></strong>
                                     </div>
                                     <span class="bc-nights" data-field="nights"><?= (int) $b['nights'] ?> nights</span>
                                 </div>
@@ -255,12 +281,34 @@ $status_map = [
                                             <span class="bc-btn-ghost" style="cursor:default;opacity:0.5;font-size:12px;"
                                                 title="Cannot cancel an active booking">Active stay</span>
                                         <?php else: ?>
-                                            <span class="bc-btn-ghost" style="cursor:default;opacity:0.5;font-size:12px;"
-                                                title="Cancellation window has passed">No cancellation</span>
+                                            <span class="bc-no-cancel" title="Cancellation window has passed">
+                                                <svg viewBox="0 0 24 24">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                                                </svg>
+                                                No cancellation
+                                            </span>
                                         <?php endif; ?>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <button class="bc-btn-ghost" style="cursor:default;opacity:0.45;" disabled>Cancelled</button>
+                                    <?php if ($rawSt === 'cancelled'): ?>
+                                        <span class="bc-status-pill bc-status-cancelled">
+                                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor"
+                                                stroke-width="2.5">
+                                                <circle cx="12" cy="12" r="10" />
+                                                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                                            </svg>
+                                            Cancelled
+                                        </span>
+                                    <?php elseif ($rawSt === 'completed'): ?>
+                                        <span class="bc-status-pill bc-status-completed">
+                                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor"
+                                                stroke-width="2.5">
+                                                <polyline points="20 6 9 17 4 12" />
+                                            </svg>
+                                            Completed
+                                        </span>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
                         </div>

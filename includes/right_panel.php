@@ -36,6 +36,7 @@ for ($i = -3; $i <= 3; $i++) {
   $calendarDays[] = [
     'day' => $d->format('j'),
     'date' => $d->format('Y-m-d'),
+    'weekday' => mb_substr($d->format('D'), 0, 1),
     'is_today' => $i === 0,
   ];
 }
@@ -47,22 +48,38 @@ $scheduleRes = mysqli_query(
    FROM maintenance_requests m
    LEFT JOIN units u ON u.unit_id = m.unit_id
    LEFT JOIN properties p ON p.property_id = u.property_id
-   WHERE m.request_status IN ('open','pending','in_progress')
+   WHERE m.request_status IN ('open','in_progress')
    ORDER BY m.created_at DESC
-   LIMIT 4"
+   LIMIT 50"
 );
 while ($scheduleRes && ($row = mysqli_fetch_assoc($scheduleRes))) {
   fmt_dt_row($row);
   $schedule[] = $row;
 }
 
+// Initial render shows today's tasks only (JS defaults selectedDate to
+// today and re-filters $schedule client-side when another date is picked).
+$todayYmd = $today->format('Y-m-d');
+$todaySchedule = array_values(array_filter(
+  $schedule,
+  fn($s) => substr((string) ($s['request_date'] ?? ''), 0, 10) === $todayYmd
+));
+
 $activities = [];
 $activityRes = mysqli_query(
   $conn,
-  "SELECT description, amount, type, transaction_date
-   FROM transactions
-   ORDER BY transaction_date DESC, id DESC
-   LIMIT 5"
+  "(SELECT description, amount, type, transaction_date
+      FROM transactions)
+   UNION ALL
+   (SELECT
+      CONCAT('Refund', IF(booking_id IS NOT NULL, CONCAT(' for Booking #', booking_id), '')) AS description,
+      refund_amount AS amount,
+      'Refund' AS type,
+      COALESCE(processed_date, refund_date) AS transaction_date
+    FROM refunds
+    WHERE refund_status = 'completed' AND COALESCE(processed_date, refund_date) IS NOT NULL)
+   ORDER BY transaction_date DESC
+   LIMIT 6"
 );
 while ($activityRes && ($row = mysqli_fetch_assoc($activityRes))) {
   fmt_dt_row($row);
@@ -114,9 +131,13 @@ $_notifTotalRow = mysqli_fetch_assoc(mysqli_query(
 $notifTotalCount = (int) ($_notifTotalRow['c'] ?? 0);
 $notifHasMore = $notifTotalCount > count($notifications);
 
-function rp_activity_icon_svg(string $desc, bool $isExpense): string
+function rp_activity_icon_svg(string $desc, bool $isExpense, string $type = ''): string
 {
   $descLower = strtolower($desc);
+  if (strtolower($type) === 'refund' || strpos($descLower, 'refund') !== false) {
+    // Counter-clockwise return arrow
+    return '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5"/></svg>';
+  }
   if (strpos($descLower, 'booking') !== false || strpos($descLower, 'reservation') !== false) {
     return '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
   }
@@ -167,17 +188,21 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
   }
+
   #adminNotifDropdown::-webkit-scrollbar {
     display: block;
     width: 6px;
   }
+
   #adminNotifDropdown::-webkit-scrollbar-track {
     background: transparent;
   }
+
   #adminNotifDropdown::-webkit-scrollbar-thumb {
     background-color: #cbd5e1;
     border-radius: 99px;
   }
+
   #adminNotifDropdown::-webkit-scrollbar-thumb:hover {
     background-color: #94a3b8;
   }
@@ -185,6 +210,7 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
   #adminNotifViewMoreBtn:hover {
     background: #eff6ff;
   }
+
   #adminNotifViewMoreBtn:disabled {
     cursor: default;
     color: #94a3b8;
@@ -239,7 +265,8 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
           <?php endforeach; ?>
         <?php endif; ?>
       </div>
-      <div id="adminNotifViewMore" style="<?= $notifHasMore ? '' : 'display:none;' ?>padding:0;text-align:center;border-top:1px solid #f1f5f9;">
+      <div id="adminNotifViewMore"
+        style="<?= $notifHasMore ? '' : 'display:none;' ?>padding:0;text-align:center;border-top:1px solid #f1f5f9;">
         <button type="button" id="adminNotifViewMoreBtn"
           style="display:block;width:100%;border:none;background:none;color:#2563eb;font-size:13px;font-weight:600;cursor:pointer;padding:10px 12px;border-radius:0 0 12px 12px;transition:background .12s;">View
           more</button>
@@ -269,23 +296,34 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
       </div>
     </div>
     <div class="cal-days" id="rt-cal-days">
-      <?php foreach ($calendarDays as $day): ?>
-        <div class="cal-day<?= $day['is_today'] ? ' active' : '' ?>"
-          data-cal-date="<?= htmlspecialchars($day['date']) ?>">
-          <?= htmlspecialchars($day['day']) ?>
+      <?php foreach ($calendarDays as $day):
+        $dayCls = 'cal-day' . ($day['is_today'] ? ' active today' : '');
+        ?>
+        <div class="cal-day-col">
+          <div class="cal-day-label"><?= htmlspecialchars($day['weekday']) ?></div>
+          <div class="<?= $dayCls ?>" data-cal-date="<?= htmlspecialchars($day['date']) ?>">
+            <?= htmlspecialchars($day['day']) ?>
+          </div>
         </div>
       <?php endforeach; ?>
     </div>
     <div class="topbar-divider"></div>
 
+    <div class="section-title">Tasks</div>
     <div class="schedule-list" id="rt-right-schedule">
-      <?php if (empty($schedule)): ?>
-        <div class="schedule-slot">
-          <div class="time-col" style="opacity:.35;">&nbsp;</div>
-          <div style="flex:1;" class="empty-slot">No open tasks</div>
+      <?php if (empty($todaySchedule)): ?>
+        <div class="rp-empty-state">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+            <path d="M9 16l2 2 4-4" />
+          </svg>
+          <span>No open tasks for this day</span>
         </div>
       <?php else: ?>
-        <?php foreach ($schedule as $slot):
+        <?php foreach ($todaySchedule as $slot):
           // Use created_at for time display — convert UTC to local PHT (Asia/Manila)
           $timeLabel = '--';
           if (!empty($slot['created_at'])) {
@@ -336,25 +374,33 @@ function rp_activity_icon_svg(string $desc, bool $isExpense): string
 
     <div class="topbar-divider"></div>
 
-    <div class="section-title">Recently Activity</div>
-    <div class="activity-list" id="rt-right-activity">
+    <div class="section-title">Recent Activity</div>
+    <div class="activity-list" id="rt-right-activity" <?= empty($activities) ? '' : ' data-rendered="1"' ?>>
       <?php if (empty($activities)): ?>
-        <div style="padding:14px 6px;color:#94a3b8;font-size:12px;">No recent transactions.</div>
+        <div class="rp-empty-state">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16l3-2 3 2 3-2 3 2V8z" />
+            <line x1="8" y1="8" x2="14" y2="8" />
+            <line x1="8" y1="12" x2="14" y2="12" />
+          </svg>
+          <span>No transactions yet</span>
+        </div>
       <?php else: ?>
         <?php foreach ($activities as $a):
           $amount = (float) ($a['amount'] ?? 0);
-          $isExpense = strtolower((string) ($a['type'] ?? '')) === 'expense';
+          $typeLower = strtolower((string) ($a['type'] ?? ''));
+          $isExpense = in_array($typeLower, ['expense', 'refund'], true);
           $sign = $isExpense ? '-' : '+';
           $name = trim((string) ($a['description'] ?? 'Transaction'));
           ?>
           <div class="activity-item">
             <div class="activity-avatar">
-              <?= rp_activity_icon_svg($name, $isExpense) ?>
+              <?= rp_activity_icon_svg($name, $isExpense, (string) ($a['type'] ?? '')) ?>
             </div>
             <div class="activity-info">
               <div class="activity-name"><?= htmlspecialchars($name) ?></div>
               <div class="activity-date">
-                <?= htmlspecialchars($a['transaction_date'] ? date('d F Y', strtotime(str_replace('+00:00', '', $a['transaction_date']))) : '—') ?>
+                <?= htmlspecialchars($a['transaction_date'] ? date('M j, Y', strtotime(str_replace('+00:00', '', $a['transaction_date']))) : '—') ?>
               </div>
             </div>
             <div class="activity-amount" style="<?= $isExpense ? 'color:var(--danger);' : '' ?>">

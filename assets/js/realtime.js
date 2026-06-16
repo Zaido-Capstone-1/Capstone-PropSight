@@ -749,6 +749,16 @@
                      style="padding:32px 16px;text-align:center;color:#94a3b8;font-size:0.85rem;">
                     No new notifications
                 </div>
+            </div>
+            <div id="notifViewMore" style="display:none;padding:0;border-top:1px solid #f1f5f9;">
+                <button id="notifViewMoreBtn"
+                    style="display:block;width:100%;border:none;background:none;color:#2563eb;
+                           font-size:0.8rem;font-weight:600;cursor:pointer;padding:10px 16px;
+                           border-radius:0 0 12px 12px;transition:background 0.15s;"
+                    onmouseenter="this.style.background='#eff6ff'"
+                    onmouseleave="this.style.background='none'">
+                    View more
+                </button>
             </div>`;
 
         wrap.appendChild(drop);
@@ -795,6 +805,63 @@
         `;
         document.head.appendChild(style);
 
+        // Pagination state — reset each time the dropdown is opened
+        let _notifOffset = 0;
+        let _notifHasMore = false;
+        let _notifLoading = false;
+        const _notifPageSize = 10;
+
+        function _loadNotifs(offset, append) {
+            if (_notifLoading) return;
+            _notifLoading = true;
+            const viewMoreBtn = document.getElementById('notifViewMoreBtn');
+            if (viewMoreBtn) { viewMoreBtn.textContent = 'Loading…'; viewMoreBtn.disabled = true; }
+
+            fetch(`../../api/user/notifications.php?limit=${_notifPageSize}&offset=${offset}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) return;
+                    const list = document.getElementById('rt-notif-list');
+                    const empty = document.getElementById('notifEmptyState');
+                    const viewMoreWrap = document.getElementById('notifViewMore');
+                    const items = data.notifications || [];
+
+                    if (!append) {
+                        // Fresh load — clear existing items
+                        list.querySelectorAll('.rt-notif-item').forEach(n => n.remove());
+                    }
+
+                    if (!items.length && !append) {
+                        if (empty) empty.style.display = '';
+                        if (viewMoreWrap) viewMoreWrap.style.display = 'none';
+                        return;
+                    }
+                    if (empty) empty.style.display = 'none';
+
+                    items.forEach(n => {
+                        const div = _buildNotifItem(n);
+                        list.appendChild(div);
+                    });
+
+                    _notifOffset = offset + items.length;
+                    _notifHasMore = !!data.has_more;
+
+                    if (viewMoreWrap) viewMoreWrap.style.display = _notifHasMore ? '' : 'none';
+
+                    // Update badge
+                    document.querySelectorAll('[data-rt="notif-count"]').forEach(el => {
+                        el.textContent = data.unread_count;
+                        el.style.display = data.unread_count > 0 ? 'flex' : 'none';
+                    });
+                })
+                .catch(() => {})
+                .finally(() => {
+                    _notifLoading = false;
+                    const btn = document.getElementById('notifViewMoreBtn');
+                    if (btn) { btn.textContent = 'View more'; btn.disabled = false; }
+                });
+        }
+
         // Toggle open/close
         bellBtn.addEventListener('click', e => {
             e.stopPropagation();
@@ -802,42 +869,22 @@
             drop.style.display = isOpen ? 'none' : 'block';
             if (!isOpen) {
                 placeNotifDropdown();
-
-                // Load fresh notifications when opening
-                fetch('../../api/user/notifications.php?limit=20')
-                    .then(r => r.json())
-                    .then(data => {
-                        if (!data.success) return;
-                        const list = document.getElementById('rt-notif-list');
-                        const empty = document.getElementById('notifEmptyState');
-                        const items = data.notifications || [];
-
-                        // Clear existing items (keep empty state node)
-                        list.querySelectorAll('.rt-notif-item').forEach(n => n.remove());
-
-                        if (!items.length) {
-                            if (empty) empty.style.display = '';
-                            return;
-                        }
-                        if (empty) empty.style.display = 'none';
-
-                        items.forEach(n => {
-                            const div = _buildNotifItem(n);
-                            list.appendChild(div);
-                        });
-
-                        // Set badge to real unread count from DB (don't zero it)
-                        document.querySelectorAll('[data-rt="notif-count"]').forEach(el => {
-                            el.textContent = data.unread_count;
-                            el.style.display = data.unread_count > 0 ? 'flex' : 'none';
-                        });
-                    })
-                    .catch(() => {});
+                // Reset and load first page
+                _notifOffset = 0;
+                _notifHasMore = false;
+                _loadNotifs(0, false);
             }
         });
 
         window.addEventListener('resize', () => {
             if (drop.style.display === 'block') placeNotifDropdown();
+        });
+
+        // View more button
+        const viewMoreBtn = drop.querySelector('#notifViewMoreBtn');
+        viewMoreBtn?.addEventListener('click', e => {
+            e.stopPropagation();
+            if (_notifHasMore) _loadNotifs(_notifOffset, true);
         });
 
         // Mark all read button

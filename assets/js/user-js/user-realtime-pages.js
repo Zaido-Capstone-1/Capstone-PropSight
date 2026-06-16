@@ -150,6 +150,17 @@
                     badge.setAttribute('data-status', b.status);
                 }
 
+                // Also update the image overlay badge (bc-img-badge)
+                const imgBadge = el.querySelector('.bc-img-badge');
+                if (imgBadge) {
+                    imgBadge.className = imgBadge.className
+                        .replace(/\bbadge-\w+/g, '')
+                        .trim();
+                    imgBadge.classList.add(lbl.cls);
+                    imgBadge.textContent = lbl.text;
+                    imgBadge.dataset.status = b.status;
+                }
+
                 const cancelBtn = el.querySelector('[data-action="cancel"], .bc-btn-cancel');
                 if (cancelBtn && ['cancelled', 'completed', 'active'].includes(b.status)) {
                     cancelBtn.style.display = 'none';

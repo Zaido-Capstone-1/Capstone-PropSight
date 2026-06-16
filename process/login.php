@@ -199,7 +199,7 @@ $user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if ($user === null) {
-    json_error('Email not found!');
+    json_error('Email don\'t exist!');
 }
 
 //Checking of locked account and expiration of lock

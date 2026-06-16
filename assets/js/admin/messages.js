@@ -8,6 +8,26 @@ function escHtml(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function scrollToBottom(body) {
+    if (!body) return;
+    body.scrollTop = body.scrollHeight;
+    // Re-scroll once all images inside have finished loading
+    const imgs = body.querySelectorAll('img');
+    if (!imgs.length) return;
+    let pending = 0;
+    imgs.forEach(img => {
+        if (!img.complete) {
+            pending++;
+            const done = () => {
+                pending--;
+                if (pending === 0) body.scrollTop = body.scrollHeight;
+            };
+            img.addEventListener('load', done, { once: true });
+            img.addEventListener('error', done, { once: true });
+        }
+    });
+}
+
 function closeMsgPane() {
     const layout = document.querySelector('.msg-layout');
     if (layout) layout.classList.remove('pane-open');
@@ -174,7 +194,7 @@ function renderMsgs(msgs, clearFirst) {
     // Show seen indicator only on last sent bubble
     updateSeenIndicator();
     body.dataset.lastDate = lastDate;
-    body.scrollTop = body.scrollHeight;
+    scrollToBottom(body);
 }
 
 // ── Bubble context menu (reply / unsent) ────────────────────
@@ -375,7 +395,7 @@ function sendMsg() {
     bub.innerHTML = `${innerHtml}<div class="btime">${timeStr}</div>`;
     if (msgBody) {
         msgBody.appendChild(bub);
-        msgBody.scrollTop = msgBody.scrollHeight;
+        scrollToBottom(msgBody);
     }
 
     const fd = new FormData();
@@ -417,6 +437,7 @@ function sendMsg() {
                 updateThreadPreview(activeUserId, bodyTxt || '📎 Attachment');
                 clearAdminAttach();
                 updateSeenIndicator();
+                scrollToBottom(document.getElementById('msgBody'));
             } else {
                 bub.remove();
                 showToast(d.message || 'Failed to send.', 'error');

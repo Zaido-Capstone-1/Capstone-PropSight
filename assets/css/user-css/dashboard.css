@@ -1724,16 +1724,33 @@ body {
     }
 
     .history-item {
-        grid-template-columns: 64px 1fr;
+        grid-template-columns: 130px 1fr;
+        grid-template-rows: auto auto;
         grid-template-areas:
             "img info"
             "img right";
-        align-items: start;
+        align-items: stretch !important;
     }
 
     .history-img {
         grid-area: img;
-        width: 64px;
+        grid-row: 1 / 3;
+        width: 130px !important;
+        position: relative !important;
+        align-self: stretch !important;
+        min-height: 130px;
+        height: 100% !important;
+    }
+
+    .history-img-bg {
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover;
     }
 
     .history-info {
@@ -1776,19 +1793,6 @@ body {
         line-height: 1.15;
     }
 
-    .history-item {
-        grid-template-columns: 80px 1fr auto;
-        grid-template-areas:
-            "img info right";
-        align-items: stretch;
-    }
-
-    .history-img {
-        width: 80px;
-        height: auto;
-        min-height: 90px;
-    }
-
     .history-room {
         font-size: .8rem;
         white-space: normal;
@@ -1796,20 +1800,34 @@ body {
         text-overflow: clip;
     }
 
+    .history-prop svg {
+        width: 10px;
+        height: 10px;
+    }
+
     .history-prop {
-        font-size: .7rem;
+        font-size: .65rem;
     }
 
     .history-dates {
+        flex-wrap: wrap;
         font-size: .68rem;
+        gap: 3px;
+        position: relative;
     }
 
     .history-nights {
         font-size: .62rem;
+        padding: 1px 6px;
+        white-space: nowrap;
+        margin-left: 118px;
+        margin-top: 2px;
+        display: block;
+        width: fit-content;
     }
 
     .history-price {
-        font-size: .85rem;
+        font-size: 1.15rem;
     }
 }
 
