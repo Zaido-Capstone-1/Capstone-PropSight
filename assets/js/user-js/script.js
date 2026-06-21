@@ -71,13 +71,11 @@ function getAmenityIcon(name, iconSlug) {
 function openSidebar() {
     document.getElementById('sidebarOverlay').classList.add('open');
     document.getElementById('profileSidebar').classList.add('open');
-    document.body.style.overflow = 'hidden';
 }
 
 function closeSidebar() {
     document.getElementById('sidebarOverlay')?.classList.remove('open');
     document.getElementById('profileSidebar')?.classList.remove('open');
-    document.body.style.overflow = '';
 }
 const profileBtn = document.getElementById('profileBtn');
 if (profileBtn) profileBtn.addEventListener('click', openSidebar);
@@ -797,6 +795,7 @@ if (burger && mob) {
             closeRoomModal();
             closePaymentModal();
             closeSidebar();
+            closeCancelConfirmModal();
             closeManageModal();
         }
     });
@@ -928,10 +927,47 @@ if (burger && mob) {
             if (e.target === manageModal) closeManageModal();
         });
     }
+    const cancelConfirmModal = document.getElementById('cancelConfirmModal');
+    if (cancelConfirmModal) {
+        cancelConfirmModal.addEventListener('click', e => {
+            if (e.target === cancelConfirmModal) closeCancelConfirmModal();
+        });
+    }
 
     function cancelBooking() {
         if (!currentBookingId) return;
-        if (!confirm('Are you sure you want to cancel this reservation? This cannot be undone.')) return;
+        // Populate the confirm modal with current booking details
+        const ref  = document.getElementById('manageBookingRef')?.textContent || '';
+        const unit = document.getElementById('manageUnitName')?.textContent || '';
+        const cin  = document.getElementById('manageCheckin')?.textContent || '';
+        const cout = document.getElementById('manageCheckout')?.textContent || '';
+
+        const ccmRef  = document.getElementById('ccm-ref');
+        const ccmUnit = document.getElementById('ccm-unit');
+        const ccmDates= document.getElementById('ccm-dates');
+        const ccmBtn  = document.getElementById('ccm-confirm-btn');
+
+        if (ccmRef)   ccmRef.textContent  = ref;
+        if (ccmUnit)  ccmUnit.textContent = unit;
+        if (ccmDates) ccmDates.textContent = cin && cout ? cin + ' → ' + cout : '';
+        if (ccmBtn) {
+            ccmBtn.disabled = false;
+            ccmBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Yes, Cancel`;
+        }
+
+        const overlay = document.getElementById('cancelConfirmModal');
+        if (overlay) overlay.classList.add('open');
+    }
+
+    function closeCancelConfirmModal() {
+        const overlay = document.getElementById('cancelConfirmModal');
+        if (overlay) overlay.classList.remove('open');
+    }
+
+    function confirmCancelNow() {
+        const ccmBtn = document.getElementById('ccm-confirm-btn');
+        if (ccmBtn) { ccmBtn.disabled = true; ccmBtn.textContent = 'Cancelling…'; }
+        closeCancelConfirmModal();
         showToast('Cancelling your reservation…', 'info');
         fetch('../../api/user/cancel_booking.php', {
                 method: 'POST',

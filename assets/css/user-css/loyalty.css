@@ -3,6 +3,9 @@
 ═══════════════════════════════════════════ */
 
 /* ── Hero card ── */
+* { scrollbar-width: none; }          /* Firefox */
+*::-webkit-scrollbar { display: none; } /* Chrome / Edge / Safari */
+
 .loyalty-hero-card {
     background: linear-gradient(145deg, #0a1628 0%, #0d2044 45%, #112d5e 75%, #1a4070 100%);
     border-radius: var(--r-xl);

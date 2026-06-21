@@ -275,7 +275,9 @@ if ($method === 'POST') {
 
             if ($bkExtra) {
                 $gId = (int) $bkExtra['user_id'];
-                $uLabel = $bkExtra['unit_name'] ?: (($bkExtra['property_name'] ?? '') . ' — Unit ' . ($bkExtra['unit_number'] ?? ''));
+                $uLabel = $bkExtra['unit_name']
+                    ? (($bkExtra['property_name'] ?? '') . ' — ' . $bkExtra['unit_name'])
+                    : (($bkExtra['property_name'] ?? '') . ' — Unit ' . ($bkExtra['unit_number'] ?? ''));
                 $ntMsgs = [
                     'confirmed' => ['Your booking is confirmed! 🎉', "Booking $bkRef for $uLabel has been confirmed."],
                     'cancelled' => ['Booking cancelled', "Booking $bkRef for $uLabel has been cancelled."],
@@ -303,145 +305,145 @@ if ($method === 'POST') {
 
                         $statusMeta = [
                             'confirmed' => [
-                                'subject'  => 'Booking Confirmed',
-                                'accent'   => '#16a34a',
-                                'bg'       => '#f0fdf4',
+                                'subject' => 'Booking Confirmed',
+                                'accent' => '#16a34a',
+                                'bg' => '#f0fdf4',
                                 'headline' => 'Your Booking is Confirmed!',
-                                'sub'      => 'Great news — your reservation is all set. We look forward to welcoming you.',
-                                'icon'     => '',
+                                'sub' => 'Great news — your reservation is all set. We look forward to welcoming you.',
+                                'icon' => '',
                                 'badge_bg' => '#dcfce7',
                             ],
                             'cancelled' => [
-                                'subject'  => 'Booking Cancelled',
-                                'accent'   => '#dc2626',
-                                'bg'       => '#fef2f2',
+                                'subject' => 'Booking Cancelled',
+                                'accent' => '#dc2626',
+                                'bg' => '#fef2f2',
                                 'headline' => 'Your Booking Has Been Cancelled',
-                                'sub'      => "Your reservation has been cancelled. If you have questions, please don't hesitate to reach out.",
-                                'icon'     => '',
+                                'sub' => "Your reservation has been cancelled. If you have questions, please don't hesitate to reach out.",
+                                'icon' => '',
                                 'badge_bg' => '#fee2e2',
                             ],
                             'completed' => [
-                                'subject'  => 'Stay Completed',
-                                'accent'   => '#2563eb',
-                                'bg'       => '#eff6ff',
+                                'subject' => 'Stay Completed',
+                                'accent' => '#2563eb',
+                                'bg' => '#eff6ff',
                                 'headline' => 'Thank You for Your Stay!',
-                                'sub'      => "We hope you had a wonderful time. We'd love to welcome you back again soon.",
-                                'icon'     => '&#9829;',
+                                'sub' => "We hope you had a wonderful time. We'd love to welcome you back again soon.",
+                                'icon' => '<span style="color:#ffffff;font-size:30px;font-family:Arial,sans-serif;">&#9825;</span>',
                                 'badge_bg' => '#dbeafe',
                             ],
                             'active' => [
-                                'subject'  => 'Check-In Confirmed',
-                                'accent'   => '#0891b2',
-                                'bg'       => '#ecfeff',
+                                'subject' => 'Check-In Confirmed',
+                                'accent' => '#0891b2',
+                                'bg' => '#ecfeff',
                                 'headline' => 'Welcome! Your Check-In is Confirmed',
-                                'sub'      => "You're all checked in. We hope you enjoy every moment of your stay.",
-                                'icon'     => '&#8962;',
+                                'sub' => "You're all checked in. We hope you enjoy every moment of your stay.",
+                                'icon' => '&#8962;',
                                 'badge_bg' => '#cffafe',
                             ],
                         ];
 
                         $m = $statusMeta[$newStatus];
                         $emailSubject = $m['subject'];
-                        $accent   = $m['accent'];
-                        $bgColor  = $m['bg'];
+                        $accent = $m['accent'];
+                        $bgColor = $m['bg'];
                         $headline = $m['headline'];
-                        $subline  = $m['sub'];
-                        $icon     = $m['icon'];
-                        $badgeBg  = $m['badge_bg'];
+                        $subline = $m['sub'];
+                        $icon = $m['icon'];
+                        $badgeBg = $m['badge_bg'];
                         $uLabelSafe = htmlspecialchars($uLabel);
                         $year = date('Y');
 
                         $html = "
-                            <!DOCTYPE html>
-                            <html lang='en'>
-                            <head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'></head>
-                            <body style='margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;'>
+                        <!DOCTYPE html>
+                        <html lang='en'>
+                        <head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'></head>
+                        <body style='margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;'>
 
-                            <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f1f5f9;padding:40px 16px;'>
-                            <tr><td align='center'>
+                        <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f1f5f9;padding:40px 16px;'>
+                        <tr><td align='center'>
 
-                            <table role='presentation' width='100%' style='max-width:580px;' cellpadding='0' cellspacing='0'>
+                        <table role='presentation' width='100%' style='max-width:580px;' cellpadding='0' cellspacing='0'>
 
-                                <!-- Brand header -->
+                            <!-- Brand header -->
+                            <tr>
+                            <td style='background:#1e3a5f;border-radius:12px 12px 0 0;padding:22px 36px;text-align:center;'>
+                                <div style='color:#c9a84c;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:4px;'>Boracay Accommodation</div>
+                                <div style='color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;'>Investment Properties &amp; Services</div>
+                            </td>
+                            </tr>
+
+                            <!-- Status banner -->
+                            <tr>
+                            <td style='background:{$accent};padding:32px 36px;text-align:center;'>
+                                " . ($icon ? "<table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 auto 16px;'><tr><td width='68' height='68' style='width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,0.22);text-align:center;vertical-align:middle;font-size:34px;color:#ffffff;line-height:68px;font-family:Arial,sans-serif;'>{$icon}</td></tr></table>" : '') . "
+                                <h1 style='color:#ffffff;margin:0;font-size:22px;font-weight:700;line-height:1.3;letter-spacing:-0.2px;'>{$headline}</h1>
+                                <p style='color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:14px;line-height:1.6;max-width:400px;display:inline-block;'>{$subline}</p>
+                            </td>
+                            </tr>
+
+                            <!-- Body -->
+                            <tr>
+                            <td style='background:#ffffff;padding:36px 36px 28px;'>
+                                <p style='color:#1e3a5f;font-size:16px;font-weight:600;margin:0 0 6px;'>Hi {$userName},</p>
+                                <p style='color:#6b7280;font-size:14px;margin:0 0 28px;line-height:1.6;'>Here are the details of your reservation:</p>
+
+                                <!-- Booking card -->
+                                <table role='presentation' width='100%' cellpadding='0' cellspacing='0'
+                                    style='background:{$bgColor};border:1.5px solid {$badgeBg};border-radius:10px;overflow:hidden;margin-bottom:24px;'>
+
+                                <!-- Ref badge row -->
                                 <tr>
-                                <td style='background:#1e3a5f;border-radius:12px 12px 0 0;padding:22px 36px;text-align:center;'>
-                                    <div style='color:#c9a84c;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:4px;'>Boracay Accommodation</div>
-                                    <div style='color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;'>Investment Properties &amp; Services</div>
-                                </td>
+                                    <td colspan='2' style='padding:14px 20px;border-bottom:1px solid {$badgeBg};'>
+                                    <span style='font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:{$accent};'>Booking Reference</span>
+                                    <span style='float:right;font-size:15px;font-weight:800;color:#1e3a5f;letter-spacing:0.05em;'>{$bkRef}</span>
+                                    </td>
                                 </tr>
 
-                                <!-- Status banner -->
+                                <!-- Details rows -->
                                 <tr>
-                                <td style='background:{$accent};padding:32px 36px;text-align:center;'>
-                                    " . ($icon ? "<table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 auto 16px;'><tr><td width='68' height='68' style='width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,0.22);text-align:center;vertical-align:middle;font-size:34px;color:#ffffff;line-height:68px;'>{$icon}</td></tr></table>" : '') . "
-                                    <h1 style='color:#ffffff;margin:0;font-size:22px;font-weight:700;line-height:1.3;letter-spacing:-0.2px;'>{$headline}</h1>
-                                    <p style='color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:14px;line-height:1.6;max-width:400px;display:inline-block;'>{$subline}</p>
-                                </td>
+                                    <td style='padding:11px 20px 4px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;'>Unit</td>
+                                    <td style='padding:11px 20px 4px;font-size:14px;color:#374151;font-weight:600;text-align:right;'>{$uLabelSafe}</td>
+                                </tr>
+                                <tr>
+                                    <td style='padding:4px 20px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;'>Check-in</td>
+                                    <td style='padding:4px 20px;font-size:14px;color:#374151;text-align:right;'>{$checkin}</td>
+                                </tr>
+                                <tr>
+                                    <td style='padding:4px 20px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;'>Check-out</td>
+                                    <td style='padding:4px 20px;font-size:14px;color:#374151;text-align:right;'>{$checkout}</td>
                                 </tr>
 
-                                <!-- Body -->
+                                <!-- Total row -->
                                 <tr>
-                                <td style='background:#ffffff;padding:36px 36px 28px;'>
-                                    <p style='color:#1e3a5f;font-size:16px;font-weight:600;margin:0 0 6px;'>Hi {$userName},</p>
-                                    <p style='color:#6b7280;font-size:14px;margin:0 0 28px;line-height:1.6;'>Here are the details of your reservation:</p>
-
-                                    <!-- Booking card -->
-                                    <table role='presentation' width='100%' cellpadding='0' cellspacing='0'
-                                        style='background:{$bgColor};border:1.5px solid {$badgeBg};border-radius:10px;overflow:hidden;margin-bottom:24px;'>
-
-                                    <!-- Ref badge row -->
-                                    <tr>
-                                        <td colspan='2' style='padding:14px 20px;border-bottom:1px solid {$badgeBg};'>
-                                        <span style='font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:{$accent};'>Booking Reference</span>
-                                        <span style='float:right;font-size:15px;font-weight:800;color:#1e3a5f;letter-spacing:0.05em;'>{$bkRef}</span>
-                                        </td>
-                                    </tr>
-
-                                    <!-- Details rows -->
-                                    <tr>
-                                        <td style='padding:11px 20px 4px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;'>Unit</td>
-                                        <td style='padding:11px 20px 4px;font-size:14px;color:#374151;font-weight:600;text-align:right;'>{$uLabelSafe}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style='padding:4px 20px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;'>Check-in</td>
-                                        <td style='padding:4px 20px;font-size:14px;color:#374151;text-align:right;'>{$checkin}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style='padding:4px 20px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;'>Check-out</td>
-                                        <td style='padding:4px 20px;font-size:14px;color:#374151;text-align:right;'>{$checkout}</td>
-                                    </tr>
-
-                                    <!-- Total row -->
-                                    <tr>
-                                        <td colspan='2' style='padding:14px 20px;border-top:1px solid {$badgeBg};margin-top:6px;'>
-                                        <span style='font-size:13px;color:#6b7280;font-weight:600;'>Total Amount</span>
-                                        <span style='float:right;font-size:18px;font-weight:800;color:{$accent};'>{$amount}</span>
-                                        </td>
-                                    </tr>
-                                    </table>
-
-                                    <p style='color:#9ca3af;font-size:13px;margin:0;line-height:1.7;text-align:center;'>
-                                    Questions or concerns? Reply to this email or<br>visit our website — we're happy to help.
-                                    </p>
-                                </td>
+                                    <td colspan='2' style='padding:14px 20px;border-top:1px solid {$badgeBg};margin-top:6px;'>
+                                    <span style='font-size:13px;color:#6b7280;font-weight:600;'>Total Amount</span>
+                                    <span style='float:right;font-size:18px;font-weight:800;color:{$accent};'>{$amount}</span>
+                                    </td>
                                 </tr>
+                                </table>
 
-                                <!-- Footer -->
-                                <tr>
-                                <td style='background:#1e3a5f;border-radius:0 0 12px 12px;padding:20px 36px;text-align:center;'>
-                                    <p style='margin:0 0 4px;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.08em;text-transform:uppercase;'>
-                                    &copy; {$year} Boracay Accommodation. All rights reserved.
-                                    </p>
-                                    <p style='margin:0;font-size:11px;color:rgba(255,255,255,0.25);'>This is an automated message, please do not reply directly.</p>
-                                </td>
-                                </tr>
+                                <p style='color:#9ca3af;font-size:13px;margin:0;line-height:1.7;text-align:center;'>
+                                Questions or concerns? Reply to this email or<br>visit our website — we're happy to help.
+                                </p>
+                            </td>
+                            </tr>
 
-                            </table>
-                            </td></tr>
-                            </table>
+                            <!-- Footer -->
+                            <tr>
+                            <td style='background:#1e3a5f;border-radius:0 0 12px 12px;padding:20px 36px;text-align:center;'>
+                                <p style='margin:0 0 4px;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.08em;text-transform:uppercase;'>
+                                &copy; {$year} Boracay Accommodation. All rights reserved.
+                                </p>
+                                <p style='margin:0;font-size:11px;color:rgba(255,255,255,0.25);'>This is an automated message, please do not reply directly.</p>
+                            </td>
+                            </tr>
 
-                            </body>
-                            </html>";
+                        </table>
+                        </td></tr>
+                        </table>
+
+                        </body>
+                        </html>";
 
                         $emailService->sendEmail($bkExtra['user_email'], $emailSubject . " — $bkRef", $html);
                     } catch (\Throwable $emailErr) {

@@ -140,8 +140,9 @@ if ($pmStatus === 'succeeded' || $paidAt !== null) {
         $amount = (float) $row['amount'];
 
         // Avoid duplicate payment records
-        $existPay = $conn->query("SELECT payment_id FROM payments WHERE booking_id = $bookingId LIMIT 1")->fetch_assoc();
-        if (!$existPay) {
+        $existPay = $conn->query("SELECT payment_id FROM payments WHERE booking_id = $bookingId AND payment_status='paid' LIMIT 1")->fetch_assoc();
+        $existTxn = $conn->query("SELECT id FROM transactions WHERE booking_id = $bookingId AND type='Income' LIMIT 1")->fetch_assoc();
+        if (!$existPay && !$existTxn) {
             $now = date('Y-m-d H:i:s');
             $date = date('Y-m-d');
             $note = 'PayMongo card checkout (session: ' . $conn->real_escape_string($sessionId) . ')';
@@ -153,8 +154,10 @@ if ($pmStatus === 'succeeded' || $paidAt !== null) {
 
             $ref = 'PMT-' . $newId;
             $esc = $conn->real_escape_string('Card checkout payment for Booking #' . $bookingId);
-            $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, booking_id)
-                          VALUES ('$ref', '$esc', 'Room Revenue', 'Income', $amount, '$date', $bookingId)");
+            $propIdRow2 = $conn->query("SELECT p.property_id FROM bookings b JOIN units u ON u.unit_id = b.unit_id JOIN properties p ON p.property_id = u.property_id WHERE b.booking_id = $bookingId LIMIT 1")->fetch_assoc();
+            $txPropId2 = $propIdRow2 ? (int) $propIdRow2['property_id'] : 'NULL';
+            $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, booking_id, property_id)
+                          VALUES ('$ref', '$esc', 'Room Revenue', 'Income', $amount, '$date', $bookingId, $txPropId2)");
         }
 
         $conn->query("UPDATE paymongo_payments SET status = 'paid'

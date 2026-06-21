@@ -47,38 +47,8 @@ foreach (array_slice($_sb_parts, 0, 2) as $p) {
 if ($_sb_initials === '')
   $_sb_initials = 'A';
 ?>
-<style>
-  .sidebar-avatar {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
 
-  .sidebar-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-    border: none;
-  }
-
-  .sidebar-avatar-initials {
-    background: linear-gradient(135deg, var(--blue-300), var(--blue-700));
-    color: white;
-    font-weight: 600;
-    font-size: 16px;
-  }
-
-  /* Hide initials background when image is present */
-  .sidebar-avatar:not(.sidebar-avatar-initials) {
-    background: transparent !important;
-    border: none !important;
-    outline: none !important;
-  }
-</style>
+<link rel="stylesheet" href="../../assets/css/admin-css/sidebar.css">
 
 <div class="overlay" id="overlay"></div>
 
@@ -97,148 +67,25 @@ if ($_sb_initials === '')
 
 <!-- Mobile notification dropdown -->
 <div id="mobileNotifDropdown"
-  style="display:none;position:fixed;top:70px;right:12px;left:12px;max-height:70vh;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 10px 32px rgba(15,23,42,.18);z-index:9998;">
+  style="display:none;position:fixed;top:62px;right:8px;left:auto;width:260px;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 32px rgba(15,23,42,.25);z-index:9999;flex-direction:column;font-family:'DM Sans',sans-serif;">
   <div
-    style="padding:12px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;">
+    style="padding:12px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:700;color:#0f172a;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background-color:#ffffff;border-radius:14px 14px 0 0;">
     <span>Notifications</span>
     <button id="mobileNotifMarkAll" type="button"
       style="border:none;background:none;color:#2563eb;font-size:12px;font-weight:600;cursor:pointer;">Mark all
       read</button>
   </div>
-  <div id="mobileNotifList">
-    <div style="padding:24px 14px;text-align:center;color:#94a3b8;font-size:13px;">No notifications yet.</div>
-  </div>
-  <div id="mobileNotifViewMore" style="display:none;padding:0;text-align:center;border-top:1px solid #f1f5f9;">
-    <button type="button" id="mobileNotifViewMoreBtn"
-      style="display:block;width:100%;border:none;background:none;color:#2563eb;font-size:14px;font-weight:600;cursor:pointer;padding:12px 14px;border-radius:0 0 14px 14px;transition:background .12s;">View
-      more</button>
+  <div style="overflow-y:auto;max-height:60vh;">
+    <div id="mobileNotifList">
+      <div style="padding:24px 14px;text-align:center;color:#94a3b8;font-size:13px;">No notifications yet.</div>
+    </div>
+    <div id="mobileNotifViewMore" style="display:none;padding:0;text-align:center;border-top:1px solid #f1f5f9;">
+      <button type="button" id="mobileNotifViewMoreBtn"
+        style="display:block;width:100%;border:none;background:none;color:#2563eb;font-size:14px;font-weight:600;cursor:pointer;padding:12px 14px;border-radius:0 0 14px 14px;transition:background .12s;">View
+        more</button>
+    </div>
   </div>
 </div>
-
-<style>
-  .mobile-notif-btn {
-    display: none;
-    /* shown via media query below */
-    position: fixed;
-    right: 16px;
-    top: 18px;
-    z-index: 400;
-    width: 44px;
-    height: 44px;
-    background: var(--white, #fff);
-    border: 1px solid var(--border, #e2e8f0);
-    border-radius: var(--radius, 8px);
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--blue-600, #2563eb);
-    transition: background .15s;
-  }
-
-  .mobile-notif-btn:hover {
-    background: var(--blue-50, #eff6ff);
-  }
-
-  .mobile-notif-dot {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
-    background: #ef4444;
-    border-radius: 8px;
-    border: 2px solid #fff;
-    font-size: 9px;
-    font-weight: 700;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-  }
-
-  /* Show bell when right-panel is hidden */
-  @media (max-width: 1024px) {
-    .mobile-notif-btn {
-      display: flex;
-    }
-  }
-
-  /* Hide when sidebar is open (same as menu-toggle) */
-  body:has(.sidebar.open) .mobile-notif-btn {
-    display: none !important;
-  }
-
-  .mobile-notif-item {
-    padding: 12px 14px;
-    border-bottom: 1px solid #f8fafc;
-    cursor: pointer;
-    transition: background .12s;
-  }
-
-  .mobile-notif-item:hover {
-    background: #f8fafc;
-  }
-
-  #mobileNotifViewMoreBtn:hover,
-  #mobileNotifViewMoreBtn:active {
-    background: #eff6ff;
-  }
-  #mobileNotifViewMoreBtn:disabled {
-    cursor: default;
-    color: #94a3b8;
-  }
-
-  .mobile-notif-item:last-child {
-    border-bottom: none;
-  }
-
-  .mobile-notif-item-text {
-    font-size: 13px;
-    color: #0f172a;
-    line-height: 1.4;
-  }
-
-  .mobile-notif-item-time {
-    font-size: 11px;
-    color: #94a3b8;
-    margin-top: 3px;
-  }
-
-  /* Unread vs read distinction */
-  .mobile-notif-item.is-unread {
-    background: #eff6ff;
-  }
-
-  .mobile-notif-item.is-unread .mobile-notif-item-text {
-    font-weight: 600;
-  }
-
-  .mobile-notif-item.is-read {
-    opacity: 0.6;
-  }
-
-  .mobile-notif-item.is-read .mobile-notif-item-text {
-    font-weight: 400;
-    color: #64748b;
-  }
-
-  .mobile-notif-item-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-  }
-
-  .mobile-notif-item-dot {
-    flex: 0 0 6px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #2563eb;
-    margin-top: 5px;
-  }
-</style>
 
 <nav class="sidebar" id="sidebar" aria-label="Main navigation">
 
@@ -312,7 +159,7 @@ if ($_sb_initials === '')
       </a>
     </div>
 
-    <div class="nav-item has-sub<?= group_active(['reservations', 'calendar', 'checkin_checkout', 'task_summary']) ?>">
+    <div class="nav-item has-sub<?= group_active(['reservations', 'calendar', 'checkin_checkout']) ?>">
       <div class="nav-icon">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -329,7 +176,7 @@ if ($_sb_initials === '')
         </svg>
       </span>
     </div>
-    <div class="nav-sub<?= group_sub_open(['reservations', 'calendar', 'checkin_checkout', 'task_summary']) ?>">
+    <div class="nav-sub<?= group_sub_open(['reservations', 'calendar', 'checkin_checkout']) ?>">
       <a href="reservations.php" class="sub-item<?= sub_active('reservations') ?>">
         <div class="sub-dot"></div>Reservations
       </a>
@@ -338,9 +185,6 @@ if ($_sb_initials === '')
       </a>
       <a href="checkin_checkout.php" class="sub-item<?= sub_active('checkin_checkout') ?>">
         <div class="sub-dot"></div>Check-in / Check-out
-      </a>
-      <a href="task_summary.php" class="sub-item<?= sub_active('task_summary') ?>">
-        <div class="sub-dot"></div>Task Summary
       </a>
     </div>
 
@@ -430,20 +274,33 @@ if ($_sb_initials === '')
       </a>
     </div>
 
-    <a href="support.php" class="nav-item<?= nav_active('support') ?>">
+    <div class="nav-item has-sub<?= group_active(['support', 'task_summary']) ?>">
       <div class="nav-icon">
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M9 11l3 3L22 4" />
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
         </svg>
       </div>
-      <span class="nav-label">Support Tickets</span>
+      <span class="nav-label">Support & Help</span>
       <span class="nav-badge" data-rt="support" style="display:none;">0</span>
-    </a>
+      <span class="nav-arrow">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </span>
+    </div>
+    <div class="nav-sub<?= group_sub_open(['support', 'task_summary']) ?>">
+      <a href="support.php" class="sub-item<?= sub_active('support') ?>">
+        <div class="sub-dot"></div>Support Tickets
+      </a>
+      <a href="task_summary.php" class="sub-item<?= sub_active('task_summary') ?>">
+        <div class="sub-dot"></div>Maintenance Requests
+      </a>
+    </div>
 
     <a href="loyalty_rewards.php" class="nav-item<?= nav_active('loyalty_rewards') ?>">
       <div class="nav-icon">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="15" height="15">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="8" r="5" />
           <path d="M14.5 11.9L16 21l-4-2.4-4 2.4 1.5-9.1" />
         </svg>

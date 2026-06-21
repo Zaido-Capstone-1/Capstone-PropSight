@@ -123,8 +123,10 @@ if ($method === 'POST') {
         if (mysqli_query($conn, $sql)) {
             $newId = mysqli_insert_id($conn);
             $ref = 'PMT-' . $newId;
-            mysqli_query($conn, "INSERT INTO transactions (reference_no,description,category,type,amount,transaction_date,booking_id)
-                VALUES ('$ref','Payment #$newId for Booking #$booking_id','Room Revenue','Income',$amount,'$dateEsc',$booking_id)");
+            $propIdRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT p.property_id FROM bookings b JOIN units u ON u.unit_id = b.unit_id JOIN properties p ON p.property_id = u.property_id WHERE b.booking_id = $booking_id LIMIT 1"));
+            $txPropId = $propIdRow ? (int) $propIdRow['property_id'] : 'NULL';
+            mysqli_query($conn, "INSERT INTO transactions (reference_no,description,category,type,amount,transaction_date,booking_id,property_id)
+                VALUES ('$ref','Payment #$newId for Booking #$booking_id','Room Revenue','Income',$amount,'$dateEsc',$booking_id,$txPropId)");
             echo json_encode(['success' => true, 'message' => 'Payment recorded.', 'payment_id' => $newId]);
         } else {
             echo json_encode(['success' => false, 'message' => mysqli_error($conn)]);

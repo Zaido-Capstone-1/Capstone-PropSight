@@ -170,12 +170,15 @@
         notifDrop.style.right = Math.max(8, rightEdge - (rect.width / 2)) + 'px';
         notifDrop.style.left = 'auto';
       }
-      notifDrop.style.display = isOpen ? 'block' : 'none';
+      notifDrop.style.display = isOpen ? 'flex' : 'none';
     });
     document.addEventListener('click', () => {
       notifDrop.style.display = 'none';
     });
     notifDrop.addEventListener('click', e => e.stopPropagation());
+    window.addEventListener('resize', () => {
+      notifDrop.style.display = 'none';
+    });
   }
 
   notifList?.addEventListener('click', e => {

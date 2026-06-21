@@ -623,6 +623,7 @@
     #payStatusDropdownWrap {
         flex: 1 1 calc(50% - 4px);
         max-width: calc(50% - 4px);
+        order: 2;
     }
 
     #monthPickerBtn,
@@ -650,11 +651,27 @@
         left: auto;
         right: 0;
     }
+
+    #paySearchWrap {
+        flex: 1 1 100%;
+        max-width: 100%;
+        order: 1;
+    }
 }
 
 #payTableFoot td {
     padding: 0;
     border-top: 1.5px solid var(--border);
+}
+
+/* Pagination lives outside table-wrap so it sticks at card bottom and never scrolls */
+.pay-pagination-wrap {
+    border-top: 1.5px solid var(--border);
+}
+
+/* Ensure table is wide enough on mobile to be scrollable */
+.table-wrap table {
+    min-width: 640px;
 }
 
 .txn-pagination {
@@ -732,40 +749,41 @@
     transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
+.txn-page-numbers .txn-pg-num.active {
+    background: #0f2744;
+    color: #e8c86a;
+    border-color: #0f2744;
+    cursor: pointer;
+}
+
 .txn-chevron-btn:hover:not(:disabled) {
-    background: var(--navy, #0f2044);
-    border-color: var(--navy, #0f2044);
-    color: #fff;
+    background: #f1f5f9;
+    border-color: #cbd5e1;
 }
 
 .txn-chevron-btn:disabled {
     opacity: 0.35;
-    cursor: default;
+    cursor: not-allowed;
 }
 
 .txn-page-numbers {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
 }
 
 .txn-pg-num {
-    min-width: 30px;
-    height: 30px;
-    padding: 0 6px;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
     border: 1px solid var(--border, #e2e8f0);
     border-radius: 7px;
     background: #fff;
-    color: var(--text-dark, #1a2236);
-    font-size: 12.5px;
-    font-weight: 500;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.txn-pg-num:hover:not(.active) {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
 }
 
 .txn-pg-num.active {
@@ -774,6 +792,11 @@
     color: #fff;
     font-weight: 700;
     cursor: default;
+}
+
+.txn-pg-num:hover{
+    background: #f1f5f9;
+    border-color: #cbd5e1;
 }
 
 .txn-pg-ellipsis {

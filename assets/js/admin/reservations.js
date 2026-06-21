@@ -125,6 +125,7 @@ function escHtml(s) {
     return String(s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 function fmtDate(iso) {
     if (!iso) return '—';
@@ -132,7 +133,7 @@ function fmtDate(iso) {
     if (isNaN(d.getTime())) return String(iso);
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
-}
+
 
 /* ─── Action buttons HTML ────────────────────────────────────────────────── */
 function _actionButtons(bookingId, status) {

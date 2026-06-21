@@ -168,6 +168,7 @@ $email = htmlspecialchars($_SESSION['email'] ?? '');
 $initials = strtoupper(mb_substr($first_name, 0, 1) . mb_substr($last_name, 0, 1));
 $hour = (int) date('G');
 $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
+$todayLong = date('F j, Y');
 $isVerifiedSidebar = (($_SESSION['verification_status'] ?? '') === 'Verified');
 
 // Sync id_verified from DB so session is always fresh
@@ -394,35 +395,131 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
 ═══════════════════════════════════════════════════════════ -->
     <section class="user-hero" id="account">
         <div class="user-hero-inner">
-            <div class="reveal">
-                <div class="user-hero-greeting">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="width:13px;height:13px;stroke:var(--sand-dk);">
-                        <path
-                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                    <?php echo $greeting; ?>
-                </div>
-                <h1>Welcome back, <em><?php echo htmlspecialchars($_SESSION['first_name']); ?></em>!</h1>
-                <p class="user-hero-sub">Ready to plan your next Boracay getaway? Browse our rooms below.</p>
-            </div>
-            <div class="user-stats-strip reveal rd1">
-                <div class="ustat">
-                    <div class="ustat-num" data-rt-user="booking_total"><?php echo $bookingCount; ?></div>
-                    <div class="ustat-lbl">Bookings</div>
-                </div>
-                <div class="ustat">
-                    <div class="ustat-num" data-rt-user="loyalty_points"><?php echo number_format($loyaltyPoints); ?>
+            <div class="hero-banner reveal">
+                <div class="hero-banner-photo"></div>
+                <div class="hero-banner-overlay"></div>
+                <div class="hero-banner-content">
+                    <div class="hero-banner-left">
+                        <div class="user-hero-greeting">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                style="width:13px;height:13px;stroke:var(--gold);">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <?php echo $greeting; ?>
+                        </div>
+                        <h1>Welcome back, <em><?php echo htmlspecialchars($_SESSION['first_name']); ?></em>!</h1>
+                        <div class="hero-banner-meta">
+                            <span class="hbm-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                </svg>
+                                <?php echo $todayLong; ?>
+                            </span>
+                            <span class="hbm-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                                    <circle cx="12" cy="10" r="3" />
+                                </svg>
+                                <span id="heroLocationText">Locating…</span>
+                            </span>
+                        </div>
                     </div>
-                    <div class="ustat-lbl">Points</div>
-                </div>
-                <div class="ustat">
-                    <div class="ustat-num" data-rt-user="loyalty_tier"><?php echo $loyaltyTier; ?></div>
-                    <div class="ustat-lbl">Tier</div>
-                </div>
-                <div class="ustat">
-                    <div class="ustat-num" data-rt-user="saved_count"><?php echo count($savedUnitIds); ?></div>
-                    <div class="ustat-lbl">Saved</div>
+                    <div class="hero-weather" id="heroWeather" aria-live="polite">
+                        <div class="hw-icon" id="hwIcon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                                <circle cx="12" cy="12" r="4.5" />
+                                <line x1="12" y1="1.5" x2="12" y2="4" />
+                                <line x1="12" y1="20" x2="12" y2="22.5" />
+                                <line x1="4.2" y1="4.2" x2="5.9" y2="5.9" />
+                                <line x1="18.1" y1="18.1" x2="19.8" y2="19.8" />
+                                <line x1="1.5" y1="12" x2="4" y2="12" />
+                                <line x1="20" y1="12" x2="22.5" y2="12" />
+                                <line x1="4.2" y1="19.8" x2="5.9" y2="18.1" />
+                                <line x1="18.1" y1="5.9" x2="19.8" y2="4.2" />
+                            </svg>
+                        </div>
+                        <div class="hw-temp" id="hwTemp">--°C</div>
+                        <div class="hw-desc" id="hwDesc">Loading weather…</div>
+                    </div>
+                    <div class="hero-reservation reveal rd1">
+                        <?php if ($activeBooking): ?>
+                            <div class="booking-banner" id="rt-active-booking-wrap"
+                                data-booking-id="<?php echo (int) $activeBooking['booking_id']; ?>"
+                                data-unit-id="<?php echo (int) $activeBooking['unit_id']; ?>"
+                                data-checkin="<?php echo htmlspecialchars($activeBooking['checkin_date'] ?? ''); ?>"
+                                data-checkout="<?php echo htmlspecialchars($activeBooking['checkout_date'] ?? ''); ?>">
+                                <div class="booking-banner-inner">
+                                    <div class="bb-body">
+                                        <div class="bb-label">Active Reservation</div>
+                                        <div class="bb-room">
+                                            <?php echo htmlspecialchars($activeBooking['unit_name'] ?? $activeBooking['unit_number']); ?>
+                                            —
+                                            <?php echo htmlspecialchars($activeBooking['property_name']); ?>
+                                        </div>
+                                        <div class="bb-dates"
+                                            data-checkin="<?php echo htmlspecialchars($activeBooking['checkin_date'] ?? ''); ?>"
+                                            data-checkout="<?php echo htmlspecialchars($activeBooking['checkout_date'] ?? ''); ?>">
+                                            <?php echo formatDate($activeBooking['checkin_date']); ?><span
+                                                class="bb-date-sep"> →
+                                            </span><?php echo formatDate($activeBooking['checkout_date']); ?>
+                                        </div>
+                                    </div>
+                                    <div class="bb-actions">
+                                        <div class="bb-status <?php echo statusBadgeClass($activeBooking['status']); ?>"
+                                            id="rt-active-booking-status">
+                                            <?php echo statusLabel($activeBooking['status']); ?>
+                                        </div>
+                                        <?php
+                                        $activeImgSrc = !empty($activeBooking['image_path']) ? '../../' . ltrim($activeBooking['image_path'], '/') : '';
+                                        $manageData = json_encode([
+                                            'booking_id' => $activeBooking['booking_id'],
+                                            'unit_name' => $activeBooking['unit_name'] ?? $activeBooking['unit_number'] ?? 'Unit',
+                                            'property_name' => $activeBooking['property_name'] ?? '',
+                                            'address' => $activeBooking['address'] ?? '',
+                                            'latitude' => (float) ($activeBooking['latitude'] ?? 0),
+                                            'longitude' => (float) ($activeBooking['longitude'] ?? 0),
+                                            'checkin' => formatDate($activeBooking['checkin_date']),
+                                            'checkout' => formatDate($activeBooking['checkout_date']),
+                                            'nights' => nightsBetween($activeBooking['checkin_date'], $activeBooking['checkout_date']),
+                                            'status' => statusLabel($activeBooking['status']),
+                                            'total_amount' => 'PHP ' . number_format((float) ($activeBooking['total_amount'] ?? 0), 0),
+                                            'guests' => (int) ($activeBooking['guests'] ?? 2),
+                                            'image' => $activeImgSrc,
+                                        ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+                                        ?>
+                                        <button class="btn-manage"
+                                            onclick="openManageModal(<?php echo htmlspecialchars($manageData, ENT_QUOTES); ?>)">Manage
+                                            Stay</button>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="booking-banner" id="rt-active-booking-wrap" data-booking-id="" data-unit-id=""
+                                style="display:none;opacity:0;max-height:0;overflow:hidden;">
+                                <div class="booking-banner-inner">
+                                    <div class="bb-body">
+                                        <div class="bb-label">Active Reservation</div>
+                                        <div class="bb-room">No active reservation</div>
+                                        <div class="bb-dates"></div>
+                                    </div>
+                                    <div class="bb-actions">
+                                        <div class="bb-status st-pending" id="rt-active-booking-status">Pending</div>
+                                        <button class="btn-manage" onclick="return false;">Manage Stay</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="hero-no-reservation">
+                                <div>
+                                    <div class="hnr-title">No active reservation</div>
+                                    <div class="hnr-sub">Browse rooms below for your next stay.</div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -479,91 +576,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
         </div>
     </section>
 
-    <!-- ══ ACTIVE BOOKING BANNER ══ -->
-    <?php if ($activeBooking): ?>
-        <div class="booking-banner" id="rt-active-booking-wrap"
-            data-booking-id="<?php echo (int) $activeBooking['booking_id']; ?>"
-            data-unit-id="<?php echo (int) $activeBooking['unit_id']; ?>"
-            data-checkin="<?php echo htmlspecialchars($activeBooking['checkin_date'] ?? ''); ?>"
-            data-checkout="<?php echo htmlspecialchars($activeBooking['checkout_date'] ?? ''); ?>">
-            <div class="booking-banner-inner reveal">
-                <div class="bbl">
-                    <div class="bb-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                            <polyline points="9 22 9 12 15 12 15 22" />
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="bb-label">Active Reservation</div>
-                        <div class="bb-room">
-                            <?php echo htmlspecialchars($activeBooking['unit_name'] ?? $activeBooking['unit_number']); ?> —
-                            <?php echo htmlspecialchars($activeBooking['property_name']); ?>
-                        </div>
-                        <div class="bb-dates"
-                            data-checkin="<?php echo htmlspecialchars($activeBooking['checkin_date'] ?? ''); ?>"
-                            data-checkout="<?php echo htmlspecialchars($activeBooking['checkout_date'] ?? ''); ?>">Check-in:
-                            <?php echo formatDate($activeBooking['checkin_date']); ?><span class="bb-date-sep">
-                                &nbsp;·&nbsp; </span>Check-out:
-                            <?php echo formatDate($activeBooking['checkout_date']); ?>
-                        </div>
-                    </div>
-                </div>
-                <div class="bb-right">
-                    <div class="bb-status <?php echo statusBadgeClass($activeBooking['status']); ?>"
-                        id="rt-active-booking-status"><?php echo statusLabel($activeBooking['status']); ?></div>
-                    <?php
-                    $activeImgSrc = !empty($activeBooking['image_path']) ? '../../' . ltrim($activeBooking['image_path'], '/') : '';
-                    $manageData = json_encode([
-                        'booking_id' => $activeBooking['booking_id'],
-                        'unit_name' => $activeBooking['unit_name'] ?? $activeBooking['unit_number'] ?? 'Unit',
-                        'property_name' => $activeBooking['property_name'] ?? '',
-                        'address' => $activeBooking['address'] ?? '',
-                        'latitude' => (float) ($activeBooking['latitude'] ?? 0),
-                        'longitude' => (float) ($activeBooking['longitude'] ?? 0),
-                        'checkin' => formatDate($activeBooking['checkin_date']),
-                        'checkout' => formatDate($activeBooking['checkout_date']),
-                        'nights' => nightsBetween($activeBooking['checkin_date'], $activeBooking['checkout_date']),
-                        'status' => statusLabel($activeBooking['status']),
-                        'total_amount' => 'PHP ' . number_format((float) ($activeBooking['total_amount'] ?? 0), 0),
-                        'guests' => (int) ($activeBooking['guests'] ?? 2),
-                        'image' => $activeImgSrc,
-                    ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
-                    ?>
-                    <button class="btn-manage"
-                        onclick="openManageModal(<?php echo htmlspecialchars($manageData, ENT_QUOTES); ?>)">Manage
-                        Stay</button>
-                </div>
-            </div>
-        </div>
-    <?php endif; ?>
-
     <!-- ══ ROOMS SECTION ══ -->
-    <?php if (!$activeBooking): ?>
-        <div class="booking-banner" id="rt-active-booking-wrap" data-booking-id="" data-unit-id=""
-            style="display:none;opacity:0;max-height:0;overflow:hidden;">
-            <div class="booking-banner-inner reveal">
-                <div class="bbl">
-                    <div class="bb-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                            <polyline points="9 22 9 12 15 12 15 22" />
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="bb-label">Active Reservation</div>
-                        <div class="bb-room">No active reservation</div>
-                        <div class="bb-dates"></div>
-                    </div>
-                </div>
-                <div class="bb-right">
-                    <div class="bb-status st-pending" id="rt-active-booking-status">Pending</div>
-                    <button class="btn-manage" onclick="return false;">Manage Stay</button>
-                </div>
-            </div>
-        </div>
-    <?php endif; ?>
-
     <section class="rooms-section" id="browse">
         <div class="section-header-row">
             <div>
@@ -1252,6 +1265,97 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
         </div>
     </div>
 
+    <!-- ── Cancel Reservation Confirmation Modal ───────────── -->
+    <div class="manage-modal-overlay" id="cancelConfirmModal" style="z-index:1100;">
+        <div class="manage-modal-box" style="max-width:420px;border-radius:20px;padding:0;overflow:hidden;">
+
+            <!-- Red top band -->
+            <div style="background:linear-gradient(135deg,#e11d48,#be123c);padding:24px 24px 20px;position:relative;">
+                <button onclick="closeCancelConfirmModal()"
+                    style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.18);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+                <div style="display:flex;align-items:center;gap:13px;">
+                    <div
+                        style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" width="24" height="24">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="15" y1="9" x2="9" y2="15" />
+                            <line x1="9" y1="9" x2="15" y2="15" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div style="color:#fff;font-size:1.05rem;font-weight:700;letter-spacing:-.01em;">Cancel
+                            Reservation?</div>
+                        <div id="ccm-ref" style="color:rgba(255,255,255,.75);font-size:.8rem;margin-top:2px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div style="padding:20px 24px 24px;background:#fff;">
+
+                <!-- Booking summary pill -->
+                <div
+                    style="border:1px solid #f1f5f9;border-radius:12px;padding:14px 16px;margin-bottom:16px;background:#fafafa;">
+                    <div
+                        style="font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#94a3b8;margin-bottom:10px;">
+                        Booking Summary</div>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                        <div style="display:flex;align-items:center;gap:9px;font-size:.84rem;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" width="14"
+                                height="14" style="flex-shrink:0;">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                <polyline points="9 22 9 12 15 12 15 22" />
+                            </svg>
+                            <span id="ccm-unit" style="font-weight:600;color:#0f172a;"></span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:9px;font-size:.84rem;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" width="14"
+                                height="14" style="flex-shrink:0;">
+                                <rect x="3" y="4" width="18" height="18" rx="2" />
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                                <line x1="8" y1="2" x2="8" y2="6" />
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                            <span id="ccm-dates" style="color:#475569;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warning strip -->
+                <div
+                    style="display:flex;align-items:flex-start;gap:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:22px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2" width="16" height="16"
+                        style="flex-shrink:0;margin-top:1px;">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                    <p style="margin:0;font-size:.79rem;color:#9a3412;line-height:1.55;">This action <strong>cannot be
+                            undone.</strong> If you paid for this booking, you may submit a refund request from your
+                        Payment History.</p>
+                </div>
+
+                <!-- Action buttons -->
+                <div style="display:flex;gap:10px;">
+                    <button onclick="closeCancelConfirmModal()"
+                        style="flex:1;padding:10px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;">
+                        Keep Booking
+                    </button>
+                    <button id="ccm-confirm-btn" onclick="confirmCancelNow()"
+                        style="flex:1;padding:10px;background:#e11d48;color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14"
+                            height="14">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="15" y1="9" x2="9" y2="15" />
+                            <line x1="9" y1="9" x2="15" y2="15" />
+                        </svg>
+                        Yes, Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1281,6 +1385,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
         window.PS_RT_API = '../../api/realtime.php';
     </script>
     <script src="../../assets/js/user-js/script.js"></script>
+    <script src="../../assets/js/user-js/hero-weather.js"></script>
     <script src="../../assets/js/toast.js"></script>
 
     <script src="../../assets/js/realtime.js"></script>

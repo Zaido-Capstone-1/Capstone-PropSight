@@ -341,16 +341,16 @@ function renderTxPage(matchedRows, page) {
                 color:var(--ink-soft); transition:background .18s, border-color .18s, color .18s, transform .15s, box-shadow .18s;
             }
             .tx-pg-btn:not(:disabled):hover {
-                background:#eef4fb; border-color:#c3d8ef;
-                color:var(--navy-900); transform:translateY(-2px);
-                box-shadow:0 4px 10px rgba(11,24,41,.10);
+                background: #f1f5f9;
+                border-color: #cbd5e1;
             }
             .tx-pg-btn.active {
-                background:var(--navy-900); border-color:var(--navy-900);
-                color:#fff; box-shadow:0 3px 10px rgba(11,24,41,.18);
+                background: #0f2744;
+                color: #e8c86a;
+                border-color: #0f2744;
+                cursor: pointer;
             }
-            .tx-pg-btn.active:hover { transform:translateY(-2px); box-shadow:0 5px 14px rgba(11,24,41,.22); }
-            .tx-pg-btn:disabled { opacity:.35; cursor:default; }
+            .tx-pg-btn:disabled { opacity:.35; cursor:not-allowed; }
         `;
         document.head.appendChild(s);
     }

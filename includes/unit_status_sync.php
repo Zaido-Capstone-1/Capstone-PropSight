@@ -3,10 +3,11 @@
  * Sync unit status from booking dates and statuses.
  *
  * Rules:
- * - booked:      has a confirmed/pending booking but check-in date is in the future
- * - occupied:    has an active/confirmed booking and today >= checkin_date
- * - vacant:      no active bookings (or all completed/cancelled)
+ * - booked:      has a CONFIRMED booking and check-in date is in the future
+ * - occupied:    has an active or confirmed booking and today >= checkin_date
+ * - vacant:      no active bookings (or all completed/cancelled/pending)
  * - maintenance: never touched by this function
+ * NOTE: pending bookings never affect unit status or tenant display.
  */
 function syncUnitAvailabilityFromBookings(mysqli $conn, int $unitId): bool
 {
@@ -43,7 +44,7 @@ function syncUnitAvailabilityFromBookings(mysqli $conn, int $unitId): bool
             SELECT COUNT(*) AS c
             FROM bookings
             WHERE unit_id = $unitId
-              AND status IN ('pending', 'confirmed')
+              AND status = 'confirmed'
               AND checkin_date > CURDATE()
               AND checkout_date > CURDATE()
         ");

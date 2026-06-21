@@ -28,14 +28,10 @@ $adminRow = mysqli_fetch_assoc(mysqli_query(
 
 $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adminRow['last_name'], 0, 1));
 ?>
-<style>
-    @media (max-width: 480px) {
-        #ps-toast-container {
-            bottom: 120px !important;
-        }
-    }
-</style>
+
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
+<link rel="stylesheet" href="../../assets/css/admin-css/settings.css">
+<?php include '../../lib/admin-queries/settings_queries.php'; ?>
 
 <div class="page-inner">
 
@@ -197,15 +193,14 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
 
         <!-- ── Backup & Recovery ────────────────────────────────── -->
         <div class="card">
-            <div class="card-header"
-                style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <div class="card-header backup-card-header">
                 <div>
                     <span class="card-title" style="display:block;margin-bottom:4px;">Backup &amp; Recovery</span>
                     <p style="font-size:12px;color:var(--text-soft);margin:0;">Generate a full SQL snapshot of the
                         database. Each backup can be downloaded or used to restore data.</p>
                 </div>
                 <button onclick="generateBackup()" id="generateBackupBtn"
-                    style="display:inline-flex;align-items:center;gap:7px;padding:9px 18px;background:var(--blue-500,#3b82f6);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;margin-left:16px;">
+                    style="display:inline-flex;align-items:center;gap:7px;padding:9px 18px;background:var(--blue-500,#3b82f6);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;">
                     <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
                         height="14">
                         <ellipse cx="12" cy="5" rx="9" ry="3" />

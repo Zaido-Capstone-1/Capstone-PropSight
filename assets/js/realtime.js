@@ -694,14 +694,11 @@
         const bellBtn = document.getElementById('notifBellBtn');
         if (!bellBtn) return;
 
-        // Build dropdown panel
-        const wrap = bellBtn.closest('div') || bellBtn.parentElement;
-        wrap.style.position = 'relative';
-
+        // Build dropdown panel — appended to body so sticky/fixed headers don't affect placement
         const drop = document.createElement('div');
         drop.id = 'notifDropdown';
         drop.style.cssText = [
-            'display:none;position:absolute;top:calc(100% + 8px);right:0;',
+            'display:none;position:fixed;',
             'width:320px;max-height:420px;overflow-y:auto;',
             'background:#fff;border:1px solid #e2e8f0;border-radius:12px;',
             'box-shadow:0 8px 32px rgba(0,0,0,0.13);z-index:9999;',
@@ -712,18 +709,15 @@
             const rect = bellBtn.getBoundingClientRect();
             const isMobile = window.innerWidth <= 640;
             if (isMobile) {
-                const top = Math.min(rect.bottom + 8, window.innerHeight - 220);
-                drop.style.position = 'fixed';
-                drop.style.top = `${Math.max(10, top)}px`;
-                drop.style.right = '12px';
-                drop.style.left = '12px';
-                drop.style.width = 'auto';
-                drop.style.maxHeight = `calc(100vh - ${Math.max(10, top) + 12}px)`;
-                drop.style.borderRadius = '14px';
+                drop.style.top = (rect.bottom + 8) + 'px';
+                drop.style.right = '8px';
+                drop.style.left = 'auto';
+                drop.style.width = '260px';
+                drop.style.maxHeight = '45vh';
+                drop.style.borderRadius = '12px';
             } else {
-                drop.style.position = 'absolute';
-                drop.style.top = 'calc(100% + 8px)';
-                drop.style.right = '0';
+                drop.style.top = (rect.bottom + 8) + 'px';
+                drop.style.right = (window.innerWidth - rect.right) + 'px';
                 drop.style.left = 'auto';
                 drop.style.width = '320px';
                 drop.style.maxHeight = '420px';
@@ -733,7 +727,9 @@
 
         drop.innerHTML = `
             <div style="display:flex;align-items:center;justify-content:space-between;
-                        padding:14px 16px 10px;border-bottom:1px solid #f1f5f9;">
+                        padding:14px 16px 10px;border-bottom:1px solid #f1f5f9;
+                        flex-shrink:0;background:#fff;border-radius:12px 12px 0 0;
+                        position:sticky;top:0;z-index:1;">
                 <span style="font-weight:700;font-size:0.95rem;color:#1e293b;">Notifications</span>
                 <button id="notifMarkAllBtn"
                     style="font-size:0.75rem;color:#2563eb;background:none;border:none;
@@ -744,24 +740,26 @@
                     Mark all read
                 </button>
             </div>
-            <div id="rt-notif-list" style="padding:4px 0;">
-                <div id="notifEmptyState"
-                     style="padding:32px 16px;text-align:center;color:#94a3b8;font-size:0.85rem;">
-                    No new notifications
+            <div id="notif-scroll-body" style="overflow-y:auto;flex:1;min-height:0;">
+                <div id="rt-notif-list" style="padding:4px 0;">
+                    <div id="notifEmptyState"
+                         style="padding:32px 16px;text-align:center;color:#94a3b8;font-size:0.85rem;">
+                        No new notifications
+                    </div>
                 </div>
-            </div>
-            <div id="notifViewMore" style="display:none;padding:0;border-top:1px solid #f1f5f9;">
-                <button id="notifViewMoreBtn"
-                    style="display:block;width:100%;border:none;background:none;color:#2563eb;
-                           font-size:0.8rem;font-weight:600;cursor:pointer;padding:10px 16px;
-                           border-radius:0 0 12px 12px;transition:background 0.15s;"
-                    onmouseenter="this.style.background='#eff6ff'"
-                    onmouseleave="this.style.background='none'">
-                    View more
-                </button>
+                <div id="notifViewMore" style="display:none;padding:0;border-top:1px solid #f1f5f9;">
+                    <button id="notifViewMoreBtn"
+                        style="display:block;width:100%;border:none;background:none;color:#2563eb;
+                               font-size:0.8rem;font-weight:600;cursor:pointer;padding:10px 16px;
+                               border-radius:0 0 12px 12px;transition:background 0.15s;"
+                        onmouseenter="this.style.background='#eff6ff'"
+                        onmouseleave="this.style.background='none'">
+                        View more
+                    </button>
+                </div>
             </div>`;
 
-        wrap.appendChild(drop);
+        document.body.appendChild(drop);
 
         // Add CSS for notif items dynamically
         const style = document.createElement('style');

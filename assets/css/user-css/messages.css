@@ -1,4 +1,7 @@
 /* ── MESSAGES PAGE ── */
+* { scrollbar-width: none; }          /* Firefox */
+*::-webkit-scrollbar { display: none; } /* Chrome / Edge / Safari */
+
 .msg-page {
     display: grid;
     grid-template-columns: 320px 1fr;

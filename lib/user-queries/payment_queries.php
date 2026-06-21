@@ -10,7 +10,8 @@ $bRes = mysqli_query($conn, "
         CONCAT('Booking #BK-', LPAD(b.booking_id, 6, '0')) AS unit_label,
         DATEDIFF(b.checkout_date, b.checkin_date)  AS nights,
         p.property_name,
-    COALESCE(pp.paid_at, py.payment_date) AS sort_datetime
+        COALESCE(pp.paid_at, py.created_at) AS display_datetime,
+        COALESCE(pp.paid_at, py.created_at) AS sort_datetime
     FROM payments py
     JOIN bookings    b  ON b.booking_id  = py.booking_id
     JOIN units       u  ON u.unit_id     = b.unit_id
@@ -125,7 +126,7 @@ foreach ($bills as $b) {
     $unified[] = [
         'type' => 'payment',
         'sort_date' => $b['sort_datetime'],
-        'date' => $b['payment_date'],
+        'date' => $b['display_datetime'] ?? $b['sort_datetime'] ?? $b['payment_date'],
         'property_name' => $b['property_name'] ?? '—',
         'unit_label' => $b['unit_label'] ?? '',
         'nights' => (int) ($b['nights'] ?? 0),

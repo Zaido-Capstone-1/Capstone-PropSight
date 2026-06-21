@@ -624,30 +624,54 @@
 
     .header-right {
         width: 100%;
-        flex-direction: column;
-        align-items: flex-start;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
         gap: 8px;
     }
 
-    .month-nav {
+    /* Let filter-bar's children become direct flex items of header-right,
+       so the month picker and category dropdown can sit side by side */
+    .filter-bar {
+        display: contents;
+    }
+
+    .filter-bar input[type="text"],
+    .filter-bar input#searchInput {
+        order: 1;
+        flex: 1 1 100%;
         width: 100%;
+    }
+
+    #expMonthPickerWrap {
+        order: 2;
+        flex: 1 1 calc(50% - 4px);
+        width: calc(50% - 4px);
+    }
+
+    #expMonthPickerBtn {
+        width: 100%;
+        height: 38px;
+        box-sizing: border-box;
         justify-content: space-between;
     }
 
-    .month-nav span {
-        flex: 1;
+    .filter-bar .exp-cat-dropdown-wrap {
+        order: 3;
+        flex: 1 1 calc(50% - 4px);
+        width: calc(50% - 4px);
     }
 
-    .filter-bar {
+    .filter-bar .exp-cat-trigger {
         width: 100%;
-        flex-direction: row;
-        gap: 8px;
+        height: 38px;
+        box-sizing: border-box;
+        justify-content: space-between;
     }
 
     .filter-bar input,
     .filter-bar select {
-        width: 0;
-        flex: 1;
+        width: 100%;
         min-width: 0;
     }
 

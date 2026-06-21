@@ -87,6 +87,13 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+/* Prevent body scroll when sidebar open, without killing the sidebar's own scroll on iOS */
+body.sidebar-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+}
+
 /* Keep page content below fixed top header */
 .page-shell {
     padding-top: 68px;
@@ -364,6 +371,7 @@ nav a.active {
     top: 0;
     right: 0;
     bottom: 0;
+    height: 100dvh;
     width: 340px;
     background: var(--white);
     z-index: 300;
@@ -617,7 +625,9 @@ nav a.active {
 
 .sidebar-body {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 16px 0;
 }
 
@@ -733,6 +743,7 @@ nav a.active {
 }
 
 .sidebar-foot {
+    flex-shrink: 0;
     padding: 16px 22px 24px;
     border-top: 1px solid var(--border-lt);
 }

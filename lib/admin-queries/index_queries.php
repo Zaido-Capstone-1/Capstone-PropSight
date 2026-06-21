@@ -189,6 +189,7 @@ $taskDotColor = [
     'closed' => 'var(--success)',
 ];
 $taskPriorityMap = [
+    'urgent' => ['bg' => 'var(--danger-light)', 'color' => 'var(--danger)', 'label' => 'Urgent'],
     'high' => ['bg' => 'var(--danger-light)', 'color' => 'var(--danger)', 'label' => 'High'],
     'medium' => ['bg' => 'var(--pending-light)', 'color' => 'var(--accent-dk)', 'label' => 'Medium'],
     'low' => ['bg' => 'var(--blue-50)', 'color' => 'var(--blue-500)', 'label' => 'Low'],

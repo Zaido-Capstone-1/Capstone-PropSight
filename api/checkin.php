@@ -13,7 +13,7 @@ function sendBookingStatusEmail(mysqli $conn, int $bookingId, string $statusKey)
             $conn,
             "SELECT b.*, u2.email AS user_email,
                     CONCAT(u2.first_name,' ',u2.last_name) AS user_name,
-                    COALESCE(un.unit_name, CONCAT('Unit ', un.unit_number)) AS unit_label
+                    COALESCE(NULLIF(un.unit_name,''), CONCAT('Unit ', un.unit_number)) AS unit_label
              FROM bookings b
              JOIN users u2 ON u2.user_id = b.user_id
              LEFT JOIN units un ON un.unit_id = b.unit_id
@@ -39,7 +39,7 @@ function sendBookingStatusEmail(mysqli $conn, int $bookingId, string $statusKey)
                 'badge_bg' => '#dbeafe',
                 'headline' => 'Thank You for Your Stay!',
                 'sub' => "We hope you had a wonderful time. We'd love to welcome you back again soon.",
-                'icon' => '&#9829;',
+                'icon' => '<span style="color:#ffffff;font-size:30px;line-height:1;">&#9825;</span>',
             ],
         ];
 
@@ -68,7 +68,7 @@ function sendBookingStatusEmail(mysqli $conn, int $bookingId, string $statusKey)
             </tr>
             <tr>
             <td style='background:{$accent};padding:28px 32px;text-align:center;'>
-                <table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 auto 16px;'><tr><td width='68' height='68' style='width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,0.22);text-align:center;vertical-align:middle;font-size:34px;color:#ffffff;line-height:68px;'>{$icon}</td></tr></table>
+                <table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 auto 16px;'><tr><td width='68' height='68' style='width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,0.22);text-align:center;vertical-align:middle;font-size:34px;color:#ffffff;line-height:68px;font-family:Arial,sans-serif;'>{$icon}</td></tr></table>
                 <h1 style='color:#ffffff;margin:0;font-size:20px;font-weight:700;line-height:1.3;letter-spacing:-0.2px;'>{$headline}</h1>
                 <p style='color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:13px;line-height:1.6;'>{$subline}</p>
             </td>

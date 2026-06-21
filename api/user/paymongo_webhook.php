@@ -8,8 +8,9 @@ function format_payment_method(string $method): string
         'gcash' => 'GCash',
         'paymaya', 'maya' => 'Maya',
         'card' => 'Card',
-        'dob', 'online_banking', 'bank_transfer' => 'Bank Transfer',
-        default => ucfirst($method) ?: 'PayMongo',
+        'cash' => 'Cash',
+        'dob', 'online_banking', 'bank_transfer', 'bank transfer', 'bank' => 'Bank Transfer',
+        default => ($method !== '' ? ucfirst($method) : 'PayMongo'),
     };
 }
 
@@ -218,6 +219,17 @@ if ($isLinkPaid || $isCheckoutPaid) {
     }
 
     // ── Regular booking payment ───────────────────────────────────────────
+    // Guard against double-insert (webhook + polling race condition)
+    $alreadyPaid = $conn->query("SELECT payment_id FROM payments WHERE booking_id=$bookingId AND payment_status='paid' LIMIT 1")->fetch_assoc();
+    $alreadyTxn  = $conn->query("SELECT id FROM transactions WHERE booking_id=$bookingId AND type='Income' LIMIT 1")->fetch_assoc();
+    if ($alreadyPaid || $alreadyTxn) {
+        // Payment already recorded (likely by the polling script) — just confirm booking status and exit
+        $conn->query("UPDATE bookings SET status='confirmed', paid_at=NOW() WHERE booking_id=$bookingId AND status IN ('pending','confirmed')");
+        http_response_code(200);
+        echo 'ok';
+        exit;
+    }
+
     $ins = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (?, ?, ?, ?, 'paid', ?)");
     $paymentDatetime = date('Y-m-d H:i:s');
     $date = date('Y-m-d');
@@ -238,8 +250,13 @@ if ($isLinkPaid || $isCheckoutPaid) {
     $desc = 'PayMongo payment (' . $paymentMethod . ') for Booking #' . $bookingId;
     $cat = 'Room Revenue';
     $typ = 'Income';
-    $txStmt = $conn->prepare("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, booking_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $txStmt->bind_param('ssssdsi', $ref, $desc, $cat, $typ, $amount, $date, $bookingId);
+
+    // Fetch property_id for this booking
+    $propRow = $conn->query("SELECT p.property_id FROM bookings b JOIN units u ON u.unit_id = b.unit_id JOIN properties p ON p.property_id = u.property_id WHERE b.booking_id = $bookingId LIMIT 1")->fetch_assoc();
+    $propertyId = $propRow ? (int) $propRow['property_id'] : null;
+
+    $txStmt = $conn->prepare("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, booking_id, property_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $txStmt->bind_param('ssssdsii', $ref, $desc, $cat, $typ, $amount, $date, $bookingId, $propertyId);
     $txStmt->execute();
     $txStmt->close();
 

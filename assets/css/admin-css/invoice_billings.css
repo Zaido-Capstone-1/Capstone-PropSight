@@ -798,18 +798,45 @@
 
     .inv-filters {
         width: 100%;
-        flex-direction: row;
+        display: flex;
+        flex-wrap: wrap;
         gap: 8px;
     }
 
     .inv-search {
-        flex: 1;
+        order: 1;
+        flex: 1 1 100%;
+        width: 100%;
         min-width: 0;
     }
 
     .inv-search input {
         width: 100% !important;
         box-sizing: border-box;
+    }
+
+    #invMonthPickerWrap {
+        order: 2;
+        flex: 1 1 calc(50% - 4px);
+        width: calc(50% - 4px);
+    }
+
+    #invMonthPickerBtn {
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: space-between;
+    }
+
+    .inv-status-dropdown-wrap {
+        order: 3;
+        flex: 1 1 calc(50% - 4px);
+        width: calc(50% - 4px);
+    }
+
+    .inv-status-dropdown-wrap .inv-status-trigger {
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: space-between;
     }
 
     .inv-select {
@@ -848,15 +875,15 @@
 .inv-page-controls {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
 }
 
 .inv-chevron-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border: 1.5px solid var(--inv-border, #e8edf2);
     border-radius: 6px;
     background: #fff;
@@ -879,18 +906,18 @@
 .inv-page-numbers {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
 }
 
 .inv-pg-num {
-    min-width: 28px;
-    height: 28px;
-    padding: 0 6px;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
     border: 1.5px solid var(--inv-border, #e8edf2);
     border-radius: 6px;
     background: #fff;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 0.78rem;
+    font-weight: 600;
     color: var(--inv-text, #1a2332);
     cursor: pointer;
     transition: all .15s;
@@ -900,14 +927,20 @@
 }
 
 .inv-pg-num:hover:not(.active) {
-    border-color: var(--inv-text, #1a2332);
+    background: #f1f5f9;
+    border-color: #cbd5e1;
 }
 
 .inv-pg-num.active {
-    background: var(--inv-text, #1a2332);
-    border-color: var(--inv-text, #1a2332);
-    color: #fff;
-    font-weight: 600;
+    background: #0f2744;
+    color: #e8c86a;
+    border-color: #0f2744;
+    cursor: pointer;
+}
+
+.inv-chevron-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
 }
 
 .inv-pg-ellipsis {
@@ -1042,6 +1075,14 @@
 .table-wrap {
     overflow-x: auto;
     padding: 0 24px;
+}
+
+.table-wrap table {
+    min-width: 700px;
+}
+
+.pay-pagination-wrap {
+    border-top: 1.5px solid var(--border);
 }
 
 .inv-input-error {

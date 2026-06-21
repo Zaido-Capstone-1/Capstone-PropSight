@@ -14,7 +14,7 @@
 </div>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-<aside class="profile-sidebar" id="profileSidebar">
+<aside class="profile-sidebar" id="profileSidebar" style="display:flex;flex-direction:column;height:100dvh;overflow:hidden;">
     <div class="sidebar-hdr">
         <button class="sidebar-close" id="sidebarClose">✕</button>
         <div class="sb-avatar">
@@ -41,7 +41,7 @@
             <?php endif; ?>
         </div>
     </div>
-    <div class="sidebar-body">
+    <div class="sidebar-body" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;">
         <div class="sb-section-label">Account</div>
         <?php foreach ($nav_items as $key => $item):
             $isActive = ($active_nav === $key); ?>
@@ -84,7 +84,7 @@
             <?php endif; ?>
         <?php endforeach; ?>
     </div>
-    <div class="sidebar-foot">
+    <div class="sidebar-foot" style="flex-shrink:0;">
         <a href="../../process/logout.php" class="btn-logout">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />

@@ -264,9 +264,10 @@ try {
         $paymentMethod = format_payment_method(resolve_payment_method($conn, $row, $link));
 
         // Check if payment record already exists for this booking
-        $existingPayment = $conn->query("SELECT payment_id FROM payments WHERE booking_id=$bookingId LIMIT 1")->fetch_assoc();
+        $existingPayment = $conn->query("SELECT payment_id FROM payments WHERE booking_id=$bookingId AND payment_status='paid' LIMIT 1")->fetch_assoc();
+        $existingTxn    = $conn->query("SELECT id FROM transactions WHERE booking_id=$bookingId AND type='Income' LIMIT 1")->fetch_assoc();
 
-        if (!$existingPayment) {
+        if (!$existingPayment && !$existingTxn) {
             $pmPaymentData = $conn->query("SELECT amount FROM paymongo_payments WHERE paymongo_link_id='" . $conn->real_escape_string($row['paymongo_link_id']) . "' LIMIT 1")->fetch_assoc();
             $amount = (float) ($pmPaymentData['amount'] ?? 0);
 
@@ -284,7 +285,9 @@ try {
             // Save transaction with the resolved method in description
             $ref = 'PMT-' . $newPaymentId;
             $desc = 'PayMongo payment (' . $paymentMethod . ') for Booking #' . $bookingId;
-            $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, booking_id) VALUES ('$ref', '" . $conn->real_escape_string($desc) . "', 'Room Revenue', 'Income', $amount, '$date', $bookingId)");
+            $propIdRow = $conn->query("SELECT p.property_id FROM bookings b JOIN units u ON u.unit_id = b.unit_id JOIN properties p ON p.property_id = u.property_id WHERE b.booking_id = $bookingId LIMIT 1")->fetch_assoc();
+            $txPropId = $propIdRow ? (int) $propIdRow['property_id'] : 'NULL';
+            $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, booking_id, property_id) VALUES ('$ref', '" . $conn->real_escape_string($desc) . "', 'Room Revenue', 'Income', $amount, '$date', $bookingId, $txPropId)");
 
             error_log("check_payment_status: Created payment record for booking $bookingId, amount: $amount, method: $paymentMethod");
         }

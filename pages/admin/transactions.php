@@ -21,77 +21,7 @@ include '../../includes/db.php';
 include '../../includes/layout_open.php';
 
 $year = (int) date('Y');
-
-// ── Total Income (full year) ──────────────────────────────────────────────────
-$stmtIncome = mysqli_prepare($conn, "
-    SELECT COALESCE(SUM(amount), 0)
-    FROM transactions
-    WHERE type = 'Income' AND YEAR(transaction_date) = ?
-");
-mysqli_stmt_bind_param($stmtIncome, 'i', $year);
-mysqli_stmt_execute($stmtIncome);
-mysqli_stmt_bind_result($stmtIncome, $totalIncomeYear);
-mysqli_stmt_fetch($stmtIncome);
-mysqli_stmt_close($stmtIncome);
-$totalIncomeYear = (int) $totalIncomeYear;
-
-// ── Total Expenses (full year) ────────────────────────────────────────────────
-$stmtExpense = mysqli_prepare($conn, "
-    SELECT COALESCE(SUM(ABS(amount)), 0)
-    FROM transactions
-    WHERE type = 'Expense' AND YEAR(transaction_date) = ?
-");
-mysqli_stmt_bind_param($stmtExpense, 'i', $year);
-mysqli_stmt_execute($stmtExpense);
-mysqli_stmt_bind_result($stmtExpense, $totalExpenseYear);
-mysqli_stmt_fetch($stmtExpense);
-mysqli_stmt_close($stmtExpense);
-$totalExpenseYear = (int) $totalExpenseYear;
-
-$netProfitYear = $totalIncomeYear - $totalExpenseYear;
-
-// ── Transaction count (full year) ─────────────────────────────────────────────
-$stmtCount = mysqli_prepare($conn, "
-    SELECT COUNT(*) FROM transactions WHERE YEAR(transaction_date) = ?
-");
-mysqli_stmt_bind_param($stmtCount, 'i', $year);
-mysqli_stmt_execute($stmtCount);
-mysqli_stmt_bind_result($stmtCount, $totalCountYear);
-mysqli_stmt_fetch($stmtCount);
-mysqli_stmt_close($stmtCount);
-$totalCountYear = (int) $totalCountYear;
-
-// ── All rows for the table (JS handles client-side filtering) ─────────────────
-$stmtAll = mysqli_prepare($conn, "
-    SELECT
-        t.id,
-        DATE_FORMAT(t.transaction_date, '%b %d') AS date_label,
-        DATE_FORMAT(t.transaction_date, '%Y-%m')  AS month_val,
-        t.reference_no,
-        t.description,
-        t.category,
-        p.property_name   AS property_name,
-        t.type,
-        t.amount
-    FROM transactions t
-    LEFT JOIN properties p ON p.property_id = t.property_id
-    WHERE YEAR(t.transaction_date) = ?
-    ORDER BY t.transaction_date DESC
-");
-mysqli_stmt_bind_param($stmtAll, 'i', $year);
-mysqli_stmt_execute($stmtAll);
-$result = mysqli_stmt_get_result($stmtAll);
-$txns = mysqli_fetch_all($result, MYSQLI_ASSOC);
-mysqli_stmt_close($stmtAll);
-
-// Dynamic category list for the dropdown
-$categories = array_values(array_unique(array_column($txns, 'category')));
-sort($categories);
-
-// Month picker initial values
-$txn_filter_month = date('Y-m');
-$txn_cur_picker_month = (int) date('m');
-$txn_cur_picker_year = (int) date('Y');
+require_once '../../lib/admin-queries/transactions_queries.php';
 
 function formatPeso(int $n): string
 {
@@ -111,13 +41,13 @@ function formatPeso(int $n): string
         </div>
         <div class="dash-header-actions">
             <button class="btn btn-secondary" id="exportCsvBtn">
-            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Export CSV
-        </button>
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Export CSV
+            </button>
         </div>
     </div>
 
@@ -334,32 +264,6 @@ function formatPeso(int $n): string
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
-                    <tfoot id="txnTableFoot" style="display:none;">
-                        <tr>
-                            <td colspan="7">
-                                <div class="txn-pagination">
-                                    <span class="txn-page-info" id="txnPageInfo"></span>
-                                    <div class="txn-page-controls" id="txnPageControls" style="display:none;">
-                                        <button type="button" id="txnPrevBtn" class="txn-chevron-btn"
-                                            onclick="txnChangePage(-1)" disabled>
-                                            <svg fill="none" stroke="currentColor" stroke-width="2.2"
-                                                viewBox="0 0 24 24" width="14" height="14">
-                                                <polyline points="15 18 9 12 15 6" />
-                                            </svg>
-                                        </button>
-                                        <span id="txnPageNumbers" class="txn-page-numbers"></span>
-                                        <button type="button" id="txnNextBtn" class="txn-chevron-btn"
-                                            onclick="txnChangePage(1)" disabled>
-                                            <svg fill="none" stroke="currentColor" stroke-width="2.2"
-                                                viewBox="0 0 24 24" width="14" height="14">
-                                                <polyline points="9 18 15 12 9 6" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    </tfoot>
                 </table>
 
                 <div id="emptyState" style="display:none;text-align:center;padding:52px 16px;">
@@ -369,6 +273,30 @@ function formatPeso(int $n): string
                         <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
                     <div style="color:#aaa;font-size:14px;">No transactions match your filters.</div>
+                </div>
+            </div>
+
+            <!-- Pagination outside table-wrap — never scrolls horizontally -->
+            <div id="txnTableFoot" class="pay-pagination-wrap" style="display:none;">
+                <div class="txn-pagination">
+                    <span class="txn-page-info" id="txnPageInfo"></span>
+                    <div class="txn-page-controls" id="txnPageControls" style="display:none;">
+                        <button type="button" id="txnPrevBtn" class="txn-chevron-btn"
+                            onclick="txnChangePage(-1)" disabled>
+                            <svg fill="none" stroke="currentColor" stroke-width="2.2"
+                                viewBox="0 0 24 24" width="14" height="14">
+                                <polyline points="15 18 9 12 15 6" />
+                            </svg>
+                        </button>
+                        <span id="txnPageNumbers" class="txn-page-numbers"></span>
+                        <button type="button" id="txnNextBtn" class="txn-chevron-btn"
+                            onclick="txnChangePage(1)" disabled>
+                            <svg fill="none" stroke="currentColor" stroke-width="2.2"
+                                viewBox="0 0 24 24" width="14" height="14">
+                                <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

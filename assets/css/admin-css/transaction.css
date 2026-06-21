@@ -113,7 +113,7 @@
 .txn-page-controls {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
 }
 
 /* Chevron prev/next — icon-only */
@@ -121,8 +121,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border: 1.5px solid var(--border, #e5e7eb);
     border-radius: 6px;
     background: var(--white, #fff);
@@ -146,18 +146,18 @@
 .txn-page-numbers {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
 }
 
 .txn-pg-num {
-    min-width: 28px;
-    height: 28px;
-    padding: 0 6px;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
     border: 1.5px solid var(--border, #e5e7eb);
     border-radius: 6px;
     background: var(--white, #fff);
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 0.78rem;
+    font-weight: 600;
     color: var(--text, #1e2533);
     cursor: pointer;
     transition: all .15s;
@@ -167,14 +167,20 @@
 }
 
 .txn-pg-num:hover:not(.active) {
-    border-color: var(--text, #1e2533);
+    background: #f1f5f9;
+    border-color: #cbd5e1;
 }
 
 .txn-pg-num.active {
-    background: var(--text, #1e2533);
-    border-color: var(--text, #1e2533);
-    color: #fff;
-    font-weight: 600;
+    background: #0f2744;
+    color: #e8c86a;
+    border-color: #0f2744;
+    cursor: pointer;
+}
+
+.txn-chevron-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
 }
 
 .txn-pg-ellipsis {
@@ -336,4 +342,12 @@
         left: 0;
         right: auto;
     }
+}
+/* ── Horizontal scroll + fixed pagination ── */
+.table-wrap table {
+    min-width: 700px;
+}
+
+.pay-pagination-wrap {
+    border-top: 1.5px solid var(--border);
 }

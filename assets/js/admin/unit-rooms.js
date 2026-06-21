@@ -357,7 +357,7 @@ async function openViewModal(unit) {
                   maintenance: { bg:'rgba(180,83,9,0.88)',   color:'#fef3c7',  lbl:'MAINTENANCE' },
                 };
                 const sb = STATUS_BADGE[status] || STATUS_BADGE.occupied;
-                return '<span style="font-family:DM Sans,sans-serif;font-size:0.58rem;font-weight:800;letter-spacing:0.09em;padding:3px 9px;border-radius:99px;background:'+sb.bg+';color:'+sb.color+';">'+sb.lbl+'</span>';
+                return '<span style="font-family:DM Sans,sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.09em;padding:3px 9px;border-radius:99px;background:'+sb.bg+';color:'+sb.color+';">'+sb.lbl+'</span>';
               })()}
             </div>
           </div>
@@ -439,11 +439,11 @@ async function openViewModal(unit) {
                   ${unit.tenant_email ? `<div style="font-size:12px;color:var(--text-soft);margin-top:2px;">${unit.tenant_email}</div>` : ''}
                 </div>
                 ${status === 'occupied'
-                  ? `<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;background:#dcfce7;border:1px solid #86efac;color:#16a34a;font-family:'DM Sans',sans-serif;font-size:0.58rem;font-weight:800;letter-spacing:0.09em;">
+                  ? `<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;background:#dcfce7;border:1px solid #86efac;color:#16a34a;font-family:'DM Sans',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.09em;">
                       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:11px;height:11px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                       ACTIVE
                     </span>`
-                  : `<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;background:#dbeafe;border:1px solid #93c5fd;color:#1d4ed8;font-family:'DM Sans',sans-serif;font-size:0.58rem;font-weight:800;letter-spacing:0.09em;">
+                  : `<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;background:#dbeafe;border:1px solid #93c5fd;color:#1d4ed8;font-family:'DM Sans',sans-serif;font-size:0.58rem;font-weight:750;letter-spacing:0.09em;">
                       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:11px;height:11px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                       BOOKED
                     </span>`}
@@ -843,6 +843,21 @@ async function openViewModal(unit) {
             card.dataset.status = newStatus;
             const pill = card.querySelector('.status-pill');
             if (pill) { pill.className = `status-pill ${newStatus}`; pill.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1); }
+
+            // Update top-right overlay badge
+            const availMeta = {
+              vacant:      { bg: 'rgba(22,163,74,0.9)',   color: '#fff',     lbl: 'AVAILABLE' },
+              booked:      { bg: 'rgba(37,99,235,0.9)',   color: '#fff',     lbl: 'BOOKED' },
+              occupied:    { bg: 'rgba(185,28,28,0.85)',  color: '#fecaca',  lbl: 'OCCUPIED' },
+              maintenance: { bg: 'rgba(180,83,9,0.88)',   color: '#fef3c7',  lbl: 'MAINTENANCE' },
+            };
+            const am = availMeta[newStatus] || availMeta.vacant;
+            const availBadge = card.querySelector('.avail-badge');
+            if (availBadge) {
+              availBadge.style.background = am.bg;
+              availBadge.style.color = am.color;
+              availBadge.textContent = am.lbl;
+            }
             const titleEl = card.querySelector('.unit-title');
             if (titleEl) titleEl.textContent = mergedUnit.unit_number || '—';
             const priceEl = card.querySelector('.price-value');

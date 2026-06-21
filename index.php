@@ -521,70 +521,463 @@ if (isset($conn) && $conn) {
         </div>
     </section>
 
-    <section class="rooms" id="rooms">
-        <div class="rooms-header reveal">
-            <div class="eyebrow" style="justify-content:center;"><span
-                    style="width:24px;height:1.5px;background:var(--gold);display:block;"></span>&nbsp;Featured Rooms
+
+    <section class="lp-avail-section" id="rooms">
+        <style>
+        /* ══ Availability Section ══════════════════════════════════════════ */
+        .lp-avail-section {
+            background: var(--blue-50, #f0f7ff);
+            padding: 64px 5vw;
+            position: relative;
+            overflow: hidden;
+        }
+        .lp-avail-inner {
+            max-width: 1160px;
+            margin: 0 auto;
+        }
+        /* Header */
+        .lp-avail-hdr { text-align: center; margin-bottom: 40px; }
+        .lp-eyebrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+            color: var(--gold, #c9aa71);
+            margin-bottom: 14px;
+        }
+        .lp-eyebrow span { display: block; width: 26px; height: 1.5px; background: var(--gold, #c9aa71); }
+        .lp-avail-hdr h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 600;
+            color: var(--text-dark, #0b1829);
+            line-height: 1.15;
+            margin: 0 0 10px;
+        }
+        .lp-avail-hdr h2 em { font-style: italic; color: var(--gold, #c9aa71); }
+        .lp-avail-hdr p { color: var(--text-soft, #64748b); font-size: .9rem; max-width: 440px; margin: 0 auto; line-height: 1.65; }
+        /* Picker card */
+        .lp-picker-card {
+            background: var(--white, #fff);
+            border: 1.5px solid var(--border-light, #e2e8f0);
+            border-radius: 20px;
+            box-shadow: 0 2px 16px rgba(11,24,41,.06);
+            padding: 24px 28px;
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+        }
+        .lp-picker-field-wrap { flex: 1; min-width: 140px; }
+        .lp-picker-field-wrap.narrow { flex: 0 0 auto; min-width: 0; }
+        /* Guests stepper */
+        .lp-guests-field {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: var(--blue-50, #f0f7ff);
+            border: 1.5px solid var(--border-light, #e2e8f0);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color .18s;
+        }
+        .lp-guests-field:focus-within { border-color: var(--gold, #c9aa71); }
+        .lp-guests-btn {
+            width: 34px; height: 42px;
+            border: none; background: transparent;
+            font-size: 1rem; font-weight: 700;
+            color: var(--navy-700, #1a3a5c);
+            cursor: pointer; flex-shrink: 0;
+            transition: background .15s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .lp-guests-btn:hover { background: rgba(11,24,41,.06); }
+        .lp-guests-num {
+            flex: 1; text-align: center;
+            font-size: .9rem; font-weight: 700;
+            color: var(--text-dark, #0b1829);
+            min-width: 28px;
+            pointer-events: none;
+        }
+        /* Unit type select */
+        .lp-type-field {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--blue-50, #f0f7ff);
+            border: 1.5px solid var(--border-light, #e2e8f0);
+            border-radius: 12px;
+            padding: 0 14px;
+            transition: border-color .18s;
+            height: 42px;
+        }
+        .lp-type-field:focus-within { border-color: var(--gold, #c9aa71); }
+        .lp-type-field > svg { width: 14px; height: 14px; stroke: var(--navy-500, #2563a8); fill: none; flex-shrink: 0; }
+        .lp-type-select {
+            border: none; background: transparent; outline: none;
+            font-size: .87rem; font-weight: 600;
+            color: var(--text-dark, #0b1829);
+            font-family: inherit; cursor: pointer;
+            width: 100%; appearance: none;
+        }
+        .lp-picker-label {
+            font-size: .66rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--text-soft, #64748b);
+            margin-bottom: 8px;
+        }
+        .lp-date-field {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--blue-50, #f0f7ff);
+            border: 1.5px solid var(--border-light, #e2e8f0);
+            border-radius: 12px;
+            padding: 11px 14px;
+            cursor: pointer;
+            transition: border-color .18s, background .18s;
+            position: relative;
+        }
+        .lp-date-field:hover, .lp-date-field:focus-within {
+            border-color: var(--gold, #c9aa71);
+            background: var(--white, #fff);
+        }
+        .lp-date-field > svg { width: 15px; height: 15px; stroke: var(--navy-500, #2563a8); flex-shrink: 0; fill: none; }
+        .lp-date-field input[type="date"] {
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: .88rem;
+            font-weight: 600;
+            color: var(--text-dark, #0b1829);
+            font-family: inherit;
+            cursor: pointer;
+            width: 100%;
+        }
+        .lp-date-field input[type="date"]::-webkit-calendar-picker-indicator {
+            opacity: 0;
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            cursor: pointer;
+        }
+        .lp-picker-actions { flex-shrink: 0; display: flex; gap: 10px; align-items: center; }
+        .btn-lp-check {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 99px;
+            background: var(--navy-800, #112240);
+            color: var(--gold, #c9aa71);
+            border: none;
+            font-size: .83rem;
+            font-weight: 800;
+            letter-spacing: .04em;
+            cursor: pointer;
+            font-family: inherit;
+            transition: opacity .18s, transform .18s;
+            white-space: nowrap;
+        }
+        .btn-lp-check:hover  { opacity: .85; transform: translateY(-1px); }
+        .btn-lp-check > svg  { width: 14px; height: 14px; stroke: var(--gold, #c9aa71); fill: none; }
+        .lp-check-icon       { display: block; }
+        .lp-spinner {
+            width: 14px; height: 14px;
+            border: 2px solid rgba(201,170,113,.3);
+            border-top-color: var(--gold, #c9aa71);
+            border-radius: 50%;
+            animation: lpSpin .6s linear infinite;
+            display: none;
+        }
+        .btn-lp-check.loading .lp-check-icon { display: none; }
+        .btn-lp-check.loading .lp-spinner    { display: block; }
+        @keyframes lpSpin { to { transform: rotate(360deg); } }
+        .btn-lp-clear {
+            padding: 11px 16px;
+            border-radius: 99px;
+            border: 1.5px solid var(--border-light, #e2e8f0);
+            background: transparent;
+            font-size: .79rem;
+            font-weight: 600;
+            color: var(--text-soft, #64748b);
+            cursor: pointer;
+            font-family: inherit;
+            transition: border-color .18s, color .18s;
+            display: none;
+        }
+        .btn-lp-clear:hover   { border-color: var(--navy-400, #3b82d4); color: var(--navy-700, #1a3a5c); }
+        .btn-lp-clear.visible { display: block; }
+        /* Results */
+        .lp-avail-results { min-height: 60px; }
+        .lp-prompt-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-soft, #64748b);
+            border: 1.5px dashed var(--border-light, #e2e8f0);
+            border-radius: 16px;
+            background: var(--white, #fff);
+        }
+        .lp-prompt-state svg { width: 36px; height: 36px; display: block; margin: 0 auto 12px; fill: none; stroke: currentColor; opacity: .4; }
+        .lp-prompt-state p   { font-size: .86rem; margin: 0; }
+        .lp-results-hdr {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .lp-results-hdr h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-dark, #0b1829);
+            margin: 0;
+        }
+        .lp-avail-badge {
+            background: var(--navy-800, #112240);
+            color: var(--gold, #c9aa71);
+            font-size: .7rem;
+            font-weight: 800;
+            padding: 3px 11px;
+            border-radius: 99px;
+        }
+        .lp-range-note { font-size: .75rem; color: var(--text-soft, #64748b); margin-left: auto; }
+        .lp-empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-soft, #64748b);
+            border: 1.5px dashed var(--border-light, #e2e8f0);
+            border-radius: 16px;
+            background: var(--white, #fff);
+        }
+        .lp-empty-state svg { width: 36px; height: 36px; display: block; margin: 0 auto 12px; fill: none; stroke: currentColor; opacity: .3; }
+        .lp-empty-state p   { font-size: .86rem; margin: 0; }
+        /* Unit cards */
+        .lp-units-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+        .lp-unit-card {
+            background: var(--white, #fff);
+            border: 1px solid var(--border-light, #e2e8f0);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(11,24,41,.05);
+            transition: transform .2s, box-shadow .2s, border-color .2s;
+            cursor: pointer;
+        }
+        .lp-unit-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(11,24,41,.1); border-color: var(--navy-200, #bfdbf7); }
+        .lp-card-img { position: relative; height: 132px; overflow: hidden; background: linear-gradient(135deg,#1e2d40,#2c3e50); }
+        .lp-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
+        .lp-unit-card:hover .lp-card-img img { transform: scale(1.04); }
+        .lp-card-type { position: absolute; top: 9px; left: 9px; background: rgba(11,24,41,.72); color: #fff; font-size: .6rem; font-weight: 800; letter-spacing: .08em; padding: 3px 9px; border-radius: 99px; }
+        .lp-until-pill { position: absolute; bottom: 8px; left: 8px; right: 8px; background: rgba(11,24,41,.65); color: rgba(255,255,255,.9); font-size: .66rem; font-weight: 600; padding: 4px 10px; border-radius: 7px; display: flex; align-items: center; gap: 4px; }
+        .lp-until-pill > svg { width: 10px; height: 10px; fill: none; stroke: currentColor; flex-shrink: 0; }
+        .lp-until-pill span { margin-left: auto; font-weight: 800; color: #4ade80; }
+        .lp-card-body  { padding: 12px 13px 14px; }
+        .lp-card-name  { font-weight: 700; font-size: .84rem; color: var(--text-dark, #0b1829); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lp-card-loc   { font-size: .68rem; color: var(--text-soft, #64748b); display: flex; align-items: center; gap: 3px; margin-bottom: 10px; }
+        .lp-card-loc svg { width: 10px; height: 10px; fill: none; stroke: var(--text-soft, #64748b); flex-shrink: 0; }
+        .lp-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .lp-card-price  { font-weight: 800; font-size: .88rem; color: var(--text-dark, #0b1829); }
+        .lp-card-price sub { font-size: .6em; font-weight: 400; color: var(--text-soft, #64748b); }
+        .btn-lp-view { padding: 6px 13px; border-radius: 8px; background: var(--navy-800, #112240); color: var(--gold, #c9aa71); border: none; font-size: .71rem; font-weight: 800; cursor: pointer; font-family: inherit; transition: opacity .15s; }
+        .btn-lp-view:hover { opacity: .85; }
+        /* CTA nudge */
+        .lp-avail-cta  { text-align: center; margin-top: 40px; }
+        .lp-avail-cta p { color: var(--text-soft, #64748b); font-size: .85rem; margin: 0 0 12px; }
+        .lp-avail-cta a { display: inline-block; padding: 11px 28px; border-radius: 99px; background: var(--navy-800, #112240); color: var(--gold, #c9aa71); font-size: .82rem; font-weight: 700; text-decoration: none; transition: opacity .18s; letter-spacing: .04em; }
+        .lp-avail-cta a:hover { opacity: .85; }
+        </style>
+
+        <div class="lp-avail-inner">
+
+            <!-- Header -->
+            <div class="lp-avail-hdr reveal">
+                <div class="lp-eyebrow"><span></span>Availability<span></span></div>
+                <h2>Check <em>Unit</em> Availability</h2>
+                <p>Pick a date — or a date range — to instantly see which units are open and for how long.</p>
             </div>
-            <h2 class="section-heading">Find Your <em>Perfect</em> Room</h2>
+
+            <!-- Date Picker -->
+            <div class="lp-picker-card reveal">
+
+                <!-- Check-in -->
+                <div class="lp-picker-field-wrap">
+                    <div class="lp-picker-label">Check-in</div>
+                    <div class="lp-date-field" onclick="document.getElementById('lpDateIn').showPicker?.()">
+                        <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <input type="date" id="lpDateIn" onchange="lpOnDateChange()">
+                    </div>
+                </div>
+
+                <!-- Check-out -->
+                <div class="lp-picker-field-wrap">
+                    <div class="lp-picker-label">Check-out <span style="font-weight:400;letter-spacing:0;text-transform:none;font-size:.68rem;">(optional)</span></div>
+                    <div class="lp-date-field" onclick="document.getElementById('lpDateOut').showPicker?.()">
+                        <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <input type="date" id="lpDateOut" onchange="lpOnDateChange()">
+                    </div>
+                </div>
+
+                <!-- Guests -->
+                <div class="lp-picker-field-wrap narrow" style="min-width:110px;">
+                    <div class="lp-picker-label">Guests</div>
+                    <div class="lp-guests-field">
+                        <button class="lp-guests-btn" onclick="lpAdjGuests(-1)" type="button">−</button>
+                        <span class="lp-guests-num" id="lpGuestsNum">2</span>
+                        <button class="lp-guests-btn" onclick="lpAdjGuests(1)" type="button">+</button>
+                    </div>
+                </div>
+
+                <!-- Unit Type -->
+                <div class="lp-picker-field-wrap" style="min-width:150px;">
+                    <div class="lp-picker-label">Unit Type</div>
+                    <div class="lp-type-field">
+                        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        <select class="lp-type-select" id="lpUnitType">
+                            <option value="">Any type</option>
+                            <?php
+                            $lpTypes = [];
+                            foreach ($units as $u) {
+                                $t = trim((string)($u['unit_type'] ?? ''));
+                                if ($t && !in_array($t, $lpTypes)) $lpTypes[] = $t;
+                            }
+                            sort($lpTypes);
+                            foreach ($lpTypes as $t):
+                            ?>
+                            <option value="<?php echo htmlspecialchars(strtolower($t)); ?>">
+                                <?php echo htmlspecialchars(ucfirst($t)); ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="lp-picker-actions">
+                    <button class="btn-lp-clear" id="lpClearBtn" onclick="lpClearAvail()">Clear</button>
+                    <button class="btn-lp-check" id="lpCheckBtn" onclick="lpCheckAvail()">
+                        <svg class="lp-check-icon" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <div class="lp-spinner"></div>
+                        Check Availability
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="lp-avail-results" id="lpAvailResults">
+                <div class="lp-prompt-state">
+                    <svg viewBox="0 0 24 24" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <p>Select a check-in date to see available units.</p>
+                </div>
+            </div>
+
+            <!-- Guest CTA -->
+            <div class="lp-avail-cta">
+                <p>Found the perfect unit? Create an account to book your stay.</p>
+                <a href="pages/user/register.php">Get Started — It's Free</a>
+            </div>
         </div>
 
-        <div class="rooms-grid">
-            <?php if (empty($landingUnits)): ?>
-                <div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text-soft);">
-                    No rooms available right now.
-                </div>
-            <?php else: ?>
-                <?php foreach ($landingUnits as $idx => $unit):
-                    $name = landing_unit_name($unit);
-                    $image = hero_img_path($unit['image_path']);
-                    $amenities = $amenitiesMap[$unit['unit_id']] ?? [];
-                    $location = trim(($unit['property_name'] ?? '') . (!empty($unit['city']) ? ', ' . $unit['city'] : ''));
-                    $roomData = [
-                        'name' => $name,
-                        'type' => $unit['unit_type'] ?: 'Room',
-                        'location' => $location,
-                        'price' => '₱' . number_format((float) ($unit['rent_amount'] ?? 0), 0),
-                        'description' => $unit['description'] ?: 'Comfortable room with essential amenities.',
-                        'image' => $image,
-                        'amenities' => array_map(function ($am) {
-                            return $am['name'] ?? ''; }, $amenities),
-                    ];
-                    $badgeClass = '';
-                    $badgeLabel = !empty($unit['unit_type']) ? ucwords(trim((string) $unit['unit_type'])) : 'Unit';
-                    ?>
-                    <div class="room-card reveal <?php echo $idx % 2 ? 'reveal-delay-1' : ''; ?>">
-                        <div class="room-card-img">
-                            <div class="room-card-img-bg r-img-<?php echo ($idx % 6) + 1; ?>">
-                                <img src="<?php echo htmlspecialchars($image); ?>" alt="<?php echo htmlspecialchars($name); ?>">
-                            </div>
-                            <span
-                                class="room-badge <?php echo $badgeClass; ?>"><?php echo htmlspecialchars($badgeLabel); ?></span>
-                        </div>
-                        <div class="room-card-body">
-                            <div class="room-name"><?php echo htmlspecialchars($name); ?></div>
-                            <div class="room-meta">
-                                <span><svg viewBox="0 0 24 24">
-                                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                                    </svg><?php echo htmlspecialchars($unit['unit_type'] ?: 'Room'); ?></span>
-                                <span><svg viewBox="0 0 24 24">
-                                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                                        <circle cx="9" cy="7" r="4" />
-                                    </svg>2 Guests</span>
-                            </div>
-                            <div class="room-divider"></div>
-                            <div class="room-price-row">
-                                <div class="room-price">₱<?php echo number_format((float) ($unit['rent_amount'] ?? 0), 0); ?>
-                                    <sub>/ night</sub></div>
-                                <button class="btn-room"
-                                    data-room="<?php echo htmlspecialchars(json_encode($roomData), ENT_QUOTES); ?>">View
-                                    Room</button>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
+        <script>
+        (function () {
+            const SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const today = new Date().toISOString().slice(0,10);
+            document.getElementById('lpDateIn').min  = today;
+            document.getElementById('lpDateOut').min = today;
+
+            let _lpGuests = 2;
+
+            window.lpAdjGuests = function (delta) {
+                _lpGuests = Math.min(10, Math.max(1, _lpGuests + delta));
+                document.getElementById('lpGuestsNum').textContent = _lpGuests;
+            };
+
+            window.lpOnDateChange = function () {
+                const inVal = document.getElementById('lpDateIn').value;
+                const outEl = document.getElementById('lpDateOut');
+                if (inVal) {
+                    const next = new Date(inVal + 'T00:00:00');
+                    next.setDate(next.getDate() + 1);
+                    outEl.min = next.toISOString().slice(0,10);
+                    if (outEl.value && outEl.value <= inVal) outEl.value = '';
+                }
+                document.getElementById('lpClearBtn').classList.toggle('visible', !!inVal);
+            };
+
+            window.lpClearAvail = function () {
+                document.getElementById('lpDateIn').value  = '';
+                document.getElementById('lpDateOut').value = '';
+                const typeEl = document.getElementById('lpUnitType');
+                if (typeEl) typeEl.value = '';
+                _lpGuests = 2;
+                const gEl = document.getElementById('lpGuestsNum');
+                if (gEl) gEl.textContent = 2;
+                document.getElementById('lpClearBtn').classList.remove('visible');
+                document.getElementById('lpAvailResults').innerHTML = promptHtml();
+            };
+
+            window.lpCheckAvail = function () {
+                const dateIn  = document.getElementById('lpDateIn').value;
+                const dateOut = document.getElementById('lpDateOut').value;
+                if (!dateIn) { document.getElementById('lpDateIn').focus(); return; }
+                const btn = document.getElementById('lpCheckBtn');
+                btn.classList.add('loading'); btn.disabled = true;
+                fetch('api/user/unit_availability.php?date=' + encodeURIComponent(dateIn))
+                    .then(r => r.json())
+                    .then(data => { btn.classList.remove('loading'); btn.disabled = false; renderResults(data.units || [], dateIn, dateOut); })
+                    .catch(() => { btn.classList.remove('loading'); btn.disabled = false;
+                        document.getElementById('lpAvailResults').innerHTML = '<div class="lp-empty-state"><p>Could not load availability. Please try again.</p></div>'; });
+            };
+
+            function promptHtml() {
+                return '<div class="lp-prompt-state"><svg viewBox="0 0 24 24" stroke-width="1.5" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><p>Select a check-in date to see available units.</p></div>';
+            }
+            function fmt(iso) { if (!iso) return ''; const [y,m,d]=iso.split('-'); return SHORT[parseInt(m,10)-1]+' '+parseInt(d,10)+', '+y; }
+            function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+            function num(n) { return Number(n).toLocaleString('en-PH',{maximumFractionDigits:0}); }
+
+            function renderResults(units, dateIn, dateOut) {
+                const panel = document.getElementById('lpAvailResults');
+                if (!units.length) {
+                    panel.innerHTML = '<div class="lp-results-hdr"><h3>Available on '+fmt(dateIn)+'</h3><span class="lp-avail-badge">0 units</span></div><div class="lp-empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><p>No units available on this date. Try a different date.</p></div>';
+                    return;
+                }
+                const selType = (document.getElementById('lpUnitType')?.value || '').toLowerCase();
+                let filtered = units;
+                if (selType) filtered = filtered.filter(u => (u.unit_type || '').toLowerCase() === selType);
+                if (dateOut) filtered = filtered.filter(u => !u.available_until || u.available_until > dateOut);
+                const rangeNote = dateOut ? '<span class="lp-range-note">'+fmt(dateIn)+' → '+fmt(dateOut)+'</span>' : '';
+                if (!filtered.length && dateOut) {
+                    panel.innerHTML = '<div class="lp-results-hdr"><h3>Available on '+fmt(dateIn)+'</h3><span class="lp-avail-badge">0 for full stay</span>'+rangeNote+'</div><div class="lp-empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><p>No units free for the full stay ('+fmt(dateIn)+' → '+fmt(dateOut)+'). Try adjusting dates.</p></div>';
+                    return;
+                }
+                let cards = '';
+                filtered.forEach(u => {
+                    const img = u.image_path ? u.image_path : '';
+                    const imgTag = img ? `<img src="${esc(img)}" alt="${esc(u.name)}" onerror="this.style.display='none'">` : '';
+                    const until = u.available_until ? 'Until '+fmt(u.available_until) : 'Indefinitely';
+                    cards += '<div class="lp-unit-card" onclick="location.href=\'pages/user/register.php\'">'+
+                        '<div class="lp-card-img">'+imgTag+
+                        '<span class="lp-card-type">'+esc(u.unit_type.toUpperCase())+'</span>'+
+                        '<div class="lp-until-pill"><svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Available<span>'+esc(until)+'</span></div>'+
+                        '</div><div class="lp-card-body">'+
+                        '<div class="lp-card-name">'+esc(u.name)+'</div>'+
+                        '<div class="lp-card-loc"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>'+esc(u.property_name)+(u.city?', '+esc(u.city):'')+'</div>'+
+                        '<div class="lp-card-footer"><div class="lp-card-price">₱'+num(u.rent_amount)+' <sub>/ night</sub></div>'+
+                        '<button class="btn-lp-view" onclick="event.stopPropagation();location.href=\'pages/user/register.php\'">Book Now</button></div>'+
+                        '</div></div>';
+                });
+                panel.innerHTML = '<div class="lp-results-hdr"><h3>Available on '+fmt(dateIn)+'</h3><span class="lp-avail-badge">'+filtered.length+' unit'+(filtered.length!==1?'s':'')+'</span>'+rangeNote+'</div><div class="lp-units-grid">'+cards+'</div>';
+            }
+        })();
+        </script>
     </section>
 
     <section class="testimonials" id="reviews">

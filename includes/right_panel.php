@@ -228,14 +228,15 @@ function rp_activity_icon_svg(string $desc, bool $isExpense, string $type = ''):
     </div>
 
     <div id="adminNotifDropdown"
-      style="display:none;position:absolute;top:calc(100% + -20px);left:-230px;width:300px;max-height:420px;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 28px rgba(15,23,42,.18);z-index:99999;">
+      style="display:none;position:absolute;top:calc(100% + -20px);left:-230px;width:300px;max-height:420px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 28px rgba(15,23,42,.18);z-index:99999;flex-direction:column;">
       <div
-        style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:700;color:#0f172a;display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:0;background:#fff;">
+        style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:700;color:#0f172a;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;background:#fff;border-radius:12px 12px 0 0;">
         <span>Notifications</span>
         <button id="adminNotifMarkAll" type="button"
           style="border:none;background:none;color:#2563eb;font-size:11px;font-weight:600;cursor:pointer;">Mark all as
           read</button>
       </div>
+      <div style="overflow-y:auto;flex:1;">
       <div id="adminNotifList">
         <?php if (empty($notifications)): ?>
           <div style="padding:14px 12px;color:#94a3b8;font-size:12px;">No new notifications.</div>
@@ -271,6 +272,7 @@ function rp_activity_icon_svg(string $desc, bool $isExpense, string $type = ''):
           style="display:block;width:100%;border:none;background:none;color:#2563eb;font-size:13px;font-weight:600;cursor:pointer;padding:10px 12px;border-radius:0 0 12px 12px;transition:background .12s;">View
           more</button>
       </div>
+      </div><!-- end inner scroll -->
     </div>
     <div class="user-info">
       <div>

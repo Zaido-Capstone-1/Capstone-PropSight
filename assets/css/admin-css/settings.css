@@ -1,0 +1,145 @@
+@media (max-width: 480px) {
+    #ps-toast-container {
+        bottom: 120px !important;
+    }
+}
+
+/* ── Backup & Recovery responsive ───────────────────────── */
+.backup-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    gap: 12px;
+}
+
+#generateBackupBtn {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+    .backup-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    #generateBackupBtn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Table → card-list on mobile: hide table, show cards */
+    #backupList table {
+        display: none !important;
+    }
+
+    #backupList .backup-mobile-list {
+        display: flex !important;
+    }
+}
+
+/* Mobile backup card list — hidden on desktop */
+.backup-mobile-list {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.backup-mobile-card {
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #fff;
+}
+
+.backup-mobile-card.latest {
+    border-color: #bfdbfe;
+    background: rgba(59, 130, 246, .03);
+}
+
+.backup-mobile-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.backup-mobile-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    background: rgba(59, 130, 246, .1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.backup-mobile-meta {
+    flex: 1;
+    min-width: 0;
+}
+
+.backup-mobile-filename {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark, #0f172a);
+    word-break: break-all;
+}
+
+.backup-mobile-badge {
+    display: inline-block;
+    font-size: 10px;
+    color: #3b82f6;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.backup-mobile-details {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-soft, #64748b);
+    margin-bottom: 10px;
+}
+
+.backup-mobile-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+}
+
+.backup-mobile-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 6px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.bk-btn-download {
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #e2e8f0;
+}
+
+.bk-btn-restore {
+    background: #eff6ff;
+    color: #3b82f6;
+    border-color: #bfdbfe;
+}
+
+.bk-btn-delete {
+    background: #fff1f2;
+    color: #e11d48;
+    border-color: #fecdd3;
+}

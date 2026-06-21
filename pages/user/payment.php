@@ -161,9 +161,9 @@ require_once '../../lib/user-queries/payment_queries.php';
                                 $isPayment = $row['type'] === 'payment';
                                 $isRefund = $row['type'] === 'refund';
 
-                                // Use data-ts + JS psDate() for correct local timezone display
+                                // Emit the raw UTC datetime string — psDate() in datetime.js
+                                // appends 'Z' if no tz suffix, giving correct local-time display.
                                 $dateDisp = htmlspecialchars($row['date'] ?? '');
-                                $timeDisp = htmlspecialchars($row['date'] ?? '');
                                 $searchStr = strtolower(
                                     ($row['property_name'] ?? '') . ' ' .
                                     ($row['unit_label'] ?? '') . ' ' .
@@ -219,9 +219,9 @@ require_once '../../lib/user-queries/payment_queries.php';
                                     data-search="<?php echo htmlspecialchars($searchStr); ?>">
 
                                     <td style="white-space:nowrap;">
-                                        <div class="ps-date" data-date="<?php echo $dateDisp; ?>"
+                                        <div class="ps-dt-date" data-date="<?php echo $dateDisp; ?>"
                                             style="font-size:.82rem;color:var(--ink-mid);"></div>
-                                        <div class="ps-time" data-date="<?php echo $timeDisp; ?>"
+                                        <div class="ps-dt-time" data-date="<?php echo $dateDisp; ?>"
                                             style="font-size:.7rem;color:var(--ink-faint);"></div>
                                     </td>
 
@@ -280,9 +280,12 @@ require_once '../../lib/user-queries/payment_queries.php';
                                             <?php endif; ?>
 
                                         <?php elseif ($row['processed_date']): ?>
-                                            <span class="ps-date"
+                                            <span class="ps-dt-date"
                                                 data-date="<?php echo htmlspecialchars($row['processed_date']); ?>"
-                                                style="font-size:.72rem;color:var(--ink-faint);"></span>
+                                                style="font-size:.72rem;color:var(--ink-faint);display:block;"></span>
+                                            <span class="ps-dt-time"
+                                                data-date="<?php echo htmlspecialchars($row['processed_date']); ?>"
+                                                style="font-size:.7rem;color:var(--ink-faint);display:block;"></span>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
@@ -388,6 +391,20 @@ require_once '../../lib/user-queries/payment_queries.php';
 <script src="../../assets/js/user-js/payment.js"></script>
 <script src="../../assets/js/user-js/refund.js"></script>
 <script>window.PS_RT_PAGE = 'payment';</script>
+<script>
+    // Render payment history datetimes via datetime.js psDate() so UTC→local is correct.
+    // Uses dedicated classes to avoid colliding with global .ps-date / .ps-time handlers.
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.ps-dt-date[data-date]').forEach(function (el) {
+            const d = psDate(el.dataset.date);
+            if (d) el.textContent = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        });
+        document.querySelectorAll('.ps-dt-time[data-date]').forEach(function (el) {
+            const d = psDate(el.dataset.date);
+            if (d) el.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        });
+    });
+</script>
 
 <!-- ── Refund Request Modal ─────────────────────────────────────────────── -->
 <div id="refundModal" class="modal-overlay">

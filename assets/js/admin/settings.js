@@ -238,7 +238,13 @@ function loadBackups() {
                 return;
             }
 
-            list.innerHTML = `
+            const fileIcon = `<svg fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+            const dlIcon   = `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+            const reIcon   = `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12" height="12"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>`;
+            const delIcon  = `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>`;
+
+            // Desktop table
+            const tableHtml = `
                 <table style="width:100%;border-collapse:collapse;font-size:13px;">
                     <thead>
                         <tr style="border-bottom:2px solid var(--border,#e2e8f0);">
@@ -253,12 +259,7 @@ function loadBackups() {
                         <tr style="border-bottom:1px solid var(--border-lt,#f1f5f9);${i === 0 ? 'background:rgba(59,130,246,.03);' : ''}">
                             <td style="padding:10px 10px;">
                                 <div style="display:flex;align-items:center;gap:8px;">
-                                    <div style="width:30px;height:30px;border-radius:7px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                        <svg fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24" width="14" height="14">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                            <polyline points="14 2 14 8 20 8"/>
-                                        </svg>
-                                    </div>
+                                    <div style="width:30px;height:30px;border-radius:7px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">${fileIcon}</div>
                                     <div>
                                         <div style="font-weight:500;color:var(--text-dark);">${b.filename}</div>
                                         ${i === 0 ? '<div style="font-size:10px;color:#3b82f6;font-weight:600;margin-top:1px;">Latest</div>' : ''}
@@ -271,33 +272,47 @@ function loadBackups() {
                                 <div style="display:inline-flex;align-items:center;gap:6px;">
                                     <button onclick="downloadBackup('${b.filename}')" title="Download"
                                         style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;">
-                                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12" height="12">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                                        </svg>
-                                        Download
+                                        ${dlIcon} Download
                                     </button>
                                     <button onclick="restoreBackup('${b.filename}')" title="Restore"
                                         style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#eff6ff;color:#3b82f6;border:1px solid #bfdbfe;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;">
-                                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12" height="12">
-                                            <polyline points="1 4 1 10 7 10"/>
-                                            <path d="M3.51 15a9 9 0 1 0 .49-4"/>
-                                        </svg>
-                                        Restore
+                                        ${reIcon} Restore
                                     </button>
                                     <button onclick="deleteBackup('${b.filename}')" title="Delete"
                                         style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:#fff1f2;color:#e11d48;border:1px solid #fecdd3;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;">
-                                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12" height="12">
-                                            <polyline points="3 6 5 6 21 6"/>
-                                            <path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>
-                                        </svg>
-                                        Delete
+                                        ${delIcon} Delete
                                     </button>
                                 </div>
                             </td>
                         </tr>`).join('')}
                     </tbody>
                 </table>`;
+
+            // Mobile card list (shown via CSS at ≤600px, hidden on desktop)
+            const mobileHtml = `
+                <div class="backup-mobile-list">
+                    ${data.backups.map((b, i) => `
+                    <div class="backup-mobile-card${i === 0 ? ' latest' : ''}">
+                        <div class="backup-mobile-card-top">
+                            <div class="backup-mobile-icon">${fileIcon}</div>
+                            <div class="backup-mobile-meta">
+                                <div class="backup-mobile-filename">${b.filename}</div>
+                                ${i === 0 ? '<span class="backup-mobile-badge">Latest</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="backup-mobile-details">
+                            <span>${psFmtDateTime(b.created)}</span>
+                            <span>${b.size_mb} MB</span>
+                        </div>
+                        <div class="backup-mobile-actions">
+                            <button class="bk-btn-download" onclick="downloadBackup('${b.filename}')">${dlIcon} Download</button>
+                            <button class="bk-btn-restore" onclick="restoreBackup('${b.filename}')">${reIcon} Restore</button>
+                            <button class="bk-btn-delete"  onclick="deleteBackup('${b.filename}')">${delIcon} Delete</button>
+                        </div>
+                    </div>`).join('')}
+                </div>`;
+
+            list.innerHTML = tableHtml + mobileHtml;
         })
         .catch(() => {
             const list = document.getElementById('backupList');

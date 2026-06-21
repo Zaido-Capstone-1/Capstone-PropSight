@@ -267,6 +267,11 @@ window.addEventListener('ps:tasks', e => {
     }
   };
   const priorityMap = {
+    urgent: {
+      bg: 'var(--danger-light)',
+      color: 'var(--danger)',
+      label: 'Urgent'
+    },
     high: {
       bg: 'var(--danger-light)',
       color: 'var(--danger)',

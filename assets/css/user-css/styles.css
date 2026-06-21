@@ -6,6 +6,9 @@
      padding: 0;
  }
 
+ * { scrollbar-width: none; }          /* Firefox */
+*::-webkit-scrollbar { display: none; } /* Chrome / Edge / Safari */
+
  :root {
      /* layout.css defines the master vars — these extend for dashboard */
      --blue-900: #0b1829; --blue-800: #112240; --blue-700: #1a3a5c;

@@ -1,6 +1,10 @@
 /* ── BOOKING PAGE ── */
 
 /* Summary strip */
+
+* { scrollbar-width: none; }          /* Firefox */
+*::-webkit-scrollbar { display: none; } /* Chrome / Edge / Safari */
+
 .summary-strip {
     display: grid;
     grid-template-columns: repeat(4, 1fr);

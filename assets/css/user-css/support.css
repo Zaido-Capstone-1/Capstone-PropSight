@@ -1,8 +1,7 @@
-/* ══════════════════════════════════════════════════════
-   PropSight User — Support & Help  ·  Enhanced Redesign
-   ══════════════════════════════════════════════════════ */
 
-/* ── Hero banner ──────────────────────────────────────── */
+* { scrollbar-width: none; }          /* Firefox */
+*::-webkit-scrollbar { display: none; } /* Chrome / Edge / Safari */
+
 .support-hero {
     background: linear-gradient(135deg, var(--navy-800) 0%, #1a3a5c 60%, #2d1a0e 100%);
     border-radius: var(--r-xl);

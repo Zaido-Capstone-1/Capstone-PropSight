@@ -1,0 +1,226 @@
+.sidebar-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: none;
+}
+
+.sidebar-avatar-initials {
+    background: linear-gradient(135deg, var(--blue-300), var(--blue-700));
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+/* Hide initials background when image is present */
+.sidebar-avatar:not(.sidebar-avatar-initials) {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+}
+
+.mobile-notif-btn {
+    display: none;
+    /* shown via media query below */
+    position: fixed;
+    right: 16px;
+    top: 18px;
+    z-index: 400;
+    width: 44px;
+    height: 44px;
+    background: var(--white, #fff);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: var(--radius, 8px);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--blue-600, #2563eb);
+    transition: background .15s;
+}
+
+.mobile-notif-btn:hover {
+    background: var(--blue-50, #eff6ff);
+}
+
+.mobile-notif-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: #ef4444;
+    border-radius: 8px;
+    border: 2px solid #fff;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* Show bell when right-panel is hidden */
+@media (max-width: 1024px) {
+    .mobile-notif-btn {
+        display: flex;
+    }
+}
+
+/* Smaller bell on small phones */
+@media (max-width: 480px) {
+    .mobile-notif-btn {
+        width: 34px;
+        height: 34px;
+        top: 20px;
+        right: 14px;
+        border-radius: 6px;
+    }
+
+    .mobile-notif-btn svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .mobile-notif-dot {
+        top: 3px;
+        right: 3px;
+        min-width: 13px;
+        height: 13px;
+        font-size: 8px;
+    }
+}
+
+/* Hide when sidebar is open (same as menu-toggle) */
+body:has(.sidebar.open) .mobile-notif-btn {
+    display: none !important;
+}
+
+.mobile-notif-item {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f8fafc;
+    cursor: pointer;
+    transition: background .12s;
+}
+
+.mobile-notif-item:hover {
+    background: #f8fafc;
+}
+
+#mobileNotifViewMoreBtn:hover,
+#mobileNotifViewMoreBtn:active {
+    background: #eff6ff;
+}
+
+#mobileNotifViewMoreBtn:disabled {
+    cursor: default;
+    color: #94a3b8;
+}
+
+.mobile-notif-item:last-child {
+    border-bottom: none;
+}
+
+.mobile-notif-item-text {
+    font-size: 13px;
+    color: #0f172a;
+    line-height: 1.4;
+}
+
+.mobile-notif-item-time {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 3px;
+}
+
+/* Unread vs read distinction */
+.mobile-notif-item.is-unread {
+    background: #eff6ff;
+}
+
+.mobile-notif-item.is-unread .mobile-notif-item-text {
+    font-weight: 600;
+}
+
+.mobile-notif-item.is-read {
+    opacity: 0.6;
+}
+
+.mobile-notif-item.is-read .mobile-notif-item-text {
+    font-weight: 400;
+    color: #64748b;
+}
+
+.mobile-notif-item-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.mobile-notif-item-dot {
+    flex: 0 0 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2563eb;
+    margin-top: 5px;
+}
+/* ── Compact notification panel on small phones ── */
+@media (max-width: 480px) {
+    #mobileNotifDropdown {
+        top: 62px !important;
+        right: 8px !important;
+        left: auto !important;
+        width: 260px !important;
+        border-radius: 10px !important;
+        max-height: 70vh;
+        overflow: hidden;
+    }
+
+    /* Header row */
+    #mobileNotifDropdown > div:first-child {
+        padding: 8px 10px !important;
+        font-size: 11px !important;
+    }
+
+    /* Scrollable body */
+    #mobileNotifDropdown > div:last-child {
+        max-height: 55vh !important;
+    }
+
+    .mobile-notif-item {
+        padding: 8px 10px;
+    }
+
+    .mobile-notif-item-text {
+        font-size: 11px;
+    }
+
+    .mobile-notif-item-time {
+        font-size: 10px;
+        margin-top: 2px;
+    }
+
+    .mobile-notif-item-dot {
+        flex: 0 0 5px;
+        width: 5px;
+        height: 5px;
+        margin-top: 4px;
+    }
+
+    #mobileNotifViewMoreBtn {
+        font-size: 12px !important;
+        padding: 10px 12px !important;
+    }
+}

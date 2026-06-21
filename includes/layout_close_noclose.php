@@ -76,6 +76,8 @@
     var _bellViewMoreBtn = document.getElementById('mobileNotifViewMoreBtn');
     if (!_bellBtn || !_bellDrop) return;
 
+    // Move dropdown to <body> to escape any stacking context from sidebar/layout wrappers
+    document.documentElement.appendChild(_bellDrop);
     function _esc(s) {
       return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
@@ -158,12 +160,37 @@
 
     _render();
 
+    var _initialFetched = !!(window.__PS_RIGHT_PANEL__);
+
+    function _fetchInitial(cb) {
+      if (_initialFetched) { if (cb) cb(); return; }
+      _initialFetched = true;
+      _bellList.innerHTML = '<div style="padding:24px 14px;text-align:center;color:#94a3b8;font-size:13px;">Loading…</div>';
+      fetch('../../api/admin/notifications.php?action=list&offset=0&limit=' + (window.__mobileNotifPageSize || 10))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data && data.success) {
+            var _list = data.notifications || [];
+            _st.clear();
+            for (var _k = 0; _k < _list.length; _k++) {
+              if (_list[_k] && _list[_k].id) _st.set(String(_list[_k].id), _list[_k]);
+            }
+            window.__mobileNotifOffset = _list.length;
+            window.__mobileNotifHasMore = !!data.has_more;
+            if (typeof data.unread_count === 'number') window.__mobileNotifUnreadCount = data.unread_count;
+          }
+        })
+        .catch(function () { })
+        .finally(function () { _render(); if (cb) cb(); });
+    }
+
     _bellBtn.addEventListener('click', function (e) {
       e.stopPropagation();
-      if (_bellDrop.style.display === 'block') {
+      if (_bellDrop.style.display !== 'none' && _bellDrop.style.display !== '') {
         _bellDrop.style.display = 'none';
       } else {
-        _bellDrop.style.display = 'block';
+        _bellDrop.style.display = 'flex';
+        _fetchInitial(null);
         setTimeout(function () {
           document.addEventListener('click', function _out(ev) {
             if (ev.target !== _bellBtn && !_bellDrop.contains(ev.target)) {
@@ -176,6 +203,11 @@
     });
 
     _bellDrop.addEventListener('click', function (e) { e.stopPropagation(); });
+
+    // Close and reset dropdown when resizing between mobile and desktop
+    window.addEventListener('resize', function () {
+      _bellDrop.style.display = 'none';
+    });
 
     if (_bellList) {
       _bellList.addEventListener('click', function (e) {

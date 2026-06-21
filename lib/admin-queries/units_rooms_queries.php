@@ -45,6 +45,7 @@ $units_result = $conn->query(
             CASE
                 WHEN b_active.booking_id  IS NOT NULL THEN 'occupied'
                 WHEN b_booked.booking_id  IS NOT NULL THEN 'booked'
+                WHEN u.status IN ('occupied','booked')  THEN 'vacant'
                 ELSE u.status
             END AS real_status
      FROM units u

@@ -18,6 +18,8 @@ if ($_SESSION['role'] !== 'admin') {
 $page_title = 'Units / Rooms';
 $active_page = 'units_rooms';
 include '../../includes/db.php';
+require_once '../../includes/unit_status_sync.php';
+syncAllUnitStatuses($conn);
 include '../../includes/layout_open.php';
 require_once '../../lib/admin-queries/units_rooms_queries.php';
 ?>
@@ -280,7 +282,7 @@ require_once '../../lib/admin-queries/units_rooms_queries.php';
                 default => '#fff',
               };
               ?>
-              <span
+              <span class="avail-badge"
                 style="font-family:'DM Sans',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.09em;padding:3px 9px;border-radius:99px;background:<?= $availBg ?>;color:<?= $availColor ?>;position:absolute;top:10px;right:10px;z-index:8;">
                 <?= $availLabel ?>
               </span>

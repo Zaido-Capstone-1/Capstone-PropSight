@@ -272,30 +272,7 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
             <?php endforeach; ?>
           <?php endif; ?>
         </tbody>
-        <tfoot id="invTableFoot" style="display:none;">
-          <tr>
-            <td colspan="9">
-              <div class="inv-pagination">
-                <span class="inv-page-info" id="invPageInfo"></span>
-                <div class="inv-page-controls" id="invPageControls" style="display:none;">
-                  <button type="button" id="invPrevBtn" class="inv-chevron-btn" onclick="invChangePage(-1)" disabled>
-                    <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
-                      height="14">
-                      <polyline points="15 18 9 12 15 6" />
-                    </svg>
-                  </button>
-                  <span id="invPageNumbers" class="inv-page-numbers"></span>
-                  <button type="button" id="invNextBtn" class="inv-chevron-btn" onclick="invChangePage(1)" disabled>
-                    <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
-                      height="14">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </td>
-          </tr>
-        </tfoot>
+        </tbody>
       </table>
 
       <div class="inv-empty" id="emptyState">
@@ -304,6 +281,26 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
         <p>No invoices match your filters.</p>
+      </div>
+    </div>
+
+    <!-- Pagination outside table-wrap — never scrolls horizontally -->
+    <div id="invTableFoot" class="pay-pagination-wrap" style="display:none;">
+      <div class="inv-pagination">
+        <span class="inv-page-info" id="invPageInfo"></span>
+        <div class="inv-page-controls" id="invPageControls" style="display:none;">
+          <button type="button" id="invPrevBtn" class="inv-chevron-btn" onclick="invChangePage(-1)" disabled>
+            <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14" height="14">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <span id="invPageNumbers" class="inv-page-numbers"></span>
+          <button type="button" id="invNextBtn" class="inv-chevron-btn" onclick="invChangePage(1)" disabled>
+            <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14" height="14">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 

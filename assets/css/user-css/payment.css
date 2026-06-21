@@ -1,4 +1,7 @@
 /* ── PAYMENT PAGE ── */
+* { scrollbar-width: none; }          /* Firefox */
+*::-webkit-scrollbar { display: none; } /* Chrome / Edge / Safari */
+
 .card-visual {
     border-radius: var(--r-xl);
     padding: 26px 28px;

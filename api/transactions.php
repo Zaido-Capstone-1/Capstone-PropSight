@@ -42,6 +42,7 @@ if ($method === 'GET') {
             DATE_FORMAT(t.transaction_date,'%b %d') AS date_label,
             DATE_FORMAT(t.transaction_date,'%Y-%m') AS month_val,
             t.transaction_date,
+            t.created_at,
             MONTH(t.transaction_date) AS month_num,
             t.reference_no, t.description, t.category,
             t.type, t.amount,
@@ -56,7 +57,7 @@ if ($method === 'GET') {
         LEFT JOIN units      bu ON bu.unit_id      = bk.unit_id
         LEFT JOIN properties bp ON bp.property_id  = bu.property_id
         WHERE YEAR(t.transaction_date) = $year
-        ORDER BY t.transaction_date DESC, t.id DESC
+        ORDER BY t.created_at DESC, t.id DESC
     ");
     $rows = [];
     $categories = [];

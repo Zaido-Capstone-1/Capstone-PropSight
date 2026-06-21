@@ -5,54 +5,85 @@ body {
 
 /* Keep user-hero section below fixed header */
 .user-hero {
-    padding: 52px 2.5vw 48px;
-    background: var(--white);
+    padding: 28px 2.5vw 0;
+    background: var(--off-white);
     position: relative;
-    overflow: hidden;
-    border-bottom: 1px solid var(--border-lt);
-}
-
-.user-hero::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-        radial-gradient(ellipse 60% 100% at 100% 50%, rgba(37, 99, 196, .06) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 80% at 0% 100%, rgba(232, 200, 130, .04) 0%, transparent 65%);
-    pointer-events: none;
-}
-
-/* Thin gold accent line at top */
-.user-hero::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent 0%, rgba(232, 200, 130, .4) 30%, rgba(232, 200, 130, .6) 50%, rgba(232, 200, 130, .4) 70%, transparent 100%);
-    pointer-events: none;
+    overflow: visible;
 }
 
 .user-hero-inner {
     width: 100%;
     max-width: none;
     margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2rem;
-    flex-wrap: wrap;
+    display: block;
     position: relative;
     z-index: 1;
+}
+
+/* ── Banner card (photo-card style hero) ── */
+.hero-banner {
+    position: relative;
+    border-radius: 22px;
+    overflow: hidden;
+    padding: 36px clamp(24px, 4vw, 56px);
+    box-shadow: 0 18px 44px rgba(8, 16, 28, .22);
+}
+
+/* Two conflicting global .reveal rules (layout.css's auto-playing keyframe
+   animation vs styles.css's JS-triggered opacity transition) race on load
+   and cause the hero to flash visible then snap back until the
+   IntersectionObserver fires. Hero content is always above the fold on
+   load, so skip the reveal effect entirely here and render it stable. */
+.hero-banner.reveal,
+.hero-reservation.reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+}
+
+/* background photo, sits behind everything */
+.hero-banner-photo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: url('../../images/header.jpg');
+    background-size: cover;
+    background-position: center 35%;
+}
+
+/* navy/gold gradient overlay — keeps the photo readable behind text */
+.hero-banner-photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 70% 120% at 8% 20%, rgba(232, 200, 130, .16) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 100% at 100% 100%, rgba(37, 99, 196, .25) 0%, transparent 60%),
+        linear-gradient(120deg, rgba(6, 14, 26, .88) 0%, rgba(11, 24, 41, .82) 45%, rgba(26, 58, 92, .72) 100%);
+}
+
+.hero-banner-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+}
+
+.hero-banner-left {
+    min-width: 0;
+    flex: 1 1 260px;
 }
 
 .user-hero-greeting {
     font-size: .68rem;
     font-weight: 700;
-    letter-spacing: .12em;
+    letter-spacing: .14em;
     text-transform: uppercase;
-    color: var(--sand-dk);
+    color: var(--gold);
     margin-bottom: 10px;
     display: flex;
     align-items: center;
@@ -61,24 +92,105 @@ body {
 
 .user-hero h1 {
     font-family: var(--font-display);
-    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-size: clamp(1.7rem, 3.2vw, 2.5rem);
     font-weight: 700;
-    color: var(--ink);
+    color: var(--white);
     line-height: 1.1;
     letter-spacing: -.02em;
-    margin: 0 0 8px;
+    margin: 0 0 14px;
 }
 
 .user-hero h1 em {
     font-style: italic;
-    color: var(--terra);
+    color: var(--gold);
 }
 
-.user-hero-sub {
-    font-size: .86rem;
-    color: var(--ink-soft);
-    font-weight: 300;
+.hero-banner-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+
+.hbm-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .82rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, .78);
     letter-spacing: .01em;
+}
+
+.hbm-item svg {
+    width: 14px;
+    height: 14px;
+    stroke: var(--gold);
+    flex-shrink: 0;
+}
+
+/* ── Weather — stacked icon, temp, description (no pill) ── */
+.hero-weather {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.hw-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.hw-icon svg {
+    width: 36px;
+    height: 36px;
+    stroke: var(--white);
+}
+
+.hw-temp {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1;
+}
+
+.hw-desc {
+    font-size: .72rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, .75);
+    letter-spacing: .01em;
+    white-space: nowrap;
+    margin-top: 2px;
+}
+
+@media(max-width:480px) {
+    .hero-banner-meta {
+        gap: 12px;
+    }
+
+    .hbm-item {
+        font-size: .76rem;
+    }
+
+    .hw-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .hw-icon svg {
+        width: 30px;
+        height: 30px;
+    }
+
+    .hw-temp {
+        font-size: 1.4rem;
+    }
 }
 
 /* Keep dashboard sidebar consistent with shared layout */
@@ -94,60 +206,202 @@ body {
     max-width: 100%;
 }
 
-.user-stats-strip {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(120px, 1fr));
-    gap: 10px;
-    background: transparent;
-    border: none;
-    min-width: min(640px, 100%);
+/* ── Reservation card — compact, vertical stack ── */
+.hero-reservation {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: none;
+    margin-left: auto;
 }
 
-.ustat {
-    padding: 20px 18px;
-    text-align: center;
-    background: linear-gradient(145deg, #f4f8ff, #eef4fb);
-    border: 1px solid #dbe8f6;
-    border-radius: 16px;
-    transition: border-color .2s, box-shadow .2s, transform .2s;
-    min-width: 0;
+.hero-reservation .booking-banner {
+    padding: 0;
+    background: transparent;
+}
+
+.hero-reservation .booking-banner-inner {
+    width: auto;
+    max-width: none;
+    margin: 0;
+    background: rgba(255, 255, 255, .08);
+    backdrop-filter: blur(6px);
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    border: 1px solid rgba(255, 255, 255, .15);
     position: relative;
     overflow: hidden;
 }
 
-.ustat::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(37, 99, 196, .25), transparent);
-    border-radius: 0 0 16px 16px;
+.hero-reservation .bb-body {
+    min-width: 0;
 }
 
-.ustat:hover {
-    border-color: #c3d8ef;
-    box-shadow: 0 8px 24px rgba(11, 24, 41, .10);
-
-}
-
-.ustat-num {
-    font-family: var(--font-display);
-    font-size: 1.9rem;
+.hero-reservation .bb-label {
+    font-size: .58rem;
     font-weight: 700;
-    color: var(--navy-900);
-    line-height: 1;
-    letter-spacing: -.015em;
-}
-
-.ustat-lbl {
-    font-size: .62rem;
-    font-weight: 700;
-    letter-spacing: .13em;
+    letter-spacing: .09em;
     text-transform: uppercase;
-    color: #7d93ab;
-    margin-top: 6px;
+    color: var(--gold);
+    opacity: .9;
+    margin-bottom: 2px;
+}
+
+.hero-reservation .bb-label::before {
+    content: none;
+    display: none;
+}
+
+.hero-reservation .bb-room {
+    font-family: var(--font-display);
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.2;
+    text-shadow: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+}
+
+.hero-reservation .bb-dates {
+    font-size: .68rem;
+    color: rgba(255, 255, 255, .55);
+    margin-top: 2px;
+    letter-spacing: .01em;
+}
+
+.hero-reservation .bb-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, .12);
+}
+
+.hero-reservation .bb-status {
+    font-size: .58rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: var(--r-pill, 999px);
+    white-space: nowrap;
+}
+
+.hero-reservation .btn-manage {
+    font-size: .68rem;
+    padding: 7px 14px;
+    white-space: nowrap;
+}
+
+@media(max-width:560px) {
+    .hero-reservation .booking-banner-inner {
+        padding: 12px 14px;
+        width: 100%;
+    }
+
+    .hero-reservation .bb-room {
+        white-space: normal;
+        max-width: none;
+    }
+}
+
+/* No-reservation state, in-banner */
+.hero-no-reservation {
+    max-width: 420px;
+    margin-left: auto;
+    background: rgba(255, 255, 255, .07);
+    border: 1px dashed rgba(255, 255, 255, .2);
+    border-radius: 14px;
+    padding: 12px 16px;
+}
+
+.hnr-title {
+    font-family: var(--font-display);
+    font-size: .92rem;
+    font-weight: 700;
+    color: var(--white);
+}
+
+.hnr-sub {
+    font-size: .72rem;
+    color: rgba(255, 255, 255, .55);
+    margin-top: 2px;
+}
+
+/* ── Mobile: greeting+weather share a row, reservation drops full-width below ── */
+@media(max-width:760px) {
+    .hero-banner {
+        padding: 28px 22px;
+    }
+
+    .hero-banner-content {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        row-gap: 22px;
+    }
+
+    .hero-banner-left {
+        flex: 1 1 auto;
+    }
+
+    .hero-weather {
+        align-self: flex-start;
+        flex: 0 0 auto;
+    }
+
+    .hero-reservation {
+        flex: 1 0 100% !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin-left: 0 !important;
+        order: 3;
+    }
+
+    .hero-reservation .booking-banner-inner {
+        width: 100%;
+    }
+
+    .hero-no-reservation {
+        width: 100% !important;
+        max-width: none !important;
+        margin-left: 0 !important;
+        order: 3;
+    }
+}
+
+@media(max-width:480px) {
+    .hero-banner-meta {
+        gap: 12px;
+    }
+
+    .hbm-item {
+        font-size: .76rem;
+    }
+
+    .hw-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .hw-icon svg {
+        width: 30px;
+        height: 30px;
+    }
+
+    .hw-temp {
+        font-size: 1.4rem;
+    }
 }
 
 /* Quick action cards */
@@ -642,12 +896,6 @@ body {
     flex-direction: column;
     min-height: 100%;
 }
-
-/* .room-card:hover {
-    box-shadow: var(--sh-lg);
-    transform: translateY(-4px);
-    border-color: var(--navy-200);
-} */
 
 .room-card-img {
     position: relative;
@@ -1623,11 +1871,6 @@ body {
         padding: 0 44px;
     }
 
-    .user-stats-strip {
-        min-width: 0;
-        width: 100%;
-    }
-
     .loyalty-band-inner {
         grid-template-columns: 1fr;
         gap: 24px;
@@ -1663,11 +1906,6 @@ body {
 
     .carousel-btn-next {
         right: 0;
-    }
-
-    .user-stats-strip {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
     }
 
     .profile-sidebar {

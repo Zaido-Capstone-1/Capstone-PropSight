@@ -72,26 +72,33 @@ function renderPageNumbers(totalPages) {
     wrap.innerHTML = '';
 
     const cur = currentPage;
-    const nums = new Set([1, totalPages, cur, cur - 1, cur + 1].filter(n => n >= 1 && n <= totalPages));
-    const sorted = [...nums].sort((a, b) => a - b);
+    const delta = 1; // pages shown each side of current
+
+    // Always include: 1, last, and a window around current
+    const range = new Set();
+    range.add(1);
+    range.add(totalPages);
+    for (let i = Math.max(1, cur - delta); i <= Math.min(totalPages, cur + delta); i++) {
+        range.add(i);
+    }
+    // If gap between 1 and window is just 1 page, fill it in (avoid lone ellipsis)
+    if (cur - delta === 3) range.add(2);
+    if (cur + delta === totalPages - 2) range.add(totalPages - 1);
+
+    const sorted = [...range].sort((a, b) => a - b);
 
     sorted.forEach((n, idx) => {
-        // Ellipsis gap
         if (idx > 0 && n > sorted[idx - 1] + 1) {
             const el = document.createElement('span');
             el.className = 'txn-pg-ellipsis';
             el.textContent = '…';
             wrap.appendChild(el);
         }
-
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'txn-pg-num' + (n === cur ? ' active' : '');
         btn.textContent = n;
-        btn.onclick = () => {
-            currentPage = n;
-            paginateTable();
-        };
+        btn.onclick = () => { currentPage = n; paginateTable(); };
         wrap.appendChild(btn);
     });
 }
@@ -111,7 +118,7 @@ window.changePage = function (page) {
 /* ── Session-restore refresh ────────────────────────────────────────────── */
 if (sessionStorage.getItem('txn_needs_refresh') === '1') {
     sessionStorage.removeItem('txn_needs_refresh');
-    setTimeout(refreshTransactionsTable, 300);
+    refreshTransactionsTable();
 }
 
 /* ── Filters ────────────────────────────────────────────────────────────── */
@@ -216,6 +223,8 @@ function renderTransactionsTable(rows) {
         window.applyFilters();
         return;
     }
+
+    // Rows are already sorted by the API (created_at DESC, id DESC)
 
     tbody.innerHTML = rows.map(t => {
         const isIncome = t.type === 'Income';
