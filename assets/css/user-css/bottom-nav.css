@@ -1,0 +1,110 @@
+/* ═══════════════════════════════════════════════════════════
+   USER BOTTOM NAV — Mobile tab bar
+   ═══════════════════════════════════════════════════════════ */
+
+.user-bottom-nav {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .user-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 62px;
+        background: #fff;
+        border-top: 1px solid rgba(0, 0, 0, .08);
+        box-shadow: 0 -4px 20px rgba(10, 22, 40, .08);
+        z-index: 200;
+        align-items: center;
+        padding: 0 !important;
+    }
+
+    /* Override layout.css nav a { padding: 7px 14px } */
+    .user-bottom-nav a.ubn-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        text-decoration: none;
+        color: #94a3b8;
+        font-size: .6rem;
+        font-weight: 500;
+        font-family: 'DM Sans', sans-serif;
+        letter-spacing: .01em;
+        position: relative;
+        transition: color .18s;
+        padding: 6px 0 !important;
+        height: 100%;
+        background: none !important;
+        border-radius: 0 !important;
+    }
+
+    .user-bottom-nav a.ubn-item svg {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+
+    .user-bottom-nav a.ubn-item.ubn-active {
+        color: #1a3a5c;
+    }
+
+    .user-bottom-nav a.ubn-item.ubn-active svg {
+        stroke: #1a3a5c;
+    }
+
+    .user-bottom-nav a.ubn-item.ubn-center {
+        color: #64748b;
+    }
+
+    .ubn-fab {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #1a3a5c 0%, #c0694a 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 3px 12px rgba(26, 58, 92, .35);
+        transition: transform .18s, box-shadow .18s;
+        flex-shrink: 0;
+    }
+
+    .ubn-fab svg {
+        width: 20px;
+        height: 20px;
+        stroke: #fff;
+    }
+
+    .user-bottom-nav a.ubn-item.ubn-center:active .ubn-fab {
+        transform: scale(.93);
+    }
+
+    .ubn-badge {
+        position: absolute;
+        top: 6px;
+        right: calc(50% - 16px);
+        min-width: 14px;
+        height: 14px;
+        background: #ef4444;
+        color: #fff;
+        font-size: .58rem;
+        font-weight: 700;
+        border-radius: 99px;
+        padding: 0 3px;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        border: 1.5px solid #fff;
+    }
+
+    body {
+        padding-bottom: calc(62px + env(safe-area-inset-bottom));
+    }
+}

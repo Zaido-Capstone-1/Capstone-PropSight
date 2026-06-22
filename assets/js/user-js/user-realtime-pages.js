@@ -199,7 +199,7 @@
                     var bbDates = banner.querySelector('.bb-dates');
                     if (bbDates) {
                         bbDates.innerHTML = 'Check-in: ' + _fmtDate(ci) +
-                            '<span class="bb-date-sep"> &nbsp;·&nbsp; </span>Check-out: ' + _fmtDate(co);
+                            '<span class="bb-date-sep"> &nbsp;\u2013&nbsp; </span>Check-out: ' + _fmtDate(co);
                     }
                 }
 

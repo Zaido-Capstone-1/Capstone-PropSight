@@ -3,7 +3,8 @@ include '../../includes/session.php';
 require_not_blacklisted(false);
 
 if ($_SESSION['role'] !== 'user') {
-    echo '<!DOCTYPE html><html><body><script>setTimeout(() => history.back(), 2000);</script></body></html>';
+    echo '<!DOCTYPE html><html><body><script>setTimeout(() => history.back(), 2000);</script>
+</body></html>';
     exit;
 }
 
@@ -195,6 +196,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
     <title>Boracay Accommodation — My Account</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="../../assets/css/user-css/layout.css">
+    <link rel="stylesheet" href="../../assets/css/user-css/bottom-nav.css">
     <link rel="stylesheet" href="../../assets/css/user-css/styles.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap"
@@ -310,7 +312,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
 
     <!-- ── SIDEBAR ── -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-    <aside class="profile-sidebar" id="profileSidebar">
+    <aside class="profile-sidebar" id="profileSidebar" style="display:flex;flex-direction:column;height:100dvh;overflow:hidden;">
         <div class="sidebar-hdr">
             <button class="sidebar-close" id="sidebarClose">✕</button>
             <div class="sb-avatar">
@@ -332,7 +334,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                 <?php endif; ?>
             </div>
         </div>
-        <div class="sidebar-body">
+        <div class="sidebar-body" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;">
             <div class="sb-section-label">Account</div>
             <?php foreach ($nav_items as $key => $item): ?>
                 <a href="<?php echo $item['href']; ?>"
@@ -367,7 +369,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                 <?php endif; ?>
             <?php endforeach; ?>
         </div>
-        <div class="sidebar-foot">
+        <div class="sidebar-foot" style="flex-shrink:0;">
             <a href="../../process/logout.php" class="btn-logout">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                     stroke-linejoin="round">
@@ -464,14 +466,12 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                             data-checkin="<?php echo htmlspecialchars($activeBooking['checkin_date'] ?? ''); ?>"
                                             data-checkout="<?php echo htmlspecialchars($activeBooking['checkout_date'] ?? ''); ?>">
                                             <?php echo formatDate($activeBooking['checkin_date']); ?><span
-                                                class="bb-date-sep"> →
-                                            </span><?php echo formatDate($activeBooking['checkout_date']); ?>
+                                                class="bb-date-sep"> – </span><?php echo formatDate($activeBooking['checkout_date']); ?>
                                         </div>
                                     </div>
                                     <div class="bb-actions">
                                         <div class="bb-status <?php echo statusBadgeClass($activeBooking['status']); ?>"
-                                            id="rt-active-booking-status">
-                                            <?php echo statusLabel($activeBooking['status']); ?>
+                                            id="rt-active-booking-status"><?php echo statusLabel($activeBooking['status']); ?>
                                         </div>
                                         <?php
                                         $activeImgSrc = !empty($activeBooking['image_path']) ? '../../' . ltrim($activeBooking['image_path'], '/') : '';
@@ -498,8 +498,8 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                 </div>
                             </div>
                         <?php else: ?>
-                            <div class="booking-banner" id="rt-active-booking-wrap" data-booking-id="" data-unit-id=""
-                                style="display:none;opacity:0;max-height:0;overflow:hidden;">
+                            <div class="booking-banner" id="rt-active-booking-wrap" data-booking-id=""
+                                data-unit-id="" style="display:none;opacity:0;max-height:0;overflow:hidden;">
                                 <div class="booking-banner-inner">
                                     <div class="bb-body">
                                         <div class="bb-label">Active Reservation</div>
@@ -1265,7 +1265,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
         </div>
     </div>
 
-    <!-- ── Cancel Reservation Confirmation Modal ───────────── -->
     <div class="manage-modal-overlay" id="cancelConfirmModal" style="z-index:1100;">
         <div class="manage-modal-box" style="max-width:420px;border-radius:20px;padding:0;overflow:hidden;">
 
@@ -1274,17 +1273,15 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                 <button onclick="closeCancelConfirmModal()"
                     style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.18);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
                 <div style="display:flex;align-items:center;gap:13px;">
-                    <div
-                        style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <div style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" width="24" height="24">
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="15" y1="9" x2="9" y2="15" />
-                            <line x1="9" y1="9" x2="15" y2="15" />
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="15" y1="9" x2="9" y2="15"/>
+                            <line x1="9" y1="9" x2="15" y2="15"/>
                         </svg>
                     </div>
                     <div>
-                        <div style="color:#fff;font-size:1.05rem;font-weight:700;letter-spacing:-.01em;">Cancel
-                            Reservation?</div>
+                        <div style="color:#fff;font-size:1.05rem;font-weight:700;letter-spacing:-.01em;">Cancel Reservation?</div>
                         <div id="ccm-ref" style="color:rgba(255,255,255,.75);font-size:.8rem;margin-top:2px;"></div>
                     </div>
                 </div>
@@ -1294,27 +1291,18 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
             <div style="padding:20px 24px 24px;background:#fff;">
 
                 <!-- Booking summary pill -->
-                <div
-                    style="border:1px solid #f1f5f9;border-radius:12px;padding:14px 16px;margin-bottom:16px;background:#fafafa;">
-                    <div
-                        style="font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#94a3b8;margin-bottom:10px;">
-                        Booking Summary</div>
+                <div style="border:1px solid #f1f5f9;border-radius:12px;padding:14px 16px;margin-bottom:16px;background:#fafafa;">
+                    <div style="font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#94a3b8;margin-bottom:10px;">Booking Summary</div>
                     <div style="display:flex;flex-direction:column;gap:8px;">
                         <div style="display:flex;align-items:center;gap:9px;font-size:.84rem;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" width="14"
-                                height="14" style="flex-shrink:0;">
-                                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                                <polyline points="9 22 9 12 15 12 15 22" />
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" width="14" height="14" style="flex-shrink:0;">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
                             </svg>
                             <span id="ccm-unit" style="font-weight:600;color:#0f172a;"></span>
                         </div>
                         <div style="display:flex;align-items:center;gap:9px;font-size:.84rem;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" width="14"
-                                height="14" style="flex-shrink:0;">
-                                <rect x="3" y="4" width="18" height="18" rx="2" />
-                                <line x1="16" y1="2" x2="16" y2="6" />
-                                <line x1="8" y1="2" x2="8" y2="6" />
-                                <line x1="3" y1="10" x2="21" y2="10" />
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" width="14" height="14" style="flex-shrink:0;">
+                                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                             </svg>
                             <span id="ccm-dates" style="color:#475569;"></span>
                         </div>
@@ -1322,17 +1310,12 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                 </div>
 
                 <!-- Warning strip -->
-                <div
-                    style="display:flex;align-items:flex-start;gap:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:22px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2" width="16" height="16"
-                        style="flex-shrink:0;margin-top:1px;">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                        <line x1="12" y1="9" x2="12" y2="13" />
-                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                <div style="display:flex;align-items:flex-start;gap:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:22px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2" width="16" height="16" style="flex-shrink:0;margin-top:1px;">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                     </svg>
-                    <p style="margin:0;font-size:.79rem;color:#9a3412;line-height:1.55;">This action <strong>cannot be
-                            undone.</strong> If you paid for this booking, you may submit a refund request from your
-                        Payment History.</p>
+                    <p style="margin:0;font-size:.79rem;color:#9a3412;line-height:1.55;">This action <strong>cannot be undone.</strong> If you paid for this booking, you may submit a refund request from your Payment History.</p>
                 </div>
 
                 <!-- Action buttons -->
@@ -1343,11 +1326,8 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                     </button>
                     <button id="ccm-confirm-btn" onclick="confirmCancelNow()"
                         style="flex:1;padding:10px;background:#e11d48;color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14"
-                            height="14">
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="15" y1="9" x2="9" y2="15" />
-                            <line x1="9" y1="9" x2="15" y2="15" />
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+                            <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
                         </svg>
                         Yes, Cancel
                     </button>
@@ -1391,6 +1371,8 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
     <script src="../../assets/js/realtime.js"></script>
     <script src="../../assets/js/user-js/user-realtime-pages.js"></script>
 
+
+<?php require '../../includes/_bottom_nav.php'; ?>
 </body>
 
 </html>

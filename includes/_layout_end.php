@@ -74,6 +74,7 @@
 </script>
 <script src="../../assets/js/realtime.js"></script>
 <script src="../../assets/js/user-js/user-realtime-pages.js"></script>
+<?php require __DIR__ . '/_bottom_nav.php'; ?>
 </body>
 
 </html>

@@ -71,11 +71,13 @@ function getAmenityIcon(name, iconSlug) {
 function openSidebar() {
     document.getElementById('sidebarOverlay').classList.add('open');
     document.getElementById('profileSidebar').classList.add('open');
+    document.body.classList.add('sidebar-open');
 }
 
 function closeSidebar() {
     document.getElementById('sidebarOverlay')?.classList.remove('open');
     document.getElementById('profileSidebar')?.classList.remove('open');
+    document.body.classList.remove('sidebar-open');
 }
 const profileBtn = document.getElementById('profileBtn');
 if (profileBtn) profileBtn.addEventListener('click', openSidebar);
@@ -617,7 +619,7 @@ if (burger && mob) {
             }
             const bbDates = banner.querySelector('.bb-dates');
             if (bbDates) {
-                bbDates.innerHTML = `Check-in: ${_fmtDateDash(data.checkin)}<span class="bb-date-sep"> &nbsp;·&nbsp; </span>Check-out: ${_fmtDateDash(data.checkout)}`;
+                bbDates.innerHTML = `Check-in: ${_fmtDateDash(data.checkin)}<span class="bb-date-sep"> &nbsp;–&nbsp; </span>Check-out: ${_fmtDateDash(data.checkout)}`;
             }
             if (data.unit_id) banner.dataset.unitId = String(data.unit_id);
             const unitEl = banner.querySelector('.bb-room, .bb-unit, .bb-title, [data-rt="unit_name"]');

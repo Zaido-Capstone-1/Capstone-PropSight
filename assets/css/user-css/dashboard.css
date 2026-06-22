@@ -98,6 +98,10 @@ body {
     line-height: 1.1;
     letter-spacing: -.02em;
     margin: 0 0 14px;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    max-width: 100%;
 }
 
 .user-hero h1 em {
@@ -167,30 +171,6 @@ body {
     letter-spacing: .01em;
     white-space: nowrap;
     margin-top: 2px;
-}
-
-@media(max-width:480px) {
-    .hero-banner-meta {
-        gap: 12px;
-    }
-
-    .hbm-item {
-        font-size: .76rem;
-    }
-
-    .hw-icon {
-        width: 34px;
-        height: 34px;
-    }
-
-    .hw-icon svg {
-        width: 30px;
-        height: 30px;
-    }
-
-    .hw-temp {
-        font-size: 1.4rem;
-    }
 }
 
 /* Keep dashboard sidebar consistent with shared layout */
@@ -339,33 +319,77 @@ body {
 
 /* ── Mobile: greeting+weather share a row, reservation drops full-width below ── */
 @media(max-width:760px) {
+    .hero-banner-content {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "left weather"
+            "reservation reservation";
+        align-items: start;
+        column-gap: 16px;
+        row-gap: 18px;
+    }
+
     .hero-banner {
         padding: 28px 22px;
     }
 
-    .hero-banner-content {
-        flex-direction: row;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 16px;
-        row-gap: 22px;
+    .hero-banner-left {
+        grid-area: left;
+        min-width: 0;
+        max-width: 100%;
+        flex: initial;
     }
 
-    .hero-banner-left {
-        flex: 1 1 auto;
+    .user-hero-greeting {
+        font-size: .64rem;
+    }
+
+    .user-hero h1 {
+        font-size: clamp(1.25rem, 6vw, 2.2rem);
+        white-space: normal;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        hyphens: auto;
     }
 
     .hero-weather {
-        align-self: flex-start;
-        flex: 0 0 auto;
+        grid-area: weather;
+        align-self: start;
+        justify-self: end;
+        flex-shrink: 0;
+        width: 96px;
+    }
+
+    .hw-icon {
+        width: 52px;
+        height: 52px;
+        margin: 0 auto 6px;
+    }
+
+    .hw-icon svg {
+        width: 44px;
+        height: 44px;
+    }
+
+    .hw-temp {
+        font-size: 1.7rem;
+        text-align: center;
+    }
+
+    .hw-desc {
+        white-space: normal;
+        text-align: center;
+        line-height: 1.25;
+        font-size: .74rem;
     }
 
     .hero-reservation {
-        flex: 1 0 100% !important;
+        grid-area: reservation;
+        flex: none !important;
         width: 100% !important;
         max-width: none !important;
         margin-left: 0 !important;
-        order: 3;
     }
 
     .hero-reservation .booking-banner-inner {
@@ -376,31 +400,41 @@ body {
         width: 100% !important;
         max-width: none !important;
         margin-left: 0 !important;
-        order: 3;
+        grid-area: reservation;
     }
 }
 
 @media(max-width:480px) {
     .hero-banner-meta {
-        gap: 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
     }
 
     .hbm-item {
         font-size: .76rem;
     }
 
+    .hero-weather {
+        width: 84px;
+    }
+
     .hw-icon {
-        width: 34px;
-        height: 34px;
+        width: 46px;
+        height: 46px;
     }
 
     .hw-icon svg {
-        width: 30px;
-        height: 30px;
+        width: 38px;
+        height: 38px;
     }
 
     .hw-temp {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
+    }
+
+    .hw-desc {
+        font-size: .68rem;
     }
 }
 
@@ -2199,5 +2233,16 @@ body {
         gap: 2px 8px;
         font-size: .7rem;
         line-height: 1.5;
+    }
+
+    /* The compact hero reservation card doesn't use the flex/gap spacing
+       above — it needs the separator visible to keep check-in/check-out
+       from running together. */
+    .hero-reservation .bb-date-sep {
+        display: inline !important;
+    }
+
+    .hero-reservation .bb-dates {
+        display: block !important;
     }
 }

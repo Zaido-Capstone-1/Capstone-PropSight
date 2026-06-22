@@ -7,7 +7,8 @@ include '../../includes/session.php';
 require_not_blacklisted(false);
 
 if ($_SESSION['role'] !== 'user') {
-    echo '<!DOCTYPE html><html><body><script>setTimeout(() => history.back(), 2000);</script></body></html>';
+    echo '<!DOCTYPE html><html><body><script>setTimeout(() => history.back(), 2000);</script>
+</body></html>';
     exit;
 }
 
@@ -115,6 +116,7 @@ ksort($floors);
     <link rel="icon" type="image/png" href="../../assets/images/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="../../assets/css/user-css/layout.css">
+    <link rel="stylesheet" href="../../assets/css/user-css/bottom-nav.css">
     <link rel="stylesheet" href="../../assets/css/user-css/styles.css">
     <link rel="stylesheet" href="../../assets/css/user-css/dashboard.css">
     <link rel="stylesheet" href="../../assets/css/user-css/units.css">
@@ -616,5 +618,7 @@ ksort($floors);
 </div><!-- /.units-body -->
 
 <script src="../../assets/js/user-js/units.js"></script>
+
+<?php require '../../includes/_bottom_nav.php'; ?>
 </body>
 </html>
