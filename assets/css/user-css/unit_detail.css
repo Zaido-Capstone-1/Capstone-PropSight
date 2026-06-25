@@ -2169,6 +2169,13 @@
     flex-direction: row;
   }
 
+  @media (max-width: 768px) {
+    .ud-float-bar {
+      bottom: calc(62px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: 10px;
+    }
+  }
+
   /* Mobile */
   @media (max-width: 880px) {
     body.ud-card-offscreen .ud-float-bar {

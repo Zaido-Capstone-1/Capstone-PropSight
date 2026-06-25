@@ -1071,7 +1071,7 @@
                     const minCo = new Date(ciEl.value);
                     minCo.setDate(minCo.getDate() + MIN);
                     const newDate = minCo.toISOString().split('T')[0];
-                    showToast?.(`Minimum stay is ${MIN} nights — checkout updated.`);
+                    // Toast is handled by initMinStay (section 15) which also listens on these inputs
                     // Use setTimeout to avoid triggering onChange recursively
                     setTimeout(() => {
                         fpCoInstance.setDate(newDate, true);
@@ -1428,7 +1428,19 @@ function toggleSaveRoom(unitId, btn) {
                 return;
             }
             applyState(data.saved);
-            window.showToast?.(data.saved ? 'Saved to your list!' : 'Removed from saved list.');
+            // Update saved count badges in sidebar/nav immediately
+            if (data.saved_count !== undefined) {
+                const count = parseInt(data.saved_count, 10);
+                document.querySelectorAll('[data-rt-user="saved_count"]').forEach(el => {
+                    if (count > 0) {
+                        el.textContent = String(count);
+                        el.style.display = '';
+                    } else {
+                        el.textContent = '';
+                        el.style.display = 'none';
+                    }
+                });
+            }
         })
         .catch(() => {
             applyState(isSaved);

@@ -502,9 +502,11 @@ if ($role === 'admin') {
     ));
     $payload['unread_messages'] = (int) ($uMsgRow['c'] ?? 0);
 
-    // ── New messages for user messages page ───────────
-    // Only return messages FROM admins to avoid double-rendering with page's own poll.
-    if ($page === 'messages') {
+    // ── New messages for the floating chat widget ──────
+    // Previously gated to $page === 'messages' (the old dedicated messages
+    // page). The chat widget can now be open from any page, so this is
+    // always included for the user role.
+    {
         $uNewMsgRes = mysqli_query(
             $conn,
             "SELECT m.message_id AS id, m.*, CONCAT(u.first_name,' ',u.last_name) AS sender_name,

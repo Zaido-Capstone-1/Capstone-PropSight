@@ -90,7 +90,6 @@ if (isset($conn) && $conn) {
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/availability.css">
 </head>
 
 <body>
@@ -522,150 +521,71 @@ if (isset($conn) && $conn) {
         </div>
     </section>
 
-
-    <section class="lp-avail-section" id="rooms">
-    <?php
-    $lpPropsRes = mysqli_query($conn, "
-        SELECT DISTINCT p.property_id, p.property_name, p.city
-        FROM   properties p
-        INNER JOIN units u ON u.property_id = p.property_id
-        WHERE  u.status NOT IN ('inactive','maintenance')
-        ORDER  BY p.property_name ASC
-    ");
-    $lpProperties = [];
-    while ($lpr = mysqli_fetch_assoc($lpPropsRes)) $lpProperties[] = $lpr;
-    ?>
-
-    <div class="lp-avail-inner">
-
-        <div class="lp-avail-hdr reveal">
-            <div class="lp-eyebrow"><span></span>Availability<span></span></div>
-            <h2>Check <em>Unit</em> Availability</h2>
-            <p>Pick a date — or a date range — to instantly see which units are open and for how long.</p>
+    <section class="rooms" id="rooms">
+        <div class="rooms-header reveal">
+            <div class="eyebrow" style="justify-content:center;"><span
+                    style="width:24px;height:1.5px;background:var(--gold);display:block;"></span>&nbsp;Featured Rooms
+            </div>
+            <h2 class="section-heading">Find Your <em>Perfect</em> Room</h2>
         </div>
 
-        <div class="lp-picker-card reveal">
-
-            <!-- Check-in -->
-            <div class="lp-field-group" style="position:relative;">
-                <div class="lp-field-label">
-                    <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    Check-in
+        <div class="rooms-grid">
+            <?php if (empty($landingUnits)): ?>
+                <div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text-soft);">
+                    No rooms available right now.
                 </div>
-                <div class="lp-date-trigger" id="lpInTrigger" onclick="lpOpenCal('in')">
-                    <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    <span class="lp-date-display placeholder" id="lpInDisplay">Add date</span>
-                </div>
-                <!-- Calendar popup for check-in -->
-                <div class="lp-cal-popup" id="lpCalIn">
-                    <div class="lp-cal-head">
-                        <span class="lp-cal-month-label" id="lpCalInLabel"></span>
-                        <div class="lp-cal-nav">
-                            <button class="lp-cal-nav-btn" onclick="lpCalNav('in',-1)">
-                                <svg viewBox="0 0 24 24" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                            </button>
-                            <button class="lp-cal-nav-btn" onclick="lpCalNav('in',1)">
-                                <svg viewBox="0 0 24 24" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                            </button>
+            <?php else: ?>
+                <?php foreach ($landingUnits as $idx => $unit):
+                    $name = landing_unit_name($unit);
+                    $image = hero_img_path($unit['image_path']);
+                    $amenities = $amenitiesMap[$unit['unit_id']] ?? [];
+                    $location = trim(($unit['property_name'] ?? '') . (!empty($unit['city']) ? ', ' . $unit['city'] : ''));
+                    $roomData = [
+                        'name' => $name,
+                        'type' => $unit['unit_type'] ?: 'Room',
+                        'location' => $location,
+                        'price' => '₱' . number_format((float) ($unit['rent_amount'] ?? 0), 0),
+                        'description' => $unit['description'] ?: 'Comfortable room with essential amenities.',
+                        'image' => $image,
+                        'amenities' => array_map(function ($am) {
+                            return $am['name'] ?? ''; }, $amenities),
+                    ];
+                    $badgeClass = '';
+                    $badgeLabel = !empty($unit['unit_type']) ? ucwords(trim((string) $unit['unit_type'])) : 'Unit';
+                    ?>
+                    <div class="room-card reveal <?php echo $idx % 2 ? 'reveal-delay-1' : ''; ?>">
+                        <div class="room-card-img">
+                            <div class="room-card-img-bg r-img-<?php echo ($idx % 6) + 1; ?>">
+                                <img src="<?php echo htmlspecialchars($image); ?>" alt="<?php echo htmlspecialchars($name); ?>">
+                            </div>
+                            <span
+                                class="room-badge <?php echo $badgeClass; ?>"><?php echo htmlspecialchars($badgeLabel); ?></span>
+                        </div>
+                        <div class="room-card-body">
+                            <div class="room-name"><?php echo htmlspecialchars($name); ?></div>
+                            <div class="room-meta">
+                                <span><svg viewBox="0 0 24 24">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                    </svg><?php echo htmlspecialchars($unit['unit_type'] ?: 'Room'); ?></span>
+                                <span><svg viewBox="0 0 24 24">
+                                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                                        <circle cx="9" cy="7" r="4" />
+                                    </svg>2 Guests</span>
+                            </div>
+                            <div class="room-divider"></div>
+                            <div class="room-price-row">
+                                <div class="room-price">₱<?php echo number_format((float) ($unit['rent_amount'] ?? 0), 0); ?>
+                                    <sub>/ night</sub></div>
+                                <button class="btn-room"
+                                    data-room="<?php echo htmlspecialchars(json_encode($roomData), ENT_QUOTES); ?>">View
+                                    Room</button>
+                            </div>
                         </div>
                     </div>
-                    <div class="lp-cal-days-hdr">
-                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
-                    </div>
-                    <div class="lp-cal-grid" id="lpCalInGrid"></div>
-                    <div class="lp-cal-footer">
-                        <button class="lp-cal-clear-btn" onclick="lpClearDate('in')">Clear</button>
-                        <button class="lp-cal-today-btn" onclick="lpGoToday('in')">Today</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Check-out -->
-            <div class="lp-field-group" style="position:relative;">
-                <div class="lp-field-label">
-                    <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    Check-out
-                    <span style="font-weight:500;text-transform:none;letter-spacing:0;font-size:.62rem;color:#b0bec5;">(optional)</span>
-                </div>
-                <div class="lp-date-trigger" id="lpOutTrigger" onclick="lpOpenCal('out')">
-                    <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    <span class="lp-date-display placeholder" id="lpOutDisplay">Add date</span>
-                </div>
-                <div class="lp-cal-popup" id="lpCalOut">
-                    <div class="lp-cal-head">
-                        <span class="lp-cal-month-label" id="lpCalOutLabel"></span>
-                        <div class="lp-cal-nav">
-                            <button class="lp-cal-nav-btn" onclick="lpCalNav('out',-1)">
-                                <svg viewBox="0 0 24 24" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                            </button>
-                            <button class="lp-cal-nav-btn" onclick="lpCalNav('out',1)">
-                                <svg viewBox="0 0 24 24" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="lp-cal-days-hdr">
-                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
-                    </div>
-                    <div class="lp-cal-grid" id="lpCalOutGrid"></div>
-                    <div class="lp-cal-footer">
-                        <button class="lp-cal-clear-btn" onclick="lpClearDate('out')">Clear</button>
-                        <button class="lp-cal-today-btn" onclick="lpGoToday('out')">Today</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Property -->
-            <div class="lp-field-group no-border" style="position:relative;">
-                <div class="lp-field-label">
-                    <svg viewBox="0 0 24 24" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                    Property
-                </div>
-                <div class="lp-prop-trigger" id="lpPropTrigger" onclick="lpToggleProp()">
-                    <svg viewBox="0 0 24 24" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                    <span class="lp-prop-val placeholder" id="lpPropVal">All properties</span>
-                    <svg class="lp-prop-chevron" viewBox="0 0 24 24" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="lp-prop-dropdown" id="lpPropDropdown">
-                    <div class="lp-prop-option selected" data-id="" onclick="lpSelectProp('','All properties',this)">
-                        <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
-                        All properties
-                    </div>
-                    <?php foreach ($lpProperties as $lp): ?>
-                    <div class="lp-prop-option" data-id="<?php echo (int)$lp['property_id']; ?>"
-                         onclick="lpSelectProp('<?php echo (int)$lp['property_id']; ?>','<?php echo htmlspecialchars(addslashes($lp['property_name'])); ?>',this)">
-                        <svg viewBox="0 0 24 24" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                        <?php echo htmlspecialchars($lp['property_name']); ?>
-                        <?php if ($lp['city']): ?><span class="lp-prop-city"><?php echo htmlspecialchars($lp['city']); ?></span><?php endif; ?>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-                <input type="hidden" id="lpPropertyId" value="">
-            </div>
-
-            <!-- Actions -->
-            <div class="lp-picker-actions">
-                <button class="btn-lp-clear" id="lpClearBtn" onclick="lpClearAll()">Clear</button>
-                <button class="btn-lp-check" id="lpCheckBtn" onclick="lpCheckAvail()">
-                    <svg class="lp-check-icon" viewBox="0 0 24 24" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <div class="lp-spinner"></div>
-                    Check Availability
-                </button>
-            </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
-
-        <div class="lp-avail-results" id="lpAvailResults">
-            <div class="lp-prompt-state">
-                <svg viewBox="0 0 24 24" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                <p>Select a check-in date to see available units.</p>
-            </div>
-        </div>
-
-        <div class="lp-avail-cta">
-            <p>Found the perfect unit? Create an account to book your stay.</p>
-            <a href="pages/user/register.php">Get Started — It's Free</a>
-        </div>
-    </div>
-</section>
+    </section>
 
     <section class="testimonials" id="reviews">
         <div class="testimonials-header reveal">
@@ -972,7 +892,6 @@ if (isset($conn) && $conn) {
     }
     ?>
 
-    <script src="assets/js/availability.js"></script>
 </body>
 
 </html>

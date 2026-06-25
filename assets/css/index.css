@@ -781,34 +781,39 @@ nav a:hover::after {
 /* Carousel Controls */
 .carousel-controls {
     position: absolute;
-    bottom: 20px;
-    right: 20px;
+    inset: 0;
     display: flex;
-    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    pointer-events: none;   /* let clicks pass through to image */
 }
 
 .carousel-btn {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(11, 24, 41, 0.45);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.15s;
     color: #fff;
+    pointer-events: auto;   /* re-enable clicks on the buttons */
+    flex-shrink: 0;
 }
 
 .carousel-btn:hover {
-    background: rgba(255, 255, 255, 0.35);
+    background: rgba(201, 170, 113, 0.55);
+    transform: scale(1.08);
 }
 
 .carousel-btn svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     stroke: currentColor;
     fill: none;
     stroke-width: 2.5;
@@ -2295,13 +2300,44 @@ footer {
     }
 
     .footer-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem 2rem;
+        margin-bottom: 32px;
     }
+
+    /* Brand spans full width on mobile */
+    .footer-grid > .footer-brand {
+        grid-column: 1 / -1;
+    }
+
+    footer {
+        padding: 40px 5vw 24px;
+    }
+
+    .footer-brand p {
+        max-width: 100%;
+        font-size: 0.82rem;
+        margin-bottom: 1rem;
+    }
+
+    .footer-col h5 {
+        font-size: 0.88rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .footer-links li { margin-bottom: 0.45rem; }
+    .footer-links a  { font-size: 0.82rem; }
+    .contact-row     { font-size: 0.82rem; margin-bottom: 0.65rem; }
 
     .footer-bottom {
         flex-direction: column;
         text-align: center;
+        padding-top: 20px;
+        gap: 0.5rem;
     }
+
+    .footer-bottom p,
+    .footer-policy-links { font-size: 0.72rem; }
 }
 
 /* ── Small mobile devices (phones) ── */

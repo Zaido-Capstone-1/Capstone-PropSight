@@ -619,7 +619,7 @@ if (burger && mob) {
             }
             const bbDates = banner.querySelector('.bb-dates');
             if (bbDates) {
-                bbDates.innerHTML = `Check-in: ${_fmtDateDash(data.checkin)}<span class="bb-date-sep"> &nbsp;–&nbsp; </span>Check-out: ${_fmtDateDash(data.checkout)}`;
+                bbDates.innerHTML = `Check-in: ${_fmtDateDash(data.checkin)}<span class="bb-date-sep"> &mdash; </span>Check-out: ${_fmtDateDash(data.checkout)}`;
             }
             if (data.unit_id) banner.dataset.unitId = String(data.unit_id);
             const unitEl = banner.querySelector('.bb-room, .bb-unit, .bb-title, [data-rt="unit_name"]');
@@ -1141,16 +1141,22 @@ if (burger && mob) {
             .then(data => {
                 if (data.success) {
                     btn.classList.toggle('saved');
-                    showToast(isSaved ? 'Removed from saved.' : 'Room saved!');
-                    document.querySelectorAll('[data-rt-user="saved_count"]').forEach(el => {
-                        let c = parseInt(el.textContent) || 0;
-                        el.textContent = isSaved ? Math.max(0, c - 1) : c + 1;
-                    });
-                    document.querySelectorAll('[data-rt-user="saved_count_text"]').forEach(el => {
-                        let c = parseInt(el.textContent) || 0;
-                        c = isSaved ? Math.max(0, c - 1) : c + 1;
-                        el.textContent = c + ' on wishlist';
-                    });
+                    // Use authoritative count from API response
+                    if (data.saved_count !== undefined) {
+                        const count = parseInt(data.saved_count, 10);
+                        document.querySelectorAll('[data-rt-user="saved_count"]').forEach(el => {
+                            if (count > 0) {
+                                el.textContent = String(count);
+                                el.style.display = '';
+                            } else {
+                                el.textContent = '';
+                                el.style.display = 'none';
+                            }
+                        });
+                        document.querySelectorAll('[data-rt-user="saved_count_text"]').forEach(el => {
+                            el.textContent = count + ' on wishlist';
+                        });
+                    }
                 } else {
                     showToast(data.message || 'Could not save room.');
                 }

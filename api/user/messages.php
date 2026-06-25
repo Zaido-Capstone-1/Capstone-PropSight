@@ -29,6 +29,7 @@ if ($method === 'GET') {
                 IF(m.from_user=$userId, m.to_user, m.from_user) AS admin_id,
                 CONCAT(u.first_name,' ',u.last_name)            AS admin_name,
                 u.email                                          AS admin_email,
+                u.profile_photo                                  AS admin_photo,
                 (SELECT body FROM messages
                  WHERE (from_user=$userId AND to_user=admin_id)
                     OR (from_user=admin_id AND to_user=$userId)
@@ -54,7 +55,7 @@ if ($method === 'GET') {
         // Also get list of admins user hasn't messaged yet (so they can start a new thread)
         $adminRes = mysqli_query(
             $conn,
-            "SELECT user_id, first_name, last_name, email FROM users WHERE role='admin' AND is_active=1 ORDER BY first_name"
+            "SELECT user_id, first_name, last_name, email, profile_photo FROM users WHERE role='admin' AND is_active=1 ORDER BY first_name"
         );
         $admins = [];
         while ($a = mysqli_fetch_assoc($adminRes))
@@ -104,7 +105,7 @@ if ($method === 'GET') {
         $convStmt->close();
 
         $adminStmt = $conn->prepare(
-            'SELECT user_id, first_name, last_name, email FROM users WHERE user_id = ? LIMIT 1'
+            'SELECT user_id, first_name, last_name, email, profile_photo FROM users WHERE user_id = ? LIMIT 1'
         );
         $adminStmt->bind_param('i', $adminId);
         $adminStmt->execute();

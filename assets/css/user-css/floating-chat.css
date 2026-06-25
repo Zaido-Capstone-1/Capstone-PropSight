@@ -1,0 +1,491 @@
+/* ════════════════════════════════════════════════════════════
+   Floating Chat Widget
+   - Chat icon (beside the notif bell) → dropdown of conversations
+   - Clicking a conversation opens a small popup window, docked
+     bottom-right, stacking side-by-side (Messenger-style)
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Conversations dropdown (mirrors #notifDropdown) ───────── */
+#chatDropdown {
+    display: none;
+    position: fixed;
+    width: 320px;
+    max-height: 420px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .13);
+    z-index: 9999;
+    font-family: inherit;
+}
+
+#chatDropdown::-webkit-scrollbar { width: 4px; }
+#chatDropdown::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+
+.fc-drop-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: 12px 12px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.fc-drop-title {
+    font-weight: 700;
+    font-size: .95rem;
+    color: #1e293b;
+}
+
+.fc-drop-new {
+    font-size: .75rem;
+    color: #2563eb;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: background .15s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.fc-drop-new:hover { background: #eff6ff; }
+
+.fc-thread-search-wrap {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.fc-thread-search-wrap input {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: .8rem;
+    font-family: inherit;
+    outline: none;
+    background: #f8fafc;
+}
+.fc-thread-search-wrap input:focus { border-color: #93c5fd; background: #fff; }
+
+#fc-thread-list { padding: 4px 0; }
+
+.fc-thread-empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: .85rem;
+    line-height: 1.6;
+}
+.fc-thread-empty svg { width: 30px; height: 30px; margin-bottom: 8px; opacity: .5; }
+
+.fc-thread-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background .15s;
+    border-bottom: 1px solid #f8fafc;
+}
+.fc-thread-item:last-child { border-bottom: none; }
+.fc-thread-item:hover { background: #f8fafc; }
+.fc-thread-item.has-unread .fc-thread-name { font-weight: 700; color: #1e293b; }
+.fc-thread-item.has-unread .fc-thread-preview { color: #334155; font-weight: 600; }
+
+.fc-thread-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy-700, #1a3a5c), var(--navy-500, #2563a8));
+    color: var(--sand, #e8c882);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display, 'Cormorant Garamond', serif);
+    font-weight: 600;
+    font-size: .85rem;
+    flex-shrink: 0;
+    overflow: hidden;
+    position: relative;
+}
+.fc-thread-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+.fc-thread-body { flex: 1; min-width: 0; }
+.fc-thread-name {
+    font-size: .82rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fc-thread-preview {
+    font-size: .76rem;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fc-thread-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.fc-thread-time { font-size: .68rem; color: #94a3b8; }
+.fc-thread-badge {
+    background: #ef4444;
+    color: #fff;
+    border-radius: 99px;
+    font-size: .65rem;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── New-conversation panel (inline within dropdown) ───────── */
+.fc-new-panel { padding: 12px 14px; }
+.fc-new-panel label {
+    display: block;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #475569;
+    margin: 10px 0 4px;
+}
+.fc-new-panel label:first-child { margin-top: 0; }
+.fc-new-panel select,
+.fc-new-panel textarea {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: .82rem;
+    font-family: inherit;
+    outline: none;
+    background: #f8fafc;
+    resize: none;
+}
+.fc-new-panel select:focus,
+.fc-new-panel textarea:focus { border-color: #93c5fd; background: #fff; }
+.fc-new-panel textarea { min-height: 70px; }
+.fc-new-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
+.fc-new-actions button {
+    font-size: .78rem;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+}
+.fc-new-cancel { background: #f1f5f9; color: #475569; }
+.fc-new-cancel:hover { background: #e2e8f0; }
+.fc-new-send { background: var(--navy-600, #1e4976); color: #fff; }
+.fc-new-send:hover { background: var(--navy-700, #1a3a5c); }
+.fc-new-send:disabled { opacity: .6; cursor: default; }
+
+/* ════════════════════════════════════════════════════════════
+   Popup chat windows — docked bottom-right, stacking sideways
+   ════════════════════════════════════════════════════════════ */
+#fc-popup-rail {
+    position: fixed;
+    bottom: 0;
+    right: 16px;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-end;
+    gap: 12px;
+    z-index: 9998;
+    pointer-events: none;
+}
+
+.fc-popup {
+    pointer-events: auto;
+    width: 300px;
+    height: 380px;
+    background: #fff;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 12px 36px rgba(11, 24, 41, .22);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: inherit;
+    border: 1px solid #e2e8f0;
+    border-bottom: none;
+    transition: height .18s ease;
+    flex-shrink: 0;
+}
+
+.fc-popup.minimized { height: 46px; }
+.fc-popup.minimized .fc-popup-body,
+.fc-popup.minimized .fc-popup-compose { display: none; }
+
+.fc-popup-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--navy-800, #112240);
+    color: #fff;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.fc-popup-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy-700, #1a3a5c), var(--navy-500, #2563a8));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display, 'Cormorant Garamond', serif);
+    font-size: .72rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    overflow: hidden;
+    color: var(--sand, #e8c882);
+    position: relative;
+}
+.fc-popup-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.fc-popup-name {
+    flex: 1;
+    font-size: .8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fc-popup-header-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.fc-popup-header-actions button {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, .85);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s;
+}
+.fc-popup-header-actions button:hover { background: rgba(255, 255, 255, .15); color: #fff; }
+.fc-popup-header-actions svg { width: 15px; height: 15px; }
+
+.fc-popup-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 10px 4px;
+    background: var(--off-white, #fafaf8);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.fc-popup-body::-webkit-scrollbar { width: 4px; }
+.fc-popup-body::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+
+.fc-date-divider {
+    text-align: center;
+    font-size: .65rem;
+    color: #94a3b8;
+    margin: 8px 0 4px;
+}
+
+.fc-bubble {
+    max-width: 80%;
+    padding: 7px 10px;
+    border-radius: 13px;
+    font-size: .78rem;
+    line-height: 1.38;
+    margin-bottom: 5px;
+    word-wrap: break-word;
+    position: relative;
+}
+.fc-bubble.them {
+    align-self: flex-start;
+    background: #fff;
+    color: #1e293b;
+    border: 1px solid #eef2f6;
+    border-bottom-left-radius: 4px;
+}
+.fc-bubble.me {
+    align-self: flex-end;
+    background: var(--navy-600, #1e4976);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+.fc-bubble.sending { opacity: .6; }
+.fc-bubble-time {
+    font-size: .6rem;
+    opacity: .65;
+    margin-top: 2px;
+    text-align: right;
+}
+.fc-bubble img {
+    max-width: 160px;
+    max-height: 140px;
+    border-radius: 8px;
+    margin-top: 4px;
+    display: block;
+    cursor: pointer;
+}
+.fc-bubble-file {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding: 6px 9px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .12);
+    font-size: .72rem;
+    text-decoration: none;
+    color: inherit;
+    word-break: break-all;
+}
+.fc-bubble.them .fc-bubble-file {
+    background: #f1f5f9;
+}
+.fc-bubble-file svg { flex-shrink: 0; }
+
+.fc-popup-empty {
+    margin: auto;
+    text-align: center;
+    color: #94a3b8;
+    font-size: .75rem;
+    padding: 20px;
+}
+
+/* ── Pending attachment preview chip, shown above the compose bar ── */
+.fc-popup-attach-preview {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: #f1f5f9;
+    border-top: 1px solid #f1f5f9;
+    font-size: .72rem;
+    color: #475569;
+    flex-shrink: 0;
+}
+.fc-popup-attach-preview svg { flex-shrink: 0; color: #64748b; }
+.fc-popup-attach-name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fc-popup-attach-clear {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    flex-shrink: 0;
+}
+.fc-popup-attach-clear:hover { color: #ef4444; }
+
+.fc-popup-compose {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    padding: 8px;
+    border-top: 1px solid #f1f5f9;
+    background: #fff;
+    flex-shrink: 0;
+}
+.fc-popup-attach-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #64748b;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+}
+.fc-popup-attach-btn:hover { background: #f1f5f9; color: #1e4976; }
+.fc-popup-compose textarea {
+    flex: 1;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 7px 12px;
+    font-size: .78rem;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    max-height: 70px;
+    line-height: 1.3;
+}
+.fc-popup-compose textarea:focus { border-color: #93c5fd; }
+.fc-popup-send {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--navy-600, #1e4976);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background .15s;
+}
+.fc-popup-send:hover { background: var(--navy-700, #1a3a5c); }
+.fc-popup-send:disabled { opacity: .5; cursor: default; }
+.fc-popup-send svg { width: 14px; height: 14px; }
+
+/* ── Responsive: mobile takes over full-width docked sheet ──── */
+@media (max-width: 640px) {
+    #chatDropdown {
+        width: 260px;
+        max-height: 45vh;
+    }
+
+    #fc-popup-rail {
+        right: 0;
+        left: 0;
+        bottom: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+    }
+
+    .fc-popup {
+        width: 100%;
+        height: 70vh;
+        border-radius: 14px 14px 0 0;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+
+    .fc-popup.minimized { height: 50px; }
+
+    /* Only the topmost (last opened) popup shows on mobile to avoid stacking full-screen sheets */
+    .fc-popup:not(:last-child) { display: none; }
+}

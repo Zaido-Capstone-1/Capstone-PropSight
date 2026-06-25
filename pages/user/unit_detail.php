@@ -79,7 +79,7 @@ $isMaintenance = $unit['status'] === 'maintenance';
 
 $statusLabel = match ($unit['status']) {
     'vacant' => '✓ Available',
-    'booked' => '📅 Booked',
+    'booked' => 'Booked',
     'occupied' => 'Occupied',
     'maintenance' => 'Maintenance',
     default => ucfirst($unit['status'] ?? 'Unavailable'),
@@ -132,7 +132,6 @@ $nav_items = [
     'saved' => ['label' => 'Saved Rooms', 'sub' => 'Rooms on your wishlist', 'href' => 'saved.php', 'badge' => $_savedCount, 'icon' => '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>'],
     'loyalty' => ['label' => 'Loyalty Points', 'sub' => $_loyaltySub, 'href' => 'loyalty.php', 'badge' => null, 'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'],
     'settings' => ['label' => 'Settings', 'sub' => 'Notifications, privacy, security', 'href' => 'settings.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
-    'messages' => ['label' => 'Messages', 'sub' => 'Chat with the property team', 'href' => 'messages.php', 'badge' => null, 'icon' => '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>'],
     'support' => ['label' => 'Support & Help', 'sub' => 'FAQs and contact staff', 'href' => 'support.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
 ];
 ?>
@@ -147,13 +146,16 @@ $nav_items = [
         <?php echo ud_esc($unitTitle); ?> — PropSight
     </title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=block"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <link rel="stylesheet" href="../../assets/css/user-css/layout.css">
     <link rel="stylesheet" href="../../assets/css/user-css/styles.css">
     <link rel="stylesheet" href="../../assets/css/user-css/user-dashboard.css">
+    <link rel="stylesheet" href="../../assets/css/user-css/bottom-nav.css">
+    <link rel="stylesheet" href="../../assets/css/user-css/floating-chat.css?v=4">
     <link rel="stylesheet" href="../../assets/css/user-css/unit_detail.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -230,14 +232,29 @@ $nav_items = [
             </div>
         </a>
         <nav>
-            <?php foreach ($top_nav_items as $item): ?>
-                <a href="<?php echo ud_esc($item['href']); ?>">
+            <?php
+            $account_nav_keys = ['dashboard', 'profile', 'saved', 'loyalty', 'settings', 'payment'];
+            foreach ($top_nav_items as $item):
+                $isTopActive = ($active_nav === $item['key']) ||
+                    ($item['key'] === 'dashboard' && in_array($active_nav, $account_nav_keys, true));
+            ?>
+                <a href="<?php echo ud_esc($item['href']); ?>" class="<?php echo $isTopActive ? 'active' : ''; ?>">
                     <?php echo ud_esc($item['label']); ?>
                 </a>
             <?php endforeach; ?>
         </nav>
         <div class="header-right">
-            <a href="user-dashboard.php#browse" class="btn-browse" style="text-decoration:none;">Browse Rooms</a>
+            <a href="units.php" class="btn-browse" style="text-decoration:none;">Browse Rooms</a>
+            <!-- chat icon (floating chat widget) -->
+            <button id="chatBellBtn" type="button" aria-label="Messages" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;
+                       color:var(--text-soft);display:flex;align-items:center;justify-content:center;
+                       position:relative;transition:background 0.2s;" onmouseenter="this.style.background='var(--navy-50,var(--blue-50,#eff6ff))'"
+                onmouseleave="this.style.background='none'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span data-rt="messages" style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
+            </button>
             <!-- notification bell -->
             <div style="position:relative;display:inline-flex;align-items:center;">
                 <button id="notifBellBtn" aria-label="Notifications" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;
@@ -1271,6 +1288,7 @@ $nav_items = [
             idVerified: <?php echo json_encode($_SESSION['id_verified'] ?? 'none'); ?>,
         };
         window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
+        window.PS_USER_ID = <?php echo json_encode((int) ($_SESSION['user_id'] ?? 0)); ?>;
         window.psGetCsrfToken = () => String(window.PS_CSRF_TOKEN || '');
         window.psAppendCsrf = t => { const k = window.psGetCsrfToken(); if (k && t?.append) t.append('csrf_token', k); return t; };
         window.PS_RT_PAGE = 'unit_detail'; window.PS_RT_ROLE = 'user'; window.PS_RT_API = '../../api/realtime.php';
@@ -1467,6 +1485,9 @@ $nav_items = [
     <script>window._psToastReady = true;</script>
     <script src="../../assets/js/realtime.js"></script>
     <script src="../../assets/js/user-js/user-realtime-pages.js"></script>
+    <script src="../../assets/js/user-js/floating-chat.js?v=5"></script>
+
+<?php require '../../includes/_bottom_nav.php'; ?>
 </body>
 
 </html>

@@ -193,13 +193,16 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boracay Accommodation — My Account</title>
+    <title>Boracay Accommodation — Homepage</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="../../assets/css/user-css/layout.css">
     <link rel="stylesheet" href="../../assets/css/user-css/bottom-nav.css">
+    <link rel="stylesheet" href="../../assets/css/user-css/floating-chat.css?v=4">
     <link rel="stylesheet" href="../../assets/css/user-css/styles.css">
+    <link rel="icon" type="image/png" href="../../assets/images/logo.png">
     <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=block"
         rel="stylesheet">
     <link rel="stylesheet" href="../../assets/css/user-css/dashboard.css">
     <link rel="stylesheet" href="../../assets/css/user-css/user-dashboard.css">
@@ -227,7 +230,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
         'saved' => ['label' => 'Saved Rooms', 'sub' => 'Rooms on your wishlist', 'href' => 'saved.php', 'badge' => count($savedUnitIds) > 0 ? (string) count($savedUnitIds) : null, 'icon' => '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>'],
         'loyalty' => ['label' => 'Loyalty Points', 'sub' => $loyaltyPoints . ' pts · ' . $loyaltyTier . ' tier', 'href' => 'loyalty.php', 'badge' => null, 'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'],
         'settings' => ['label' => 'Settings', 'sub' => 'Notifications, privacy, security', 'href' => 'settings.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
-        'messages' => ['label' => 'Messages', 'sub' => 'Chat with the property team', 'href' => 'messages.php', 'badge' => null, 'icon' => '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>'],
         'support' => ['label' => 'Support & Help', 'sub' => 'FAQs and contact staff', 'href' => 'support.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
     ];
     $active_nav = 'dashboard';
@@ -260,6 +262,16 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
         <div class="header-right">
             <button class="btn-browse"
                 onclick="document.querySelector('#browse').scrollIntoView({behavior:'smooth'})">Browse Rooms</button>
+            <button id="chatBellBtn" type="button" aria-label="Messages"
+                style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;position:relative;transition:background .2s;"
+                onmouseenter="this.style.background='var(--navy-50)'" onmouseleave="this.style.background='none'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    style="width:20px;height:20px;">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span data-rt="messages"
+                    style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
+            </button>
             <div style="position:relative;display:inline-flex;align-items:center;">
                 <button id="notifBellBtn" aria-label="Notifications"
                     style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;transition:background .2s;"
@@ -346,15 +358,13 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         <div class="sb-sub"><?php echo $item['sub']; ?></div>
                     </div>
                     <div class="sb-right">
-                        <?php if ($item['badge']): ?>
+                        <?php if ($item['badge'] && $key === 'saved'): ?>
+                            <span class="sb-badge-pill" data-rt-user="saved_count"><?php echo $item['badge']; ?></span>
+                        <?php elseif ($item['badge']): ?>
                             <span class="sb-badge-pill"><?php echo $item['badge']; ?></span>
-                        <?php elseif ($key === 'messages'): ?>
-                            <span class="sb-badge-pill nav-badge" data-rt="messages"
-                                style="display:none;background:#ef4444;"></span>
-                            <span class="sb-chevron" data-msg-chevron><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <polyline points="9 18 15 12 9 6" />
-                                </svg></span>
+                        <?php elseif ($key === 'saved'): ?>
+                            <span class="sb-badge-pill" data-rt-user="saved_count" style="display:none;"></span>
+                            <span class="sb-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
                         <?php else: ?>
                             <span class="sb-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
@@ -392,9 +402,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
         <span id="toastMsg"></span>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════
-     HERO SECTION
-═══════════════════════════════════════════════════════════ -->
     <section class="user-hero" id="account">
         <div class="user-hero-inner">
             <div class="hero-banner reveal">
@@ -403,11 +410,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                 <div class="hero-banner-content">
                     <div class="hero-banner-left">
                         <div class="user-hero-greeting">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                style="width:13px;height:13px;stroke:var(--gold);">
-                                <path
-                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                            </svg>
                             <?php echo $greeting; ?>
                         </div>
                         <h1>Welcome back, <em><?php echo htmlspecialchars($_SESSION['first_name']); ?></em>!</h1>
@@ -458,15 +460,15 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                     <div class="bb-body">
                                         <div class="bb-label">Active Reservation</div>
                                         <div class="bb-room">
-                                            <?php echo htmlspecialchars($activeBooking['unit_name'] ?? $activeBooking['unit_number']); ?>
-                                            —
-                                            <?php echo htmlspecialchars($activeBooking['property_name']); ?>
+                                            <?php
+                                            $bbUnitLabel = !empty($activeBooking['unit_name']) ? $activeBooking['unit_name'] : (!empty($activeBooking['unit_number']) ? $activeBooking['unit_number'] : 'Unit');
+                                            echo htmlspecialchars($bbUnitLabel) . ' — ' . htmlspecialchars($activeBooking['property_name'] ?? '');
+                                            ?>
                                         </div>
                                         <div class="bb-dates"
                                             data-checkin="<?php echo htmlspecialchars($activeBooking['checkin_date'] ?? ''); ?>"
                                             data-checkout="<?php echo htmlspecialchars($activeBooking['checkout_date'] ?? ''); ?>">
-                                            <?php echo formatDate($activeBooking['checkin_date']); ?><span
-                                                class="bb-date-sep"> – </span><?php echo formatDate($activeBooking['checkout_date']); ?>
+                                            Check-in: <?php echo formatDate($activeBooking['checkin_date']); ?><span class="bb-date-sep"> &mdash; </span>Check-out: <?php echo formatDate($activeBooking['checkout_date']); ?>
                                         </div>
                                     </div>
                                     <div class="bb-actions">
@@ -510,12 +512,6 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                                         <div class="bb-status st-pending" id="rt-active-booking-status">Pending</div>
                                         <button class="btn-manage" onclick="return false;">Manage Stay</button>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="hero-no-reservation">
-                                <div>
-                                    <div class="hnr-title">No active reservation</div>
-                                    <div class="hnr-sub">Browse rooms below for your next stay.</div>
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -1351,6 +1347,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
             idVerified: <?php echo json_encode($_SESSION['id_verified'] ?? 'none'); ?>,
         };
         window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
+        window.PS_USER_ID = <?php echo json_encode((int) ($_SESSION['user_id'] ?? 0)); ?>;
         window.psGetCsrfToken = function () {
             return String(window.PS_CSRF_TOKEN || '');
         };
@@ -1370,6 +1367,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
 
     <script src="../../assets/js/realtime.js"></script>
     <script src="../../assets/js/user-js/user-realtime-pages.js"></script>
+    <script src="../../assets/js/user-js/floating-chat.js?v=5"></script>
 
 
 <?php require '../../includes/_bottom_nav.php'; ?>

@@ -60,24 +60,27 @@
 
     .user-bottom-nav a.ubn-item.ubn-center {
         color: #64748b;
+        justify-content: flex-end;
+        padding-bottom: 10px !important;
     }
 
     .ubn-fab {
-        width: 44px;
-        height: 44px;
+        width: 54px;
+        height: 54px;
         border-radius: 50%;
         background: linear-gradient(135deg, #1a3a5c 0%, #c0694a 100%);
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 3px 12px rgba(26, 58, 92, .35);
+        box-shadow: 0 4px 14px rgba(26, 58, 92, .4);
         transition: transform .18s, box-shadow .18s;
         flex-shrink: 0;
+        margin-top: -32px;
     }
 
     .ubn-fab svg {
-        width: 20px;
-        height: 20px;
+        width: 22px;
+        height: 22px;
         stroke: #fff;
     }
 

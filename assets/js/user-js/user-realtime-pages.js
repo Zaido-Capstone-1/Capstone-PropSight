@@ -199,7 +199,7 @@
                     var bbDates = banner.querySelector('.bb-dates');
                     if (bbDates) {
                         bbDates.innerHTML = 'Check-in: ' + _fmtDate(ci) +
-                            '<span class="bb-date-sep"> &nbsp;\u2013&nbsp; </span>Check-out: ' + _fmtDate(co);
+                            '<span class="bb-date-sep"> &mdash; </span>Check-out: ' + _fmtDate(co);
                     }
                 }
 
@@ -300,40 +300,21 @@
             }
 
             /* ── Update Room Card Availability ──────────────────── */
-            if (b.unit_id) {
+            /* Only mark as Booked — never flip to Available from a single user's booking status
+               because another user may still have an active booking on the same unit. */
+            if (b.unit_id && ['confirmed', 'active', 'pending'].includes(b.status)) {
                 var roomCard = document.querySelector('.room-card[data-unit-id="' + String(b.unit_id) + '"]');
                 if (roomCard) {
-                    if (['cancelled', 'completed'].includes(b.status)) {
-                        if (roomCard.dataset.status !== 'maintenance') {
-                            roomCard.dataset.status = 'vacant';
-                        }
-                        var availBadge = roomCard.querySelector('[data-avail-status]');
-                        if (availBadge && roomCard.dataset.status !== 'maintenance') {
-                            availBadge.className = 'room-avail avail-yes';
-                            availBadge.textContent = '✓ Available';
-                        }
-                        var bookBtn = roomCard.querySelector('[data-book-btn]');
-                        if (bookBtn) {
-                            bookBtn.disabled = false;
-                            bookBtn.textContent = 'Book Now';
-                            bookBtn.onclick = function (ev) {
-                                if (ev) ev.stopPropagation();
-                                var unitId = roomCard.dataset.unitId;
-                                if (unitId) window.location.href = 'unit_detail.php?id=' + unitId + '&book=1';
-                            };
-                        }
-                    } else if (['confirmed', 'active', 'pending'].includes(b.status)) {
-                        roomCard.dataset.status = 'occupied';
-                        var availBadge = roomCard.querySelector('[data-avail-status]');
-                        if (availBadge) {
-                            availBadge.className = 'room-avail avail-no';
-                            availBadge.textContent = 'Booked';
-                        }
-                        var bookBtn = roomCard.querySelector('[data-book-btn]');
-                        if (bookBtn) {
-                            bookBtn.disabled = true;
-                            bookBtn.textContent = 'Unavailable';
-                        }
+                    roomCard.dataset.status = 'occupied';
+                    var availBadge = roomCard.querySelector('[data-avail-status]');
+                    if (availBadge) {
+                        availBadge.className = 'room-avail avail-no';
+                        availBadge.textContent = 'Booked';
+                    }
+                    var bookBtn = roomCard.querySelector('[data-book-btn]');
+                    if (bookBtn) {
+                        bookBtn.disabled = true;
+                        bookBtn.textContent = 'Unavailable';
                     }
                 }
             }
@@ -371,42 +352,23 @@
             }
         });
 
+        /* Only mark as Booked — never flip to Available from user's own booking status */
         Object.keys(unitStatusMap).forEach(function (unitId) {
             var status = unitStatusMap[unitId].status;
+            if (!['confirmed', 'active', 'pending'].includes(status)) return;
             var roomCard = document.querySelector('.room-card[data-unit-id="' + String(unitId) + '"]');
             if (!roomCard) return;
 
-            if (['cancelled', 'completed'].includes(status)) {
-                if (roomCard.dataset.status !== 'maintenance') {
-                    roomCard.dataset.status = 'vacant';
-                }
-                var availBadge = roomCard.querySelector('[data-avail-status]');
-                if (availBadge && roomCard.dataset.status !== 'maintenance') {
-                    availBadge.className = 'room-avail avail-yes';
-                    availBadge.textContent = '✓ Available';
-                }
-                var bookBtn = roomCard.querySelector('[data-book-btn]');
-                if (bookBtn) {
-                    bookBtn.disabled = false;
-                    bookBtn.textContent = 'Book Now';
-                    bookBtn.onclick = function (ev) {
-                        if (ev) ev.stopPropagation();
-                        var uid = roomCard.dataset.unitId;
-                        if (uid) window.location.href = 'unit_detail.php?id=' + uid + '&book=1';
-                    };
-                }
-            } else if (['confirmed', 'active', 'pending'].includes(status)) {
-                roomCard.dataset.status = 'occupied';
-                var availBadge = roomCard.querySelector('[data-avail-status]');
-                if (availBadge) {
-                    availBadge.className = 'room-avail avail-no';
-                    availBadge.textContent = 'Booked';
-                }
-                var bookBtn = roomCard.querySelector('[data-book-btn]');
-                if (bookBtn) {
-                    bookBtn.disabled = true;
-                    bookBtn.textContent = 'Unavailable';
-                }
+            roomCard.dataset.status = 'occupied';
+            var availBadge = roomCard.querySelector('[data-avail-status]');
+            if (availBadge) {
+                availBadge.className = 'room-avail avail-no';
+                availBadge.textContent = 'Booked';
+            }
+            var bookBtn = roomCard.querySelector('[data-book-btn]');
+            if (bookBtn) {
+                bookBtn.disabled = true;
+                bookBtn.textContent = 'Unavailable';
             }
         });
     });
@@ -660,30 +622,9 @@
         if (!bk) {
             if (banner.style.display === 'none') return;
 
+            /* Unit availability not updated here — another user may still have an active booking */
             var unitId = banner.dataset.unitId;
-            if (unitId) {
-                var roomCard = document.querySelector('.room-card[data-unit-id="' + unitId + '"]');
-                if (roomCard) {
-                    if (roomCard.dataset.status !== 'maintenance') {
-                        roomCard.dataset.status = 'vacant';
-                    }
-                    var availBadge = roomCard.querySelector('[data-avail-status]');
-                    if (availBadge && roomCard.dataset.status !== 'maintenance') {
-                        availBadge.className = 'room-avail avail-yes';
-                        availBadge.textContent = '✓ Available';
-                    }
-                    var bookBtn = roomCard.querySelector('[data-book-btn]');
-                    if (bookBtn) {
-                        bookBtn.disabled = false;
-                        bookBtn.textContent = 'Book Now';
-                        bookBtn.onclick = function (ev) {
-                            if (ev) ev.stopPropagation();
-                            var uid = roomCard.dataset.unitId;
-                            if (uid) window.location.href = 'unit_detail.php?id=' + uid + '&book=1';
-                        };
-                    }
-                }
-            }
+            void unitId; /* intentionally unused */
             window.hasActiveBooking = false;
 
             banner.style.transition = 'opacity 0.5s, max-height 0.7s ease, margin 0.7s, padding 0.7s';
@@ -701,10 +642,12 @@
         }
 
         var id = String(bk.booking_id);
+        var sameBooking = banner.dataset.bookingId === id;
         banner.dataset.bookingId = id;
         if (bk.unit_id) banner.dataset.unitId = String(bk.unit_id);
 
-        if (bk.unit_id) {
+        /* Only update room card badge if booking changed */
+        if (!sameBooking && bk.unit_id) {
             var roomCard = document.querySelector('.room-card[data-unit-id="' + String(bk.unit_id) + '"]');
             if (roomCard) {
                 roomCard.dataset.status = 'occupied';
@@ -735,25 +678,36 @@
 
         var bannerBadge = document.getElementById('rt-active-booking-status');
         if (bannerBadge) {
-            var stCls = _bbStMap[bk.status] || '';
-            bannerBadge.className = bannerBadge.className
-                .replace(/\bst-\w+/g, '').trim() + ' ' + stCls;
-            bannerBadge.textContent = _stBadge(bk.status).text;
+            var newStCls = _bbStMap[bk.status] || '';
+            var newStText = _stBadge(bk.status).text;
+            if (bannerBadge.textContent !== newStText) {
+                bannerBadge.className = bannerBadge.className
+                    .replace(/\bst-\w+/g, '').trim() + ' ' + newStCls;
+                bannerBadge.textContent = newStText;
+            }
         }
 
         var roomEl = banner.querySelector('.bb-room');
         if (roomEl) {
             var unitLabel = bk.unit_name || bk.unit_number || 'Unit';
-            roomEl.textContent = unitLabel + (bk.property_name ? ' \u2014 ' + bk.property_name : '');
+            var newRoomText = unitLabel + (bk.property_name ? ' \u2014 ' + bk.property_name : '');
+            var currentRoomText = roomEl.textContent.replace(/\s+/g, ' ').trim();
+            var normalizedNew = newRoomText.replace(/\s+/g, ' ').trim();
+            if (currentRoomText !== normalizedNew) {
+                roomEl.textContent = newRoomText;
+            }
         }
 
         if (bk.checkin_date || bk.checkout_date) {
             var bbDates = banner.querySelector('.bb-dates');
             if (bbDates) {
-                bbDates.innerHTML =
+                var newDates =
                     'Check-in: ' + _fmtDate(bk.checkin_date) +
-                    '<span class="bb-date-sep"> &nbsp;\u00b7&nbsp; </span>' +
+                    '<span class="bb-date-sep"> &mdash; </span>' +
                     'Check-out: ' + _fmtDate(bk.checkout_date);
+                if (bbDates.innerHTML !== newDates) {
+                    bbDates.innerHTML = newDates;
+                }
             }
         }
 

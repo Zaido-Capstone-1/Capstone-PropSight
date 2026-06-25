@@ -60,11 +60,11 @@
                 </div>
                 <div class="sb-right">
                     <?php if ($item['badge']): ?>
-                        <span class="sb-badge-pill"><?php echo $item['badge']; ?></span>
-                    <?php elseif ($key === 'messages'): ?>
-                        <span class="sb-badge-pill nav-badge" data-rt="messages"
-                            style="display:none;background:#ef4444;"></span>
-                        <span class="sb-chevron" data-msg-chevron>
+                        <span class="sb-badge-pill" data-rt-user="<?php echo $key === 'saved' ? 'saved_count' : ''; ?>"><?php echo $item['badge']; ?></span>
+                    <?php elseif ($key === 'saved'): ?>
+                        <span class="sb-badge-pill" data-rt-user="saved_count"
+                            style="display:none;"></span>
+                        <span class="sb-chevron">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="9 18 15 12 9 6" />
                             </svg>

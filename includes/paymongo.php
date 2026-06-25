@@ -190,6 +190,26 @@ function paymongo_get_payment_intent(string $intent_id): array
     return paymongo_request('GET', '/payment_intents/' . $intent_id);
 }
 
+/**
+ * Expire/archive a PayMongo payment link or checkout session so it can no longer be paid.
+ * - Links (GCash/Maya/Online Banking): POST /links/{id}/archive
+ * - Checkout Sessions (card):          POST /checkout_sessions/{id}/expire
+ * Silently ignores 404/already-expired errors.
+ */
+function paymongo_archive_link(string $link_id, string $payment_method = ''): void
+{
+    try {
+        if ($payment_method === 'card' || str_starts_with($link_id, 'cs_')) {
+            paymongo_request('POST', '/checkout_sessions/' . $link_id . '/expire');
+        } else {
+            paymongo_request('POST', '/links/' . $link_id . '/archive');
+        }
+    } catch (Throwable $e) {
+        // 404 = already expired/archived — safe to ignore
+        error_log('[paymongo_archive_link] ' . $link_id . ': ' . $e->getMessage());
+    }
+}
+
 function paymongo_verify_webhook(string $rawBody, string $sigHeader, string $secret): bool
 {
     // header format: t=timestamp,te=hash,li=hash

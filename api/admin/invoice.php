@@ -684,15 +684,57 @@ function handle_check_paid(mysqli $conn): void
       $txChk2->store_result();
       if ($txChk2->num_rows === 0) {
         $txChk2->close();
-        $paidAmt2 = (float) $pmRow['amount'];
-        $paidMeth2 = format_payment_method($pmRow['payment_method'] ?: 'PayMongo');
-        $dateStr2 = date('Y-m-d');
-        $safeRef2 = $conn->real_escape_string($txRef2);
-        $safeDesc2 = $conn->real_escape_string('PayMongo payment (' . $paidMeth2 . ') for Invoice #' . $id);
-        $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by)
-                      VALUES ('$safeRef2','$safeDesc2','Invoice Revenue','Income',$paidAmt2,'$dateStr2',NULL,'',NULL)");
+        $paidAmt2    = (float) $pmRow['amount'];
+        $paidMeth2   = format_payment_method($pmRow['payment_method'] ?: 'PayMongo');
+        $dateStr2    = date('Y-m-d');
+        $txDesc2     = 'PayMongo payment (' . $paidMeth2 . ') for Invoice #' . $id;
+        $txCat2      = 'Invoice Revenue';
+        $txTyp2      = 'Income';
+        $txNotes2    = '';
+        $txSt2 = $conn->prepare("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, NULL)");
+        $txSt2->bind_param('ssssdss', $txRef2, $txDesc2, $txCat2, $txTyp2, $paidAmt2, $dateStr2, $txNotes2);
+        $txSt2->execute();
+        if ($txSt2->errno) {
+          error_log('[check_paid fast-path] transactions INSERT error: ' . $txSt2->error);
+        }
+        $txSt2->close();
       } else {
         $txChk2->close();
+      }
+
+      // Archive all OTHER pending PayMongo links for this invoice on the API side
+      // so the tenant cannot pay again through the remaining email buttons
+      $paidLinkId2 = $pmRow['paymongo_link_id'];
+      $otherStmt2 = $conn->prepare("
+          SELECT paymongo_link_id, payment_method FROM paymongo_payments
+          WHERE  reference_id   = ?
+            AND  reference_type = 'invoice'
+            AND  paymongo_link_id != ?
+            AND  status NOT IN ('paid','expired','failed','cancelled')
+      ");
+      $otherStmt2->bind_param('is', $id, $paidLinkId2);
+      $otherStmt2->execute();
+      $otherRows2 = $otherStmt2->get_result()->fetch_all(MYSQLI_ASSOC);
+      $otherStmt2->close();
+
+      if (!empty($otherRows2)) {
+        require_once __DIR__ . '/../../includes/paymongo.php';
+        foreach ($otherRows2 as $other2) {
+          if (!empty($other2['paymongo_link_id'])) {
+            paymongo_archive_link($other2['paymongo_link_id'], $other2['payment_method']);
+          }
+        }
+        $cancelOthers2 = $conn->prepare("
+            UPDATE paymongo_payments
+            SET    status = 'cancelled'
+            WHERE  reference_id   = ?
+              AND  reference_type = 'invoice'
+              AND  paymongo_link_id != ?
+              AND  status NOT IN ('paid','expired','failed','cancelled')
+        ");
+        $cancelOthers2->bind_param('is', $id, $paidLinkId2);
+        $cancelOthers2->execute();
+        $cancelOthers2->close();
       }
 
       // Invoice already Paid and records ensured — stop polling
@@ -757,7 +799,27 @@ function handle_check_paid(mysqli $conn): void
   $updPm->execute();
   $updPm->close();
 
-  // 2. Expire all OTHER pending links for this invoice (so tenant can't pay twice)
+  // 2. Expire all OTHER pending links for this invoice on PayMongo's side
+  //    then cancel in DB — so the remaining email buttons stop working
+  $otherRows = [];
+  $otherSel = $conn->prepare("
+      SELECT paymongo_link_id, payment_method FROM paymongo_payments
+      WHERE  reference_id   = ?
+        AND  reference_type = 'invoice'
+        AND  paymongo_link_id != ?
+        AND  status NOT IN ('paid','expired','failed','cancelled')
+  ");
+  $otherSel->bind_param('is', $id, $paid_link_id);
+  $otherSel->execute();
+  $otherRows = $otherSel->get_result()->fetch_all(MYSQLI_ASSOC);
+  $otherSel->close();
+
+  foreach ($otherRows as $other) {
+    if (!empty($other['paymongo_link_id'])) {
+      paymongo_archive_link($other['paymongo_link_id'], $other['payment_method']);
+    }
+  }
+
   $expStmt = $conn->prepare("
         UPDATE paymongo_payments
         SET    status = 'cancelled'
@@ -810,15 +872,14 @@ function handle_check_paid(mysqli $conn): void
     $cat = 'Invoice Revenue';
     $typ = 'Income';
     $notes = '';
-    $recBy = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null;
 
-    $safeRef = $conn->real_escape_string($invRef);
-    $safeDesc = $conn->real_escape_string($desc);
-    $safeCat = $conn->real_escape_string($cat);
-    $safeNotes = $conn->real_escape_string($notes);
-    $recBySQL = ($recBy !== null) ? (int) $recBy : 'NULL';
-    $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by)
-                  VALUES ('$safeRef','$safeDesc','$safeCat','$typ',$paid_amount,'$date',NULL,'$safeNotes',$recBySQL)");
+    $txStmt = $conn->prepare("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, NULL)");
+    $txStmt->bind_param('ssssdss', $invRef, $desc, $cat, $typ, $paid_amount, $date, $notes);
+    $txStmt->execute();
+    if ($txStmt->errno) {
+      error_log('[check_paid] transactions INSERT error: ' . $txStmt->error);
+    }
+    $txStmt->close();
   }
 
   json_response(true, 'Payment confirmed.', ['is_paid' => true, 'payment_method' => $paid_method]);

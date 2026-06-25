@@ -64,7 +64,7 @@ if ($isLinkPaid || $isCheckoutPaid) {
 
     // Resolve the PayMongo record ID depending on event type
     if ($isLinkPaid) {
-        $linkId = $data['attributes']['links'][0]['id'] ?? null;
+        $linkId = $data['id'] ?? null;
         error_log('PayMongo link.payment.paid - linkId: ' . ($linkId ?? 'NULL'));
     } else {
         // checkout_session.payment.paid — data IS the checkout session object
@@ -162,7 +162,27 @@ if ($isLinkPaid || $isCheckoutPaid) {
             $invUpd->close();
 
             // Expire/cancel all OTHER pending links for this invoice
-            // so the tenant cannot pay again through a different method button
+            // so the tenant cannot pay again through a different method button.
+            // First fetch them so we can archive each one via the PayMongo API,
+            // then mark them cancelled in our DB.
+            $otherSel = $conn->prepare("
+                SELECT paymongo_link_id, payment_method FROM paymongo_payments
+                WHERE  reference_id   = ?
+                  AND  reference_type = 'invoice'
+                  AND  paymongo_link_id != ?
+                  AND  status NOT IN ('paid','expired','failed','cancelled')
+            ");
+            $otherSel->bind_param('is', $invoiceId, $linkId);
+            $otherSel->execute();
+            $otherRows = $otherSel->get_result()->fetch_all(MYSQLI_ASSOC);
+            $otherSel->close();
+
+            foreach ($otherRows as $other) {
+                if (!empty($other['paymongo_link_id'])) {
+                    paymongo_archive_link($other['paymongo_link_id'], $other['payment_method']);
+                }
+            }
+
             $expStmt = $conn->prepare("
                 UPDATE paymongo_payments
                 SET    status = 'cancelled'
@@ -205,10 +225,13 @@ if ($isLinkPaid || $isCheckoutPaid) {
 
             if (!$txExists) {
                 $desc = 'PayMongo payment (' . $paymentMethod . ') for Invoice #' . $invoiceId;
-                $safeRef = $conn->real_escape_string($invRef);
-                $safeDesc = $conn->real_escape_string($desc);
-                $conn->query("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by)
-                              VALUES ('$safeRef','$safeDesc','Invoice Revenue','Income',$amount,'$date',NULL,'',NULL)");
+                $invCat = 'Invoice Revenue';
+                $invTyp = 'Income';
+                $invNotes = '';
+                $invTxStmt = $conn->prepare("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, property_id, notes, recorded_by) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, NULL)");
+                $invTxStmt->bind_param('ssssdss', $invRef, $desc, $invCat, $invTyp, $amount, $date, $invNotes);
+                $invTxStmt->execute();
+                $invTxStmt->close();
             }
 
             error_log('[webhook] Invoice #' . $invoiceId . ' marked Paid via PayMongo link ' . $linkId . ' method: ' . $paymentMethod);
@@ -220,11 +243,24 @@ if ($isLinkPaid || $isCheckoutPaid) {
 
     // ── Regular booking payment ───────────────────────────────────────────
     // Guard against double-insert (webhook + polling race condition)
-    $alreadyPaid = $conn->query("SELECT payment_id FROM payments WHERE booking_id=$bookingId AND payment_status='paid' LIMIT 1")->fetch_assoc();
-    $alreadyTxn  = $conn->query("SELECT id FROM transactions WHERE booking_id=$bookingId AND type='Income' LIMIT 1")->fetch_assoc();
+    $apStmt = $conn->prepare("SELECT payment_id FROM payments WHERE booking_id=? AND payment_status='paid' LIMIT 1");
+    $apStmt->bind_param('i', $bookingId);
+    $apStmt->execute();
+    $alreadyPaid = $apStmt->get_result()->fetch_assoc();
+    $apStmt->close();
+
+    $atStmt = $conn->prepare("SELECT id FROM transactions WHERE booking_id=? AND type='Income' LIMIT 1");
+    $atStmt->bind_param('i', $bookingId);
+    $atStmt->execute();
+    $alreadyTxn = $atStmt->get_result()->fetch_assoc();
+    $atStmt->close();
+
     if ($alreadyPaid || $alreadyTxn) {
         // Payment already recorded (likely by the polling script) — just confirm booking status and exit
-        $conn->query("UPDATE bookings SET status='confirmed', paid_at=NOW() WHERE booking_id=$bookingId AND status IN ('pending','confirmed')");
+        $earlyUpd = $conn->prepare("UPDATE bookings SET status='confirmed', paid_at=NOW() WHERE booking_id=? AND status IN ('pending','confirmed')");
+        $earlyUpd->bind_param('i', $bookingId);
+        $earlyUpd->execute();
+        $earlyUpd->close();
         http_response_code(200);
         echo 'ok';
         exit;
@@ -252,7 +288,11 @@ if ($isLinkPaid || $isCheckoutPaid) {
     $typ = 'Income';
 
     // Fetch property_id for this booking
-    $propRow = $conn->query("SELECT p.property_id FROM bookings b JOIN units u ON u.unit_id = b.unit_id JOIN properties p ON p.property_id = u.property_id WHERE b.booking_id = $bookingId LIMIT 1")->fetch_assoc();
+    $propStmt = $conn->prepare("SELECT p.property_id FROM bookings b JOIN units u ON u.unit_id = b.unit_id JOIN properties p ON p.property_id = u.property_id WHERE b.booking_id = ? LIMIT 1");
+    $propStmt->bind_param('i', $bookingId);
+    $propStmt->execute();
+    $propRow = $propStmt->get_result()->fetch_assoc();
+    $propStmt->close();
     $propertyId = $propRow ? (int) $propRow['property_id'] : null;
 
     $txStmt = $conn->prepare("INSERT INTO transactions (reference_no, description, category, type, amount, transaction_date, booking_id, property_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
@@ -268,7 +308,7 @@ if ($isLinkPaid || $isCheckoutPaid) {
     // Notify admin now that payment is confirmed
     try {
         $bkRef2 = 'BK-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
-        $bkInfoNotif = $conn->query("
+        $bkInfoNotifStmt = $conn->prepare("
             SELECT CONCAT(u2.first_name,' ',u2.last_name) AS guest_name,
                    COALESCE(un.unit_name, CONCAT(p.property_name, ' — Unit ', un.unit_number)) AS unit_label,
                    b.checkin_date, b.checkout_date
@@ -276,8 +316,12 @@ if ($isLinkPaid || $isCheckoutPaid) {
             JOIN users u2 ON u2.user_id = b.user_id
             JOIN units un ON un.unit_id = b.unit_id
             LEFT JOIN properties p ON p.property_id = un.property_id
-            WHERE b.booking_id=$bookingId LIMIT 1
-        ")->fetch_assoc();
+            WHERE b.booking_id=? LIMIT 1
+        ");
+        $bkInfoNotifStmt->bind_param('i', $bookingId);
+        $bkInfoNotifStmt->execute();
+        $bkInfoNotif = $bkInfoNotifStmt->get_result()->fetch_assoc();
+        $bkInfoNotifStmt->close();
         if ($bkInfoNotif) {
             $gName = $bkInfoNotif['guest_name'] ?? 'A guest';
             $uLabel2 = $bkInfoNotif['unit_label'] ?? 'a unit';
@@ -286,7 +330,10 @@ if ($isLinkPaid || $isCheckoutPaid) {
             $ntTitle2 = "Payment confirmed: $bkRef2";
             $ntBody2 = "$gName booked $uLabel2 · $ciDate–$coDate (PayMongo payment received via $paymentMethod).";
             $ntLink2 = 'pages/admin/reservations.php';
-            $admins2 = $conn->query("SELECT user_id FROM users WHERE role='admin' LIMIT 20");
+            $adminsStmt = $conn->prepare("SELECT user_id FROM users WHERE role='admin' LIMIT 20");
+            $adminsStmt->execute();
+            $admins2 = $adminsStmt->get_result();
+            $adminsStmt->close();
             while ($adm2 = $admins2->fetch_assoc()) {
                 $aId2 = (int) $adm2['user_id'];
                 $aN = $conn->prepare("INSERT INTO notifications (user_id,type,title,body,link) VALUES (?,'booking',?,?,?)");
@@ -315,7 +362,7 @@ if ($isLinkPaid || $isCheckoutPaid) {
     // Send confirmation email
     try {
         require_once '../../includes/email_service.php';
-        $bkInfo = $conn->query("
+        $bkInfoStmt = $conn->prepare("
             SELECT b.checkin_date, b.checkout_date, b.total_amount,
                    CONCAT(u2.first_name,' ',u2.last_name) AS user_name, u2.email AS user_email,
                    un.unit_name, un.unit_number, p.property_name
@@ -323,8 +370,12 @@ if ($isLinkPaid || $isCheckoutPaid) {
             JOIN users u2 ON u2.user_id = b.user_id
             JOIN units  un ON un.unit_id = b.unit_id
             LEFT JOIN properties p ON p.property_id = un.property_id
-            WHERE b.booking_id=$bookingId LIMIT 1
-        ")->fetch_assoc();
+            WHERE b.booking_id=? LIMIT 1
+        ");
+        $bkInfoStmt->bind_param('i', $bookingId);
+        $bkInfoStmt->execute();
+        $bkInfo = $bkInfoStmt->get_result()->fetch_assoc();
+        $bkInfoStmt->close();
 
         if ($bkInfo && !empty($bkInfo['user_email'])) {
             $bkRef = 'BK-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
@@ -368,7 +419,7 @@ if ($isLinkPaid || $isCheckoutPaid) {
 // Handle payment.failed
 if ($type === 'payment.failed') {
     $sourceId = $data['attributes']['source']['id'] ?? null;
-    $linkId = $data['attributes']['links'][0]['id'] ?? null;
+    $linkId = $data['id'] ?? null;
 
     $row = null;
     if (!$row && $linkId) {

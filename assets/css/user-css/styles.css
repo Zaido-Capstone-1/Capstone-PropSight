@@ -1743,12 +1743,14 @@
          display: none;
      }
 
+     /* Bottom nav + profile sidebar already cover all the links the
+        hamburger's mobile-nav dropdown exposes at this width. */
      .hamburger {
-         display: flex;
+         display: none;
      }
 
      .mobile-nav {
-         display: flex;
+         display: none;
      }
 
      .btn-book-header {

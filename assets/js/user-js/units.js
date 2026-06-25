@@ -371,21 +371,38 @@
        SAVE / HEART TOGGLE
     ════════════════════════════════════════════════════════════════════════ */
     function toggleSaveRoom(unitId, btn) {
+        const isSaved = btn.classList.contains('saved');
         btn.classList.add('saving');
-        fetch('../../api/user/save_toggle.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ unit_id: unitId })
-        })
-        .then(r => r.json())
-        .then(d => {
-            btn.classList.remove('saving');
-            if (d.saved !== undefined) {
-                btn.classList.toggle('saved', !!d.saved);
-                btn.setAttribute('aria-label', d.saved ? 'Remove from saved' : 'Save room');
-            }
-        })
-        .catch(() => btn.classList.remove('saving'));
+        const fd = new FormData();
+        fd.append('unit_id', unitId);
+        fd.append('action', isSaved ? 'unsave' : 'save');
+        if (window.psAppendCsrf) window.psAppendCsrf(fd);
+        fetch('../../api/user/save_toggle.php', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(d => {
+                btn.classList.remove('saving');
+                if (d.success) {
+                    btn.classList.toggle('saved', !!d.saved);
+                    btn.setAttribute('aria-label', d.saved ? 'Remove from saved' : 'Save room');
+                    // Update all saved count badges
+                    if (d.saved_count !== undefined) {
+                        const count = parseInt(d.saved_count, 10);
+                        document.querySelectorAll('[data-rt-user="saved_count"]').forEach(el => {
+                            if (count > 0) { el.textContent = String(count); el.style.display = ''; }
+                            else { el.textContent = ''; el.style.display = 'none'; }
+                        });
+                        document.querySelectorAll('[data-rt-user="saved_count_text"]').forEach(el => {
+                            el.textContent = count + ' on wishlist';
+                        });
+                    }
+                } else {
+                    window.showToast?.(d.message || 'Could not update saved status.', 'error');
+                }
+            })
+            .catch(() => {
+                btn.classList.remove('saving');
+                window.showToast?.('Network error. Please try again.', 'error');
+            });
     }
     window.toggleSaveRoom = toggleSaveRoom;
 

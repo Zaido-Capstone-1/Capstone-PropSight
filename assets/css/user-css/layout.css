@@ -1785,6 +1785,13 @@ nav a.active {
     .form-grid {
         grid-template-columns: 1fr
     }
+
+    /* Bottom nav + profile sidebar already cover Home/Bookings/Messages/
+       Support/Profile at this width, so the hamburger (and its mobile-nav
+       dropdown) is redundant here. */
+    .hamburger {
+        display: none;
+    }
 }
 
 @media(max-width:560px) {
@@ -1809,10 +1816,6 @@ nav a.active {
     .btn-profile {
         width: 34px;
         height: 34px;
-    }
-
-    .hamburger {
-        padding: 4px;
     }
 }
 
