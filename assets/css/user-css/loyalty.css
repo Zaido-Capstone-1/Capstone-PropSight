@@ -949,6 +949,14 @@
     .voucher-box {
         flex-wrap: wrap;
     }
+    
+    .widget-card {
+        display: none;
+    }
+
+    .tip-card {
+        display: none;
+    }
 }
 
 /* Add at the end of the file, before the Responsive section */

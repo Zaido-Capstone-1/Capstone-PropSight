@@ -805,8 +805,7 @@ require '../../includes/_nav.php';
                 <?php $s = $unit['season'] ?? 'Low';
                 $sColor = ['Peak' => '#E74C3C', 'High' => '#deaf37', 'Low' => '#2ECC71'][$s] ?? '#2ECC71'; ?>
                 <span
-                    style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;"><?= $s ?>
-                    Season</span>
+                    style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;white-space:nowrap;"><?= $s ?> Season</span>
             </div>
             <div class="ud-float-dates" id="udFloatDates">Select dates to see total</div>
         </div>

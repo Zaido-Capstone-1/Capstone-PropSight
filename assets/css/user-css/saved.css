@@ -1,6 +1,14 @@
 /* ── SAVED ROOMS PAGE ── */
-* { scrollbar-width: none; }          /* Firefox */
-*::-webkit-scrollbar { display: none; } /* Chrome / Edge / Safari */
+* {
+  scrollbar-width: none;
+}
+
+/* Firefox */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Chrome / Edge / Safari */
 
 .saved-header-bar {
   display: flex;
@@ -535,5 +543,17 @@
 
   .saved-book-strip {
     grid-template-columns: 1fr;
+  }
+
+  .tip-card {
+    display: none;
+  }
+
+  .col-side .widget-card:not(.rd2) {
+    display: none;
+  }
+
+  .page-two-col .col-side {
+    order: -1;
   }
 }

@@ -202,15 +202,35 @@ nav a {
     font-weight: 500;
     color: var(--ink-soft);
     text-decoration: none;
-    padding: 7px 14px;
+    padding: 7px 16px;
     border-radius: var(--r-pill);
     transition: background .2s, color .2s;
+    position: relative;
 }
 
-nav a:hover,
-nav a.active {
+nav a:hover {
     color: var(--navy-700);
     background: var(--navy-50);
+}
+
+nav a.active {
+    color: var(--sand);
+    background: var(--navy-800);
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(17,34,64,.18);
+}
+
+nav a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--sand);
+    opacity: 0.7;
 }
 
 .header-right {
@@ -263,6 +283,10 @@ nav a.active {
     border-radius: 50%;
     object-fit: cover;
     display: block;
+}
+
+.btn-profile:hover {
+    transform: scale(1.07);
 }
 
 .profile-initials {

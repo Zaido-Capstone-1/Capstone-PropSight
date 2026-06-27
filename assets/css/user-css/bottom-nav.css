@@ -76,6 +76,8 @@
         transition: transform .18s, box-shadow .18s;
         flex-shrink: 0;
         margin-top: -32px;
+        position: relative;
+        z-index: 500;
     }
 
     .ubn-fab svg {

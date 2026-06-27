@@ -385,7 +385,7 @@
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, .10), 0 2px 6px rgba(0, 0, 0, .06);
     padding: 5px;
-    z-index: 200;
+    z-index: 9999;
     list-style: none;
     margin: 0;
     animation: fddIn .14s ease both;
@@ -777,8 +777,16 @@
     .filter-bar-group {
         flex-wrap: wrap;
         border-radius: 12px;
-        overflow: hidden;
-        /* clip children to rounded corners */
+        overflow: visible;
+    }
+
+    /* Clip rounded corners via outline instead */
+    .filter-bar-group::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        pointer-events: none;
     }
 
     /* Each dropdown occupies half the top row */
@@ -914,5 +922,14 @@
 
     .pay-stat-card:not(.accent) .pay-stat-value {
         font-size: 1.5rem;
+    }
+}
+@media (max-width: 768px) {
+    .col-side .widget-card:not(.rd2) {
+        display: none;
+    }
+
+    .page-two-col .col-side {
+        order: -1;
     }
 }

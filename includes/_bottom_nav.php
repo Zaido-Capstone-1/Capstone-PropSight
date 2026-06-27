@@ -5,6 +5,24 @@
  * Pages: dashboard, bookings, support, profile
  */
 $_bn_active = $active_nav ?? '';
+
+// Active/upcoming bookings count (pending, confirmed, active) for the
+// Bookings tab badge. Reuse $nav_items['bookings']['badge'] if the
+// including page already computed it (units.php, unit_detail.php,
+// user-dashboard.php, and pages using _layout.php all do); otherwise
+// fall back to running the same query directly.
+$_bn_bookings_badge = $nav_items['bookings']['badge'] ?? null;
+if ($_bn_bookings_badge === null && isset($_SESSION['user_id'])) {
+    require_once __DIR__ . '/db.php';
+    if (!empty($conn)) {
+        $_bn_uid = (int) $_SESSION['user_id'];
+        $_bn_r = mysqli_fetch_assoc(mysqli_query(
+            $conn,
+            "SELECT COUNT(*) AS c FROM bookings WHERE user_id=$_bn_uid AND status IN('pending','confirmed','active')"
+        ));
+        $_bn_bookings_badge = (!empty($_bn_r['c']) && $_bn_r['c'] > 0) ? (string) $_bn_r['c'] : null;
+    }
+}
 ?>
 <div class="user-bottom-nav" id="userBottomNav" role="navigation" aria-label="Main navigation">
     <a href="user-dashboard.php" class="ubn-item<?php echo $_bn_active === 'dashboard' ? ' ubn-active' : ''; ?>">
@@ -24,7 +42,8 @@ $_bn_active = $active_nav ?? '';
             <line x1="3" y1="10" x2="21" y2="10" />
         </svg>
         <span>Bookings</span>
-        <span class="ubn-badge" data-rt="bookings-count" style="display:none;"></span>
+        <span class="ubn-badge" data-rt="bookings-count"
+            style="<?php echo $_bn_bookings_badge ? '' : 'display:none;'; ?>"><?php echo htmlspecialchars($_bn_bookings_badge ?? ''); ?></span>
     </a>
     <a href="units.php" class="ubn-item ubn-center">
         <div class="ubn-fab">

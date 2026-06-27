@@ -66,8 +66,9 @@
         </a>
         <nav>
             <?php foreach ($top_nav_items as $top_nav):
+                $topNavKeys = array_column($top_nav_items, 'key');
                 $isTopActive = ($active_nav === $top_nav['key']) ||
-                    ($top_nav['key'] === 'dashboard' && in_array($active_nav, $account_nav_keys, true));
+                    ($top_nav['key'] === 'dashboard' && !in_array($active_nav, $topNavKeys, true) && in_array($active_nav, $account_nav_keys, true));
                 ?>
                 <a href="<?php echo htmlspecialchars($top_nav['href']); ?>"
                     class="<?php echo $isTopActive ? 'active' : ''; ?>">

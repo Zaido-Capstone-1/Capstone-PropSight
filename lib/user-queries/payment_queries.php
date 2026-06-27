@@ -105,13 +105,16 @@ while ($r = mysqli_fetch_assoc($refundsRes)) {
 function normalizeMethod(string $m): string
 {
     $map = [
-        'gcash'     => 'GCash',
-        'paymaya'   => 'Maya',
-        'maya'      => 'Maya',
-        'paymongo'  => 'PayMongo',
-        'bank'      => 'Bank',
-        'cash'      => 'Cash',
-        'card'      => 'Card',
+        'gcash'          => 'GCash',
+        'paymaya'        => 'Maya',
+        'maya'           => 'Maya',
+        'paymongo'       => 'PayMongo',
+        'dob'            => 'Bank Transfer',
+        'online_banking' => 'Bank Transfer',
+        'bank_transfer'  => 'Bank Transfer',
+        'bank'           => 'Bank Transfer',
+        'cash'           => 'Cash',
+        'card'           => 'Card',
     ];
     return $map[strtolower(trim($m))] ?? ucfirst($m);
 }

@@ -790,8 +790,8 @@ function handle_check_paid(mysqli $conn): void
   }
 
   // ── Payment confirmed — sync everything ───────────────────────────────
-  $paidAt = date('Y-m-d H:i:s');
-  $date = date('Y-m-d');
+  $paidAt = gmdate('Y-m-d H:i:s');
+  $date = gmdate('Y-m-d');
 
   // 1. Mark the paid paymongo_payments row
   $updPm = $conn->prepare("UPDATE paymongo_payments SET status='paid', paymongo_payment_id=?, paid_at=? WHERE paymongo_link_id=?");

@@ -85,7 +85,7 @@ require_once '../../lib/user-queries/profile_queries.php';
 
             <div class="info-row">
                 <span class="info-label">First Name</span>
-                <span class="info-value" data-profile-field="first_name""><?php echo $first_name; ?></span>
+                <span class="info-value" data-profile-field="first_name""><?php echo $first_name ?: '—'; ?></span>
             </div>
             <div class=" info-row">
                     <span class="info-label">Last Name</span>
@@ -94,7 +94,7 @@ require_once '../../lib/user-queries/profile_queries.php';
             <div class=" info-row info-row-email">
                         <span class="info-label">Email</span>
                         <span class="info-value" data-profile-field="email"
-                            info-email-value"><?php echo $email; ?></span>
+                            info-email-value"><?php echo $email ?: '—'; ?></span>
                         <div class="info-email-actions">
                             <span class="badge <?php echo $isVerified ? 'badge-green' : 'badge-gold'; ?>">
                                 <?php echo $isVerified ? '✓ Verified' : '⚠ Not Verified'; ?>
@@ -108,19 +108,19 @@ require_once '../../lib/user-queries/profile_queries.php';
             </div>
             <div class="info-row">
                 <span class="info-label">Phone</span>
-                <span class="info-value" data-profile-field="phone""><?php echo $phone; ?></span>
+                <span class="info-value" data-profile-field="phone""><?php echo $phone ?: '—'; ?></span>
             </div>
             <div class=" info-row">
                     <span class="info-label">Country</span>
-                    <span class="info-value"><?php echo $nationality; ?></span>
+                    <span class="info-value"><?php echo $nationality ?: '—'; ?></span>
             </div>
             <div class="info-row">
                 <span class="info-label">Date of Birth</span>
-                <span class="info-value"><?php echo $birthday; ?></span>
+                <span class="info-value"><?php echo $birthday ?: '—'; ?></span>
             </div>
             <div class="info-row">
                 <span class="info-label">Gender</span>
-                <span class="info-value"><?php echo $gender; ?></span>
+                <span class="info-value"><?php echo $gender ?: '—'; ?></span>
             </div>
         </div>
 
@@ -291,7 +291,17 @@ require_once '../../lib/user-queries/profile_queries.php';
                 <div class="form-field">
                     <label>Select Photo</label>
                     <input type="file" id="profilePhotoFileInput" name="profile_photo" accept=".jpg,.jpeg,.png,.webp"
-                        required>
+                        required style="display:none;">
+                    <button type="button" onclick="document.getElementById('profilePhotoFileInput').click()"
+                        style="display:flex;align-items:center;gap:8px;width:100%;padding:9px 14px;border:1.5px dashed var(--border);border-radius:var(--r-md);background:var(--off-white);color:var(--ink-soft);font-size:.82rem;font-weight:500;cursor:pointer;transition:border-color .2s,color .2s;"
+                        onmouseenter="this.style.borderColor='var(--navy-400)';this.style.color='var(--navy-700)'"
+                        onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--ink-soft)'"
+                        id="profilePhotoPickerBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <span id="profilePhotoPickerLabel">Choose a photo…</span>
+                    </button>
                 </div>
             </div>
             <p id="profilePhotoMsg" style="font-size:.8rem;margin-top:-.5rem;margin-bottom:8px;display:none;"></p>
@@ -525,6 +535,30 @@ unset($_SESSION['toast_success'], $_SESSION['toast_error']);
     <script src="../../assets/js/user-js/profile-toast.js"></script>
 <?php endif; ?>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var inp = document.getElementById('profilePhotoFileInput');
+    if (inp) {
+        inp.addEventListener('change', function () {
+            var lbl = document.getElementById('profilePhotoPickerLabel');
+            if (lbl) lbl.textContent = this.files[0] ? this.files[0].name : 'Choose a photo…';
+            // update preview
+            if (this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var prev = document.querySelector('.profile-photo-preview img');
+                    if (prev) { prev.src = e.target.result; }
+                    else {
+                        var wrap = document.querySelector('.profile-photo-preview');
+                        if (wrap) { wrap.innerHTML = '<img src="' + e.target.result + '" alt="Preview">'; }
+                    }
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+});
+</script>
 <script src="../../assets/js/user-js/profile.js"></script>
 <script>window.PS_RT_PAGE = 'profile';</script>
 <?php require '../../includes/_layout_end.php'; ?>
