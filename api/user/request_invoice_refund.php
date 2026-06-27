@@ -32,9 +32,9 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'user') {
 
 require_csrf_token(true);
 
-$userId    = (int) $_SESSION['user_id'];
+$userId = (int) $_SESSION['user_id'];
 $invoiceId = (int) ($_POST['invoice_id'] ?? 0);
-$reason    = trim($_POST['reason'] ?? '');
+$reason = trim($_POST['reason'] ?? '');
 
 if (!$invoiceId || !$reason) {
     echo json_encode(['success' => false, 'message' => 'Invoice ID and reason are required.']);
@@ -87,10 +87,10 @@ $dupStmt->close();
 if ($dupRow) {
     $existingStatus = $dupRow['refund_status'];
     $messages = [
-        'pending'    => 'You already have a pending refund request for this invoice. Please wait for admin review.',
+        'pending' => 'You already have a pending refund request for this invoice. Please wait for admin review.',
         'processing' => 'Your refund for this invoice is already being processed.',
-        'completed'  => 'A refund has already been completed for this invoice.',
-        'rejected'   => 'Your previous refund request for this invoice was rejected. Please contact support directly if you wish to appeal.',
+        'completed' => 'A refund has already been completed for this invoice.',
+        'rejected' => 'Your previous refund request for this invoice was rejected. Please contact support directly if you wish to appeal.',
     ];
     echo json_encode([
         'success' => false,
@@ -111,13 +111,15 @@ $stmt = $conn->prepare("
             pp.status       AS pm_status,
             COALESCE(pp.paid_at, pp.created_at) AS paid_at
     FROM    invoices i
+    JOIN    tenants  t  ON  t.tenant_id = i.tenant_id
+    JOIN    users    u  ON  u.email     = t.email
     JOIN    paymongo_payments pp
                ON  pp.reference_id   = i.id
                AND pp.reference_type = 'invoice'
                AND pp.status         = 'paid'
-    WHERE   i.id        = ?
-      AND   i.tenant_id = ?
-      AND   i.status    = 'Paid'
+    WHERE   i.id     = ?
+      AND   u.user_id = ?
+      AND   i.status  = 'Paid'
     ORDER BY pp.paid_at DESC
     LIMIT 1
 ");
@@ -132,10 +134,13 @@ if (!$row) {
         SELECT i.status AS inv_status,
                pp.status AS pm_status
         FROM   invoices i
+        JOIN   tenants  t  ON t.tenant_id = i.tenant_id
+        JOIN   users    u  ON u.email     = t.email
         LEFT JOIN paymongo_payments pp
-                   ON pp.reference_id   = i.id
+                   ON pp.reference_id    = i.id
                    AND pp.reference_type = 'invoice'
-        WHERE  i.id = ? AND i.tenant_id = ?
+        WHERE  i.id      = ?
+          AND  u.user_id = ?
         LIMIT 1
     ");
     $checkStmt->bind_param('ii', $invoiceId, $userId);
@@ -158,7 +163,7 @@ if (!$row) {
 }
 
 // ── Protection 2: Time window — must be within REFUND_WINDOW_DAYS of payment ─
-$paidAt       = strtotime($row['paid_at']);
+$paidAt = strtotime($row['paid_at']);
 $daysSincePaid = (time() - $paidAt) / 86400;
 
 if ($daysSincePaid > REFUND_WINDOW_DAYS) {
@@ -166,28 +171,28 @@ if ($daysSincePaid > REFUND_WINDOW_DAYS) {
     echo json_encode([
         'success' => false,
         'message' => "Refund requests must be submitted within " . REFUND_WINDOW_DAYS . " days of payment. "
-                   . "This invoice was paid on {$paidFormatted} (" . round($daysSincePaid) . " days ago). "
-                   . "Please contact support if you believe this is an error."
+            . "This invoice was paid on {$paidFormatted} (" . round($daysSincePaid) . " days ago). "
+            . "Please contact support if you believe this is an error."
     ]);
     exit;
 }
 
 // ── All checks passed — insert refund request ─────────────────────────────────
-$amount    = (float) $row['total'];
-$method    = $row['payment_method'] ?? '';
+$amount = (float) $row['total'];
+$method = $row['payment_method'] ?? '';
 $invoiceNo = $row['invoice_no'];
-$today     = date('Y-m-d');
-$placeholderPaymentId = 0; // invoices use paymongo_payments, not the payments table
+$today = date('Y-m-d');
+// payment_id is NULL for invoice refunds — FK now allows NULL after migration
 
 $ins = $conn->prepare("
     INSERT INTO refunds
         (payment_id, booking_id, invoice_id, user_id,
          refund_amount, refund_reason, refund_status,
          refund_method, refund_date, created_at)
-    VALUES (?, NULL, ?, ?, ?, ?, 'pending', ?, ?, NOW())
+    VALUES (NULL, NULL, ?, ?, ?, ?, 'pending', ?, ?, NOW())
 ");
-$ins->bind_param('iiidsss',
-    $placeholderPaymentId,
+$ins->bind_param(
+    'iidsss',
     $invoiceId,
     $userId,
     $amount,
@@ -211,16 +216,16 @@ $uStmt->execute();
 $uInfo = $uStmt->get_result()->fetch_assoc();
 $uStmt->close();
 
-$userName  = htmlspecialchars(trim(($uInfo['first_name'] ?? '') . ' ' . ($uInfo['last_name'] ?? '')));
+$userName = htmlspecialchars(trim(($uInfo['first_name'] ?? '') . ' ' . ($uInfo['last_name'] ?? '')));
 $userEmail = $uInfo['email'] ?? '';
-$amtFmt    = '₱' . number_format($amount, 2);
-$paidFmt   = date('M j, Y', $paidAt);
+$amtFmt = '₱' . number_format($amount, 2);
+$paidFmt = date('M j, Y', $paidAt);
 $deadlineFmt = date('M j, Y', strtotime("+30 days", $paidAt));
 
 // ── Notify admins (in-app) ────────────────────────────────────────────────────
 $ntTitle = "Refund Request — Invoice {$invoiceNo}";
-$ntBody  = "{$userName} requested a refund of {$amtFmt} for invoice {$invoiceNo}.";
-$ntLink  = 'pages/admin/refunds.php';
+$ntBody = "{$userName} requested a refund of {$amtFmt} for invoice {$invoiceNo}.";
+$ntLink = 'pages/admin/refunds.php';
 
 $admins = $conn->query("SELECT user_id FROM users WHERE role='admin' AND is_active=1 LIMIT 20");
 while ($adm = $admins->fetch_assoc()) {
@@ -234,8 +239,8 @@ while ($adm = $admins->fetch_assoc()) {
 // ── Confirmation email to user ─────────────────────────────────────────────────
 require_once __DIR__ . '/../../includes/email_service.php';
 if ($userEmail) {
-    $daysLeft    = max(0, REFUND_WINDOW_DAYS - (int) round($daysSincePaid));
-    $reasonEsc   = htmlspecialchars($reason);
+    $daysLeft = max(0, REFUND_WINDOW_DAYS - (int) round($daysSincePaid));
+    $reasonEsc = htmlspecialchars($reason);
 
     $userHtml = "
     <div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;padding:32px 16px;'>

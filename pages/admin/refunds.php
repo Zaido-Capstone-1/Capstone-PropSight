@@ -134,7 +134,6 @@ function fmt_peso(float $v): string
                         <tr>
                             <th>ID</th>
                             <th>Guest</th>
-                            <th>Unit</th>
                             <th>Amount</th>
                             <th>Reason</th>
                             <th>Requested</th>

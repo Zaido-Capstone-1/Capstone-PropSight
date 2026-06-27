@@ -8,6 +8,7 @@ if ($_SESSION['role'] !== 'user') {
     exit;
 }
 
+$popularOnly = true;
 include '../../includes/fetch_units.php';
 include '../../includes/fetch_bookings.php';
 
@@ -187,206 +188,38 @@ if ($dashboardPhotoRaw === '') {
 }
 $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRaw, '/') : '';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boracay Accommodation — Homepage</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="../../assets/css/user-css/layout.css">
-    <link rel="stylesheet" href="../../assets/css/user-css/bottom-nav.css">
-    <link rel="stylesheet" href="../../assets/css/user-css/floating-chat.css?v=4">
-    <link rel="stylesheet" href="../../assets/css/user-css/styles.css">
-    <link rel="icon" type="image/png" href="../../assets/images/logo.png">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=block"
-        rel="stylesheet">
+<?php
+$page_title = 'Home';
+$active_nav = 'dashboard';
+$sidebarPhoto = $dashboardPhoto;
+$account_nav_keys = ['dashboard', 'profile', 'saved', 'loyalty', 'settings', 'payment'];
+$nav_items = [
+    'profile' => ['label' => 'View Profile', 'sub' => 'Personal details & preferences', 'href' => 'profile.php', 'badge' => null, 'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
+    'bookings' => [
+        'label' => 'My Bookings', 'sub' => 'View and manage reservations', 'href' => 'bookings.php',
+        'badge' => (function () use ($conn, $_uid) {
+            if (!$conn) return null;
+            $r = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM bookings WHERE user_id=$_uid AND status IN('pending','confirmed','active')"));
+            return $r['c'] > 0 ? (string) $r['c'] : null; })(),
+        'icon' => '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'
+    ],
+    'payment' => ['label' => 'Payment History', 'sub' => 'View transactions & refunds', 'href' => 'payment.php', 'badge' => null, 'icon' => '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'],
+    'saved' => ['label' => 'Saved Rooms', 'sub' => 'Rooms on your wishlist', 'href' => 'saved.php', 'badge' => count($savedUnitIds) > 0 ? (string) count($savedUnitIds) : null, 'icon' => '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>'],
+    'loyalty' => ['label' => 'Loyalty Points', 'sub' => $loyaltyPoints . ' pts · ' . $loyaltyTier . ' tier', 'href' => 'loyalty.php', 'badge' => null, 'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'],
+    'settings' => ['label' => 'Settings', 'sub' => 'Notifications, privacy, security', 'href' => 'settings.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
+    'support' => ['label' => 'Support & Help', 'sub' => 'FAQs and contact staff', 'href' => 'support.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
+];
+$page_extra_head = '
+    <link rel="stylesheet" href="../../assets/css/user-css/styles.css?v=3">
     <link rel="stylesheet" href="../../assets/css/user-css/dashboard.css">
     <link rel="stylesheet" href="../../assets/css/user-css/user-dashboard.css">
     <link rel="stylesheet" href="../../assets/css/user-css/user-dashboard-inline.css">
-</head>
+';
+require '../../includes/_nav.php';
+?>
 
-<body>
 
-    <?php
-    // ── Reuse the shared header + sidebar from _layout.php nav structure ──
-    $nav_items = [
-        'profile' => ['label' => 'View Profile', 'sub' => 'Personal details & preferences', 'href' => 'profile.php', 'badge' => null, 'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
-        'bookings' => [
-            'label' => 'My Bookings',
-            'sub' => 'View and manage reservations',
-            'href' => 'bookings.php',
-            'badge' => (function () use ($conn, $_uid) {
-                if (!$conn)
-                    return null;
-                $r = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM bookings WHERE user_id=$_uid AND status IN('pending','confirmed','active')"));
-                return $r['c'] > 0 ? (string) $r['c'] : null; })(),
-            'icon' => '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'
-        ],
-        'payment' => ['label' => 'Payment History', 'sub' => 'View transactions & refunds', 'href' => 'payment.php', 'badge' => null, 'icon' => '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'],
-        'saved' => ['label' => 'Saved Rooms', 'sub' => 'Rooms on your wishlist', 'href' => 'saved.php', 'badge' => count($savedUnitIds) > 0 ? (string) count($savedUnitIds) : null, 'icon' => '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>'],
-        'loyalty' => ['label' => 'Loyalty Points', 'sub' => $loyaltyPoints . ' pts · ' . $loyaltyTier . ' tier', 'href' => 'loyalty.php', 'badge' => null, 'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'],
-        'settings' => ['label' => 'Settings', 'sub' => 'Notifications, privacy, security', 'href' => 'settings.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
-        'support' => ['label' => 'Support & Help', 'sub' => 'FAQs and contact staff', 'href' => 'support.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
-    ];
-    $active_nav = 'dashboard';
-    ?>
-
-    <!-- ── HEADER ── -->
-    <header id="hdr">
-        <a href="user-dashboard.php" class="logo">
-            <img src="../../assets/images/logo.png" alt="Boracay Accommodation" class="logo-icon">
-            <div class="logo-wordmark">
-                <strong>Boracay Accommodation</strong>
-                <span>Boracay, Philippines</span>
-            </div>
-        </a>
-        <nav>
-            <?php
-            $dashboard_section_map = [
-                'dashboard' => '#account',
-                'bookings' => '#bookings',
-                'support' => '#support',
-            ];
-            foreach ($top_nav_items as $top_nav):
-                $topHref = $dashboard_section_map[$top_nav['key']] ?? $top_nav['href'];
-                ?>
-                <a href="<?php echo $topHref; ?>" class="<?php echo ($active_nav === $top_nav['key']) ? 'active' : ''; ?>">
-                    <?php echo $top_nav['label']; ?>
-                </a>
-            <?php endforeach; ?>
-        </nav>
-        <div class="header-right">
-            <button class="btn-browse"
-                onclick="document.querySelector('#browse').scrollIntoView({behavior:'smooth'})">Browse Rooms</button>
-            <button id="chatBellBtn" type="button" aria-label="Messages"
-                style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;position:relative;transition:background .2s;"
-                onmouseenter="this.style.background='var(--navy-50)'" onmouseleave="this.style.background='none'">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    style="width:20px;height:20px;">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-                <span id="chatMsgBadge" data-rt="messages"
-                    style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
-            </button>
-            <button id="notifBellBtn" aria-label="Notifications"
-                style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;transition:background .2s;position:relative;"
-                onmouseenter="this.style.background='var(--navy-50)'" onmouseleave="this.style.background='none'">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    style="width:20px;height:20px;">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-                <span data-rt="notif-count"
-                    style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
-            </button>
-            <div class="btn-profile-wrap" style="position:relative;">
-                <button class="btn-profile" id="profileBtn" aria-label="My Profile">
-                    <?php if ($dashboardPhoto): ?>
-                        <img src="<?php echo htmlspecialchars($dashboardPhoto); ?>" alt="Profile photo"
-                            onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
-                    <?php endif; ?>
-                    <span class="profile-initials" <?php echo $dashboardPhoto ? 'style="display:none;"' : ''; ?>>
-                        <?php echo $initials; ?>
-                    </span>
-                </button>
-
-                <span class="profile-dot"></span>
-            </div>
-            <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
-        </div>
-    </header>
-
-    <div class="mobile-nav" id="mobileNav">
-        <?php foreach ($top_nav_items as $top_nav): ?>
-            <a href="<?php echo $top_nav['href']; ?>" onclick="closeMob()"><?php echo $top_nav['label']; ?></a>
-        <?php endforeach; ?>
-    </div>
-
-    <!-- ── SIDEBAR ── -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-    <aside class="profile-sidebar" id="profileSidebar" style="display:flex;flex-direction:column;height:100dvh;overflow:hidden;">
-        <div class="sidebar-hdr">
-            <button class="sidebar-close" id="sidebarClose">✕</button>
-            <div class="sb-avatar">
-                <?php if ($dashboardPhoto): ?>
-                    <img src="<?php echo htmlspecialchars($dashboardPhoto); ?>" alt="Profile photo"
-                        onerror="this.style.display='none';this.parentElement.classList.add('sb-avatar-fallback');">
-                <?php else: ?>
-                    <?php echo $initials; ?>
-                <?php endif; ?>
-            </div>
-            <div class="sb-name"><?php echo $full_name; ?></div>
-            <div class="sb-email"><?php echo $email; ?></div>
-            <div class="sb-badge <?php echo $isVerifiedSidebar ? 'sb-badge-verified' : 'sb-badge-unverified'; ?>">
-                <span class="badge-dot"></span>
-                <span
-                    class="sb-badge-label"><?php echo $isVerifiedSidebar ? 'Email Verified' : 'Email Not Verified'; ?></span>
-                <?php if (!$isVerifiedSidebar): ?>
-                    <a href="profile.php" class="sb-verify-link">Verify Email</a>
-                <?php endif; ?>
-            </div>
-        </div>
-        <div class="sidebar-body" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-            <div class="sb-section-label">Account</div>
-            <?php foreach ($nav_items as $key => $item): ?>
-                <a href="<?php echo $item['href']; ?>"
-                    class="sb-item<?php echo $key === 'dashboard' ? ' active-item' : ''; ?>">
-                    <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                            stroke-linecap="round" stroke-linejoin="round"><?php echo $item['icon']; ?></svg></div>
-                    <div class="sb-text">
-                        <div class="sb-title"><?php echo $item['label']; ?></div>
-                        <div class="sb-sub"><?php echo $item['sub']; ?></div>
-                    </div>
-                    <div class="sb-right">
-                        <?php if ($item['badge'] && $key === 'saved'): ?>
-                            <span class="sb-badge-pill" data-rt-user="saved_count"><?php echo $item['badge']; ?></span>
-                        <?php elseif ($item['badge']): ?>
-                            <span class="sb-badge-pill"><?php echo $item['badge']; ?></span>
-                        <?php elseif ($key === 'saved'): ?>
-                            <span class="sb-badge-pill" data-rt-user="saved_count" style="display:none;"></span>
-                            <span class="sb-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
-                        <?php else: ?>
-                            <span class="sb-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <polyline points="9 18 15 12 9 6" />
-                                </svg></span>
-                        <?php endif; ?>
-                    </div>
-                </a>
-                <?php if ($key === 'loyalty'): ?>
-                    <div class="sb-divider"></div>
-                    <div class="sb-section-label">Preferences</div>
-                <?php endif; ?>
-            <?php endforeach; ?>
-        </div>
-        <div class="sidebar-foot" style="flex-shrink:0;">
-            <a href="../../process/logout.php" class="btn-logout">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-                Sign Out
-            </a>
-        </div>
-    </aside>
-
-    <!-- ── TOAST ── -->
-    <div id="toast"
-        style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy-800);color:var(--white);padding:14px 28px;border-radius:40px;font-size:.88rem;font-weight:500;box-shadow:0 8px 32px rgba(10,22,40,.35);z-index:600;transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .4s;opacity:0;white-space:nowrap;display:flex;align-items:center;gap:10px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-            style="width:16px;height:16px;stroke:var(--sand);flex-shrink:0;">
-            <polyline points="20 6 9 17 4 12" />
-        </svg>
-        <span id="toastMsg"></span>
-    </div>
-
-    <section class="user-hero" id="account">
+        <section class="user-hero" id="account">
         <div class="user-hero-inner">
             <div class="hero-banner reveal">
                 <div class="hero-banner-photo"></div>
@@ -515,7 +348,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                     </svg></div>
                 <div>
                     <div class="qa-title">Browse Rooms</div>
-                    <div class="qa-sub"><?php echo count($units); ?> available now</div>
+                    <div class="qa-sub"><?php echo count($units); ?> most popular</div>
                 </div>
             </div>
             <div class="qa-card reveal rd1"
@@ -560,25 +393,8 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
     <section class="rooms-section" id="browse">
         <div class="section-header-row">
             <div>
-                <div class="eyebrow">Available Rooms</div>
+                <div class="eyebrow">Most Popular</div>
                 <h2 class="section-heading">Find Your <em>Perfect</em> Stay</h2>
-            </div>
-        </div>
-
-        <div class="filter-bar reveal">
-            <button class="filter-pill active" onclick="filterRooms('all',this)">All Rooms</button>
-            <button class="filter-pill" onclick="filterRooms('available',this)">Available Now</button>
-            <?php foreach ($roomTypeFilters as $slug => $label): ?>
-                <button class="filter-pill"
-                    onclick="filterRooms('<?php echo htmlspecialchars($slug); ?>', this)"><?php echo htmlspecialchars($label); ?></button>
-            <?php endforeach; ?>
-            <div class="filter-spacer"></div>
-            <div class="search-bar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input type="text" placeholder="Search rooms…" id="roomSearch" oninput="searchRooms(this.value)">
             </div>
         </div>
 
@@ -1345,7 +1161,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
         window.PS_RT_ROLE = 'user';
         window.PS_RT_API = '../../api/realtime.php';
     </script>
-    <script src="../../assets/js/user-js/script.js"></script>
+    <script src="../../assets/js/user-js/script.js?v=2"></script>
     <script src="../../assets/js/user-js/hero-weather.js"></script>
     <script src="../../assets/js/toast.js"></script>
 

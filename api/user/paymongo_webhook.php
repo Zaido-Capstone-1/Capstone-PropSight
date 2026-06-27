@@ -5,7 +5,7 @@ require_once '../../includes/paymongo.php';
 function format_payment_method(string $method): string
 {
     return match (strtolower(trim($method))) {
-        'gcash' => 'GCash',
+        'gcash', 'qrph' => 'GCash',
         'paymaya', 'maya' => 'Maya',
         'card' => 'Card',
         'cash' => 'Cash',
@@ -102,7 +102,11 @@ if ($isLinkPaid || $isCheckoutPaid) {
             ?? $data['id']
             ?? null;
     } else {
-        $paymentId = $data['id'] ?? null;
+        // link.payment.paid: actual pay_… ID is nested in payments array
+        $paymentId = $data['attributes']['payments'][0]['data']['id']
+            ?? $data['attributes']['payments'][0]['id']
+            ?? $data['id']
+            ?? null;
     }
 
     // ── Resolve the actual payment method ────────────────────────────────

@@ -85,10 +85,10 @@ const sidebarClose = document.getElementById('sidebarClose');
 if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
 
 // ── HEADER SCROLL ──────────────────────────────────────────
-const hdr = document.getElementById('hdr');
-window.addEventListener('scroll', () => {
-    if (hdr) hdr.classList.toggle('scrolled', scrollY > 20);
-});
+// No longer toggles a class on scroll: doing so forced the header's
+// backdrop-filter to be recomputed every time the class changed,
+// which showed up as a visible blur flash (worst when scrolling back
+// up). The header now keeps a permanent subtle shadow via CSS instead.
 
 // ── HAMBURGER ──────────────────────────────────────────────
 const burger = document.getElementById('hamburger');

@@ -135,159 +135,19 @@ $nav_items = [
     'support' => ['label' => 'Support & Help', 'sub' => 'FAQs and contact staff', 'href' => 'support.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
 ];
 ?>
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">
-    <title>
-        <?php echo ud_esc($unitTitle); ?> — PropSight
-    </title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=block"
-        rel="stylesheet">
+<?php
+$page_title = htmlspecialchars($unit['unit_name'] ?? $unit['unit_number'] ?? 'Unit Detail');
+$account_nav_keys = ['dashboard', 'profile', 'saved', 'loyalty', 'settings', 'payment'];
+$page_extra_head = '
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <link rel="stylesheet" href="../../assets/css/user-css/layout.css">
-    <link rel="stylesheet" href="../../assets/css/user-css/styles.css">
+    <link rel="stylesheet" href="../../assets/css/user-css/styles.css?v=3">
     <link rel="stylesheet" href="../../assets/css/user-css/user-dashboard.css">
-    <link rel="stylesheet" href="../../assets/css/user-css/bottom-nav.css">
-    <link rel="stylesheet" href="../../assets/css/user-css/floating-chat.css?v=4">
     <link rel="stylesheet" href="../../assets/css/user-css/unit_detail.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <style>
-        /* Sidebar must always sit above the sticky float bar (z-index:400) */
-        .sidebar-overlay {
-            z-index: 499 !important;
-        }
-
-        .profile-sidebar {
-            z-index: 500 !important;
-        }
-
-        /* Leaflet custom property marker - remove default white box */
-        .ud-prop-marker {
-            background: none !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-
-        /* Star distribution filter */
-        .ud-star-dist {
-            flex: 1;
-            min-width: 160px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .ud-star-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 4px 6px;
-            border-radius: 8px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 13px;
-            color: var(--ud-text-mid, #64748b);
-            transition: background .15s, color .15s;
-            width: 100%;
-            text-align: left;
-        }
-
-        .ud-star-row:hover {
-            background: rgba(201, 168, 76, 0.08);
-            color: #c9a84c;
-        }
-
-        .ud-star-lbl {
-            min-width: 32px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748b;
-        }
-
-        .ud-star-row:hover .ud-star-lbl,
-        .ud-star-row.active .ud-star-lbl {
-            color: #c9a84c;
-        }
-    </style>
-</head>
-
-<body>
-    <!-- HEADER -->
-    <header id="hdr">
-        <a href="user-dashboard.php" class="logo">
-            <img src="../../assets/images/logo.png" alt="Boracay Accommodation" class="logo-icon">
-            <div class="logo-wordmark">
-                <strong>Boracay Accommodation</strong>
-                <span>Boracay, Philippines</span>
-            </div>
-        </a>
-        <nav>
-            <?php
-            $account_nav_keys = ['dashboard', 'profile', 'saved', 'loyalty', 'settings', 'payment'];
-            foreach ($top_nav_items as $item):
-                $isTopActive = ($active_nav === $item['key']) ||
-                    ($item['key'] === 'dashboard' && in_array($active_nav, $account_nav_keys, true));
-            ?>
-                <a href="<?php echo ud_esc($item['href']); ?>" class="<?php echo $isTopActive ? 'active' : ''; ?>">
-                    <?php echo ud_esc($item['label']); ?>
-                </a>
-            <?php endforeach; ?>
-        </nav>
-        <div class="header-right">
-            <a href="units.php" class="btn-browse" style="text-decoration:none;">Browse Rooms</a>
-            <!-- chat icon (floating chat widget) -->
-            <button id="chatBellBtn" type="button" aria-label="Messages" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;
-                       color:var(--text-soft);display:flex;align-items:center;justify-content:center;
-                       position:relative;transition:background 0.2s;" onmouseenter="this.style.background='var(--navy-50,var(--blue-50,#eff6ff))'"
-                onmouseleave="this.style.background='none'">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-                <span id="chatMsgBadge" data-rt="messages" style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
-            </button>
-            <!-- notification bell -->
-            <div style="position:relative;display:inline-flex;align-items:center;">
-                <button id="notifBellBtn" aria-label="Notifications" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;
-                           color:var(--text-soft);display:flex;align-items:center;justify-content:center;
-                           transition:background 0.2s;" onmouseenter="this.style.background='var(--blue-50,#eff6ff)'"
-                    onmouseleave="this.style.background='none'">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="width:20px;height:20px;">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                    </svg>
-                    <span data-rt="notif-count" style="display:none;position:absolute;top:2px;right:2px;
-                           font-size:0.62rem;background:#ef4444;color:#fff;border-radius:99px;
-                           min-width:15px;height:15px;padding:0 3px;
-                           align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
-                </button>
-            </div>
-            <div class="btn-profile-wrap">
-                <button class="btn-profile" id="profileBtn" aria-label="My Profile">
-                    <?php if ($dashboardPhoto): ?>
-                        <img src="<?php echo ud_esc($dashboardPhoto); ?>" alt="Profile"
-                            onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
-                    <?php endif; ?>
-                    <span class="profile-initials" <?php echo $dashboardPhoto ? 'style="display:none"' : ''; ?>>
-                        <?php echo $initials; ?>
-                    </span>
-                </button>
-
-                <span class="profile-dot"></span>
-            </div>
-            <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
-        </div>
-    </header>
+';
+require '../../includes/_nav.php';
+?>
 
     <?php require '../../includes/_unitdetails_layout.php'; ?>
 
@@ -1429,7 +1289,7 @@ $nav_items = [
             }
         })();
     </script>
-    <script src="../../assets/js/user-js/script.js"></script>
+    <script src="../../assets/js/user-js/script.js?v=2"></script>
     <script src="../../assets/js/user-js/saved.js"></script>
     <script src="../../assets/js/user-js/unit_detail_additions.js"></script>
     <script src="../../assets/js/user-js/card-checkout.js"></script>

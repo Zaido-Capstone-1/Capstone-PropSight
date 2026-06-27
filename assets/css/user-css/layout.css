@@ -112,13 +112,12 @@ header {
     justify-content: space-between;
     padding: 0 5vw;
     background: rgba(255, 255, 255, .93);
-    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    backdrop-filter: blur(12px) saturate(140%);
     border-bottom: 1px solid var(--border-lt);
-    transition: box-shadow .3s;
-}
-
-header.scrolled {
     box-shadow: var(--sh-sm);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 
 /* ── LOGO ── */
@@ -264,10 +263,6 @@ nav a.active {
     border-radius: 50%;
     object-fit: cover;
     display: block;
-}
-
-.btn-profile:hover {
-    transform: scale(1.07);
 }
 
 .profile-initials {
@@ -1771,7 +1766,10 @@ nav a.active {
 
 @media(max-width:768px) {
     header {
-        padding: 0 4vw
+        padding: 0 4vw;
+        background: rgba(255, 255, 255, .98);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
     }
 
     .page-content {
@@ -1800,8 +1798,8 @@ nav a.active {
     }
 
     .logo-icon {
-        width: 33px;
-        height: 33px;
+        width: 40px;
+        height: 40px;
     }
 
     .logo-wordmark strong {
@@ -1855,8 +1853,8 @@ nav a.active {
     }
 
     .logo-icon {
-        width: 30px;
-        height: 30px;
+        width: 40px;
+        height: 40px;
     }
 
     .logo-wordmark strong {
@@ -1874,8 +1872,8 @@ nav a.active {
     }
 
     .logo-icon {
-        width: 50px;
-        height: 50px;
+        width: 40px;
+        height: 40px;
     }
 
     .logo-wordmark strong {

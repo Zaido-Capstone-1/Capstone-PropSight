@@ -247,34 +247,78 @@ require_once '../../lib/user-queries/payment_queries.php';
 
                                     <td>
                                         <?php if ($isPayment): ?>
-                                            <button class="btn-secondary" style="font-size:.7rem;padding:5px 12px;"
-                                                onclick="downloadInvoice(<?php echo $row['booking_id']; ?>,this)">
-                                                Receipt
-                                            </button>
 
                                             <?php
-                                            // AFTER
-                                            $bkChk = $conn->prepare("SELECT status FROM bookings WHERE booking_id = ? LIMIT 1");
-                                            $bkChk->bind_param('i', $row['booking_id']);
-                                            $bkChk->execute();
-                                            $bkChkRow = $bkChk->get_result()->fetch_assoc();
-                                            $bkChk->close();
-
-                                            $refChk = $conn->prepare("SELECT refund_id FROM refunds WHERE booking_id = ? AND refund_status IN ('pending','processing','completed') LIMIT 1");
-                                            $refChk->bind_param('i', $row['booking_id']);
-                                            $refChk->execute();
-                                            $alreadyRefunded = $refChk->get_result()->fetch_assoc();
-                                            $refChk->close();
-
+                                            $isInvoiceRow = !empty($row['invoice_id']);
                                             $paymongoMethods = ['GCash', 'Maya', 'Bank Transfer'];
-                                            $canRefund = in_array($row['method'], $paymongoMethods)
-                                                && $row['status'] === 'paid'
-                                                && ($bkChkRow['status'] ?? '') === 'cancelled'
-                                                && !$alreadyRefunded;
-                                            if ($canRefund): ?>
+
+                                            if ($isInvoiceRow):
+                                                // ── Invoice payment ──────────────────────────────────
+                                                // Check if user already has any refund for this invoice
+                                                $existingInvRefund = $invoiceRefundMap[$row['invoice_id']] ?? null;
+                                                $invoiceCanRefund  = in_array($row['method'], $paymongoMethods)
+                                                    && $row['status'] === 'paid'
+                                                    && $existingInvRefund === null; // no existing refund of any status
+                                            else:
+                                                // ── Booking payment ──────────────────────────────────
+                                                $bkChk = $conn->prepare("SELECT status FROM bookings WHERE booking_id = ? LIMIT 1");
+                                                $bkChk->bind_param('i', $row['booking_id']);
+                                                $bkChk->execute();
+                                                $bkChkRow = $bkChk->get_result()->fetch_assoc();
+                                                $bkChk->close();
+
+                                                $refChk = $conn->prepare("SELECT refund_id FROM refunds WHERE booking_id = ? AND refund_status IN ('pending','processing','completed') LIMIT 1");
+                                                $refChk->bind_param('i', $row['booking_id']);
+                                                $refChk->execute();
+                                                $alreadyRefunded = $refChk->get_result()->fetch_assoc();
+                                                $refChk->close();
+
+                                                $invoiceCanRefund = false;
+                                                $canRefund = in_array($row['method'], $paymongoMethods)
+                                                    && $row['status'] === 'paid'
+                                                    && ($bkChkRow['status'] ?? '') === 'cancelled'
+                                                    && !$alreadyRefunded;
+                                            endif;
+                                            ?>
+
+                                            <?php if (!$isInvoiceRow): // booking receipt button ?>
+                                                <button class="btn-secondary" style="font-size:.7rem;padding:5px 12px;"
+                                                    onclick="downloadInvoice(<?php echo (int) $row['booking_id']; ?>,this)">
+                                                    Receipt
+                                                </button>
+                                            <?php endif; ?>
+
+                                            <?php if ($isInvoiceRow && $invoiceCanRefund): ?>
+                                                <!-- Invoice Refund button -->
+                                                <button class="btn-secondary"
+                                                    style="font-size:.7rem;padding:5px 12px;color:var(--terra);border-color:var(--terra);"
+                                                    onclick="openInvoiceRefundModal(
+                                                        <?php echo (int) $row['invoice_id']; ?>,
+                                                        '<?php echo htmlspecialchars($row['property_name'] . ' · ' . $row['unit_label'], ENT_QUOTES); ?>',
+                                                        '<?php echo number_format($row['amount'], 2); ?>'
+                                                    )">
+                                                    Refund
+                                                </button>
+                                            <?php elseif ($isInvoiceRow && $existingInvRefund): ?>
+                                                <!-- Show current refund status if one exists -->
+                                                <span style="font-size:.7rem;color:var(--ink-soft);white-space:nowrap;">
+                                                    <?php echo match($existingInvRefund) {
+                                                        'pending'    => '⏳ Refund pending',
+                                                        'processing' => '🔄 Refund processing',
+                                                        'completed'  => '✅ Refunded',
+                                                        'rejected'   => '❌ Refund rejected',
+                                                        default      => ucfirst($existingInvRefund)
+                                                    }; ?>
+                                                </span>
+                                            <?php elseif (!$isInvoiceRow && ($canRefund ?? false)): ?>
+                                                <!-- Booking Refund button -->
                                                 <button class="btn-secondary"
                                                     style="font-size:.7rem;padding:5px 12px;margin-left:4px;color:var(--terra);border-color:var(--terra);"
-                                                    onclick="openRefundModal(<?php echo (int) $row['booking_id']; ?>, '<?php echo htmlspecialchars($row['property_name'] . ' · ' . $row['unit_label'], ENT_QUOTES); ?>', '<?php echo number_format($row['amount'], 2); ?>')">
+                                                    onclick="openRefundModal(
+                                                        <?php echo (int) $row['booking_id']; ?>,
+                                                        '<?php echo htmlspecialchars($row['property_name'] . ' · ' . $row['unit_label'], ENT_QUOTES); ?>',
+                                                        '<?php echo number_format($row['amount'], 2); ?>'
+                                                    )">
                                                     Refund
                                                 </button>
                                             <?php endif; ?>

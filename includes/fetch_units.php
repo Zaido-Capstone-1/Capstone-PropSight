@@ -49,6 +49,8 @@ if ($hasBookingReviews) {
     $ratingExpr = "u.rating AS rating";
 }
 
+$popularLimit = !empty($popularOnly) ? "LIMIT 4" : "";
+
 $unitsSql = "
     SELECT
         u.unit_id,
@@ -73,10 +75,17 @@ $unitsSql = "
             ORDER BY ui.sort_order ASC, ui.image_id ASC
             LIMIT 1
         ) AS image_path,
-        {$ratingExpr}
+        {$ratingExpr},
+        (
+            SELECT COUNT(*)
+            FROM bookings b
+            WHERE b.unit_id = u.unit_id
+              AND b.status IN ('confirmed', 'active', 'completed')
+        ) AS booking_count
     FROM  units u
     LEFT JOIN properties p ON p.property_id = u.property_id
-    ORDER BY u.unit_id ASC
+    ORDER BY booking_count DESC, u.unit_id ASC
+    {$popularLimit}
 ";
 
 $unitsResult = mysqli_query($conn, $unitsSql);

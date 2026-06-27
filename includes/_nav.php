@@ -28,7 +28,7 @@
     <link rel="icon" type="image/png" href="../../assets/images/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="../../assets/css/user-css/layout.css">
+    <link rel="stylesheet" href="../../assets/css/user-css/layout.css?v=7">
     <link rel="stylesheet" href="../../assets/css/user-css/bottom-nav.css">
     <link rel="stylesheet" href="../../assets/css/user-css/floating-chat.css?v=4">
     <link

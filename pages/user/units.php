@@ -136,191 +136,44 @@ foreach ($units as $u) {
 }
 ksort($floors);
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All Units — Boracay Accommodation</title>
-    <link rel="icon" type="image/png" href="../../assets/images/logo.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="../../assets/css/user-css/layout.css?v=2">
-    <link rel="stylesheet" href="../../assets/css/user-css/bottom-nav.css?v=2">
-    <link rel="stylesheet" href="../../assets/css/user-css/floating-chat.css?v=4">
-    <link rel="stylesheet" href="../../assets/css/user-css/styles.css">
+<?php
+$page_title = 'Browse Rooms';
+$active_nav = 'browse';
+$account_nav_keys = ['dashboard', 'profile', 'saved', 'loyalty', 'settings', 'payment'];
+$sidebarPhoto = $_sidebarPhoto;
+$initials = $_initials;
+$full_name = trim($_firstName . ' ' . $_lastName);
+$email = htmlspecialchars($_SESSION['email'] ?? '');
+$page_extra_head = '
+    <link rel="stylesheet" href="../../assets/css/user-css/styles.css?v=3">
     <link rel="stylesheet" href="../../assets/css/user-css/dashboard.css">
     <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=4">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=block" rel="stylesheet">
-
-    <!-- Pass PHP config to JS -->
     <script>
         window.UNITS_CONFIG = {
-            priceMin: <?php echo $priceMin; ?>,
-            priceMax: <?php echo $priceMax; ?>
+            priceMin: ' . $priceMin . ',
+            priceMax: ' . $priceMax . '
         };
     </script>
-</head>
+';
+require '../../includes/_nav.php';
+?>
 
-<body>
+<?php
+$_heroImg = '../../assets/images/hero.jpg';
+$_heroStyle = ' style="background-image:url(\'' . $_heroImg . '\');background-size:cover;background-position:center;background-repeat:no-repeat;"';
+echo '<div class="page-hero"' . $_heroStyle . '>';
+echo '<div class="page-hero-rule"></div>';
+echo '<div class="page-hero-inner reveal">';
+echo '<div>';
+echo '<div class="breadcrumb"><a href="user-dashboard.php">My Account</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg><span>Browse Units</span></div>';
+echo '<h1 class="page-hero-title">Browse Our <em>Units</em></h1>';
+echo '<p class="page-hero-sub">Filter, sort, and find the perfect unit for your Boracay stay.</p>';
+echo '</div>';
+echo '<div class="page-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>';
+echo '</div>';
+echo '</div>';
+?>
 
-<!-- ══ HEADER ════════════════════════════════════════════════════════════════ -->
-<header id="hdr">
-    <a href="user-dashboard.php" class="logo">
-        <img src="../../assets/images/logo.png" alt="Boracay Accommodation" class="logo-icon">
-        <div class="logo-wordmark">
-            <strong>Boracay Accommodation</strong>
-            <span>Boracay, Philippines</span>
-        </div>
-    </a>
-    <nav>
-        <?php foreach ($top_nav_items as $top_nav): ?>
-            <a href="<?php echo $top_nav['href']; ?>"
-               class="<?php echo $top_nav['key'] === 'browse' ? 'active' : ''; ?>">
-                <?php echo $top_nav['label']; ?>
-            </a>
-        <?php endforeach; ?>
-    </nav>
-    <div class="header-right">
-        <!-- Chat icon (floating chat widget) -->
-        <button id="chatBellBtn" type="button" aria-label="Messages"
-            style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;position:relative;transition:background .2s;"
-            onmouseenter="this.style.background='var(--navy-50)'" onmouseleave="this.style.background='none'">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-            <span data-rt="messages"
-                style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
-        </button>
-        <!-- Notification bell -->
-        <div style="position:relative;display:inline-flex;align-items:center;">
-            <button id="notifBellBtn" aria-label="Notifications"
-                style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;transition:background .2s;"
-                onmouseenter="this.style.background='var(--navy-50)'" onmouseleave="this.style.background='none'">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                </svg>
-                <span data-rt="notif-count"
-                    style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
-            </button>
-        </div>
-        <!-- Profile button -->
-        <div class="btn-profile-wrap" style="position:relative;">
-            <button class="btn-profile" id="profileBtn" aria-label="My Profile">
-                <?php if ($_photo): ?>
-                    <img src="<?php echo htmlspecialchars($_photo); ?>" alt="Profile"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
-                <?php endif; ?>
-                <span class="profile-initials" <?php echo $_photo ? 'style="display:none;"' : ''; ?>>
-                    <?php echo $_initials; ?>
-                </span>
-            </button>
-            <span id="profileActivityBadge" style="display:none;position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;background:#ef4444;color:#fff;border-radius:99px;font-size:0.62rem;font-weight:700;padding:0 4px;align-items:center;justify-content:center;border:2px solid var(--surface,#fff);pointer-events:none;z-index:10;line-height:1;">0</span>
-            <span class="profile-dot"></span>
-        </div>
-        <button class="hamburger" id="hamburger" aria-label="Menu">
-            <span></span><span></span><span></span>
-        </button>
-    </div>
-</header>
-
-<!-- ══ MOBILE NAV ═════════════════════════════════════════════════════════════ -->
-<div class="mobile-nav" id="mobileNav">
-    <?php foreach ($top_nav_items as $top_nav): ?>
-        <a href="<?php echo $top_nav['href']; ?>" onclick="closeMob()"><?php echo $top_nav['label']; ?></a>
-    <?php endforeach; ?>
-</div>
-
-<!-- ══ SIDEBAR ═══════════════════════════════════════════════════════════════ -->
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-<aside class="profile-sidebar" id="profileSidebar" style="display:flex;flex-direction:column;height:100dvh;overflow:hidden;">
-    <div class="sidebar-hdr">
-        <button class="sidebar-close" id="sidebarClose" onclick="closeProfileSidebar()">✕</button>
-        <div class="sb-avatar">
-            <?php if ($_photo): ?>
-                <img src="<?php echo htmlspecialchars($_photo); ?>" alt="Profile photo"
-                     onerror="this.style.display='none';this.parentElement.classList.add('sb-avatar-fallback');">
-            <?php else: ?>
-                <?php echo $_initials; ?>
-            <?php endif; ?>
-        </div>
-        <div class="sb-name"><?php echo $_fullName; ?></div>
-        <div class="sb-email"><?php echo $_email; ?></div>
-        <div class="sb-badge <?php echo $_isVerified ? 'sb-badge-verified' : 'sb-badge-unverified'; ?>">
-            <span class="badge-dot"></span>
-            <span class="sb-badge-label"><?php echo $_isVerified ? 'Email Verified' : 'Email Not Verified'; ?></span>
-            <?php if (!$_isVerified): ?>
-                <a href="profile.php" class="sb-verify-link">Verify Email</a>
-            <?php endif; ?>
-        </div>
-    </div>
-    <div class="sidebar-body" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-        <div class="sb-section-label">Account</div>
-        <?php foreach ($nav_items as $key => $item): ?>
-            <a href="<?php echo $item['href']; ?>" class="sb-item">
-                <div class="sb-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                         stroke-linecap="round" stroke-linejoin="round"><?php echo $item['icon']; ?></svg>
-                </div>
-                <div class="sb-text">
-                    <div class="sb-title"><?php echo $item['label']; ?></div>
-                    <div class="sb-sub"><?php echo $item['sub']; ?></div>
-                </div>
-                <div class="sb-right">
-                    <?php if ($item['badge'] && $key === 'saved'): ?>
-                        <span class="sb-badge-pill" data-rt-user="saved_count"><?php echo $item['badge']; ?></span>
-                    <?php elseif ($item['badge']): ?>
-                        <span class="sb-badge-pill"><?php echo $item['badge']; ?></span>
-                    <?php elseif ($key === 'saved'): ?>
-                        <span class="sb-badge-pill" data-rt-user="saved_count" style="display:none;"></span>
-                        <span class="sb-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
-                    <?php else: ?>
-                        <span class="sb-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
-                    <?php endif; ?>
-                </div>
-            </a>
-            <?php if ($key === 'loyalty'): ?>
-                <div class="sb-divider"></div>
-                <div class="sb-section-label">Preferences</div>
-            <?php endif; ?>
-        <?php endforeach; ?>
-    </div>
-    <div class="sidebar-foot" style="flex-shrink:0;">
-        <a href="../../process/logout.php" class="btn-logout">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Sign Out
-        </a>
-    </div>
-</aside>
-
-<!-- ══ HERO ═════════════════════════════════════════════════════════════════ -->
-<div class="page-hero" style="background-image:url('../../assets/images/hero.jpg');background-size:cover;background-position:center;background-repeat:no-repeat;">
-    <div class="page-hero-rule"></div>
-    <div class="page-hero-inner reveal">
-        <div>
-            <div class="breadcrumb">
-                <a href="user-dashboard.php">My Account</a>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-                <span>Browse Units</span>
-            </div>
-            <h1 class="page-hero-title">Browse Our <em>Units</em></h1>
-            <p class="page-hero-sub">Filter, sort, and find the perfect unit for your Boracay stay.</p>
-        </div>
-        <div class="page-hero-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                <circle cx="11" cy="11" r="8"/>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-        </div>
-    </div>
-</div>
-
-<!-- ══ TOOLBAR ════════════════════════════════════════════════════════════════ -->
 
 <!-- ══ PAGE BODY (sidebar + grid) ═══════════════════════════════════════════ -->
 <div class="units-body">
@@ -804,7 +657,7 @@ ksort($floors);
     });
 </script>
 <script src="../../assets/js/toast.js"></script>
-<script src="../../assets/js/user-js/script.js"></script>
+<script src="../../assets/js/user-js/script.js?v=2"></script>
 <script src="../../assets/js/user-js/units.js"></script>
 <script src="../../assets/js/realtime.js"></script>
 <script src="../../assets/js/user-js/user-realtime-pages.js"></script>

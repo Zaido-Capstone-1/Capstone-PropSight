@@ -112,7 +112,12 @@ if ($action === 'approve') {
 
     $pmPaymentId = $refund['paymongo_payment_id'] ?? '';
 
-    if ($pmPaymentId) {
+    // PayMongo only supports programmatic refunds for card, GCash (checkout), Maya.
+    // QR Ph (qrph) payments and GrabPay cannot be refunded via API — handle manually.
+    $storedMethod  = strtolower(trim($refund['refund_method'] ?? ''));
+    $apiRefundable = !in_array($storedMethod, ['qrph', 'grabpay'], true);
+
+    if ($pmPaymentId && $apiRefundable) {
         try {
             paymongo_request('POST', '/refunds', [
                 'amount'     => (int) round($amount * 100),
@@ -128,6 +133,9 @@ if ($action === 'approve') {
             ]);
             exit;
         }
+    } elseif (!$apiRefundable) {
+        // Log that this needs manual processing (e.g. bank transfer back to user)
+        error_log("[process_refund] Method '$storedMethod' is not API-refundable — marking as processing for manual handling.");
     }
 
     // Update refund record

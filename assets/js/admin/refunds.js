@@ -100,7 +100,6 @@
                             </div>
                         </div>
                     </td>
-                    <td>${esc(r.unit_number)}</td>
                     <td style="font-weight:700;">₱ ${r.refund_amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                     <td><div class="refund-reason-cell" title="${esc(r.refund_reason)}">${esc(r.refund_reason)}</div></td>
                     <td style="font-size:12px;color:var(--text-soft);">${fmtDate(r.created_at)}</td>
