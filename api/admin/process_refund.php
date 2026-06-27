@@ -22,12 +22,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 require_csrf_token(true);
 
-$adminId  = (int) $_SESSION['user_id'];
+$adminId = (int) $_SESSION['user_id'];
 $refundId = (int) ($_POST['refund_id'] ?? 0);
-$action   = trim($_POST['action'] ?? '');
-$reason   = trim($_POST['reason'] ?? '');
+$action = trim($_POST['action'] ?? '');
+$reason = trim($_POST['reason'] ?? '');
 
-if (!$refundId || !in_array($action, ['approve', 'reject'], true)) {
+if (!$refundId || !in_array($action, ['approve', 'reject', 'complete'], true)) {
     echo json_encode(['success' => false, 'message' => 'Invalid request.']);
     exit;
 }
@@ -48,7 +48,8 @@ $stmt = $conn->prepare("
             r.user_id,
             r.refund_amount,
             r.refund_status,
-            COALESCE(pp_bk.paymongo_payment_id, pp_inv.paymongo_payment_id) AS paymongo_payment_id,
+            r.refund_method,
+            COALESCE(pp_bk.paymongo_payment_id, pp_inv.paymongo_payment_id, pp_py.paymongo_payment_id) AS paymongo_payment_id,
             u.first_name,
             u.last_name,
             u.email
@@ -63,6 +64,14 @@ $stmt = $conn->prepare("
            AND pp_inv.reference_type = 'invoice'
            AND pp_inv.status         = 'paid'
            AND r.invoice_id          IS NOT NULL
+    LEFT JOIN payments py_row
+           ON  py_row.payment_id = r.payment_id
+           AND r.payment_id      IS NOT NULL
+    LEFT JOIN paymongo_payments pp_py
+           ON  pp_py.reference_type = 'invoice'
+           AND pp_py.status         = 'paid'
+           AND pp_py.reference_id   = CAST(REPLACE(py_row.notes, 'INV-PMT-', '') AS UNSIGNED)
+           AND py_row.notes         LIKE 'INV-PMT-%'
     WHERE   r.refund_id = ?
     LIMIT   1
 ");
@@ -81,14 +90,14 @@ if ($refund['refund_status'] !== 'pending') {
     exit;
 }
 
-$userId    = (int) $refund['user_id'];
+$userId = (int) $refund['user_id'];
 $bookingId = (int) ($refund['booking_id'] ?? 0);
 $invoiceId = (int) ($refund['invoice_id'] ?? 0);
-$amount    = (float) $refund['refund_amount'];
-$amtFmt    = '₱' . number_format($amount, 2);
-$userName  = htmlspecialchars(trim($refund['first_name'] . ' ' . $refund['last_name']));
+$amount = (float) $refund['refund_amount'];
+$amtFmt = '₱' . number_format($amount, 2);
+$userName = htmlspecialchars(trim($refund['first_name'] . ' ' . $refund['last_name']));
 $userEmail = $refund['email'] ?? '';
-$today     = date('Y-m-d');
+$today = date('Y-m-d');
 
 // Build a human-readable reference for notifications and emails
 if ($invoiceId) {
@@ -98,12 +107,12 @@ if ($invoiceId) {
     $invStmt->execute();
     $invRow = $invStmt->get_result()->fetch_assoc();
     $invStmt->close();
-    $refRef    = $invRow['invoice_no'] ?? "INV-$invoiceId";
-    $refLabel  = "invoice $refRef";
+    $refRef = $invRow['invoice_no'] ?? "INV-$invoiceId";
+    $refLabel = "invoice $refRef";
     $notesLabel = "invoice $refRef";
 } else {
-    $refRef    = 'BK-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
-    $refLabel  = "booking $refRef";
+    $refRef = 'BK-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
+    $refLabel = "booking $refRef";
     $notesLabel = "booking $refRef";
 }
 
@@ -111,32 +120,43 @@ if ($invoiceId) {
 if ($action === 'approve') {
 
     $pmPaymentId = $refund['paymongo_payment_id'] ?? '';
+    $storedMethod = strtolower(trim($refund['refund_method'] ?? ''));
+    $isCard = ($storedMethod === 'card');
 
-    // PayMongo only supports programmatic refunds for card, GCash (checkout), Maya.
-    // QR Ph (qrph) payments and GrabPay cannot be refunded via API — handle manually.
-    $storedMethod  = strtolower(trim($refund['refund_method'] ?? ''));
-    $apiRefundable = !in_array($storedMethod, ['qrph', 'grabpay'], true);
-
-    if ($pmPaymentId && $apiRefundable) {
+    if ($pmPaymentId && $isCard) {
         try {
             paymongo_request('POST', '/refunds', [
-                'amount'     => (int) round($amount * 100),
+                'amount' => (int) round($amount * 100),
                 'payment_id' => $pmPaymentId,
-                'reason'     => 'others',
-                'notes'      => "Admin approved refund for $notesLabel",
+                'reason' => 'others',
+                'notes' => "Admin approved refund for $notesLabel",
             ]);
+            // Card refunds complete immediately via PayMongo
+            $cUpd = $conn->prepare("
+                UPDATE refunds SET refund_status='completed', processed_date=?, processed_by=?,
+                admin_notes='Auto-refunded via PayMongo (card)', updated_at=NOW() WHERE refund_id=?
+            ");
+            $cUpd->bind_param('sii', $today, $adminId, $refundId);
+            $cUpd->execute();
+            $cUpd->close();
         } catch (Throwable $e) {
-            error_log('[process_refund] PayMongo refund failed: ' . $e->getMessage());
-            echo json_encode([
-                'success' => false,
-                'message' => 'PayMongo refund failed: ' . $e->getMessage()
-            ]);
+            error_log('[process_refund] Card PayMongo refund failed: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'PayMongo refund failed: ' . $e->getMessage()]);
             exit;
         }
-    } elseif (!$apiRefundable) {
-        // Log that this needs manual processing (e.g. bank transfer back to user)
-        error_log("[process_refund] Method '$storedMethod' is not API-refundable — marking as processing for manual handling.");
+        // Notify user of completion
+        $ntTitle = "Refund Completed — $refRef";
+        $ntBody = "Your refund of $amtFmt for $refLabel has been completed successfully.";
+        $ntLink = 'pages/user/payment.php';
+        $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
+        $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
+        $n->execute();
+        $n->close();
+        echo json_encode(['success' => true, 'message' => "Refund of $amtFmt for $refLabel has been processed automatically."]);
+        exit;
     }
+
+    // GCash / Maya / Bank Transfer — manual processing
 
     // Update refund record
     $upd = $conn->prepare("
@@ -154,8 +174,8 @@ if ($action === 'approve') {
 
     // In-app notification to user
     $ntTitle = "Refund Approved — $refRef";
-    $ntBody  = "Your refund of $amtFmt for $refLabel has been approved and is now being processed. You will be notified once it is completed.";
-    $ntLink  = 'pages/user/payment.php';
+    $ntBody = "Your refund of $amtFmt for $refLabel has been approved and is now being processed. You will be notified once it is completed.";
+    $ntLink = 'pages/user/payment.php';
     $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
     $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
     $n->execute();
@@ -221,8 +241,8 @@ if ($action === 'reject') {
 
     // In-app notification to user
     $ntTitle = "Refund Rejected — $refRef";
-    $ntBody  = "Your refund request of $amtFmt for $refLabel was not approved. Reason: $reason";
-    $ntLink  = 'pages/user/payment.php';
+    $ntBody = "Your refund request of $amtFmt for $refLabel was not approved. Reason: $reason";
+    $ntLink = 'pages/user/payment.php';
     $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
     $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
     $n->execute();
@@ -232,7 +252,7 @@ if ($action === 'reject') {
     if ($userEmail) {
         require_once __DIR__ . '/../../includes/email_service.php';
         $reasonEsc = htmlspecialchars($reason);
-        $rowLabel  = $invoiceId ? 'Invoice No.' : 'Booking Ref';
+        $rowLabel = $invoiceId ? 'Invoice No.' : 'Booking Ref';
 
         $html = "
         <div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;padding:32px 16px;'>
@@ -268,5 +288,71 @@ if ($action === 'reject') {
     }
 
     echo json_encode(['success' => true, 'message' => "Refund request for $refLabel has been rejected."]);
+    exit;
+}
+
+// \u2500\u2500 2C. COMPLETE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+if ($action === 'complete') {
+
+    if ($refund['refund_status'] !== 'processing') {
+        echo json_encode(['success' => false, 'message' => 'Only processing refunds can be marked complete.']);
+        exit;
+    }
+
+    $upd = $conn->prepare("
+        UPDATE refunds
+        SET    refund_status  = 'completed',
+               processed_date = ?,
+               admin_notes    = 'Manually completed by admin',
+               updated_at     = NOW()
+        WHERE  refund_id = ?
+    ");
+    $upd->bind_param('si', $today, $refundId);
+    $upd->execute();
+    $upd->close();
+
+    // In-app notification
+    $ntTitle = "Refund Completed \u2014 $refRef";
+    $ntBody = "Your refund of $amtFmt for $refLabel has been completed successfully.";
+    $ntLink = 'pages/user/payment.php';
+    $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
+    $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
+    $n->execute();
+    $n->close();
+
+    // Email to user
+    if ($userEmail) {
+        require_once __DIR__ . '/../../includes/email_service.php';
+        $rowLabel = $invoiceId ? 'Invoice No.' : 'Booking Ref';
+        $html = "
+        <div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;padding:32px 16px;'>
+            <div style='background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);'>
+                <div style='background:#16a34a;padding:28px 32px;'>
+                    <h1 style='color:#fff;margin:0;font-size:22px;font-weight:700;'>&#x2705; Refund Completed</h1>
+                </div>
+                <div style='padding:28px 32px;'>
+                    <p style='color:#374151;font-size:15px;margin:0 0 20px;'>Hi {$userName},</p>
+                    <p style='color:#374151;font-size:15px;margin:0 0 20px;'>
+                        Your refund has been completed. The amount has been returned to your original payment method.
+                    </p>
+                    <div style='background:#f1f5f9;border-radius:8px;padding:18px 20px;margin-bottom:20px;'>
+                        <table style='width:100%;border-collapse:collapse;font-size:14px;color:#374151;'>
+                            <tr><td style='padding:5px 0;color:#6b7280;'>{$rowLabel}</td><td style='text-align:right;font-weight:700;'>{$refRef}</td></tr>
+                            <tr><td style='padding:5px 0;color:#6b7280;'>Refund Amount</td><td style='text-align:right;font-weight:700;color:#16a34a;'>{$amtFmt}</td></tr>
+                            <tr><td style='padding:5px 0;color:#6b7280;'>Status</td><td style='text-align:right;font-weight:700;color:#16a34a;'>Completed</td></tr>
+                        </table>
+                    </div>
+                    <p style='color:#6b7280;font-size:13px;margin:0;'>Thank you for your patience.</p>
+                </div>
+            </div>
+        </div>";
+        try {
+            $emailService->sendEmail($userEmail, "Refund Completed \u2014 $refRef", $html);
+        } catch (Throwable $e) {
+            error_log('[process_refund] Complete email failed: ' . $e->getMessage());
+        }
+    }
+
+    echo json_encode(['success' => true, 'message' => "Refund of $amtFmt for $refLabel has been marked as completed."]);
     exit;
 }

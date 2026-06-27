@@ -39,7 +39,7 @@
         const tbody = document.getElementById('refundTableBody');
 
         if (rows.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8">
+            tbody.innerHTML = `<tr><td colspan="9">
                 <div class="refund-empty">
                     <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5"
                         viewBox="0 0 24 24" style="margin:0 auto 12px;display:block;">
@@ -76,6 +76,12 @@
                                <line x1="6" y1="6" x2="18" y2="18"/>
                            </svg>Reject
                        </button>`
+                    : r.isProcessing
+                    ? `<button class="btn-approve" onclick='markComplete(${r.refund_id})'>
+                           <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="13" height="13">
+                               <polyline points="20 6 9 17 4 12"/>
+                           </svg>Mark Complete
+                       </button>`
                     : `<span style="font-size:12px;color:var(--text-soft);">${r.processed_date ? fmtDate(r.processed_date) : '—'}</span>`;
 
                 const notesHtml = !r.isPending && r.admin_notes
@@ -103,6 +109,11 @@
                     <td style="font-weight:700;">₱ ${r.refund_amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                     <td><div class="refund-reason-cell" title="${esc(r.refund_reason)}">${esc(r.refund_reason)}</div></td>
                     <td style="font-size:12px;color:var(--text-soft);">${fmtDate(r.created_at)}</td>
+                    <td>${(function(m){
+                        const map={'gcash':'#0070e0','maya':'#00b14f','card':'#6366f1','bank transfer':'#374151'};
+                        const c=map[(m||'').toLowerCase()]||'#6b7280';
+                        return m?'<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:'+c+'18;color:'+c+';">'+esc(m)+'</span>':'<span style="color:var(--text-soft);">&#8212;</span>';
+                    })(r.refund_method)}</td>
                     <td>
                         <span class="badge ${esc(r.badgeClass)}">${esc(r.statusLabel)}</span>
                         ${notesHtml}
@@ -197,7 +208,33 @@
             '₱' + parseFloat(data.refund_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 });
         document.getElementById('approveGuest').textContent  = data.guest_name;
         document.getElementById('approveBkRef').textContent  = data.refLabel; // shows INV- or BK-
+        // Show correct subtext depending on whether PayMongo can process it automatically
+        const method = (data.refund_method || '').toLowerCase();
+        const nonApi = ['bank transfer', 'qrph', 'dob', 'online_banking', 'bank_transfer', 'grabpay'];
+        const isManual = nonApi.includes(method);
+        document.getElementById('approveSubtext').textContent = isManual
+            ? 'This refund will be marked for manual processing. Please return the amount to the guest directly and notify them by email.'
+            : 'This will trigger the PayMongo refund and notify the guest by email.';
         document.getElementById('approveModal').style.display = 'flex';
+    };
+
+    window.markComplete = function (refundId) {
+        if (!confirm('Mark this refund as completed? This confirms you have manually returned the amount to the guest.')) return;
+        const fd = new FormData();
+        fd.append('action',    'complete');
+        fd.append('refund_id', refundId);
+        fd.append('csrf_token', window.PS_CSRF_TOKEN);
+        fetch('../../api/admin/process_refund.php', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message ?? 'Refund marked complete.', false);
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showToast(data.message ?? 'Something went wrong.', true);
+                }
+            })
+            .catch(() => showToast('Network error. Please try again.', true));
     };
 
     window.closeApproveModal = function () {

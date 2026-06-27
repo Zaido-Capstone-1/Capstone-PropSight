@@ -56,44 +56,45 @@ $stmt->close();
 // ── Shape rows for JSON embedding ────────────────────────────────────────────
 $js_rows = [];
 foreach ($refunds as $r) {
-    $fullName    = trim($r['first_name'] . ' ' . $r['last_name']);
-    $refId       = '#REF-' . str_pad($r['refund_id'], 4, '0', STR_PAD_LEFT);
-    $isInvoice   = !empty($r['invoice_id']);
+    $fullName = trim($r['first_name'] . ' ' . $r['last_name']);
+    $refId = '#REF-' . str_pad($r['refund_id'], 4, '0', STR_PAD_LEFT);
+    $isInvoice = !empty($r['invoice_id']);
 
     // Reference label: invoice number OR booking ref
     if ($isInvoice) {
         $refLabel = $r['invoice_no'] ?? 'INV-' . $r['invoice_id'];
         $unitDisplay = '—'; // invoices are not tied to a specific unit in the table
     } else {
-        $refLabel    = 'BK-' . str_pad($r['booking_id'], 6, '0', STR_PAD_LEFT);
+        $refLabel = 'BK-' . str_pad($r['booking_id'], 6, '0', STR_PAD_LEFT);
         $unitDisplay = $r['unit_number'] ?? '—';
     }
 
-    $isPending   = $r['refund_status'] === 'pending';
-    $badgeClass  = $r['refund_status'] === 'completed' ? 'badge-approved' : 'badge-' . $r['refund_status'];
+    $isPending = $r['refund_status'] === 'pending';
+    $badgeClass = $r['refund_status'] === 'completed' ? 'badge-approved' : 'badge-' . $r['refund_status'];
     $statusLabel = $r['refund_status'] === 'completed' ? 'Approved' : ucfirst($r['refund_status']);
 
     $js_rows[] = [
-        'refund_id'      => $r['refund_id'],
-        'booking_id'     => $r['booking_id'],
-        'invoice_id'     => $r['invoice_id'],
-        'is_invoice'     => $isInvoice,
-        'refund_amount'  => (float) $r['refund_amount'],
-        'refund_reason'  => $r['refund_reason'],
-        'refund_status'  => $r['refund_status'],
-        'admin_notes'    => $r['admin_notes'] ?? '',
+        'refund_id' => $r['refund_id'],
+        'booking_id' => $r['booking_id'],
+        'invoice_id' => $r['invoice_id'],
+        'is_invoice' => $isInvoice,
+        'refund_amount' => (float) $r['refund_amount'],
+        'refund_reason' => $r['refund_reason'],
+        'refund_status' => $r['refund_status'],
+        'admin_notes' => $r['admin_notes'] ?? '',
         'processed_date' => $r['processed_date'] ?? '',
-        'created_at'     => $r['created_at'],
-        'guest_name'     => $fullName,
-        'email'          => $r['email'],
-        'unit_number'    => $unitDisplay,
-        'profile_photo'  => !empty($r['profile_photo']) ? htmlspecialchars($r['profile_photo']) : '',
-        'refId'          => $refId,
-        'refLabel'       => $refLabel,   // invoice_no OR BK-xxxxxx
-        'refType'        => $isInvoice ? 'Invoice' : 'Booking',
-        'isPending'      => $isPending,
-        'badgeClass'     => $badgeClass,
-        'statusLabel'    => $statusLabel,
-        'initial'        => strtoupper(mb_substr($fullName, 0, 1)),
+        'created_at' => $r['created_at'],
+        'guest_name' => $fullName,
+        'email' => $r['email'],
+        'unit_number' => $unitDisplay,
+        'profile_photo' => !empty($r['profile_photo']) ? htmlspecialchars($r['profile_photo']) : '',
+        'refId' => $refId,
+        'refLabel' => $refLabel,   // invoice_no OR BK-xxxxxx
+        'refType' => $isInvoice ? 'Invoice' : 'Booking',
+        'isPending' => $isPending,
+        'isProcessing' => $r['refund_status'] === 'processing',
+        'badgeClass' => $badgeClass,
+        'statusLabel' => $statusLabel,
+        'initial' => strtoupper(mb_substr($fullName, 0, 1)),
     ];
 }

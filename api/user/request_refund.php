@@ -92,7 +92,15 @@ if ($dupRow) {
 // ── 3. Insert refund request ──────────────────────────────────────────────────
 $amount = (float) $row['amount'];
 $paymentId = (int) $row['payment_id'];
-$method = $row['payment_method'] ?? '';
+$rawMethod = strtolower(trim($row['payment_method'] ?? ''));
+$method = match ($rawMethod) {
+    'gcash'                      => 'GCash',
+    'paymaya', 'maya'            => 'Maya',
+    'card'                       => 'Card',
+    'dob', 'online_banking',
+    'bank_transfer', 'qrph'      => 'Bank Transfer',
+    default                      => ucfirst($row['payment_method'] ?? 'PayMongo'),
+};
 $today = date('Y-m-d');
 
 $ins = $conn->prepare("

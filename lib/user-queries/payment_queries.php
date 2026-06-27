@@ -78,7 +78,7 @@ if ($invPayRes) {
 // Handles both booking refunds (joins payments table) and invoice refunds (invoice_id set).
 $refundsRes = mysqli_query($conn, "
     SELECT r.refund_id, r.refund_amount, r.refund_reason, r.refund_status,
-           r.refund_method, r.refund_date, r.processed_date, r.created_at,
+           r.refund_method, r.refund_date, r.processed_date, r.updated_at, r.created_at,
            r.booking_id, r.invoice_id,
            COALESCE(u2.unit_name, u2.unit_number, '—') AS unit_label,
            p.property_name,
@@ -183,7 +183,7 @@ foreach ($refunds as $rf) {
         'booking_id'     => $rf['booking_id'] ?? null,
         'invoice_id'     => $rf['invoice_id'] ?? null,
         'reason'         => $rf['refund_reason'],
-        'processed_date' => $rf['processed_date'],
+        'processed_date' => $rf['updated_at'] ?? $rf['processed_date'],
     ];
 }
 usort($unified, fn($a, $b) => strtotime($b['sort_date']) - strtotime($a['sort_date']));

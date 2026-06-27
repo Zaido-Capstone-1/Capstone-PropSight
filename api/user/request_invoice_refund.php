@@ -179,8 +179,16 @@ if ($daysSincePaid > REFUND_WINDOW_DAYS) {
 
 // ── All checks passed — insert refund request ─────────────────────────────────
 $amount = (float) $row['total'];
-$method = $row['payment_method'] ?? '';
 $invoiceNo = $row['invoice_no'];
+$rawMethod = strtolower(trim($row['payment_method'] ?? ''));
+$method = match ($rawMethod) {
+    'gcash'                      => 'GCash',
+    'paymaya', 'maya'            => 'Maya',
+    'card'                       => 'Card',
+    'dob', 'online_banking',
+    'bank_transfer', 'qrph'      => 'Bank Transfer',
+    default                      => ucfirst($row['payment_method'] ?? 'PayMongo'),
+};
 $today = date('Y-m-d');
 // payment_id is NULL for invoice refunds — FK now allows NULL after migration
 

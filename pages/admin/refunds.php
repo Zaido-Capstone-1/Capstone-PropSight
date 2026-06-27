@@ -137,6 +137,7 @@ function fmt_peso(float $v): string
                             <th>Amount</th>
                             <th>Reason</th>
                             <th>Requested</th>
+                            <th>Method</th>
                             <th>Status</th>
                             <th style="text-align:center;">Actions</th>
                         </tr>
@@ -144,7 +145,7 @@ function fmt_peso(float $v): string
                     <tbody id="refundTableBody"></tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="8">
+                            <td colspan="9">
                                 <div class="txn-pagination">
                                     <span class="txn-page-info" id="refPageInfo"></span>
                                     <div class="txn-page-controls" id="refPageControls"></div>
@@ -171,7 +172,7 @@ function fmt_peso(float $v): string
                 You are about to approve a refund of <strong id="approveAmount"></strong> for
                 <strong id="approveGuest"></strong> (<span id="approveBkRef"></span>).
             </p>
-            <p style="color:var(--text-soft);margin:0;font-size:13px;">
+            <p style="color:var(--text-soft);margin:0;font-size:13px;" id="approveSubtext">
                 This will trigger the PayMongo refund and notify the guest by email.
             </p>
         </div>
