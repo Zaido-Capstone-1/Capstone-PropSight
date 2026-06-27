@@ -89,11 +89,11 @@
     var _profileBadgeCounts = { messages: 0, support: 0 };
 
     function _updateProfileBadge() {
-        var total = _profileBadgeCounts.messages + _profileBadgeCounts.support;
-        var badge = document.getElementById('profileActivityBadge');
+        var count = _profileBadgeCounts.messages;
+        var badge = document.getElementById('chatMsgBadge');
         if (!badge) return;
-        if (total > 0) {
-            badge.textContent = total > 99 ? '99+' : String(total);
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : String(count);
             badge.style.display = 'inline-flex';
         } else {
             badge.style.display = 'none';
@@ -548,7 +548,7 @@
             el.style.display = count > 0 ? '' : 'none';
         });
 
-        // Profile picture badge
+        // Message icon badge in header
         _profileBadgeCounts.messages = count;
         _updateProfileBadge();
     });

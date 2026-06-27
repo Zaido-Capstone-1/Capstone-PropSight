@@ -422,11 +422,6 @@
         /* Price slider initial fill */
         _updateRangeFill();
 
-        /* Header scroll shadow */
-        window.addEventListener('scroll', () => {
-            document.getElementById('hdr')?.classList.toggle('scrolled', window.scrollY > 10);
-        }, { passive: true });
-
         /* Mobile hamburger */
         document.getElementById('hamburger')?.addEventListener('click', function () {
             this.classList.toggle('open');

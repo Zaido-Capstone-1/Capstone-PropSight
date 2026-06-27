@@ -269,22 +269,20 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                     style="width:20px;height:20px;">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
-                <span data-rt="messages"
+                <span id="chatMsgBadge" data-rt="messages"
                     style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
             </button>
-            <div style="position:relative;display:inline-flex;align-items:center;">
-                <button id="notifBellBtn" aria-label="Notifications"
-                    style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;transition:background .2s;"
-                    onmouseenter="this.style.background='var(--navy-50)'" onmouseleave="this.style.background='none'">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="width:20px;height:20px;">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                    </svg>
-                    <span data-rt="notif-count"
-                        style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
-                </button>
-            </div>
+            <button id="notifBellBtn" aria-label="Notifications"
+                style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;transition:background .2s;position:relative;"
+                onmouseenter="this.style.background='var(--navy-50)'" onmouseleave="this.style.background='none'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    style="width:20px;height:20px;">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                <span data-rt="notif-count"
+                    style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
+            </button>
             <div class="btn-profile-wrap" style="position:relative;">
                 <button class="btn-profile" id="profileBtn" aria-label="My Profile">
                     <?php if ($dashboardPhoto): ?>
@@ -295,21 +293,7 @@ $dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRa
                         <?php echo $initials; ?>
                     </span>
                 </button>
-                <span id="profileActivityBadge" style="
-                    display:none;
-                    position:absolute;
-                    top:-4px;right:-4px;
-                    min-width:17px;height:17px;
-                    background:#ef4444;color:#fff;
-                    border-radius:99px;
-                    font-size:0.62rem;font-weight:700;
-                    padding:0 4px;
-                    align-items:center;justify-content:center;
-                    border:2px solid var(--surface,#fff);
-                    pointer-events:none;
-                    z-index:10;
-                    line-height:1;
-                ">0</span>
+
                 <span class="profile-dot"></span>
             </div>
             <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>

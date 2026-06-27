@@ -359,9 +359,14 @@ function renderTxPage(matchedRows, page) {
     if (!pgWrap) {
         pgWrap = document.createElement('div');
         pgWrap.id = 'txPaginationBar';
-        pgWrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 0 8px;';
-        const table = document.getElementById('billingTable');
-        if (table) table.parentNode.insertBefore(pgWrap, table.nextSibling);
+        pgWrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 0 8px;width:100%;box-sizing:border-box;';
+        const anchor = document.getElementById('txPaginationWrap');
+        if (anchor) {
+            anchor.appendChild(pgWrap);
+        } else {
+            const table = document.getElementById('billingTable');
+            if (table) table.parentNode.insertBefore(pgWrap, table.nextSibling);
+        }
     }
     pgWrap.innerHTML = '';
 

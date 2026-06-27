@@ -137,19 +137,12 @@ body {
 .units-toolbar {
     background: var(--white);
     border-bottom: 1px solid var(--border-lt);
-    padding: 11px 24px;
+    padding: 11px 32px;
+    margin: -28px -32px 20px -32px;
     position: sticky;
     top: 68px;
     z-index: 90;
     box-shadow: var(--sh-xs);
-    margin: 0 -32px 20px -32px;
-}
-
-@media (max-width: 860px) {
-    .units-toolbar {
-        margin: 0 -20px 16px -20px;
-        padding: 11px 16px;
-    }
 }
 
 .units-toolbar-inner {
@@ -719,7 +712,7 @@ body {
    RIGHT  —  MAIN RESULTS AREA
 ══════════════════════════════════════════════ */
 .units-main {
-    padding: 0 32px 80px;
+    padding: 28px 32px 80px;
     min-width: 0;
     /* prevent grid blowout */
 }
@@ -955,7 +948,7 @@ body {
     position: fixed;
     inset: 0;
     background: rgba(11, 24, 41, .45);
-    z-index: 199;
+    z-index: 519;
     backdrop-filter: blur(2px);
 }
 
@@ -976,7 +969,12 @@ body {
     }
 
     .units-main {
-        padding: 0 24px 80px;
+        padding: 24px 24px 80px;
+    }
+
+    .units-toolbar {
+        margin: -24px -24px 20px -24px;
+        padding: 11px 24px;
     }
 }
 
@@ -986,19 +984,22 @@ body {
     }
 
     .units-main {
-        padding: 0 20px 72px;
+        padding: 20px 20px 72px;
+    }
+
+    .units-toolbar {
+        margin: -20px -20px 16px -20px;
+        padding: 11px 20px;
     }
 
     .units-sidebar {
         position: fixed;
         left: 0;
         top: 0;
-        bottom: 0;
-        width: 300px;
+        width: 275px;
         max-width: 85vw;
-        height: 100vh;
-        border-radius: 0 var(--r-xl) var(--r-xl) 0;
-        z-index: 200;
+        height: 100dvh;
+        z-index: 520;
         transform: translateX(-110%);
         transition: transform .28s cubic-bezier(.4, 0, .2, 1);
         box-shadow: var(--sh-xl);
@@ -1030,6 +1031,11 @@ body {
         padding: 16px 16px 64px;
     }
 
+    .units-toolbar {
+        margin: -16px -16px 14px -16px;
+        padding: 10px 16px;
+    }
+
     #unitsGrid {
         grid-template-columns: 1fr;
         gap: 16px;
@@ -1050,6 +1056,10 @@ body {
 
     .u-search-wrap {
         max-width: none;
+    }
+
+    .u-view-toggle {
+        display: none;
     }
 }
 /* ══════════════════════════════════════════════
@@ -1074,7 +1084,7 @@ body {
     align-items: center;
     padding: 4px 10px;
     border-radius: 99px;
-    background: rgba(10, 22, 40, 0.82);
+    background: rgba(10, 22, 40, 0.88);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     border: 1px solid rgba(255,255,255,.12);
@@ -1102,19 +1112,19 @@ body {
 }
 
 .badge-status.avail-yes {
-    background: rgba(22, 163, 74, 0.18);
+    background: rgba(15, 46, 28, 0.78);
     border: 1px solid rgba(74, 222, 128, 0.45);
     color: #4ade80;
 }
 
 .badge-status.avail-no {
-    background: rgba(185, 79, 60, 0.18);
+    background: rgba(46, 19, 14, 0.78);
     border: 1px solid rgba(239, 100, 80, 0.40);
     color: #f87171;
 }
 
 .badge-status.avail-maintenance {
-    background: rgba(202, 138, 4, 0.16);
+    background: rgba(46, 35, 4, 0.78);
     border: 1px solid rgba(250, 204, 21, 0.38);
     color: #fbbf24;
 }
@@ -1125,38 +1135,3 @@ body {
     bottom: 44px; /* above season vignette */
     right: 10px;
 }
-/* ══ PAGE-HERO STATS ROW (unique to browse units page) ══ */
-.units-hero-stats-row {
-    display: flex;
-    align-items: center;
-    margin-top: 18px;
-    gap: 0;
-}
-.uhsr-item {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-.uhsr-num {
-    font-size: 1.45rem;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1;
-    font-family: 'Cormorant Garamond', serif;
-}
-.uhsr-lbl {
-    font-size: .67rem;
-    font-weight: 600;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,.45);
-}
-.uhsr-divider {
-    width: 1px;
-    height: 30px;
-    background: rgba(255,255,255,.15);
-    margin: 0 20px;
-}
-
-/* Old section replaced by page-hero */
-section.units-hero { display: none !important; }

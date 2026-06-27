@@ -84,7 +84,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
-                <span data-rt="messages" style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
+                <span id="chatMsgBadge" data-rt="messages" style="display:none;position:absolute;top:2px;right:2px;font-size:.62rem;background:#ef4444;color:#fff;border-radius:99px;min-width:15px;height:15px;padding:0 3px;align-items:center;justify-content:center;font-weight:700;pointer-events:none;">0</span>
             </button>
             <div style="position:relative;display:inline-flex;align-items:center;">
                 <button id="notifBellBtn" aria-label="Notifications" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;
@@ -111,13 +111,6 @@
                     <span class="profile-initials" <?php echo $sidebarPhoto ? 'style="display:none;"' : ''; ?>>
                         <?php echo $initials; ?>
                     </span>
-                    <span id="profileActivityBadge" style="
-                        display:none;position:absolute;top:-3px;right:-3px;
-                        min-width:17px;height:17px;background:#ef4444;color:#fff;
-                        border-radius:99px;font-size:0.62rem;font-weight:700;
-                        padding:0 4px;align-items:center;justify-content:center;
-                        border:2px solid var(--surface,#fff);pointer-events:none;
-                        z-index:10;line-height:1;">0</span>
                 </button>
                 <span class="profile-dot"></span>
             </div>

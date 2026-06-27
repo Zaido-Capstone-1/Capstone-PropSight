@@ -1,4 +1,4 @@
-// assets/js/admin-js/refunds.js
+// assets/js/admin/refunds.js
 // Depends on: window.ALL_REFUNDS and window.PS_CSRF_TOKEN (set inline by refunds.php)
 
 (function () {
@@ -17,11 +17,12 @@
         return window.ALL_REFUNDS.filter(r => {
             const matchStatus = _filterStatus === 'all' || r.refund_status === _filterStatus;
             const matchSearch = !q ||
-                r.guest_name.toLowerCase().includes(q) ||
-                String(r.booking_id).includes(q)       ||
-                String(r.refund_id).includes(q)        ||
-                r.refId.toLowerCase().includes(q)      ||
-                r.bkRef.toLowerCase().includes(q);
+                r.guest_name.toLowerCase().includes(q)   ||
+                String(r.booking_id ?? '').includes(q)   ||
+                String(r.invoice_id ?? '').includes(q)   ||
+                String(r.refund_id).includes(q)          ||
+                r.refId.toLowerCase().includes(q)        ||
+                r.refLabel.toLowerCase().includes(q);    // search by BK- or INV-
             return matchStatus && matchSearch;
         });
     }
@@ -58,6 +59,11 @@
                        <div class="avatar" style="display:none;">${esc(r.initial)}</div>`
                     : `<div class="avatar">${esc(r.initial)}</div>`;
 
+                // Type badge: Invoice vs Booking
+                const typeBadge = r.is_invoice
+                    ? `<span style="font-size:10px;background:#eff6ff;color:#1d4ed8;padding:1px 6px;border-radius:4px;font-weight:600;">Invoice</span>`
+                    : `<span style="font-size:10px;background:#f0fdf4;color:#16a34a;padding:1px 6px;border-radius:4px;font-weight:600;">Booking</span>`;
+
                 const actionsHtml = r.isPending
                     ? `<button class="btn-approve" onclick='openApproveModal(${JSON.stringify(r)})'>
                            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="13" height="13">
@@ -80,7 +86,10 @@
                 return `<tr>
                     <td>
                         <strong>${esc(r.refId)}</strong>
-                        <div style="font-size:11px;color:var(--text-soft);">${esc(r.bkRef)}</div>
+                        <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
+                            ${typeBadge}
+                            <span style="font-size:11px;color:var(--text-soft);">${esc(r.refLabel)}</span>
+                        </div>
                     </td>
                     <td>
                         <div style="display:flex;align-items:center;gap:8px;">
@@ -187,8 +196,8 @@
         _refundId = data.refund_id;
         document.getElementById('approveAmount').textContent =
             '₱' + parseFloat(data.refund_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 });
-        document.getElementById('approveGuest').textContent = data.guest_name;
-        document.getElementById('approveBkRef').textContent = data.bkRef;
+        document.getElementById('approveGuest').textContent  = data.guest_name;
+        document.getElementById('approveBkRef').textContent  = data.refLabel; // shows INV- or BK-
         document.getElementById('approveModal').style.display = 'flex';
     };
 
@@ -226,8 +235,8 @@
         _refundId = data.refund_id;
         document.getElementById('rejectAmount').textContent =
             '₱' + parseFloat(data.refund_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 });
-        document.getElementById('rejectGuest').textContent = data.guest_name;
-        document.getElementById('rejectBkRef').textContent = data.bkRef;
+        document.getElementById('rejectGuest').textContent  = data.guest_name;
+        document.getElementById('rejectBkRef').textContent  = data.refLabel; // shows INV- or BK-
         document.getElementById('rejectReason').value = '';
         document.getElementById('rejectModal').style.display = 'flex';
     };

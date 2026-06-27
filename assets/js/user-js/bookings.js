@@ -259,39 +259,6 @@ function submitReview() {
         });
 }
 
-function openRebookModal(roomName) {
-    document.getElementById('rebookRoomName').textContent = roomName;
-    document.getElementById('rebookError').style.display = 'none';
-    const today = new Date();
-    today.setDate(today.getDate() + 1);
-    const out = new Date(today);
-    out.setDate(out.getDate() + 3);
-    document.getElementById('rebook_checkin').value = today.toISOString().split('T')[0];
-    document.getElementById('rebook_checkout').value = out.toISOString().split('T')[0];
-    openModal('rebookModal');
-}
-
-function confirmRebook() {
-    const ci = document.getElementById('rebook_checkin').value;
-    const co = document.getElementById('rebook_checkout').value;
-    const errEl = document.getElementById('rebookError');
-    errEl.style.display = 'none';
-    if (!ci || !co || new Date(co) <= new Date(ci)) {
-        errEl.textContent = 'Please select valid check-in and check-out dates.';
-        errEl.style.display = 'block';
-        return;
-    }
-    const btn = document.getElementById('rebookConfirmBtn');
-    btn.disabled = true;
-    btn.textContent = 'Processing…';
-    setTimeout(() => {
-        closeModal('rebookModal');
-        btn.disabled = false;
-        btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5;"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg> Confirm Booking';
-        showToast('Booking confirmed! Check your email for details.');
-    }, 800);
-}
-
 // =========================
 // TAB FILTER
 // =========================
@@ -307,7 +274,7 @@ function filterBookings(status, btn) {
 // BACKDROP & ESC
 // =========================
 document.addEventListener('DOMContentLoaded', () => {
-    ['detailsModal', 'reviewModal', 'rebookModal'].forEach(id => {
+    ['detailsModal', 'reviewModal'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener('click', e => {
@@ -317,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
-            ['detailsModal', 'reviewModal', 'rebookModal'].forEach(closeModal);
+            ['detailsModal', 'reviewModal'].forEach(closeModal);
             if (typeof closeSidebar === 'function') closeSidebar();
         }
     });

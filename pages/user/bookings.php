@@ -271,8 +271,6 @@ $status_map = [
                                                 onclick="openReviewModal('<?= addslashes($b['room_name']) ?>', <?= (int) $b['booking_id'] ?>, <?= $i ?>)">Leave
                                                 a Review</button>
                                         <?php endif; ?>
-                                        <button class="bc-btn-primary"
-                                            onclick="openRebookModal('<?= addslashes($b['room_name']) ?>')">Book Again</button>
                                     <?php else: ?>
                                         <?php if ($canCancel): ?>
                                             <button class="bc-btn-danger" data-action="cancel"
@@ -491,39 +489,6 @@ $status_map = [
                     <polygon points="22 2 15 22 11 13 2 9 22 2" />
                 </svg>
                 Submit Review
-            </button>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="rebookModal">
-    <div class="modal-box" style="max-width:460px;">
-        <button class="modal-close-btn" onclick="closeModal('rebookModal')">✕</button>
-        <div class="modal-title">Book Again</div>
-        <div class="modal-sub" id="rebookRoomName"></div>
-        <div class="form-grid" style="margin-bottom:14px;">
-            <div class="form-field"><label>Check-in Date</label><input type="date" id="rebook_checkin"></div>
-            <div class="form-field"><label>Check-out Date</label><input type="date" id="rebook_checkout"></div>
-        </div>
-        <div class="form-field" style="margin-bottom:18px;">
-            <label>Guests</label>
-            <select id="rebook_guests">
-                <option value="1">1 Guest</option>
-                <option value="2" selected>2 Guests</option>
-                <option value="3">3 Guests</option>
-                <option value="4">4 Guests</option>
-            </select>
-        </div>
-        <div id="rebookError"
-            style="display:none;color:#ef4444;font-size:0.78rem;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;margin-bottom:12px;">
-        </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end;">
-            <button class="btn-secondary" onclick="closeModal('rebookModal')">Cancel</button>
-            <button class="btn-primary" id="rebookConfirmBtn" onclick="confirmRebook()">
-                <!-- <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5;">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                </svg> -->
-                Confirm Booking
             </button>
         </div>
     </div>
