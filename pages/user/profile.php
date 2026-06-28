@@ -218,11 +218,15 @@ require_once '../../lib/user-queries/profile_queries.php';
             </div>
             <div class="mini-stat-row">
                 <span class="mini-stat-label">Email Verified</span>
-                <span class="mini-stat-val"><?php echo $isVerified ? '✓ Yes' : '✗ No'; ?></span>
+                <span class="mini-stat-val <?php echo $isVerified ? 'text-success' : 'text-danger'; ?>">
+                    <?php echo $isVerified ? '✓ Yes' : '✗ No'; ?>
+                </span>
             </div>
             <div class="mini-stat-row">
-                <span class="mini-stat-label">Phone Added</span>
-                <span class="mini-stat-val"><?php echo $phone ? '✓ Yes' : '—'; ?></span>
+                <span class="mini-stat-label">Phone Added</spFan>
+                    <span class="mini-stat-val <?php echo $phone ? 'text-success' : 'text-warn'; ?>">
+                        <?php echo $phone ? '✓ Yes' : '—'; ?>
+                    </span>
             </div>
             <div class="mini-stat-row">
                 <span class="mini-stat-label">ID Verified</span>
@@ -249,7 +253,7 @@ require_once '../../lib/user-queries/profile_queries.php';
         </div>
 
         <div class="tip-card reveal rd2">
-            <div class="tip-card-label">🥇 <?php echo $tierName; ?> Member</div>
+            <div class="tip-card-label"><?php echo $tierName; ?> Member</div>
             <div class="tip-card-title">
                 <?php echo $tierName !== 'Diamond' ? 'Reach the next tier' : 'Diamond Status!'; ?>
             </div>
@@ -261,7 +265,14 @@ require_once '../../lib/user-queries/profile_queries.php';
                     You've reached the highest tier. Enjoy all Diamond privileges!
                 <?php endif; ?>
             </div>
-            <a href="loyalty.php" class="tip-card-cta">View Loyalty →</a>
+            <a href="loyalty.php" class="tip-card-cta">
+                View Loyalty
+                <svg viewBox="0 0 24 24" fill="none"
+                    style="width:13px;height:13px;stroke:currentColor;stroke-width:2.5;">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                </svg>
+            </a>
         </div>
 
     </div><!-- /col-side -->
@@ -297,8 +308,11 @@ require_once '../../lib/user-queries/profile_queries.php';
                         onmouseenter="this.style.borderColor='var(--navy-400)';this.style.color='var(--navy-700)'"
                         onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--ink-soft)'"
                         id="profilePhotoPickerBtn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;">
-                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="width:16px;height:16px;flex-shrink:0;">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
                         </svg>
                         <span id="profilePhotoPickerLabel">Choose a photo…</span>
                     </button>
@@ -536,28 +550,28 @@ unset($_SESSION['toast_success'], $_SESSION['toast_error']);
 <?php endif; ?>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var inp = document.getElementById('profilePhotoFileInput');
-    if (inp) {
-        inp.addEventListener('change', function () {
-            var lbl = document.getElementById('profilePhotoPickerLabel');
-            if (lbl) lbl.textContent = this.files[0] ? this.files[0].name : 'Choose a photo…';
-            // update preview
-            if (this.files[0]) {
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    var prev = document.querySelector('.profile-photo-preview img');
-                    if (prev) { prev.src = e.target.result; }
-                    else {
-                        var wrap = document.querySelector('.profile-photo-preview');
-                        if (wrap) { wrap.innerHTML = '<img src="' + e.target.result + '" alt="Preview">'; }
-                    }
-                };
-                reader.readAsDataURL(this.files[0]);
-            }
-        });
-    }
-});
+    document.addEventListener('DOMContentLoaded', function () {
+        var inp = document.getElementById('profilePhotoFileInput');
+        if (inp) {
+            inp.addEventListener('change', function () {
+                var lbl = document.getElementById('profilePhotoPickerLabel');
+                if (lbl) lbl.textContent = this.files[0] ? this.files[0].name : 'Choose a photo…';
+                // update preview
+                if (this.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var prev = document.querySelector('.profile-photo-preview img');
+                        if (prev) { prev.src = e.target.result; }
+                        else {
+                            var wrap = document.querySelector('.profile-photo-preview');
+                            if (wrap) { wrap.innerHTML = '<img src="' + e.target.result + '" alt="Preview">'; }
+                        }
+                    };
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        }
+    });
 </script>
 <script src="../../assets/js/user-js/profile.js"></script>
 <script>window.PS_RT_PAGE = 'profile';</script>

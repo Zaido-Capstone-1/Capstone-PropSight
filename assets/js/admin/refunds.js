@@ -218,15 +218,37 @@
         document.getElementById('approveModal').style.display = 'flex';
     };
 
+    let _completeRefundId = null;
+
     window.markComplete = function (refundId) {
-        if (!confirm('Mark this refund as completed? This confirms you have manually returned the amount to the guest.')) return;
+        const r = window.ALL_REFUNDS.find(x => x.refund_id == refundId);
+        if (!r) return;
+        _completeRefundId = refundId;
+        document.getElementById('completeAmount').textContent =
+            '\u20b1' + parseFloat(r.refund_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+        document.getElementById('completeGuest').textContent  = r.guest_name;
+        document.getElementById('completeBkRef').textContent  = r.refLabel;
+        document.getElementById('completeModal').style.display = 'flex';
+    };
+
+    window.closeCompleteModal = function () {
+        document.getElementById('completeModal').style.display = 'none';
+        _completeRefundId = null;
+    };
+
+    window.submitComplete = function () {
+        if (!_completeRefundId) return;
+        const btn = document.getElementById('completeSubmitBtn');
+        btn.disabled = true;
+        btn.textContent = 'Processing\u2026';
         const fd = new FormData();
-        fd.append('action',    'complete');
-        fd.append('refund_id', refundId);
+        fd.append('action',     'complete');
+        fd.append('refund_id',  _completeRefundId);
         fd.append('csrf_token', window.PS_CSRF_TOKEN);
         fetch('../../api/admin/process_refund.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(data => {
+                closeCompleteModal();
                 if (data.success) {
                     showToast(data.message ?? 'Refund marked complete.', false);
                     setTimeout(() => location.reload(), 800);
@@ -234,7 +256,7 @@
                     showToast(data.message ?? 'Something went wrong.', true);
                 }
             })
-            .catch(() => showToast('Network error. Please try again.', true));
+            .catch(() => { closeCompleteModal(); showToast('Network error. Please try again.', true); });
     };
 
     window.closeApproveModal = function () {

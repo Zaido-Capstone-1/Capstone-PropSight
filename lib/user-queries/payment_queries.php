@@ -133,7 +133,8 @@ if (!empty($invoiceIdsInBills)) {
         ORDER BY created_at DESC
     ");
     $bindArgs = array_merge([$types . 'i'], $invoiceIdsInBills, [$userId]);
-    $refs = array_map(fn($v) => $v, $bindArgs);
+    $refs = [];
+    foreach ($bindArgs as $k => $v) { $refs[$k] = &$bindArgs[$k]; }
     call_user_func_array([$rfStmt, 'bind_param'], $refs);
     $rfStmt->execute();
     $rfResult = $rfStmt->get_result();

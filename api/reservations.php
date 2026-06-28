@@ -33,6 +33,58 @@ if ($_SESSION['role'] !== 'admin') {
 $method = $_SERVER['REQUEST_METHOD'];
 
 // ────────────────────────────────────────────────
+//  GET — single booking detail (for the detail modal)
+// ────────────────────────────────────────────────
+if ($method === 'GET' && isset($_GET['detail'])) {
+    $id = (int) $_GET['detail'];
+    if (!$id) {
+        echo json_encode(['success' => false, 'message' => 'Invalid booking id.']);
+        exit;
+    }
+    $stmt = $conn->prepare(
+        "SELECT
+            b.booking_id, b.checkin_date, b.checkout_date, b.guests,
+            b.total_amount, b.status, b.created_at,
+            b.payment_method, b.paid_at, b.special_requests, b.booking_source,
+            b.payment_ref, b.payment_notes,
+            b.checkin_status, b.checkout_status, b.checkin_actual, b.checkout_actual,
+            DATEDIFF(b.checkout_date, b.checkin_date) AS nights,
+            CONCAT(u2.first_name,' ',u2.last_name)    AS user_name,
+            u2.email AS user_email, u2.phone AS user_phone,
+            u2.profile_photo AS user_photo,
+            un.unit_name, un.unit_number, un.max_guests,
+            p.property_name, p.address AS property_address
+         FROM bookings b
+         JOIN users     u2 ON u2.user_id    = b.user_id
+         JOIN units     un ON un.unit_id    = b.unit_id
+         LEFT JOIN properties p ON p.property_id = un.property_id
+         WHERE b.booking_id = ? LIMIT 1"
+    );
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$row) {
+        echo json_encode(['success' => false, 'message' => 'Booking not found.']);
+        exit;
+    }
+    fmt_dt_row($row);
+
+    $payStmt = $conn->prepare(
+        "SELECT payment_id, payment_date, amount_paid, payment_method, payment_status
+         FROM payments WHERE booking_id = ? ORDER BY created_at DESC"
+    );
+    $payStmt->bind_param('i', $id);
+    $payStmt->execute();
+    $payments = $payStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $payStmt->close();
+
+    echo json_encode(['success' => true, 'booking' => $row, 'payments' => $payments]);
+    exit;
+}
+
+// ────────────────────────────────────────────────
 //  GET — list bookings
 // ────────────────────────────────────────────────
 if ($method === 'GET') {

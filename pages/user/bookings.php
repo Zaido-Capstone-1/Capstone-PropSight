@@ -343,11 +343,18 @@ $status_map = [
     <div class="col-side">
 
         <div class="tip-card reveal rd1">
-            <div class="tip-card-label">✈️ Need help?</div>
+            <div class="tip-card-label">Need help?</div>
             <div class="tip-card-title">Modify or cancel anytime</div>
             <div class="tip-card-body">Free cancellation up to 48 hours before check-in. Modifications up to 72 hours
                 before.</div>
-            <a href="support.php" class="tip-card-cta">Contact Support →</a>
+            <a href="support.php" class="tip-card-cta">
+                Contact Support
+                <svg viewBox="0 0 24 24" fill="none"
+                    style="width:13px;height:13px;stroke:currentColor;stroke-width:2.5;">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                </svg>
+            </a>
         </div>
 
         <div class="widget-card reveal rd2">

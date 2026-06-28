@@ -303,10 +303,10 @@ require_once '../../lib/user-queries/payment_queries.php';
                                                 <!-- Show current refund status if one exists -->
                                                 <span style="font-size:.7rem;color:var(--ink-soft);white-space:nowrap;">
                                                     <?php echo match($existingInvRefund) {
-                                                        'pending'    => '⏳ Refund pending',
-                                                        'processing' => '🔄 Refund processing',
-                                                        'completed'  => '✅ Refunded',
-                                                        'rejected'   => '❌ Refund rejected',
+                                                        'pending'    => '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Refund pending',
+                                                        'processing' => '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Refund processing',
+                                                        'completed'  => '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><polyline points="20 6 9 17 4 12"/></svg>Refunded',
+                                                        'rejected'   => '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Refund rejected',
                                                         default      => ucfirst($existingInvRefund)
                                                     }; ?>
                                                 </span>

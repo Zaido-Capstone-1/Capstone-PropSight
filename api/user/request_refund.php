@@ -6,6 +6,7 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../includes/session.php';
 require_once __DIR__ . '/../../includes/db.php';
+require_once __DIR__ . '/../../includes/email_templates.php';
 
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'user') {
     http_response_code(403);
@@ -153,32 +154,19 @@ while ($adm = $admins->fetch_assoc()) {
     );
 }
 
-// ── 6. Confirmation email to user ─────────────────────────────────────────────
+// ── 6. Confirmation email to user ─────────────────────────────────────────
 require_once __DIR__ . '/../../includes/email_service.php';
 if ($userEmail) {
-    $userHtml = "
-    <div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;padding:32px 16px;'>
-        <div style='background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);'>
-            <div style='background:#1d4ed8;padding:28px 32px;'>
-                <h1 style='color:#fff;margin:0;font-size:22px;font-weight:700;'>Refund Request Received</h1>
-            </div>
-            <div style='padding:28px 32px;'>
-                <p style='color:#374151;font-size:15px;margin:0 0 20px;'>Hi {$userName},</p>
-                <p style='color:#374151;font-size:15px;margin:0 0 20px;'>We've received your refund request and our team will review it within 1–2 business days.</p>
-                <div style='background:#f1f5f9;border-radius:8px;padding:18px 20px;margin-bottom:20px;'>
-                    <table style='width:100%;border-collapse:collapse;font-size:14px;color:#374151;'>
-                        <tr><td style='padding:5px 0;color:#6b7280;'>Booking Ref</td><td style='text-align:right;font-weight:700;'>{$bkRef}</td></tr>
-                        <tr><td style='padding:5px 0;color:#6b7280;'>Refund Amount</td><td style='text-align:right;font-weight:700;color:#1d4ed8;'>{$amtFmt}</td></tr>
-                        <tr><td style='padding:5px 0;color:#6b7280;'>Status</td><td style='text-align:right;'>Pending Review</td></tr>
-                    </table>
-                </div>
-                <p style='color:#6b7280;font-size:13px;margin:0;'>You'll receive another email once your request has been approved or rejected. If you have questions, please contact us.</p>
-            </div>
-        </div>
-    </div>";
-
+    $userHtml = refund_email_html('received', [
+        'name'      => $userName,
+        'ref'       => $bkRef,
+        'ref_label' => 'Booking ref',
+        'amount'    => $amtFmt,
+        'method'    => $method,
+        'reason'    => $reason,
+    ]);
     try {
-        $emailService->sendEmail($userEmail, "Refund Request Received — $bkRef", $userHtml);
+        $emailService->sendEmail($userEmail, "Refund request received — {$bkRef}", $userHtml);
     } catch (Throwable $e) {
         error_log('[request_refund] User confirmation email failed: ' . $e->getMessage());
     }

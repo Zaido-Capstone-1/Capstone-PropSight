@@ -210,6 +210,30 @@ function fmt_peso(float $v): string
     </div>
 </div>
 
+<!-- Complete Modal -->
+<div id="completeModal" class="modal-backdrop" style="display:none;"
+    onclick="if(event.target===this)closeCompleteModal()">
+    <div class="modal-box" style="max-width:440px;">
+        <div class="modal-header">
+            <h3>Mark Refund as Complete</h3>
+            <button class="modal-close" onclick="closeCompleteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="color:var(--text-soft);margin:0 0 16px;">
+                You are about to mark the refund of <strong id="completeAmount"></strong> for
+                <strong id="completeGuest"></strong> (<span id="completeBkRef"></span>) as completed.
+            </p>
+            <p style="color:var(--text-soft);margin:0;font-size:13px;">
+                This confirms that you have manually returned the amount to the guest. The guest will be notified by email.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeCompleteModal()">Cancel</button>
+            <button class="btn btn-primary" id="completeSubmitBtn" onclick="submitComplete()">Confirm Complete</button>
+        </div>
+    </div>
+</div>
+
 <script>
     window.ALL_REFUNDS = <?= json_encode($js_rows, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 </script>

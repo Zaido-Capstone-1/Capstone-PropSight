@@ -300,7 +300,7 @@ require_once '../../lib/user-queries/settings_queries.php';
         </div>
 
         <div class="tip-card reveal rd2">
-            <div class="tip-card-label">🔒 Security tip</div>
+            <div class="tip-card-label">Security tip</div>
             <div class="tip-card-title">Keep your account safe</div>
             <div class="tip-card-body">Use a strong unique password and never share your login details with anyone.
             </div>

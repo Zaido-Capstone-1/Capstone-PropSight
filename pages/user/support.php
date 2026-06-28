@@ -21,7 +21,7 @@ $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good
 $page_title = 'Support & Help';
 $page_hero_html = 'Support <em>&amp; Help</em>';
 $page_hero_sub = 'We\'re here for you 24/7. Find answers or reach our team directly.';
-$page_hero_icon = '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
+$page_hero_icon = '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3v1"/><circle cx="12" cy="17" r="1" fill="currentColor"/>';
 $active_nav = 'support';
 require '../../includes/_layout.php';
 

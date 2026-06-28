@@ -177,7 +177,14 @@ require_once '../../lib/user-queries/saved_queries.php';
             <div class="tip-card-body">You have <strong><?php echo count($saved_rooms); ?> saved
                     room<?php echo count($saved_rooms) !== 1 ? 's' : ''; ?></strong>. Book now before they're taken!
             </div>
-            <a href="user-dashboard.php" class="tip-card-cta">Browse More →</a>
+            <a href="user-dashboard.php" class="tip-card-cta">
+                Browse More 
+                <svg viewBox="0 0 24 24" fill="none"
+                    style="width:13px;height:13px;stroke:currentColor;stroke-width:2.5;">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                </svg>
+            </a>
         </div>
 
         <div class="widget-card reveal rd2">

@@ -18,6 +18,7 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../includes/session.php';
 require_once __DIR__ . '/../../includes/db.php';
+require_once __DIR__ . '/../../includes/email_templates.php';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const REFUND_WINDOW_DAYS = 30;  // max days after payment to request a refund
@@ -244,57 +245,20 @@ while ($adm = $admins->fetch_assoc()) {
     $n->close();
 }
 
-// ── Confirmation email to user ─────────────────────────────────────────────────
+// ── Confirmation email to user ─────────────────────────────────────────────
 require_once __DIR__ . '/../../includes/email_service.php';
 if ($userEmail) {
-    $daysLeft = max(0, REFUND_WINDOW_DAYS - (int) round($daysSincePaid));
-    $reasonEsc = htmlspecialchars($reason);
-
-    $userHtml = "
-    <div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;padding:32px 16px;'>
-        <div style='background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);'>
-            <div style='background:#1d4ed8;padding:28px 32px;'>
-                <h1 style='color:#fff;margin:0;font-size:22px;font-weight:700;'>Refund Request Received</h1>
-            </div>
-            <div style='padding:28px 32px;'>
-                <p style='color:#374151;font-size:15px;margin:0 0 20px;'>Hi {$userName},</p>
-                <p style='color:#374151;font-size:15px;margin:0 0 20px;'>
-                    We've received your refund request for invoice <strong>{$invoiceNo}</strong>.
-                    Our team will review it within 1–2 business days and notify you of the outcome.
-                </p>
-                <div style='background:#f1f5f9;border-radius:8px;padding:18px 20px;margin-bottom:20px;'>
-                    <table style='width:100%;border-collapse:collapse;font-size:14px;color:#374151;'>
-                        <tr><td style='padding:6px 0;color:#6b7280;'>Invoice No.</td>
-                            <td style='text-align:right;font-weight:700;'>{$invoiceNo}</td></tr>
-                        <tr><td style='padding:6px 0;color:#6b7280;'>Refund Amount</td>
-                            <td style='text-align:right;font-weight:700;color:#1d4ed8;'>{$amtFmt}</td></tr>
-                        <tr><td style='padding:6px 0;color:#6b7280;'>Payment Date</td>
-                            <td style='text-align:right;'>{$paidFmt}</td></tr>
-                        <tr><td style='padding:6px 0;color:#6b7280;'>Your Reason</td>
-                            <td style='text-align:right;'>{$reasonEsc}</td></tr>
-                        <tr><td style='padding:6px 0;color:#6b7280;'>Status</td>
-                            <td style='text-align:right;'>
-                                <span style='background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;'>
-                                    Pending Review
-                                </span>
-                            </td></tr>
-                    </table>
-                </div>
-                <div style='background:#fef9c3;border-left:4px solid #ca8a04;border-radius:4px;padding:12px 16px;margin-bottom:20px;'>
-                    <p style='color:#713f12;font-size:13px;margin:0;'>
-                        <strong>Note:</strong> Refund requests are only accepted within " . REFUND_WINDOW_DAYS . " days of payment.
-                        Only one refund request is allowed per invoice.
-                    </p>
-                </div>
-                <p style='color:#6b7280;font-size:13px;margin:0;'>
-                    If you have questions, please contact our support team and reference invoice <strong>{$invoiceNo}</strong>.
-                </p>
-            </div>
-        </div>
-    </div>";
-
+    $userHtml = refund_email_html('received', [
+        'name'      => $userName,
+        'ref'       => $invoiceNo,
+        'ref_label' => 'Invoice no.',
+        'amount'    => $amtFmt,
+        'method'    => $method,
+        'date'      => $paidFmt,
+        'reason'    => $reason,
+    ]);
     try {
-        $emailService->sendEmail($userEmail, "Refund Request Received — Invoice {$invoiceNo}", $userHtml);
+        $emailService->sendEmail($userEmail, "Refund request received — Invoice {$invoiceNo}", $userHtml);
     } catch (Throwable $e) {
         error_log('[request_invoice_refund] User email failed: ' . $e->getMessage());
     }

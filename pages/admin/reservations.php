@@ -275,6 +275,23 @@ require_once '../../lib/admin-queries/reservations_queries.php';
                 </div>
             </div>
         </div>
+
+        <div id="detailModal" class="confirm-modal-overlay res-detail-overlay">
+            <div class="confirm-modal res-detail-modal">
+                <div class="confirm-modal-header res-detail-header">
+                    <h3 class="confirm-modal-title" id="detailModalTitle">Booking Details</h3>
+                    <button type="button" class="res-detail-close" id="detailModalClose" aria-label="Close">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="confirm-modal-body res-detail-body" id="detailModalBody">
+                    <div class="res-detail-loading">Loading booking details…</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <script>

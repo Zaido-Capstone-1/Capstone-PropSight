@@ -149,7 +149,7 @@ $nav_items = [
         echo '<h1 class="page-hero-title">' . ($page_hero_html ?? htmlspecialchars($page_title)) . '</h1>';
         echo '<p class="page-hero-sub">' . ($page_hero_sub ?? '') . '</p>';
         echo '</div>';
-        echo '<div class="page-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">' . ($page_hero_icon ?? '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>') . '</svg></div>';
+        echo '<div class="page-hero-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' . ($page_hero_icon ?? '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>') . '</svg></div>';
         echo '</div>';
         echo '</div>';
         ?>

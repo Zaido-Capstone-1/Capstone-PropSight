@@ -12,6 +12,7 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../includes/session.php';
 require_once __DIR__ . '/../../includes/db.php';
+require_once __DIR__ . '/../../includes/email_templates.php';
 require_once __DIR__ . '/../../includes/paymongo.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -22,10 +23,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
 require_csrf_token(true);
 
-$adminId = (int) $_SESSION['user_id'];
+$adminId  = (int) $_SESSION['user_id'];
 $refundId = (int) ($_POST['refund_id'] ?? 0);
-$action = trim($_POST['action'] ?? '');
-$reason = trim($_POST['reason'] ?? '');
+$action   = trim($_POST['action'] ?? '');
+$reason   = trim($_POST['reason'] ?? '');
 
 if (!$refundId || !in_array($action, ['approve', 'reject', 'complete'], true)) {
     echo json_encode(['success' => false, 'message' => 'Invalid request.']);
@@ -85,19 +86,19 @@ if (!$refund) {
     exit;
 }
 
-if ($refund['refund_status'] !== 'pending') {
+if ($action !== 'complete' && $refund['refund_status'] !== 'pending') {
     echo json_encode(['success' => false, 'message' => 'This refund has already been processed.']);
     exit;
 }
 
-$userId = (int) $refund['user_id'];
+$userId    = (int) $refund['user_id'];
 $bookingId = (int) ($refund['booking_id'] ?? 0);
 $invoiceId = (int) ($refund['invoice_id'] ?? 0);
-$amount = (float) $refund['refund_amount'];
-$amtFmt = '₱' . number_format($amount, 2);
-$userName = htmlspecialchars(trim($refund['first_name'] . ' ' . $refund['last_name']));
+$amount    = (float) $refund['refund_amount'];
+$amtFmt    = '₱' . number_format($amount, 2);
+$userName  = htmlspecialchars(trim($refund['first_name'] . ' ' . $refund['last_name']));
 $userEmail = $refund['email'] ?? '';
-$today = date('Y-m-d');
+$today     = date('Y-m-d');
 
 // Build a human-readable reference for notifications and emails
 if ($invoiceId) {
@@ -107,29 +108,29 @@ if ($invoiceId) {
     $invStmt->execute();
     $invRow = $invStmt->get_result()->fetch_assoc();
     $invStmt->close();
-    $refRef = $invRow['invoice_no'] ?? "INV-$invoiceId";
-    $refLabel = "invoice $refRef";
+    $refRef    = $invRow['invoice_no'] ?? "INV-$invoiceId";
+    $refLabel  = "invoice $refRef";
     $notesLabel = "invoice $refRef";
 } else {
-    $refRef = 'BK-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
-    $refLabel = "booking $refRef";
+    $refRef    = 'BK-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
+    $refLabel  = "booking $refRef";
     $notesLabel = "booking $refRef";
 }
 
 // ── 2A. APPROVE ───────────────────────────────────────────────────────────────
 if ($action === 'approve') {
 
-    $pmPaymentId = $refund['paymongo_payment_id'] ?? '';
+    $pmPaymentId  = $refund['paymongo_payment_id'] ?? '';
     $storedMethod = strtolower(trim($refund['refund_method'] ?? ''));
-    $isCard = ($storedMethod === 'card');
+    $isCard       = ($storedMethod === 'card');
 
     if ($pmPaymentId && $isCard) {
         try {
             paymongo_request('POST', '/refunds', [
-                'amount' => (int) round($amount * 100),
+                'amount'     => (int) round($amount * 100),
                 'payment_id' => $pmPaymentId,
-                'reason' => 'others',
-                'notes' => "Admin approved refund for $notesLabel",
+                'reason'     => 'others',
+                'notes'      => "Admin approved refund for $notesLabel",
             ]);
             // Card refunds complete immediately via PayMongo
             $cUpd = $conn->prepare("
@@ -146,8 +147,8 @@ if ($action === 'approve') {
         }
         // Notify user of completion
         $ntTitle = "Refund Completed — $refRef";
-        $ntBody = "Your refund of $amtFmt for $refLabel has been completed successfully.";
-        $ntLink = 'pages/user/payment.php';
+        $ntBody  = "Your refund of $amtFmt for $refLabel has been completed successfully.";
+        $ntLink  = 'pages/user/payment.php';
         $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
         $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
         $n->execute();
@@ -174,8 +175,8 @@ if ($action === 'approve') {
 
     // In-app notification to user
     $ntTitle = "Refund Approved — $refRef";
-    $ntBody = "Your refund of $amtFmt for $refLabel has been approved and is now being processed. You will be notified once it is completed.";
-    $ntLink = 'pages/user/payment.php';
+    $ntBody  = "Your refund of $amtFmt for $refLabel has been approved and is now being processed. You will be notified once it is completed.";
+    $ntLink  = 'pages/user/payment.php';
     $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
     $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
     $n->execute();
@@ -184,36 +185,16 @@ if ($action === 'approve') {
     // Email to user
     if ($userEmail) {
         require_once __DIR__ . '/../../includes/email_service.php';
-
-        // Table row label differs for booking vs invoice
-        $rowLabel = $invoiceId ? 'Invoice No.' : 'Booking Ref';
-
-        $html = "
-        <div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;padding:32px 16px;'>
-            <div style='background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);'>
-                <div style='background:#16a34a;padding:28px 32px;'>
-                    <h1 style='color:#fff;margin:0;font-size:22px;font-weight:700;'>&#x2705; Refund Approved</h1>
-                </div>
-                <div style='padding:28px 32px;'>
-                    <p style='color:#374151;font-size:15px;margin:0 0 20px;'>Hi {$userName},</p>
-                    <p style='color:#374151;font-size:15px;margin:0 0 20px;'>
-                        Great news! Your refund request has been approved and is now being processed.
-                        The amount will be returned to your original payment method within 5–10 business days.
-                    </p>
-                    <div style='background:#f1f5f9;border-radius:8px;padding:18px 20px;margin-bottom:20px;'>
-                        <table style='width:100%;border-collapse:collapse;font-size:14px;color:#374151;'>
-                            <tr><td style='padding:5px 0;color:#6b7280;'>{$rowLabel}</td><td style='text-align:right;font-weight:700;'>{$refRef}</td></tr>
-                            <tr><td style='padding:5px 0;color:#6b7280;'>Refund Amount</td><td style='text-align:right;font-weight:700;color:#16a34a;'>{$amtFmt}</td></tr>
-                            <tr><td style='padding:5px 0;color:#6b7280;'>Status</td><td style='text-align:right;'>Approved — Processing</td></tr>
-                        </table>
-                    </div>
-                    <p style='color:#6b7280;font-size:13px;margin:0;'>If you have questions, please contact our support team.</p>
-                </div>
-            </div>
-        </div>";
-
+        $rowLabel = $invoiceId ? 'Invoice no.' : 'Booking ref';
+        $html = refund_email_html('processing', [
+            'name'      => $userName,
+            'ref'       => $refRef,
+            'ref_label' => $rowLabel,
+            'amount'    => $amtFmt,
+            'method'    => $storedMethod ? ucfirst($storedMethod) : '',
+        ]);
         try {
-            $emailService->sendEmail($userEmail, "Refund Approved — $refRef", $html);
+            $emailService->sendEmail($userEmail, "Refund approved - {$refRef}", $html);
         } catch (Throwable $e) {
             error_log('[process_refund] Approve email failed: ' . $e->getMessage());
         }
@@ -241,8 +222,8 @@ if ($action === 'reject') {
 
     // In-app notification to user
     $ntTitle = "Refund Rejected — $refRef";
-    $ntBody = "Your refund request of $amtFmt for $refLabel was not approved. Reason: $reason";
-    $ntLink = 'pages/user/payment.php';
+    $ntBody  = "Your refund request of $amtFmt for $refLabel was not approved. Reason: $reason";
+    $ntLink  = 'pages/user/payment.php';
     $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
     $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
     $n->execute();
@@ -251,37 +232,16 @@ if ($action === 'reject') {
     // Email to user
     if ($userEmail) {
         require_once __DIR__ . '/../../includes/email_service.php';
-        $reasonEsc = htmlspecialchars($reason);
-        $rowLabel = $invoiceId ? 'Invoice No.' : 'Booking Ref';
-
-        $html = "
-        <div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;padding:32px 16px;'>
-            <div style='background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);'>
-                <div style='background:#dc2626;padding:28px 32px;'>
-                    <h1 style='color:#fff;margin:0;font-size:22px;font-weight:700;'>Refund Request Update</h1>
-                </div>
-                <div style='padding:28px 32px;'>
-                    <p style='color:#374151;font-size:15px;margin:0 0 20px;'>Hi {$userName},</p>
-                    <p style='color:#374151;font-size:15px;margin:0 0 20px;'>
-                        After reviewing your refund request, we were unable to approve it at this time.
-                    </p>
-                    <div style='background:#f1f5f9;border-radius:8px;padding:18px 20px;margin-bottom:20px;'>
-                        <table style='width:100%;border-collapse:collapse;font-size:14px;color:#374151;'>
-                            <tr><td style='padding:5px 0;color:#6b7280;'>{$rowLabel}</td><td style='text-align:right;font-weight:700;'>{$refRef}</td></tr>
-                            <tr><td style='padding:5px 0;color:#6b7280;'>Refund Amount</td><td style='text-align:right;'>{$amtFmt}</td></tr>
-                            <tr><td style='padding:5px 0;color:#6b7280;'>Status</td><td style='text-align:right;font-weight:700;color:#dc2626;'>Rejected</td></tr>
-                            <tr><td style='padding:5px 0;color:#6b7280;'>Reason</td><td style='text-align:right;'>{$reasonEsc}</td></tr>
-                        </table>
-                    </div>
-                    <p style='color:#6b7280;font-size:13px;margin:0;'>
-                        If you believe this is an error or would like to appeal, please contact our support team.
-                    </p>
-                </div>
-            </div>
-        </div>";
-
+        $rowLabel2 = $invoiceId ? 'Invoice no.' : 'Booking ref';
+        $html = refund_email_html('declined', [
+            'name'           => $userName,
+            'ref'            => $refRef,
+            'ref_label'      => $rowLabel2,
+            'amount'         => $amtFmt,
+            'decline_reason' => $reason,
+        ]);
         try {
-            $emailService->sendEmail($userEmail, "Refund Request Update — $refRef", $html);
+            $emailService->sendEmail($userEmail, "Refund request declined - {$refRef}", $html);
         } catch (Throwable $e) {
             error_log('[process_refund] Reject email failed: ' . $e->getMessage());
         }
@@ -313,8 +273,8 @@ if ($action === 'complete') {
 
     // In-app notification
     $ntTitle = "Refund Completed \u2014 $refRef";
-    $ntBody = "Your refund of $amtFmt for $refLabel has been completed successfully.";
-    $ntLink = 'pages/user/payment.php';
+    $ntBody  = "Your refund of $amtFmt for $refLabel has been completed successfully.";
+    $ntLink  = 'pages/user/payment.php';
     $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
     $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
     $n->execute();
@@ -323,31 +283,18 @@ if ($action === 'complete') {
     // Email to user
     if ($userEmail) {
         require_once __DIR__ . '/../../includes/email_service.php';
-        $rowLabel = $invoiceId ? 'Invoice No.' : 'Booking Ref';
-        $html = "
-        <div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;padding:32px 16px;'>
-            <div style='background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);'>
-                <div style='background:#16a34a;padding:28px 32px;'>
-                    <h1 style='color:#fff;margin:0;font-size:22px;font-weight:700;'>&#x2705; Refund Completed</h1>
-                </div>
-                <div style='padding:28px 32px;'>
-                    <p style='color:#374151;font-size:15px;margin:0 0 20px;'>Hi {$userName},</p>
-                    <p style='color:#374151;font-size:15px;margin:0 0 20px;'>
-                        Your refund has been completed. The amount has been returned to your original payment method.
-                    </p>
-                    <div style='background:#f1f5f9;border-radius:8px;padding:18px 20px;margin-bottom:20px;'>
-                        <table style='width:100%;border-collapse:collapse;font-size:14px;color:#374151;'>
-                            <tr><td style='padding:5px 0;color:#6b7280;'>{$rowLabel}</td><td style='text-align:right;font-weight:700;'>{$refRef}</td></tr>
-                            <tr><td style='padding:5px 0;color:#6b7280;'>Refund Amount</td><td style='text-align:right;font-weight:700;color:#16a34a;'>{$amtFmt}</td></tr>
-                            <tr><td style='padding:5px 0;color:#6b7280;'>Status</td><td style='text-align:right;font-weight:700;color:#16a34a;'>Completed</td></tr>
-                        </table>
-                    </div>
-                    <p style='color:#6b7280;font-size:13px;margin:0;'>Thank you for your patience.</p>
-                </div>
-            </div>
-        </div>";
+        $rowLabel = $invoiceId ? 'Invoice no.' : 'Booking ref';
+        $completedOn = gmdate('M j, Y');
+        $html = refund_email_html('completed', [
+            'name'      => $userName,
+            'ref'       => $refRef,
+            'ref_label' => $rowLabel,
+            'amount'    => $amtFmt,
+            'method'    => $storedMethod ? ucfirst($storedMethod) : '',
+            'date'      => $completedOn,
+        ]);
         try {
-            $emailService->sendEmail($userEmail, "Refund Completed \u2014 $refRef", $html);
+            $emailService->sendEmail($userEmail, "Refund completed - {$refRef}", $html);
         } catch (Throwable $e) {
             error_log('[process_refund] Complete email failed: ' . $e->getMessage());
         }

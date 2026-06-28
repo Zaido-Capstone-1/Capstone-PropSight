@@ -56,15 +56,6 @@
     gap: 8px;
 }
 
-.support-hero-eyebrow::before {
-    content: '';
-    display: inline-block;
-    width: 22px;
-    height: 2px;
-    background: var(--sand);
-    border-radius: 2px;
-}
-
 .support-hero h1 {
     font-family: var(--font-display);
     font-size: 2rem;
@@ -284,6 +275,8 @@
     line-height: 1.7;
     position: relative;
     z-index: 1;
+    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 .contact-cta {
@@ -970,7 +963,7 @@
     }
 
     .support-hero h1 {
-        font-size: 1.4rem;
+        font-size: 1.6rem;
     }
 
     .support-hero-art {

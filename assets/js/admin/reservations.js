@@ -135,30 +135,218 @@ function fmtDate(iso) {
 }
 
 
-/* ─── Action buttons HTML ────────────────────────────────────────────────── */
+/* ─── Action buttons HTML: one primary button + a "⋯" dropdown ──────────── */
 function _actionButtons(bookingId, status) {
     const chk = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
-    const x = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-    const rcpt = `<a href="../../api/user/booking_receipt.php?booking_id=${bookingId}" target="_blank" class="action-btn btn-receipt" style="text-decoration:none;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;flex-shrink:0;">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/>
-            <line x1="16" y1="17" x2="8" y2="17"/>
-        </svg>
-        Receipt
-    </a>`;
+    const dots = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>`;
+
+    const viewBtn = `<button class="action-btn btn-view" onclick="openDetail(${bookingId})">View</button>`;
+    const viewItem = `<button class="res-menu-item" onclick="openDetail(${bookingId});this.closest('.res-menu').classList.remove('open');">View Details</button>`;
+    const receiptItem = `<a href="../../api/user/booking_receipt.php?booking_id=${bookingId}" target="_blank" class="res-menu-item">Download Receipt</a>`;
+    const cancelItem = `<button class="res-menu-item res-menu-item-danger" onclick="this.closest('.res-menu').classList.remove('open');updateStatus(${bookingId},'cancelled',this)">Cancel Booking</button>`;
+
+    let primary;
+    let menuItems;
 
     if (status === 'pending') {
-        return `<button class="action-btn btn-confirm" onclick="updateStatus(${bookingId},'confirmed',this)">${chk}Confirm</button>
-                <button class="action-btn btn-cancel"  onclick="updateStatus(${bookingId},'cancelled',this)">${x}Cancel</button>`;
+        // Forward action (Confirm) is primary; details/cancel live in the dropdown.
+        primary = `<button class="action-btn btn-confirm" onclick="updateStatus(${bookingId},'confirmed',this)">${chk}Confirm</button>`;
+        menuItems = [viewItem, cancelItem];
+    } else if (status === 'confirmed') {
+        // Forward action (Complete) is primary; details/receipt/cancel live in the dropdown.
+        primary = `<button class="action-btn btn-complete" onclick="updateStatus(${bookingId},'completed',this)">${chk}Complete</button>`;
+        menuItems = [viewItem, receiptItem, cancelItem];
+    } else if (status === 'completed') {
+        // No forward action — View is primary, Receipt lives in the dropdown.
+        primary = viewBtn;
+        menuItems = [receiptItem];
+    } else if (status === 'active') {
+        primary = viewBtn;
+        menuItems = [receiptItem];
+    } else {
+        // cancelled, or any other status — View only, nothing else to do.
+        primary = viewBtn;
+        menuItems = [];
     }
-    if (status === 'confirmed') {
-        return `<button class="action-btn btn-complete" onclick="updateStatus(${bookingId},'completed',this)">${chk}Complete</button>
-                <button class="action-btn btn-cancel"   onclick="updateStatus(${bookingId},'cancelled',this)">${x}Cancel</button>${rcpt}`;
+
+    const menuHtml = menuItems.length
+        ? `<div class="res-menu">
+             <button class="res-menu-trigger" onclick="_toggleRowMenu(this)" aria-label="More actions">${dots}</button>
+             <div class="res-menu-dropdown">${menuItems.join('')}</div>
+           </div>`
+        : '';
+
+    return `<div class="res-action-cell">${primary}${menuHtml}</div>`;
+}
+
+/* ─── Row "⋯" dropdown toggle ─────────────────────────────────────────────── */
+function _toggleRowMenu(btn) {
+    const menu = btn.closest('.res-menu');
+    const isOpen = menu.classList.contains('open');
+    document.querySelectorAll('.res-menu.open').forEach(m => m.classList.remove('open'));
+    if (!isOpen) menu.classList.add('open');
+}
+document.addEventListener('click', e => {
+    if (!e.target.closest('.res-menu')) {
+        document.querySelectorAll('.res-menu.open').forEach(m => m.classList.remove('open'));
     }
-    if (status === 'completed') return rcpt;
-    return `<span style="font-size:12px;color:#cbd5e1;">—</span>`;
+});
+
+/* ─── Booking detail modal ───────────────────────────────────────────────── */
+function _fmtMoney(n) {
+    return '₱' + Number(n || 0).toLocaleString('en-PH', { maximumFractionDigits: 0 });
+}
+
+function _fmtDateTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(String(iso).replace(' ', 'T'));
+    if (isNaN(d.getTime())) return String(iso);
+    return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+function openDetail(bookingId) {
+    const modal = document.getElementById('detailModal');
+    const body = document.getElementById('detailModalBody');
+    const title = document.getElementById('detailModalTitle');
+    if (!modal || !body) return;
+
+    title.textContent = `Booking #BK-${String(bookingId).padStart(4, '0')}`;
+    body.innerHTML = '<div class="res-detail-loading">Loading booking details…</div>';
+    modal.classList.add('active');
+
+    fetch(`../../api/reservations.php?detail=${bookingId}`, { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success || !data.booking) {
+                body.innerHTML = `<p style="color:#dc2626;">${escHtml(data.message || 'Could not load booking.')}</p>`;
+                return;
+            }
+            body.innerHTML = _detailHtml(data.booking, data.payments || []);
+        })
+        .catch(() => {
+            body.innerHTML = '<p style="color:#dc2626;">Server unreachable. Please try again.</p>';
+        });
+}
+window.openDetail = openDetail;
+
+function _detailHtml(b, payments) {
+    const unitLabel = b.unit_name || `${b.property_name || ''} — ${b.unit_number || ''}`;
+    const guestInitials = (b.user_name || '?').trim().split(/\s+/).slice(0, 2)
+        .map(w => w[0].toUpperCase()).join('');
+
+    const checkinStatus = b.checkin_status === 'done'
+        ? `<span class="res-badge res-badge-success">Checked in${b.checkin_actual ? ' · ' + _fmtDateTime(b.checkin_actual) : ''}</span>`
+        : `<span class="res-badge res-badge-pending">Not checked in</span>`;
+    const checkoutStatus = b.checkout_status === 'done'
+        ? `<span class="res-badge res-badge-success">Checked out${b.checkout_actual ? ' · ' + _fmtDateTime(b.checkout_actual) : ''}</span>`
+        : `<span class="res-badge res-badge-pending">Not checked out</span>`;
+
+    const paymentsHtml = payments.length
+        ? payments.map(p => `
+            <div class="res-detail-payment-row">
+                <span>${fmtDate(p.payment_date)} · ${escHtml(p.payment_method || '—')}</span>
+                <span class="res-detail-payment-amt">${_fmtMoney(p.amount_paid)}</span>
+                <span class="res-badge ${p.payment_status === 'paid' ? 'res-badge-success' : 'res-badge-pending'}">${escHtml(p.payment_status || '')}</span>
+            </div>`).join('')
+        : '<p class="res-detail-muted">No payment records yet.</p>';
+
+    return `
+    <div class="res-detail-grid">
+        <div class="res-detail-section">
+            <div class="res-detail-guest">
+                ${b.user_photo
+            ? `<img src="../../${b.user_photo}" class="guest-avatar-img" style="width:48px;height:48px;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                       <div class="guest-avatar" style="width:48px;height:48px;font-size:16px;display:none;">${guestInitials}</div>`
+            : `<div class="guest-avatar" style="width:48px;height:48px;font-size:16px;">${guestInitials}</div>`
+        }
+                <div>
+                    <div class="res-detail-guest-name">${escHtml(b.user_name)}</div>
+                    <div class="res-detail-guest-sub">${escHtml(b.user_email)}</div>
+                    ${b.user_phone ? `<div class="res-detail-guest-sub">${escHtml(b.user_phone)}</div>` : ''}
+                </div>
+            </div>
+            <span class="res-badge ${BADGE_CLS[b.status] || 'res-badge-pending'}" style="margin-top:8px;">${BADGE_LBL[b.status] || b.status}</span>
+        </div>
+
+        <div class="res-detail-section">
+            <div class="res-detail-label">Unit & Property</div>
+            <div class="res-detail-value">${escHtml(unitLabel)}</div>
+            ${b.property_address ? `<div class="res-detail-muted">${escHtml(b.property_address)}</div>` : ''}
+        </div>
+
+        <div class="res-detail-section res-detail-cols">
+            <div>
+                <div class="res-detail-label">Check-in</div>
+                <div class="res-detail-value">${fmtDate(b.checkin_date)}</div>
+                ${checkinStatus}
+            </div>
+            <div>
+                <div class="res-detail-label">Check-out</div>
+                <div class="res-detail-value">${fmtDate(b.checkout_date)}</div>
+                ${checkoutStatus}
+            </div>
+            <div>
+                <div class="res-detail-label">Nights</div>
+                <div class="res-detail-value">${b.nights}</div>
+            </div>
+            <div>
+                <div class="res-detail-label">Guests</div>
+                <div class="res-detail-value">${b.guests}${b.max_guests ? ' / ' + b.max_guests + ' max' : ''}</div>
+            </div>
+        </div>
+
+        <div class="res-detail-section res-detail-cols">
+            <div>
+                <div class="res-detail-label">Total Amount</div>
+                <div class="res-detail-value res-detail-amount">${_fmtMoney(b.total_amount)}</div>
+            </div>
+            <div>
+                <div class="res-detail-label">Payment Method</div>
+                <div class="res-detail-value">${escHtml(b.payment_method || '—')}</div>
+            </div>
+            <div>
+                <div class="res-detail-label">Source</div>
+                <div class="res-detail-value">${escHtml(b.booking_source || 'Direct')}</div>
+            </div>
+            <div>
+                <div class="res-detail-label">Booked on</div>
+                <div class="res-detail-value">${fmtDate(b.created_at)}</div>
+            </div>
+        </div>
+
+        ${b.special_requests ? `
+        <div class="res-detail-section">
+            <div class="res-detail-label">Special Requests</div>
+            <div class="res-detail-note">${escHtml(b.special_requests)}</div>
+        </div>` : ''}
+
+        ${b.payment_ref || b.payment_notes ? `
+        <div class="res-detail-section">
+            <div class="res-detail-label">Payment Reference</div>
+            <div class="res-detail-value">${escHtml(b.payment_ref || '—')}</div>
+            ${b.payment_notes ? `<div class="res-detail-muted">${escHtml(b.payment_notes)}</div>` : ''}
+        </div>` : ''}
+
+        <div class="res-detail-section">
+            <div class="res-detail-label">Payment History</div>
+            ${paymentsHtml}
+        </div>
+
+        <div class="res-detail-footer-actions">
+            <a href="../../api/user/booking_receipt.php?booking_id=${b.booking_id}" target="_blank" class="action-btn btn-receipt" style="text-decoration:none;">
+                Download Receipt
+            </a>
+        </div>
+    </div>`;
+}
+
+const detailModal = document.getElementById('detailModal');
+const detailModalClose = document.getElementById('detailModalClose');
+if (detailModal && detailModalClose) {
+    function _closeDetailModal() { detailModal.classList.remove('active'); }
+    detailModalClose.addEventListener('click', _closeDetailModal);
+    detailModal.addEventListener('click', e => { if (e.target === detailModal) _closeDetailModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') _closeDetailModal(); });
 }
 
 async function updateStatus(bookingId, newStatus, btn) {
@@ -242,8 +430,8 @@ function _patchRow(bookingId, newStatus) {
         badge.className = 'res-badge ' + (BADGE_CLS[newStatus] || 'res-badge-pending');
     }
 
-    const actionDiv = row.querySelector('td:last-child div');
-    if (actionDiv) actionDiv.innerHTML = _actionButtons(bookingId, newStatus);
+    const actionCell = row.querySelector('td:last-child');
+    if (actionCell) actionCell.innerHTML = _actionButtons(bookingId, newStatus);
 
     // Keep allRows in sync
     const idx = allRows.findIndex(b => b.booking_id === Number(bookingId));
@@ -291,7 +479,7 @@ function rowHtml(b, isNew) {
         : `<div class="guest-avatar">${init}</div>`;
     const badge = isNew ? '<span class="new-booking-badge">NEW</span>' : '';
 
-    return `<tr data-id="${id}" data-status="${escHtml(b.status)}">
+    return `<tr data-id="${id}" data-status="${escHtml(b.status)}" class="res-row-clickable" onclick="openDetail(${id})">
     <td><span class="booking-id">#BK-${padId}${badge}</span></td>
     <td><div class="guest-cell">
         ${avatarHtml}
@@ -309,7 +497,7 @@ function rowHtml(b, isNew) {
     <td style="text-align:center;font-weight:700;">${b.nights}</td>
     <td><span class="amount-cell">₱${Number(b.total_amount).toLocaleString('en-PH', { maximumFractionDigits: 0 })}</span></td>
     <td><span class="res-badge ${BADGE_CLS[b.status] || 'res-badge-pending'}">${BADGE_LBL[b.status] || b.status}</span></td>
-    <td><div style="display:flex;gap:6px;flex-wrap:wrap;">${_actionButtons(id, b.status)}</div></td>
+    <td onclick="event.stopPropagation()">${_actionButtons(id, b.status)}</td>
 </tr>`;
 }
 
