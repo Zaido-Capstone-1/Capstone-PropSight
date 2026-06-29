@@ -313,8 +313,25 @@
                     }
                     var bookBtn = roomCard.querySelector('[data-book-btn]');
                     if (bookBtn) {
-                        bookBtn.disabled = true;
-                        bookBtn.textContent = 'Unavailable';
+                        var unitId = parseInt(roomCard.dataset.unitId);
+                        var isMyBooking = window.PS_BOOKED_UNIT_IDS && window.PS_BOOKED_UNIT_IDS.includes(unitId);
+                        if (isMyBooking) {
+                            bookBtn.disabled = true;
+                            bookBtn.textContent = 'Already Booked';
+                            bookBtn.style.opacity = '0.6';
+                            bookBtn.style.cursor = 'default';
+                            bookBtn.onclick = null;
+                        } else {
+                            bookBtn.disabled = false;
+                            bookBtn.textContent = 'Reserve Date';
+                            bookBtn.removeAttribute('aria-disabled');
+                            bookBtn.style.opacity = '';
+                            bookBtn.style.cursor = '';
+                            bookBtn.onclick = function(ev) {
+                                if (ev) ev.stopPropagation();
+                                if (unitId) window.location.href = 'unit_detail.php?id=' + unitId;
+                            };
+                        }
                     }
                 }
             }
@@ -367,8 +384,25 @@
             }
             var bookBtn = roomCard.querySelector('[data-book-btn]');
             if (bookBtn) {
-                bookBtn.disabled = true;
-                bookBtn.textContent = 'Unavailable';
+                var unitId = parseInt(roomCard.dataset.unitId);
+                var isMyBooking = window.PS_BOOKED_UNIT_IDS && window.PS_BOOKED_UNIT_IDS.includes(unitId);
+                if (isMyBooking) {
+                    bookBtn.disabled = true;
+                    bookBtn.textContent = 'Already Booked';
+                    bookBtn.style.opacity = '0.6';
+                    bookBtn.style.cursor = 'default';
+                    bookBtn.onclick = null;
+                } else {
+                    bookBtn.disabled = false;
+                    bookBtn.textContent = 'Reserve Date';
+                    bookBtn.removeAttribute('aria-disabled');
+                    bookBtn.style.opacity = '';
+                    bookBtn.style.cursor = '';
+                    bookBtn.onclick = function(ev) {
+                        if (ev) ev.stopPropagation();
+                        if (unitId) window.location.href = 'unit_detail.php?id=' + unitId;
+                    };
+                }
             }
         });
     });
@@ -658,9 +692,25 @@
                 }
                 var bookBtn = roomCard.querySelector('[data-book-btn]');
                 if (bookBtn) {
-                    bookBtn.disabled = true;
-                    bookBtn.textContent = 'Unavailable';
-                    bookBtn.setAttribute('aria-disabled', 'true');
+                    var unitId = parseInt(roomCard.dataset.unitId);
+                    var isMyBooking = window.PS_BOOKED_UNIT_IDS && window.PS_BOOKED_UNIT_IDS.includes(unitId);
+                    if (isMyBooking) {
+                        bookBtn.disabled = true;
+                        bookBtn.textContent = 'Already Booked';
+                        bookBtn.style.opacity = '0.6';
+                        bookBtn.style.cursor = 'default';
+                        bookBtn.onclick = null;
+                    } else {
+                        bookBtn.disabled = false;
+                        bookBtn.textContent = 'Reserve Date';
+                        bookBtn.removeAttribute('aria-disabled');
+                        bookBtn.style.opacity = '';
+                        bookBtn.style.cursor = '';
+                        bookBtn.onclick = function(ev) {
+                            if (ev) ev.stopPropagation();
+                            if (unitId) window.location.href = 'unit_detail.php?id=' + unitId;
+                        };
+                    }
                 }
             }
         }

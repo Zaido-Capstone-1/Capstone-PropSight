@@ -91,6 +91,12 @@ while ($_sr = mysqli_fetch_assoc($_savedRes)) {
     $savedUnitIds[] = (int) $_sr['unit_id'];
 }
 
+// ── Units booked by this user (active/confirmed/pending) ────────────────────
+$_bookedRes = mysqli_query($conn, "SELECT DISTINCT unit_id FROM bookings WHERE user_id=$_uid AND status IN('pending','confirmed','active')");
+$bookedUnitIds = [];
+while ($_br = mysqli_fetch_assoc($_bookedRes))
+    $bookedUnitIds[] = (int) $_br['unit_id'];
+
 $roomTypeFilters = [];
 foreach ($units as $unit) {
     $typeName = trim((string) ($unit['unit_type'] ?? ''));
@@ -499,7 +505,7 @@ require '../../includes/_nav.php';
                                 $availClass = $isVacant ? 'avail-yes' : ($unit['status'] === 'maintenance' ? 'avail-maintenance' : 'avail-no');
                                 ?>
                                 <span class="room-avail <?php echo $availClass; ?>" data-avail-status>
-                                    <?php echo $isVacant ? '✓ Available' : ($unit['status'] === 'maintenance' ? 'Maintenance' : 'Booked'); ?>
+                                    <?php echo $isVacant ? 'Available' : ($unit['status'] === 'maintenance' ? 'Maintenance' : 'Booked'); ?>
                                 </span>
                                 <button class="btn-save-room<?php echo $isSaved ? ' saved' : ''; ?>"
                                     onclick="event.stopPropagation(); toggleSaveRoom(<?php echo (int) $unit['unit_id']; ?>, this)"
@@ -572,8 +578,13 @@ require '../../includes/_nav.php';
                                                 onclick="window.location.href='unit_detail.php?id=<?php echo (int) $unit['unit_id']; ?>&book=1'">
                                                 Book Now
                                             </button>
+                                        <?php elseif (in_array((int) $unit['unit_id'], $bookedUnitIds)): ?>
+                                            <button class="btn-rent" data-book-btn disabled style="opacity:.6;cursor:default;">Already Booked</button>
                                         <?php else: ?>
-                                            <button class="btn-rent" data-book-btn disabled>Unavailable</button>
+                                            <button class="btn-rent" data-book-btn
+                                                onclick="window.location.href='unit_detail.php?id=<?php echo (int) $unit['unit_id']; ?>'">
+                                                Reserve Date
+                                            </button>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -1139,6 +1150,7 @@ require '../../includes/_nav.php';
     <script>
         window.PS_POPULAR_PAYMENT = <?php echo json_encode($popularPaymentMethod); ?>;
         window.hasActiveBooking = <?php echo $activeBooking ? 'true' : 'false'; ?>;
+        window.PS_BOOKED_UNIT_IDS = <?php echo json_encode($bookedUnitIds); ?>;
         window._psSessionFields = {
             fname: <?php echo json_encode($_SESSION['first_name'] ?? ''); ?>,
             lname: <?php echo json_encode($_SESSION['last_name'] ?? ''); ?>,

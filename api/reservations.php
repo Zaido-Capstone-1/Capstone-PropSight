@@ -24,6 +24,160 @@ function autoCompleteExpiredBookings(mysqli $conn): void
     }
 }
 
+/**
+ * Builds the branded booking-status HTML email body.
+ * Shared by the automatic status-change email and the manual "Resend" action.
+ */
+function buildBookingStatusEmailHtml(string $statusKey, array $vars): string
+{
+    $statusMeta = [
+        'confirmed' => [
+            'subject' => 'Booking Confirmed',
+            'accent' => '#16a34a',
+            'bg' => '#f0fdf4',
+            'headline' => 'Your Booking is Confirmed!',
+            'sub' => 'Great news — your reservation is all set. We look forward to welcoming you.',
+            'icon' => '',
+            'badge_bg' => '#dcfce7',
+        ],
+        'cancelled' => [
+            'subject' => 'Booking Cancelled',
+            'accent' => '#dc2626',
+            'bg' => '#fef2f2',
+            'headline' => 'Your Booking Has Been Cancelled',
+            'sub' => "Your reservation has been cancelled. If you have questions, please don't hesitate to reach out.",
+            'icon' => '',
+            'badge_bg' => '#fee2e2',
+        ],
+        'completed' => [
+            'subject' => 'Stay Completed',
+            'accent' => '#2563eb',
+            'bg' => '#eff6ff',
+            'headline' => 'Thank You for Your Stay!',
+            'sub' => "We hope you had a wonderful time. We'd love to welcome you back again soon.",
+            'icon' => '<span style="color:#ffffff;font-size:30px;font-family:Arial,sans-serif;">&#9825;</span>',
+            'badge_bg' => '#dbeafe',
+        ],
+        'active' => [
+            'subject' => 'Check-In Confirmed',
+            'accent' => '#0891b2',
+            'bg' => '#ecfeff',
+            'headline' => 'Welcome! Your Check-In is Confirmed',
+            'sub' => "You're all checked in. We hope you enjoy every moment of your stay.",
+            'icon' => '&#8962;',
+            'badge_bg' => '#cffafe',
+        ],
+    ];
+
+    $m = $statusMeta[$statusKey] ?? $statusMeta['confirmed'];
+    $accent = $m['accent'];
+    $bgColor = $m['bg'];
+    $headline = $m['headline'];
+    $subline = $m['sub'];
+    $icon = $m['icon'];
+    $badgeBg = $m['badge_bg'];
+
+    $bkRef = $vars['bkRef'];
+    $uLabelSafe = htmlspecialchars($vars['uLabel']);
+    $userName = htmlspecialchars($vars['userName']);
+    $checkin = $vars['checkin'];
+    $checkout = $vars['checkout'];
+    $amount = $vars['amount'];
+    $year = date('Y');
+
+    return "
+    <!DOCTYPE html>
+    <html lang='en'>
+    <head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'></head>
+    <body style='margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;'>
+
+    <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f1f5f9;padding:40px 16px;'>
+    <tr><td align='center'>
+
+    <table role='presentation' width='100%' style='max-width:580px;' cellpadding='0' cellspacing='0'>
+
+        <!-- Brand header -->
+        <tr>
+        <td style='background:#1e3a5f;border-radius:12px 12px 0 0;padding:22px 36px;text-align:center;'>
+            <div style='color:#c9a84c;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:4px;'>Boracay Accommodation</div>
+            <div style='color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;'>Investment Properties &amp; Services</div>
+        </td>
+        </tr>
+
+        <!-- Status banner -->
+        <tr>
+        <td style='background:{$accent};padding:32px 36px;text-align:center;'>
+            " . ($icon ? "<table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 auto 16px;'><tr><td width='68' height='68' style='width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,0.22);text-align:center;vertical-align:middle;font-size:34px;color:#ffffff;line-height:68px;font-family:Arial,sans-serif;'>{$icon}</td></tr></table>" : '') . "
+            <h1 style='color:#ffffff;margin:0;font-size:22px;font-weight:700;line-height:1.3;letter-spacing:-0.2px;'>{$headline}</h1>
+            <p style='color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:14px;line-height:1.6;max-width:400px;display:inline-block;'>{$subline}</p>
+        </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+        <td style='background:#ffffff;padding:36px 36px 28px;'>
+            <p style='color:#1e3a5f;font-size:16px;font-weight:600;margin:0 0 6px;'>Hi {$userName},</p>
+            <p style='color:#6b7280;font-size:14px;margin:0 0 28px;line-height:1.6;'>Here are the details of your reservation:</p>
+
+            <!-- Booking card -->
+            <table role='presentation' width='100%' cellpadding='0' cellspacing='0'
+                style='background:{$bgColor};border:1.5px solid {$badgeBg};border-radius:10px;overflow:hidden;margin-bottom:24px;'>
+
+            <!-- Ref badge row -->
+            <tr>
+                <td colspan='2' style='padding:14px 20px;border-bottom:1px solid {$badgeBg};'>
+                <span style='font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:{$accent};'>Booking Reference</span>
+                <span style='float:right;font-size:15px;font-weight:800;color:#1e3a5f;letter-spacing:0.05em;'>{$bkRef}</span>
+                </td>
+            </tr>
+
+            <!-- Details rows -->
+            <tr>
+                <td style='padding:11px 20px 4px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;'>Unit</td>
+                <td style='padding:11px 20px 4px;font-size:14px;color:#374151;font-weight:600;text-align:right;'>{$uLabelSafe}</td>
+            </tr>
+            <tr>
+                <td style='padding:4px 20px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;'>Check-in</td>
+                <td style='padding:4px 20px;font-size:14px;color:#374151;text-align:right;'>{$checkin}</td>
+            </tr>
+            <tr>
+                <td style='padding:4px 20px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;'>Check-out</td>
+                <td style='padding:4px 20px;font-size:14px;color:#374151;text-align:right;'>{$checkout}</td>
+            </tr>
+
+            <!-- Total row -->
+            <tr>
+                <td colspan='2' style='padding:14px 20px;border-top:1px solid {$badgeBg};margin-top:6px;'>
+                <span style='font-size:13px;color:#6b7280;font-weight:600;'>Total Amount</span>
+                <span style='float:right;font-size:18px;font-weight:800;color:{$accent};'>{$amount}</span>
+                </td>
+            </tr>
+            </table>
+
+            <p style='color:#9ca3af;font-size:13px;margin:0;line-height:1.7;text-align:center;'>
+            Questions or concerns? Reply to this email or<br>visit our website — we're happy to help.
+            </p>
+        </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+        <td style='background:#1e3a5f;border-radius:0 0 12px 12px;padding:20px 36px;text-align:center;'>
+            <p style='margin:0 0 4px;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.08em;text-transform:uppercase;'>
+            &copy; {$year} Boracay Accommodation. All rights reserved.
+            </p>
+            <p style='margin:0;font-size:11px;color:rgba(255,255,255,0.25);'>This is an automated message, please do not reply directly.</p>
+        </td>
+        </tr>
+
+    </table>
+    </td></tr>
+    </table>
+
+    </body>
+    </html>";
+}
+
 if ($_SESSION['role'] !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized.']);
@@ -355,149 +509,23 @@ if ($method === 'POST') {
                         $amount = '₱' . number_format((float) $bkExtra['total_amount'], 2);
                         $userName = htmlspecialchars($bkExtra['user_name']);
 
-                        $statusMeta = [
-                            'confirmed' => [
-                                'subject' => 'Booking Confirmed',
-                                'accent' => '#16a34a',
-                                'bg' => '#f0fdf4',
-                                'headline' => 'Your Booking is Confirmed!',
-                                'sub' => 'Great news — your reservation is all set. We look forward to welcoming you.',
-                                'icon' => '',
-                                'badge_bg' => '#dcfce7',
-                            ],
-                            'cancelled' => [
-                                'subject' => 'Booking Cancelled',
-                                'accent' => '#dc2626',
-                                'bg' => '#fef2f2',
-                                'headline' => 'Your Booking Has Been Cancelled',
-                                'sub' => "Your reservation has been cancelled. If you have questions, please don't hesitate to reach out.",
-                                'icon' => '',
-                                'badge_bg' => '#fee2e2',
-                            ],
-                            'completed' => [
-                                'subject' => 'Stay Completed',
-                                'accent' => '#2563eb',
-                                'bg' => '#eff6ff',
-                                'headline' => 'Thank You for Your Stay!',
-                                'sub' => "We hope you had a wonderful time. We'd love to welcome you back again soon.",
-                                'icon' => '<span style="color:#ffffff;font-size:30px;font-family:Arial,sans-serif;">&#9825;</span>',
-                                'badge_bg' => '#dbeafe',
-                            ],
-                            'active' => [
-                                'subject' => 'Check-In Confirmed',
-                                'accent' => '#0891b2',
-                                'bg' => '#ecfeff',
-                                'headline' => 'Welcome! Your Check-In is Confirmed',
-                                'sub' => "You're all checked in. We hope you enjoy every moment of your stay.",
-                                'icon' => '&#8962;',
-                                'badge_bg' => '#cffafe',
-                            ],
+                        $subjects = [
+                            'confirmed' => 'Booking Confirmed',
+                            'cancelled' => 'Booking Cancelled',
+                            'completed' => 'Stay Completed',
+                            'active' => 'Check-In Confirmed',
                         ];
 
-                        $m = $statusMeta[$newStatus];
-                        $emailSubject = $m['subject'];
-                        $accent = $m['accent'];
-                        $bgColor = $m['bg'];
-                        $headline = $m['headline'];
-                        $subline = $m['sub'];
-                        $icon = $m['icon'];
-                        $badgeBg = $m['badge_bg'];
-                        $uLabelSafe = htmlspecialchars($uLabel);
-                        $year = date('Y');
+                        $html = buildBookingStatusEmailHtml($newStatus, [
+                            'bkRef' => $bkRef,
+                            'uLabel' => $uLabel,
+                            'userName' => $userName,
+                            'checkin' => $checkin,
+                            'checkout' => $checkout,
+                            'amount' => $amount,
+                        ]);
 
-                        $html = "
-                        <!DOCTYPE html>
-                        <html lang='en'>
-                        <head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'></head>
-                        <body style='margin:0;padding:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;'>
-
-                        <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background:#f1f5f9;padding:40px 16px;'>
-                        <tr><td align='center'>
-
-                        <table role='presentation' width='100%' style='max-width:580px;' cellpadding='0' cellspacing='0'>
-
-                            <!-- Brand header -->
-                            <tr>
-                            <td style='background:#1e3a5f;border-radius:12px 12px 0 0;padding:22px 36px;text-align:center;'>
-                                <div style='color:#c9a84c;font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:4px;'>Boracay Accommodation</div>
-                                <div style='color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;'>Investment Properties &amp; Services</div>
-                            </td>
-                            </tr>
-
-                            <!-- Status banner -->
-                            <tr>
-                            <td style='background:{$accent};padding:32px 36px;text-align:center;'>
-                                " . ($icon ? "<table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 auto 16px;'><tr><td width='68' height='68' style='width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,0.22);text-align:center;vertical-align:middle;font-size:34px;color:#ffffff;line-height:68px;font-family:Arial,sans-serif;'>{$icon}</td></tr></table>" : '') . "
-                                <h1 style='color:#ffffff;margin:0;font-size:22px;font-weight:700;line-height:1.3;letter-spacing:-0.2px;'>{$headline}</h1>
-                                <p style='color:rgba(255,255,255,0.85);margin:10px 0 0;font-size:14px;line-height:1.6;max-width:400px;display:inline-block;'>{$subline}</p>
-                            </td>
-                            </tr>
-
-                            <!-- Body -->
-                            <tr>
-                            <td style='background:#ffffff;padding:36px 36px 28px;'>
-                                <p style='color:#1e3a5f;font-size:16px;font-weight:600;margin:0 0 6px;'>Hi {$userName},</p>
-                                <p style='color:#6b7280;font-size:14px;margin:0 0 28px;line-height:1.6;'>Here are the details of your reservation:</p>
-
-                                <!-- Booking card -->
-                                <table role='presentation' width='100%' cellpadding='0' cellspacing='0'
-                                    style='background:{$bgColor};border:1.5px solid {$badgeBg};border-radius:10px;overflow:hidden;margin-bottom:24px;'>
-
-                                <!-- Ref badge row -->
-                                <tr>
-                                    <td colspan='2' style='padding:14px 20px;border-bottom:1px solid {$badgeBg};'>
-                                    <span style='font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:{$accent};'>Booking Reference</span>
-                                    <span style='float:right;font-size:15px;font-weight:800;color:#1e3a5f;letter-spacing:0.05em;'>{$bkRef}</span>
-                                    </td>
-                                </tr>
-
-                                <!-- Details rows -->
-                                <tr>
-                                    <td style='padding:11px 20px 4px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;'>Unit</td>
-                                    <td style='padding:11px 20px 4px;font-size:14px;color:#374151;font-weight:600;text-align:right;'>{$uLabelSafe}</td>
-                                </tr>
-                                <tr>
-                                    <td style='padding:4px 20px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;'>Check-in</td>
-                                    <td style='padding:4px 20px;font-size:14px;color:#374151;text-align:right;'>{$checkin}</td>
-                                </tr>
-                                <tr>
-                                    <td style='padding:4px 20px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;'>Check-out</td>
-                                    <td style='padding:4px 20px;font-size:14px;color:#374151;text-align:right;'>{$checkout}</td>
-                                </tr>
-
-                                <!-- Total row -->
-                                <tr>
-                                    <td colspan='2' style='padding:14px 20px;border-top:1px solid {$badgeBg};margin-top:6px;'>
-                                    <span style='font-size:13px;color:#6b7280;font-weight:600;'>Total Amount</span>
-                                    <span style='float:right;font-size:18px;font-weight:800;color:{$accent};'>{$amount}</span>
-                                    </td>
-                                </tr>
-                                </table>
-
-                                <p style='color:#9ca3af;font-size:13px;margin:0;line-height:1.7;text-align:center;'>
-                                Questions or concerns? Reply to this email or<br>visit our website — we're happy to help.
-                                </p>
-                            </td>
-                            </tr>
-
-                            <!-- Footer -->
-                            <tr>
-                            <td style='background:#1e3a5f;border-radius:0 0 12px 12px;padding:20px 36px;text-align:center;'>
-                                <p style='margin:0 0 4px;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.08em;text-transform:uppercase;'>
-                                &copy; {$year} Boracay Accommodation. All rights reserved.
-                                </p>
-                                <p style='margin:0;font-size:11px;color:rgba(255,255,255,0.25);'>This is an automated message, please do not reply directly.</p>
-                            </td>
-                            </tr>
-
-                        </table>
-                        </td></tr>
-                        </table>
-
-                        </body>
-                        </html>";
-
-                        $emailService->sendEmail($bkExtra['user_email'], $emailSubject . " — $bkRef", $html);
+                        $emailService->sendEmail($bkExtra['user_email'], $subjects[$newStatus] . " — $bkRef", $html);
                     } catch (\Throwable $emailErr) {
                         error_log('[reservations.php] Email failed (non-fatal): ' . $emailErr->getMessage());
                     }
@@ -528,6 +556,22 @@ if ($method === 'POST') {
             echo json_encode(['success' => false, 'message' => 'Invalid ID.']);
             exit;
         }
+
+        $chkStmt = $conn->prepare("SELECT status FROM bookings WHERE booking_id = ? LIMIT 1");
+        $chkStmt->bind_param('i', $id);
+        $chkStmt->execute();
+        $chkRow = $chkStmt->get_result()->fetch_assoc();
+        $chkStmt->close();
+
+        if (!$chkRow) {
+            echo json_encode(['success' => false, 'message' => 'Booking not found.']);
+            exit;
+        }
+        if (!in_array($chkRow['status'], ['pending', 'cancelled'], true)) {
+            echo json_encode(['success' => false, 'message' => 'Only pending or cancelled bookings can be deleted. This booking has payment or stay history attached to it — cancel it first if needed.']);
+            exit;
+        }
+
         $delStmt = $conn->prepare("DELETE FROM bookings WHERE booking_id = ?");
         $delStmt->bind_param('i', $id);
         if ($delStmt->execute()) {
@@ -537,6 +581,74 @@ if ($method === 'POST') {
             $err = $delStmt->error;
             $delStmt->close();
             echo json_encode(['success' => false, 'message' => $err]);
+        }
+        exit;
+    }
+
+    // ── RESEND CONFIRMATION EMAIL ───────────────
+    if ($action === 'resend_confirmation') {
+        $id = (int) ($_POST['booking_id'] ?? 0);
+        if (!$id) {
+            echo json_encode(['success' => false, 'message' => 'Invalid booking id.']);
+            exit;
+        }
+
+        $stmt = $conn->prepare(
+            "SELECT b.status, b.checkin_date, b.checkout_date, b.total_amount,
+                    u2.email AS user_email, CONCAT(u2.first_name,' ',u2.last_name) AS user_name,
+                    un.unit_name, un.unit_number, p.property_name
+             FROM bookings b
+             JOIN users u2 ON u2.user_id = b.user_id
+             JOIN units un ON un.unit_id = b.unit_id
+             LEFT JOIN properties p ON p.property_id = un.property_id
+             WHERE b.booking_id = ? LIMIT 1"
+        );
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $bk = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$bk) {
+            echo json_encode(['success' => false, 'message' => 'Booking not found.']);
+            exit;
+        }
+        if (empty($bk['user_email'])) {
+            echo json_encode(['success' => false, 'message' => 'Guest has no email on file.']);
+            exit;
+        }
+        if (!in_array($bk['status'], ['confirmed', 'active', 'completed'], true)) {
+            echo json_encode(['success' => false, 'message' => 'Only confirmed, active, or completed bookings have a confirmation email to resend.']);
+            exit;
+        }
+
+        try {
+            require_once __DIR__ . '/../includes/email_service.php';
+            $bkRef = 'BK-' . str_pad($id, 6, '0', STR_PAD_LEFT);
+            $uLabel = $bk['unit_name']
+                ? (($bk['property_name'] ?? '') . ' — ' . $bk['unit_name'])
+                : (($bk['property_name'] ?? '') . ' — Unit ' . ($bk['unit_number'] ?? ''));
+            $statusForEmail = $bk['status'] === 'completed' ? 'completed' : 'confirmed';
+
+            $html = buildBookingStatusEmailHtml($statusForEmail, [
+                'bkRef' => $bkRef,
+                'uLabel' => $uLabel,
+                'userName' => htmlspecialchars($bk['user_name']),
+                'checkin' => date('F j, Y', strtotime($bk['checkin_date'])),
+                'checkout' => date('F j, Y', strtotime($bk['checkout_date'])),
+                'amount' => '₱' . number_format((float) $bk['total_amount'], 2),
+            ]);
+
+            $subject = ($statusForEmail === 'completed' ? 'Stay Completed' : 'Booking Confirmed') . " — $bkRef";
+            $sent = $emailService->sendEmail($bk['user_email'], $subject, $html);
+
+            if ($sent) {
+                echo json_encode(['success' => true, 'message' => 'Confirmation email resent to ' . $bk['user_email'] . '.']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Email service could not send the message. Please try again.']);
+            }
+        } catch (\Throwable $e) {
+            error_log('[reservations.php] resend_confirmation failed: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Could not send email right now.']);
         }
         exit;
     }

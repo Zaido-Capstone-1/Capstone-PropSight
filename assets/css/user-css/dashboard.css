@@ -1008,27 +1008,18 @@ body {
 }
 
 .avail-yes {
-    background: rgba(34, 197, 94, .15);
-    color: #15803d;
-    border: 1px solid rgba(34, 197, 94, .3);
-    backdrop-filter: blur(6px);
-    background: rgba(240, 253, 244, .9);
+    background: #16a34a;
+    color: #fff;
 }
 
 .avail-no {
-    background: rgba(192, 105, 74, .1);
-    color: var(--terra);
-    border: 1px solid rgba(192, 105, 74, .3);
-    backdrop-filter: blur(6px);
-    background: rgba(255, 245, 240, .9);
+    background: #dc2626;
+    color: #fff;
 }
 
 .avail-maintenance {
-    background: rgba(234, 179, 8, .12);
-    color: #92400e;
-    border: 1px solid rgba(234, 179, 8, .35);
-    backdrop-filter: blur(6px);
-    background: rgba(255, 251, 235, .9);
+    background: #d97706;
+    color: #fff;
 }
 
 /* ── Heart / Save button ── */

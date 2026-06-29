@@ -1178,7 +1178,6 @@ require '../../includes/_nav.php';
                 { amenity: 'school', label: 'School', icon: 'ti-school' },
                 { amenity: 'place_of_worship', label: 'Church', icon: 'ti-building-church' },
                 { tourism: 'attraction', label: 'Attraction', icon: 'ti-star' },
-                { tourism: 'hotel', label: 'Hotel', icon: 'ti-building' },
                 { leisure: 'park', label: 'Park', icon: 'ti-trees' },
                 { leisure: 'beach', label: 'Beach', icon: 'ti-wave-saw-tool' },
             ];
@@ -1241,7 +1240,7 @@ require '../../includes/_nav.php';
             const address = <?php echo json_encode(trim(($unit['address'] ?? '') . ' ' . ($unit['city'] ?? ''))); ?>;
 
             function doNearbyFetch(refLat, refLng) {
-                const query = `[out:json][timeout:10];(node(around:${radius},${refLat},${refLng})[amenity~"restaurant|cafe|bar|bank|atm|pharmacy|hospital|supermarket|school|place_of_worship"];node(around:${radius},${refLat},${refLng})[tourism~"attraction|hotel"];node(around:${radius},${refLat},${refLng})[leisure~"park|beach"];way(around:${radius},${refLat},${refLng})[amenity~"restaurant|cafe|bar|bank|pharmacy|hospital|supermarket"];way(around:${radius},${refLat},${refLng})[leisure~"park|beach"];);out center 20;`;
+                const query = `[out:json][timeout:10];(node(around:${radius},${refLat},${refLng})[amenity~"restaurant|cafe|bar|bank|atm|pharmacy|hospital|supermarket|school|place_of_worship"];node(around:${radius},${refLat},${refLng})[tourism~"attraction"];node(around:${radius},${refLat},${refLng})[leisure~"park|beach"];way(around:${radius},${refLat},${refLng})[amenity~"restaurant|cafe|bar|bank|pharmacy|hospital|supermarket"];way(around:${radius},${refLat},${refLng})[leisure~"park|beach"];);out center 20;`;
                 fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(query) })
                     .then(r => r.json())
                     .then(data => {

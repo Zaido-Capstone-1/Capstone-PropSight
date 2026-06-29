@@ -77,7 +77,9 @@
             <?php endforeach; ?>
         </nav>
         <div class="header-right">
+            <?php if (empty($hideBrowseBtn)): ?>
             <a href="units.php" class="btn-browse" style="text-decoration:none;">Browse Rooms</a>
+            <?php endif; ?>
             <button id="chatBellBtn" type="button" aria-label="Messages" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;
                        color:var(--text-soft);display:flex;align-items:center;justify-content:center;
                        position:relative;transition:background 0.2s;" onmouseenter="this.style.background='var(--navy-50,var(--blue-50,#eff6ff))'"

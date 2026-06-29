@@ -885,17 +885,47 @@ body {
 
 /* Badge positions */
 .room-badge-img {
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    padding: 3px 9px;
+    border-radius: 99px;
+    background: rgba(200, 160, 60, 0.92);
+    color: #fff;
+    border: 1px solid rgba(180, 140, 40, 0.6);
     position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 2;
+    top: 10px;
+    left: 10px;
+    z-index: 8;
 }
 
 .room-avail {
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    padding: 3px 9px;
+    border-radius: 99px;
     position: absolute;
-    top: 12px;
-    right: 48px;
-    z-index: 2;
+    top: 10px;
+    right: 10px;
+    z-index: 8;
+}
+
+.room-avail.avail-yes {
+    background: rgba(22, 163, 74, 0.9);
+    color: #fff;
+}
+
+.room-avail.avail-no {
+    background: rgba(185, 28, 28, 0.85);
+    color: #fecaca;
+}
+
+.room-avail.avail-maintenance {
+    background: rgba(180, 83, 9, 0.88);
+    color: #fef3c7;
 }
 
 /* Empty state */
@@ -1078,60 +1108,9 @@ body {
     pointer-events: none;
 }
 
-/* Type badge — dark navy pill (left) */
-.badge-type {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 10px;
-    border-radius: 99px;
-    background: rgba(10, 22, 40, 0.88);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border: 1px solid rgba(255,255,255,.12);
-    font-size: .62rem;
-    font-weight: 800;
-    letter-spacing: .1em;
-    color: var(--sand, #d4a96a);
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-/* Status badge — right side */
-.badge-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border-radius: 99px;
-    font-size: .65rem;
-    font-weight: 700;
-    letter-spacing: .04em;
-    white-space: nowrap;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-}
-
-.badge-status.avail-yes {
-    background: rgba(15, 46, 28, 0.78);
-    border: 1px solid rgba(74, 222, 128, 0.45);
-    color: #4ade80;
-}
-
-.badge-status.avail-no {
-    background: rgba(46, 19, 14, 0.78);
-    border: 1px solid rgba(239, 100, 80, 0.40);
-    color: #f87171;
-}
-
-.badge-status.avail-maintenance {
-    background: rgba(46, 35, 4, 0.78);
-    border: 1px solid rgba(250, 204, 21, 0.38);
-    color: #fbbf24;
-}
-
 /* Save button — keep it clear of the badge row */
 .room-card-img .btn-save-room {
     top: auto;
-    bottom: 44px; /* above season vignette */
+    bottom: 44px;
     right: 10px;
 }

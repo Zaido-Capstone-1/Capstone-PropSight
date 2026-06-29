@@ -585,16 +585,17 @@ if (burger && mob) {
         }
         const bookBtn = roomCard.querySelector('[data-book-btn]');
         if (bookBtn) {
+            // User just booked this unit — show Already Booked
             bookBtn.disabled = true;
-            bookBtn.textContent = 'Unavailable';
-            bookBtn.setAttribute('aria-disabled', 'true');
-            bookBtn.onclick = function (ev) {
-                if (ev) {
-                    ev.preventDefault();
-                    ev.stopPropagation();
-                }
-                return false;
-            };
+            bookBtn.textContent = 'Already Booked';
+            bookBtn.style.opacity = '0.6';
+            bookBtn.style.cursor = 'default';
+            bookBtn.onclick = null;
+            // Track in global list
+            var uid = parseInt(roomCard.dataset.unitId);
+            if (uid && window.PS_BOOKED_UNIT_IDS && !window.PS_BOOKED_UNIT_IDS.includes(uid)) {
+                window.PS_BOOKED_UNIT_IDS.push(uid);
+            }
         }
     }
 
@@ -699,7 +700,7 @@ if (burger && mob) {
                 roomCard.dataset.status = 'vacant';
                 const availBadge = roomCard.querySelector('[data-avail-status]');
                 if (availBadge) {
-                    availBadge.textContent = '✓ Available';
+                    availBadge.textContent = 'Available';
                     availBadge.classList.remove('avail-no');
                     availBadge.classList.add('avail-yes');
                 }

@@ -466,17 +466,15 @@ echo '</div>';
                                     </svg>
                                 </div>
 
-                                <!-- TOP ROW: type badge (left) + status badge (right) -->
-                                <div class="card-badge-row">
-                                    <span class="badge-type">
-                                        <?php echo htmlspecialchars(strtoupper($unit['unit_type'] ?? 'UNIT')); ?>
-                                    </span>
-                                    <span class="badge-status <?php echo $availClass; ?>">
-                                        <?php if ($isVacant): ?>✓ Available
-                                        <?php elseif ($unit['status'] === 'maintenance'): ?>⚠ Maintenance
-                                        <?php else: ?>✕ Booked<?php endif; ?>
-                                    </span>
-                                </div>
+                                <!-- Badges -->
+                                <span class="room-badge-img badge-gold" >
+                                    <?php echo htmlspecialchars(strtoupper($unit['unit_type'] ?? 'UNIT')); ?>
+                                </span>
+                                <span class="room-avail <?php echo $availClass; ?>" style="position:absolute;top:12px;right:12px;z-index:3;color:#fff;">
+                                    <?php if ($isVacant): ?>Available
+                                    <?php elseif ($unit['status'] === 'maintenance'): ?>Maintenance
+                                    <?php else: ?>Booked<?php endif; ?>
+                                </span>
 
                                 <button class="btn-save-room<?php echo $isSaved ? ' saved' : ''; ?>"
                                         onclick="event.stopPropagation(); toggleSaveRoom(<?php echo (int) $unit['unit_id']; ?>, this)"
