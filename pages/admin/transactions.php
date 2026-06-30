@@ -265,15 +265,15 @@ function formatPeso(int $n): string
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+            </div>
 
-                <div id="emptyState" style="display:none;text-align:center;padding:52px 16px;">
-                    <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"
-                        style="margin:0 auto 12px;display:block;">
-                        <circle cx="11" cy="11" r="8" />
-                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <div style="color:#aaa;font-size:14px;">No transactions match your filters.</div>
-                </div>
+            <div id="emptyState" style="display:none;text-align:center;padding:52px 16px;">
+                <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"
+                    style="margin:0 auto 12px;display:block;">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <div style="color:#aaa;font-size:14px;">No transactions match your filters.</div>
             </div>
 
             <!-- Pagination outside table-wrap — never scrolls horizontally -->

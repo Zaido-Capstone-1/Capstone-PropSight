@@ -37,20 +37,13 @@
         const rows   = filtered.slice(offset, offset + PER_PAGE);
 
         const tbody = document.getElementById('refundTableBody');
+        const emptyState = document.getElementById('refundEmptyState');
 
         if (rows.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9">
-                <div class="refund-empty">
-                    <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5"
-                        viewBox="0 0 24 24" style="margin:0 auto 12px;display:block;">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="15" y1="9" x2="9" y2="15"/>
-                        <line x1="9" y1="9" x2="15" y2="15"/>
-                    </svg>
-                    No refund requests found.
-                </div>
-            </td></tr>`;
+            tbody.innerHTML = '';
+            if (emptyState) emptyState.style.display = 'block';
         } else {
+            if (emptyState) emptyState.style.display = 'none';
             tbody.innerHTML = rows.map(r => {
                 const photoHtml = r.profile_photo
                     ? `<img src="../../${r.profile_photo}" alt="${esc(r.initial)}"
@@ -91,8 +84,8 @@
 
                 return `<tr>
                     <td>
-                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                            <strong>${esc(r.refId)}</strong>
+                        <strong>${esc(r.refId)}</strong>
+                        <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
                             ${typeBadge}
                             <span style="font-size:11px;color:var(--text-soft);">${esc(r.refLabel)}</span>
                         </div>

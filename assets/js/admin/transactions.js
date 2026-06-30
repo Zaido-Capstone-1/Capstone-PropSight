@@ -130,14 +130,6 @@ if (sessionStorage.getItem('txn_needs_refresh') === '1') {
     const clearBtn = document.getElementById('clearFiltersBtn');
     const emptyState = document.getElementById('emptyState');
 
-    const storedMonth = sessionStorage.getItem('transactionsMonthFilter');
-    const navEntry = performance.getEntriesByType('navigation')[0];
-    const isReload = navEntry ? navEntry.type === 'reload' : false;
-
-    if (monthFilter && storedMonth && /^\d{4}-\d{2}$/.test(storedMonth) && !isReload) {
-        monthFilter.value = storedMonth;
-    }
-
     window.applyFilters = function () {
         const type = typeFilter?.value || '';
         const cat = catFilter?.value || '';
@@ -195,10 +187,7 @@ if (sessionStorage.getItem('txn_needs_refresh') === '1') {
 
     typeFilter?.addEventListener('change', window.applyFilters);
     catFilter?.addEventListener('change', window.applyFilters);
-    monthFilter?.addEventListener('change', function () {
-        if (monthFilter.value) sessionStorage.setItem('transactionsMonthFilter', monthFilter.value);
-        window.applyFilters();
-    });
+    monthFilter?.addEventListener('change', window.applyFilters);
 
     window.applyFilters();
 })();

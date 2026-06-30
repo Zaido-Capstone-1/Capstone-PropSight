@@ -261,30 +261,36 @@ require_once '../../lib/admin-queries/expenses_queries.php';
           </thead>
           <tbody id="expensesBody"></tbody>
 
-        </table>
+          <tfoot id="expTableFoot" style="display:none;">
+            <tr>
+              <td colspan="7">
+                <div class="exp-pagination">
+                  <span class="exp-page-info" id="expPageInfo"></span>
+                  <div class="exp-page-controls" id="expPageControls" style="display:none;">
+                    <button type="button" id="expPrevBtn" class="exp-chevron-btn" onclick="expChangePage(-1)" disabled>
+                      <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
+                        height="14">
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
+                    </button>
+                    <span id="expPageNumbers" class="exp-page-numbers"></span>
+                    <button type="button" id="expNextBtn" class="exp-chevron-btn" onclick="expChangePage(1)" disabled>
+                      <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
+                        height="14">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
 
-        <div id="emptyState" class="table-empty" style="display:none;">
-          <div class="table-empty-text">No expenses found.</div>
-        </div>
+        </table>
       </div>
 
-      <div id="expTableFoot" style="display:none;border-top:1.5px solid var(--border);">
-        <div class="exp-pagination">
-          <span class="exp-page-info" id="expPageInfo"></span>
-          <div class="exp-page-controls" id="expPageControls" style="display:none;">
-            <button type="button" id="expPrevBtn" class="exp-chevron-btn" onclick="expChangePage(-1)" disabled>
-              <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14" height="14">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </button>
-            <span id="expPageNumbers" class="exp-page-numbers"></span>
-            <button type="button" id="expNextBtn" class="exp-chevron-btn" onclick="expChangePage(1)" disabled>
-              <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14" height="14">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-          </div>
-        </div>
+      <div id="emptyState" class="table-empty" style="display:none;">
+        <div class="table-empty-text">No expenses found.</div>
       </div>
     </div>
 

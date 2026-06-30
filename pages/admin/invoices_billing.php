@@ -274,14 +274,14 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
         </tbody>
         </tbody>
       </table>
+    </div>
 
-      <div class="inv-empty" id="emptyState">
-        <svg width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <p>No invoices match your filters.</p>
-      </div>
+    <div class="inv-empty" id="emptyState">
+      <svg width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <p>No invoices match your filters.</p>
     </div>
 
     <!-- Pagination outside table-wrap — never scrolls horizontally -->

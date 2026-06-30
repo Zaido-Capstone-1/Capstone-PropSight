@@ -145,7 +145,18 @@ function fmt_peso(float $v): string
                     <tbody id="refundTableBody"></tbody>
                 </table>
             </div>
-            <div style="border-top:1.5px solid var(--border);">
+
+            <div id="refundEmptyState" style="display:none;text-align:center;padding:52px 16px;">
+                <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"
+                    style="margin:0 auto 12px;display:block;">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+                <div style="color:#aaa;font-size:14px;">No refund requests found.</div>
+            </div>
+
+            <div id="refTableFoot" style="border-top:1.5px solid var(--border);">
                 <div class="txn-pagination">
                     <span class="txn-page-info" id="refPageInfo"></span>
                     <div class="txn-page-controls" id="refPageControls"></div>

@@ -160,20 +160,7 @@ endif;
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                     <span class="card-title">Payment Records</span>
                 </div>
-                <form method="GET" id="filterForm" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-
-                    <!-- Search -->
-                    <div style="position:relative;width:100%;">
-                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="13"
-                            height="13"
-                            style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-soft);pointer-events:none;">
-                            <circle cx="11" cy="11" r="8" />
-                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                        </svg>
-                        <input type="text" name="q" id="searchInput" value="<?= htmlspecialchars($search) ?>"
-                            placeholder="Search tenant, unit, ID…"
-                            style="padding:7px 10px 7px 28px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12.5px;width:100%;background:var(--white);">
-                    </div>
+                <form method="GET" id="filterForm" style="display:flex;align-items:center;gap:8px;">
 
                     <div style="position:relative;" id="monthPickerWrap">
                         <button type="button" id="monthPickerBtn" onclick="toggleMonthPicker()"
@@ -232,6 +219,19 @@ endif;
                                     style="padding:5px 13px;border:none;border-radius:6px;font-size:12px;font-weight:600;background:var(--primary,#3b6ef5);color:white;cursor:pointer;">Apply</button>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Search -->
+                    <div style="position:relative;flex-shrink:0;">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="13"
+                            height="13"
+                            style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-soft);pointer-events:none;">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <input type="text" name="q" id="searchInput" value="<?= htmlspecialchars($search) ?>"
+                            placeholder="Search tenant, unit, ID…"
+                            style="padding:7px 10px 7px 28px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:12.5px;width:180px;background:var(--white);">
                     </div>
 
                     <!-- Status -->
@@ -379,15 +379,15 @@ endif;
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
 
-                <div id="payEmptyState" style="display:none;text-align:center;padding:52px 16px;">
-                    <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"
-                        style="margin:0 auto 12px;display:block;">
-                        <circle cx="11" cy="11" r="8" />
-                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <div style="color:#aaa;font-size:14px;">No payments match your filters.</div>
-                </div>
+            <div id="payEmptyState" style="display:none;text-align:center;padding:52px 16px;">
+                <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"
+                    style="margin:0 auto 12px;display:block;">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <div style="color:#aaa;font-size:14px;">No payments match your filters.</div>
             </div>
 
             <!-- Pagination outside table-wrap so it never scrolls horizontally -->
