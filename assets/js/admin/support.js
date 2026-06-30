@@ -293,7 +293,7 @@ function renderSptFoot(total, totalPages, start, end) {
     if (!foot) return;
 
     if (total === 0) { foot.style.display = 'none'; return; }
-    foot.style.display = '';
+    foot.style.display = 'block';
     info.innerHTML = `Showing <strong>${start + 1}–${Math.min(end, total)}</strong> of <strong>${total}</strong> ticket(s)`;
 
     if (totalPages <= 1) { if (controls) controls.style.display = 'none'; return; }

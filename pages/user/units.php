@@ -23,6 +23,12 @@ $savedUnitIds = [];
 while ($_sr = mysqli_fetch_assoc($_savedRes))
     $savedUnitIds[] = (int) $_sr['unit_id'];
 
+// ── Units booked by this user ────────────────────────────────────────────────
+$_bookedRes = mysqli_query($conn, "SELECT DISTINCT unit_id FROM bookings WHERE user_id=$_uid AND status IN('pending','confirmed','active')");
+$bookedUnitIds = [];
+while ($_br = mysqli_fetch_assoc($_bookedRes))
+    $bookedUnitIds[] = (int) $_br['unit_id'];
+
 // ── User profile photo + initials ───────────────────────────────────────────
 $_uRow = mysqli_fetch_assoc(mysqli_query(
     $conn,
@@ -140,14 +146,14 @@ ksort($floors);
 $page_title = 'Browse Rooms';
 $active_nav = 'browse';
 $account_nav_keys = ['dashboard', 'profile', 'saved', 'loyalty', 'settings', 'payment'];
-$sidebarPhoto = $_sidebarPhoto;
+$sidebarPhoto = $_photo;
 $initials = $_initials;
 $full_name = trim($_firstName . ' ' . $_lastName);
 $email = htmlspecialchars($_SESSION['email'] ?? '');
 $page_extra_head = '
     <link rel="stylesheet" href="../../assets/css/user-css/styles.css?v=3">
     <link rel="stylesheet" href="../../assets/css/user-css/dashboard.css">
-    <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=4">
+    <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=5">
     <script>
         window.UNITS_CONFIG = {
             priceMin: ' . $priceMin . ',
@@ -155,6 +161,7 @@ $page_extra_head = '
         };
     </script>
 ';
+$hideBrowseBtn = true;
 require '../../includes/_nav.php';
 ?>
 
@@ -404,7 +411,7 @@ echo '</div>';
                     <?php foreach ($units as $unit):
                         $isVacant = $unit['status'] === 'vacant';
                         $cats = unitTypeToCategory($unit['unit_type'] ?? '');
-                        $rawNum = trim(preg_replace('/^unit\s*/i', '', $unit['unit_number'] ?? ''));
+                        $rawNum = trim(preg_replace('/^unit\\s*/i', '', $unit['unit_number'] ?? ''));
 
                         if (!empty($unit['unit_name']))
                             $rawName = $unit['unit_name'];
@@ -467,10 +474,10 @@ echo '</div>';
                                 </div>
 
                                 <!-- Badges -->
-                                <span class="room-badge-img badge-gold" >
+                                <span class="room-badge-img badge-gold">
                                     <?php echo htmlspecialchars(strtoupper($unit['unit_type'] ?? 'UNIT')); ?>
                                 </span>
-                                <span class="room-avail <?php echo $availClass; ?>" style="position:absolute;top:12px;right:12px;z-index:3;color:#fff;">
+                                <span class="room-avail <?php echo $availClass; ?>">
                                     <?php if ($isVacant): ?>Available
                                     <?php elseif ($unit['status'] === 'maintenance'): ?>Maintenance
                                     <?php else: ?>Booked<?php endif; ?>
@@ -571,8 +578,13 @@ echo '</div>';
                                                         onclick="location.href='<?php echo $bookUrl; ?>'">
                                                     Book Now
                                                 </button>
+                                        <?php elseif (in_array((int) $unit['unit_id'], $bookedUnitIds)): ?>
+                                                <button class="btn-rent" disabled style="opacity:.6;cursor:default;">Already Booked</button>
                                         <?php else: ?>
-                                                <button class="btn-rent" disabled>Unavailable</button>
+                                                <button class="btn-rent"
+                                                        onclick="location.href='<?php echo $detailUrl; ?>'">
+                                                    Reserve Date
+                                                </button>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -606,6 +618,7 @@ echo '</div>';
 <script>
     window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
     window.PS_USER_ID = <?php echo json_encode((int) ($_SESSION['user_id'] ?? 0)); ?>;
+    window.PS_BOOKED_UNIT_IDS = <?php echo json_encode($bookedUnitIds); ?>;
     window.psGetCsrfToken = function() { return String(window.PS_CSRF_TOKEN || ''); };
     window.psAppendCsrf = function(target) {
         var token = window.psGetCsrfToken();
@@ -638,17 +651,14 @@ echo '</div>';
         document.body.classList.remove('sidebar-open');
     }
     document.addEventListener('DOMContentLoaded', function() {
-        // Overlay click
         var ov = document.getElementById('sidebarOverlay');
         if (ov) ov.addEventListener('click', closeProfileSidebar);
-        // Close button
         var sc = document.getElementById('sidebarClose');
         if (sc) sc.addEventListener('click', closeProfileSidebar);
-        // Profile button — override script.js binding after all scripts load
         window.addEventListener('load', function() {
             var pb = document.getElementById('profileBtn');
             if (pb) {
-                pb.replaceWith(pb.cloneNode(true)); // strip script.js listener
+                pb.replaceWith(pb.cloneNode(true));
                 document.getElementById('profileBtn').addEventListener('click', openProfileSidebar);
             }
         });

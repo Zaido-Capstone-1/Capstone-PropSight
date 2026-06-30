@@ -91,8 +91,8 @@
 
                 return `<tr>
                     <td>
-                        <strong>${esc(r.refId)}</strong>
-                        <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
+                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                            <strong>${esc(r.refId)}</strong>
                             ${typeBadge}
                             <span style="font-size:11px;color:var(--text-soft);">${esc(r.refLabel)}</span>
                         </div>

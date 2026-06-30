@@ -52,14 +52,16 @@
 
 .am-input {
     min-width: 0;
-    padding: 7px 12px;
+    padding: 7px 11px 7px 32px;
     border: 1px solid var(--border);
     border-radius: 9px;
+    height: 34px;
     font-size: 13px;
     color: var(--text);
     background: var(--white);
     outline: none;
     transition: border-color .15s;
+    box-sizing: border-box;
 }
 
 .am-input:focus {
@@ -179,24 +181,26 @@
 
 .amenity-grid {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: row;
+    flex-wrap: nowrap;
     gap: 12px;
     padding: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .amenity-card {
     background: var(--white);
     border: 1px solid var(--border);
-    border-radius: 11px;
-    padding: 15px 16px;
+    border-radius: 9px;
+    padding: 10px 12px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     transition: background .15s, box-shadow .15s;
     position: relative;
     cursor: default;
-    width: auto;
-    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .amenity-card:hover {
@@ -205,9 +209,9 @@
 }
 
 .am-icon-wrap {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -237,19 +241,19 @@
 }
 
 .am-name {
-    font-size: 13px;
+    font-size: 11.5px;
     font-weight: 600;
     color: var(--text);
     white-space: nowrap;
 }
 
 .am-status {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
-    margin-top: 3px;
+    margin-top: 2px;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
 }
 
 .am-status.available {
@@ -342,27 +346,30 @@
     .amenity-toolbar .tb-right {
         width: 100%;
         flex-direction: row !important;
-        flex-wrap: nowrap !important;
+        flex-wrap: wrap !important;
         align-items: center;
         gap: 6px;
     }
 
-    /* Override the hardcoded 220px min-width */
+    /* Search takes full width on its own row */
     .amenity-toolbar .am-search-wrap {
-        flex: 1 1 0 !important;
+        flex: 1 1 100% !important;
         min-width: 0 !important;
-        max-width: none !important;
-        width: auto !important;
+        max-width: 100% !important;
+        width: 100% !important;
     }
 
     .amenity-toolbar .am-search-wrap input {
         width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box;
+        font-size: 13px;
+        padding: 7px 8px 7px 32px;
     }
 
+    /* Dropdowns share the second row */
     .amenity-toolbar .tb-right .ur-drop-wrap {
-        flex: 1 1 0 !important;
+        flex: 1 1 calc(50% - 3px) !important;
         min-width: 0 !important;
     }
 
@@ -389,19 +396,7 @@
     }
 }
 
-@media (max-width: 360px) {
-    .amenity-toolbar .tb-right {
-        flex-wrap: wrap !important;
-    }
 
-    .amenity-toolbar .am-search-wrap {
-        flex: 1 1 100% !important;
-    }
-
-    .amenity-toolbar .tb-right .ur-drop-wrap {
-        flex: 1 1 calc(50% - 3px) !important;
-    }
-}
 
 #am-search:focus {
     border-color: #4f8ef7;

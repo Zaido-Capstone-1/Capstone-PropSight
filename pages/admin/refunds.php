@@ -143,17 +143,13 @@ function fmt_peso(float $v): string
                         </tr>
                     </thead>
                     <tbody id="refundTableBody"></tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="9">
-                                <div class="txn-pagination">
-                                    <span class="txn-page-info" id="refPageInfo"></span>
-                                    <div class="txn-page-controls" id="refPageControls"></div>
-                                </div>
-                            </td>
-                        </tr>
-                    </tfoot>
                 </table>
+            </div>
+            <div style="border-top:1.5px solid var(--border);">
+                <div class="txn-pagination">
+                    <span class="txn-page-info" id="refPageInfo"></span>
+                    <div class="txn-page-controls" id="refPageControls"></div>
+                </div>
             </div>
         </div>
     </div>

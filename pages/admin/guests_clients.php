@@ -153,14 +153,7 @@ require_once '../../lib/admin-queries/guest_clients_queries.php';
     <div class="card">
       <div class="card-header" style="flex-wrap:wrap;gap:10px;">
         <span class="card-title">Guest Directory</span>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-
-          <div class="filter-pills" id="filterPills">
-            <span class="filter-pill-sm active" data-filter="all">All</span>
-            <span class="filter-pill-sm" data-filter="active">Active</span>
-            <span class="filter-pill-sm" data-filter="inactive">Inactive</span>
-            <span class="filter-pill-sm" data-filter="blacklisted">Blacklisted</span>
-          </div>
+        <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
 
           <div class="search-wrap">
             <svg viewBox="0 0 24 24">
@@ -168,6 +161,13 @@ require_once '../../lib/admin-queries/guest_clients_queries.php';
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input type="text" id="guestSearch" placeholder="Search guests…">
+          </div>
+
+          <div class="filter-pills" id="filterPills">
+            <span class="filter-pill-sm active" data-filter="all">All</span>
+            <span class="filter-pill-sm" data-filter="active">Active</span>
+            <span class="filter-pill-sm" data-filter="inactive">Inactive</span>
+            <span class="filter-pill-sm" data-filter="blacklisted">Blacklisted</span>
           </div>
 
         </div>

@@ -77,3 +77,14 @@
     color: #aaa;
     font-size: 14px;
 }
+
+/* ── Pagination horizontal-scroll fix ─────────────────────────────────────── */
+.txn-pagination {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.txn-page-controls {
+    flex-wrap: wrap;
+    gap: 3px;
+}

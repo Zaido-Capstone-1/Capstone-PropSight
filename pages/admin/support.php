@@ -169,6 +169,29 @@ include '../../lib/admin-queries/support_queries.php';
                                 <div class="table-empty">
                                     <div class="table-empty-text">No support tickets found.</div>
                                 </div>
+
+                                <div id="sptTableFoot" style="display:none;border-top:1.5px solid var(--border);">
+                                    <div class="txn-pagination">
+                                        <span class="txn-page-info" id="sptPageInfo"></span>
+                                        <div class="txn-page-controls" id="sptPageControls" style="display:none;">
+                                            <button type="button" id="sptPrevBtn" class="txn-chevron-btn"
+                                                onclick="sptChangePage(-1)" disabled>
+                                                <svg fill="none" stroke="currentColor" stroke-width="2.2"
+                                                    viewBox="0 0 24 24" width="14" height="14">
+                                                    <polyline points="15 18 9 12 15 6" />
+                                                </svg>
+                                            </button>
+                                            <span id="sptPageNumbers" class="txn-page-numbers"></span>
+                                            <button type="button" id="sptNextBtn" class="txn-chevron-btn"
+                                                onclick="sptChangePage(1)" disabled>
+                                                <svg fill="none" stroke="currentColor" stroke-width="2.2"
+                                                    viewBox="0 0 24 24" width="14" height="14">
+                                                    <polyline points="9 18 15 12 9 6" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     <?php else: ?>
@@ -230,32 +253,7 @@ include '../../lib/admin-queries/support_queries.php';
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
-                <tfoot id="sptTableFoot" style="display:none;">
-                    <tr>
-                        <td colspan="9">
-                            <div class="txn-pagination">
-                                <span class="txn-page-info" id="sptPageInfo"></span>
-                                <div class="txn-page-controls" id="sptPageControls" style="display:none;">
-                                    <button type="button" id="sptPrevBtn" class="txn-chevron-btn"
-                                        onclick="sptChangePage(-1)" disabled>
-                                        <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"
-                                            width="14" height="14">
-                                            <polyline points="15 18 9 12 15 6" />
-                                        </svg>
-                                    </button>
-                                    <span id="sptPageNumbers" class="txn-page-numbers"></span>
-                                    <button type="button" id="sptNextBtn" class="txn-chevron-btn"
-                                        onclick="sptChangePage(1)" disabled>
-                                        <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"
-                                            width="14" height="14">
-                                            <polyline points="9 18 15 12 9 6" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                </tfoot>
+
             </table>
         </div>
 

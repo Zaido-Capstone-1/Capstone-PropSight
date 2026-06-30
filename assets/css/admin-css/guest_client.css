@@ -1,4 +1,4 @@
-    .filter-pills {
+.filter-pills {
         display: flex;
         gap: 6px;
         flex-wrap: wrap;
@@ -30,6 +30,7 @@
 
     .search-wrap {
         position: relative;
+        width: 100%;
     }
 
     .search-wrap svg {
@@ -50,7 +51,7 @@
         border-radius: var(--radius);
         font-size: 0.82rem;
         outline: none;
-        width: 200px;
+        width: 100%;
         background: #fff;
         transition: border-color .2s;
     }

@@ -171,10 +171,11 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
             <?php endif; ?>
           </tbody>
 
-          <tfoot id="tsFoot" style="display:none;">
-            <tr>
-              <td colspan="7">
-                <div class="txn-pagination">
+        </table>
+      </div>
+
+      <div id="tsFoot" style="display:none;border-top:1.5px solid var(--border);">
+        <div class="txn-pagination">
                   <span class="txn-page-info" id="tsPageInfo"></span>
                   <div class="txn-page-controls" id="tsPageControls" style="display:none;">
                     <button type="button" id="tsPrevBtn" class="txn-chevron-btn" onclick="tsChangePage(-1)" disabled>
@@ -192,10 +193,6 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
                     </button>
                   </div>
                 </div>
-              </td>
-            </tr>
-          </tfoot>
-        </table>
       </div>
 
       <div id="tsEmpty" style="display:none;text-align:center;padding:48px 16px;">
