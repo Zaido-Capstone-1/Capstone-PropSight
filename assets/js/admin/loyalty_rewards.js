@@ -87,6 +87,9 @@ function filterTable() {
         if (matchSearch && matchStatus) visible++;
     });
 
+    const noResults = document.getElementById('rwNoResults');
+    if (noResults) noResults.style.display = (rows.length > 0 && visible === 0) ? 'block' : 'none';
+
     const footer = document.getElementById('rwFooter');
     if (footer) footer.textContent = `Showing ${visible} of ${rows.length} reward${rows.length !== 1 ? 's' : ''}`;
 }

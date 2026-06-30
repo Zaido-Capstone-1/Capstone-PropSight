@@ -652,6 +652,36 @@
     width: 140px;
 }
 
+.tbl-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+}
+
+.btn-icon {
+    padding: 5px 9px;
+    border-radius: 7px;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: opacity .15s;
+}
+
+.btn-icon:hover {
+    opacity: .8;
+}
+
+.btn-edit {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
 .card-header-with-filters {
     display: flex;
     align-items: center;
@@ -711,16 +741,22 @@
     .filter-bar {
         width: 100%;
         flex-wrap: nowrap;
+        gap: 8px;
     }
 
     .filter-bar>div {
-        flex: 1;
+        flex: 1 1 0;
         min-width: 0;
     }
 
     .filter-bar input {
         width: 100%;
         box-sizing: border-box;
+    }
+
+    .filter-bar #sptStatusWrap {
+        flex: 0 0 auto;
+        width: 130px;
     }
 
     .filter-bar select {

@@ -243,22 +243,19 @@ $avg_pts = $total ? (int) round(array_sum(array_column($rewards, 'points_cost'))
                                 </td>
                             </tr>
                         <?php endforeach; ?>
-                        <!-- No Results Fallback (Hidden by default, shown via JS) -->
-                        <tr id="rwNoResults" style="display:none;">
-                            <td colspan="6">
-                                <div class="rw-empty">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <circle cx="11" cy="11" r="7" />
-                                        <line x1="16.5" y1="16.5" x2="22" y2="22" />
-                                    </svg>
-                                    <p style="font-size:14px;font-weight:600;color:#64748b;">No matching rewards</p>
-                                    <p style="font-size:13px;">Try adjusting your search or filter.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
+                                            <?php endif; ?>
                 </tbody>
             </table>
+        </div>
+
+        <div id="rwNoResults" style="display:none;text-align:center;padding:48px 16px;">
+            <svg width="36" height="36" fill="none" stroke="#cbd5e1" stroke-width="1.5" viewBox="0 0 24 24"
+                style="margin:0 auto 10px;display:block;">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <p style="font-size:14px;font-weight:600;color:#64748b;margin:0 0 4px;">No matching rewards</p>
+            <p style="font-size:13px;color:#94a3b8;margin:0;">Try adjusting your search or filter.</p>
         </div>
         <?php if (!empty($rewards)): ?>
             <div class="rw-card-footer" id="rwFooter">

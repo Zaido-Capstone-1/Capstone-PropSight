@@ -155,5 +155,44 @@ if ($method === 'POST') {
         exit;
     }
 
+    if ($action === 'update_policy') {
+        $token = $_POST['csrf_token'] ?? '';
+        if (!hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid request token.']);
+            exit;
+        }
+        $policyKey = $_POST['policy_key'] ?? '';
+        $allowedKeys = ['privacy', 'terms', 'booking'];
+        if (!in_array($policyKey, $allowedKeys, true)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid policy key.']);
+            exit;
+        }
+
+        $title = mysqli_real_escape_string($conn, trim($_POST['title'] ?? ''));
+        $content = mysqli_real_escape_string($conn, trim($_POST['content'] ?? ''));
+
+        if ($title === '' || $content === '') {
+            echo json_encode(['success' => false, 'message' => 'Title and content are required.']);
+            exit;
+        }
+
+        $titleKey = "policy_{$policyKey}_title";
+        $contentKey = "policy_{$policyKey}_content";
+
+        mysqli_query(
+            $conn,
+            "INSERT INTO admin_settings (setting_key, value, updated_by) VALUES ('$titleKey', '$title', $adminId)
+             ON DUPLICATE KEY UPDATE value='$title', updated_by=$adminId"
+        );
+        mysqli_query(
+            $conn,
+            "INSERT INTO admin_settings (setting_key, value, updated_by) VALUES ('$contentKey', '$content', $adminId)
+             ON DUPLICATE KEY UPDATE value='$content', updated_by=$adminId"
+        );
+
+        echo json_encode(['success' => true, 'message' => ucfirst($policyKey) . ' policy updated.']);
+        exit;
+    }
+
     echo json_encode(['success' => false, 'message' => 'Unknown action.']);
 }

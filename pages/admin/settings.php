@@ -27,6 +27,15 @@ $adminRow = mysqli_fetch_assoc(mysqli_query(
 ));
 
 $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adminRow['last_name'], 0, 1));
+
+// ── System / site settings (contact info, policies, etc.) ──────────────────
+$sysCfg = [];
+$sysCfgRes = mysqli_query($conn, "SELECT setting_key, value FROM admin_settings");
+if ($sysCfgRes) {
+    while ($sr = mysqli_fetch_assoc($sysCfgRes)) {
+        $sysCfg[$sr['setting_key']] = $sr['value'];
+    }
+}
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
@@ -190,6 +199,70 @@ $initials = strtoupper(mb_substr($adminRow['first_name'], 0, 1) . mb_substr($adm
             </div>
         </div>
 
+
+        <!-- ── Site Policies ────────────────────────────────────── -->
+        <div class="card">
+            <div class="card-header"><span class="card-title">Site Policies</span></div>
+            <p style="font-size:12px;color:var(--text-soft);margin-bottom:18px;">
+                Edit the content shown to guests when they open the Privacy Policy, Terms, or Booking Policy links
+                on the landing page. Basic HTML tags like &lt;h4&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, and
+                &lt;strong&gt; are supported.
+            </p>
+
+            <?php
+            $policyDefs = [
+                'privacy' => [
+                    'label' => 'Privacy Policy',
+                    'defaultTitle' => 'Privacy Policy',
+                    'defaultContent' => "<h4>Information We Collect</h4>\n<p>We collect your account details, contact information, booking preferences, and payment-related references required to process reservations.</p>\n<h4>How We Use Your Data</h4>\n<p>Your information is used to confirm bookings, send updates, provide support, and improve your experience on the platform.</p>\n<h4>Data Protection</h4>\n<p>We apply reasonable technical and organizational safeguards to protect your personal information from unauthorized access.</p>\n<h4>Your Rights</h4>\n<p>You may request access, correction, or deletion of your personal data by contacting support.</p>\n<h4>Retention</h4>\n<p>We keep essential booking and transaction records only as long as necessary for operations, compliance, and customer service.</p>",
+                ],
+                'terms' => [
+                    'label' => 'Terms and Conditions',
+                    'defaultTitle' => 'Terms and Conditions',
+                    'defaultContent' => "<h4>Use of Service</h4>\n<p>By using this site, you agree to provide accurate information and use the platform only for lawful booking purposes.</p>\n<h4>Account Responsibility</h4>\n<p>You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account.</p>\n<h4>Pricing and Availability</h4>\n<p>Room rates, availability, and offers may change without prior notice. Confirmed bookings follow the details shown at checkout.</p>\n<h4>Policy Updates</h4>\n<p>We may revise these terms when needed. Continued use of the platform indicates acceptance of updated terms.</p>\n<h4>Prohibited Use</h4>\n<ul>\n<li>Submitting false identity or payment details.</li>\n<li>Attempting unauthorized access to accounts or systems.</li>\n<li>Using the platform for unlawful or abusive activity.</li>\n</ul>",
+                ],
+                'booking' => [
+                    'label' => 'Booking Policy',
+                    'defaultTitle' => 'Booking Policy',
+                    'defaultContent' => "<h4>Reservation Confirmation</h4>\n<p>Bookings are confirmed once payment is completed and a confirmation notice is issued to your registered email.</p>\n<h4>Check-In and Check-Out</h4>\n<p>Standard check-in and check-out schedules apply unless otherwise stated in your booking confirmation.</p>\n<h4>Cancellation and Changes</h4>\n<p>Cancellation eligibility and fees depend on the selected room and date. Modification requests are subject to availability.</p>\n<h4>No-Show</h4>\n<p>Failure to arrive without notice may result in cancellation of reservation and applicable charges.</p>\n<h4>Guest Responsibility</h4>\n<p>Guests are accountable for damages beyond normal wear and must comply with posted house rules during the stay.</p>",
+                ],
+            ];
+            ?>
+
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:6px;">
+                <div class="settings-policy-tabs" style="display:flex;gap:6px;border-bottom:1px solid var(--border);">
+                    <?php foreach ($policyDefs as $pk => $pd): ?>
+                        <button type="button" class="policy-tab-btn<?= $pk === 'privacy' ? ' active' : '' ?>"
+                            data-policy-tab="<?= $pk ?>"
+                            style="padding:9px 16px;font-size:12.5px;font-weight:600;border:none;background:none;cursor:pointer;color:<?= $pk === 'privacy' ? 'var(--blue-600,#2563eb)' : 'var(--text-soft)' ?>;border-bottom:2px solid <?= $pk === 'privacy' ? 'var(--blue-600,#2563eb)' : 'transparent' ?>;">
+                            <?= htmlspecialchars($pd['label']) ?>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <?php foreach ($policyDefs as $pk => $pd):
+                $titleVal = htmlspecialchars($sysCfg["policy_{$pk}_title"] ?? $pd['defaultTitle']);
+                $contentVal = htmlspecialchars($sysCfg["policy_{$pk}_content"] ?? $pd['defaultContent']);
+                ?>
+                <div class="policy-tab-panel" data-policy-panel="<?= $pk ?>"
+                    style="<?= $pk === 'privacy' ? '' : 'display:none;' ?>">
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label>Title</label>
+                        <input type="text" id="policy_<?= $pk ?>_title" value="<?= $titleVal ?>" />
+                    </div>
+                    <div class="form-group">
+                        <label>Content (HTML)</label>
+                        <textarea id="policy_<?= $pk ?>_content" rows="12"
+                            style="width:100%;font-family:'SFMono-Regular',Consolas,monospace;font-size:12.5px;line-height:1.6;padding:10px 12px;border:1px solid var(--border);border-radius:8px;resize:vertical;"><?= $contentVal ?></textarea>
+                    </div>
+                    <div class="form-actions" style="margin-top:14px;">
+                        <button class="btn btn-primary" type="button"
+                            onclick="savePolicyContent('<?= $pk ?>')">Save <?= htmlspecialchars($pd['label']) ?></button>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
 
         <!-- ── Backup & Recovery ────────────────────────────────── -->
         <div class="card">

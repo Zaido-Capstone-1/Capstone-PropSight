@@ -881,6 +881,22 @@ if (isset($conn) && $conn) {
         </div>
     </div>
 
+    <script>
+        window.PS_POLICY_CONTENT = {
+            privacy: {
+                title: <?php echo json_encode($sysCfg['policy_privacy_title'] ?? 'Privacy Policy'); ?>,
+                html: <?php echo json_encode($sysCfg['policy_privacy_content'] ?? ''); ?>,
+            },
+            terms: {
+                title: <?php echo json_encode($sysCfg['policy_terms_title'] ?? 'Terms and Conditions'); ?>,
+                html: <?php echo json_encode($sysCfg['policy_terms_content'] ?? ''); ?>,
+            },
+            booking: {
+                title: <?php echo json_encode($sysCfg['policy_booking_title'] ?? 'Booking Policy'); ?>,
+                html: <?php echo json_encode($sysCfg['policy_booking_content'] ?? ''); ?>,
+            },
+        };
+    </script>
     <script src="assets/js/index.js"></script>
 
     <?php

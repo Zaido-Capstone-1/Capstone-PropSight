@@ -270,7 +270,7 @@ const policyModalClose = document.getElementById('policyModalClose');
 const policyModalTitle = document.getElementById('policyModalTitle');
 const policyModalContent = document.getElementById('policyModalContent');
 
-const policyContentMap = {
+const policyContentMapDefaults = {
     privacy: {
         title: 'Privacy Policy',
         html: `
@@ -323,8 +323,13 @@ const policyContentMap = {
 };
 
 function openPolicyModal(policyKey) {
-    const data = policyContentMap[policyKey];
-    if (!policyModal || !policyModalTitle || !policyModalContent || !data) return;
+    const dbData = (window.PS_POLICY_CONTENT && window.PS_POLICY_CONTENT[policyKey]) || {};
+    const fallback = policyContentMapDefaults[policyKey] || {};
+    const data = {
+        title: (dbData.title && dbData.title.trim()) ? dbData.title : fallback.title,
+        html: (dbData.html && dbData.html.trim()) ? dbData.html : fallback.html,
+    };
+    if (!policyModal || !policyModalTitle || !policyModalContent || !data.html) return;
     policyModalTitle.textContent = data.title;
     policyModalContent.innerHTML = data.html;
     policyModal.classList.add('open');

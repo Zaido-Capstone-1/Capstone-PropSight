@@ -36,11 +36,26 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
           <div class="stat-label">Total Tasks</div>
           <div class="stat-value"><span id="rt-task-total"><?= (int) $stats['total'] ?></span></div>
         </div>
+        <div class="stat-icon-wrap blue">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="9" y="2" width="6" height="4" rx="1" />
+            <path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3" />
+            <line x1="8" y1="11" x2="16" y2="11" />
+            <line x1="8" y1="15" x2="16" y2="15" />
+          </svg>
+        </div>
       </div>
       <div class="stat-card sc-red">
         <div class="stat-card-left">
           <div class="stat-label">Open</div>
           <div class="stat-value"><span id="rt-task-open"><?= (int) $stats['open_cnt'] ?></span></div>
+        </div>
+        <div class="stat-icon-wrap red">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
         </div>
       </div>
       <div class="stat-card sc-gold">
@@ -48,11 +63,23 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
           <div class="stat-label">In Progress</div>
           <div class="stat-value"><span id="rt-task-progress"><?= (int) $stats['in_progress_cnt'] ?></span></div>
         </div>
+        <div class="stat-icon-wrap gold">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        </div>
       </div>
       <div class="stat-card sc-green">
         <div class="stat-card-left">
           <div class="stat-label">Done</div>
           <div class="stat-value"><span id="rt-task-done"><?= (int) $stats['done_cnt'] ?></span></div>
+        </div>
+        <div class="stat-icon-wrap green">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
         </div>
       </div>
     </div>
@@ -171,11 +198,10 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
             <?php endif; ?>
           </tbody>
 
-        </table>
-      </div>
-
-      <div id="tsFoot" style="display:none;border-top:1.5px solid var(--border);">
-        <div class="txn-pagination">
+          <tfoot id="tsFoot" style="display:none;">
+            <tr>
+              <td colspan="7">
+                <div class="txn-pagination">
                   <span class="txn-page-info" id="tsPageInfo"></span>
                   <div class="txn-page-controls" id="tsPageControls" style="display:none;">
                     <button type="button" id="tsPrevBtn" class="txn-chevron-btn" onclick="tsChangePage(-1)" disabled>
@@ -193,6 +219,10 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
                     </button>
                   </div>
                 </div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
 
       <div id="tsEmpty" style="display:none;text-align:center;padding:48px 16px;">
