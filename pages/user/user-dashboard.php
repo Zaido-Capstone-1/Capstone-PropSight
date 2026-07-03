@@ -39,13 +39,21 @@ $loyaltyProgressPct = $loyaltyNextTier
     : 100;
 $loyaltyPtsToNext = $loyaltyNextTier ? max(0, $loyaltyNextMin - $loyaltyPoints) : 0;
 
-// Redeemable rewards — show up to 3, sorted by points_cost ASC
-$_rewardsRes = mysqli_query($conn, "SELECT name, description, points_cost FROM loyalty_rewards WHERE is_active=1 ORDER BY points_cost ASC LIMIT 3");
-$loyaltyRewards = [];
+// Redeemable rewards — pull all active rewards, then keep only the ones
+// the user can currently afford, cheapest first. Show up to 3; if there
+// are more affordable ones than that, a "View All" link on the card
+// sends them to the full rewards list.
+$_rewardsRes = mysqli_query($conn, "SELECT name, description, points_cost FROM loyalty_rewards WHERE is_active=1 ORDER BY points_cost ASC");
+$affordableRewards = [];
 if ($_rewardsRes) {
-    while ($rw = mysqli_fetch_assoc($_rewardsRes))
-        $loyaltyRewards[] = $rw;
+    while ($rw = mysqli_fetch_assoc($_rewardsRes)) {
+        if ((int) $rw['points_cost'] <= $loyaltyPoints) {
+            $affordableRewards[] = $rw;
+        }
+    }
 }
+$loyaltyRewards = array_slice($affordableRewards, 0, 3);
+$hasMoreAffordableRewards = count($affordableRewards) > 3;
 
 // Tier badge colors (inline styles)
 $loyaltyTierStyles = [
@@ -90,6 +98,11 @@ $savedUnitIds = [];
 while ($_sr = mysqli_fetch_assoc($_savedRes)) {
     $savedUnitIds[] = (int) $_sr['unit_id'];
 }
+
+// Newsletter subscription status
+$_newsletterRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT email FROM newsletter_subscribers WHERE user_id=$_uid LIMIT 1"));
+$isNewsletterSubscribed = (bool) $_newsletterRow;
+$newsletterEmail = $_newsletterRow['email'] ?? ($_SESSION['email'] ?? '');
 
 // ── Units booked by this user (active/confirmed/pending) ────────────────────
 $_bookedRes = mysqli_query($conn, "SELECT DISTINCT unit_id FROM bookings WHERE user_id=$_uid AND status IN('pending','confirmed','active')");
@@ -736,7 +749,15 @@ require '../../includes/_nav.php';
         <div class="loyalty-band-orb loyalty-band-orb-sm"></div>
         <div class="loyalty-band-inner reveal">
             <div class="loyalty-left">
-                <div class="loyalty-eyebrow">🥇 Loyalty Program</div>
+                <div class="loyalty-eyebrow">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="flex-shrink:0;">
+                        <circle cx="12" cy="15" r="6" />
+                        <path d="M9 10.5L7 3h2l3 6 3-6h2l-2 7.5" />
+                        <path d="M10 14.5l2 1.5 2-1.5" />
+                    </svg>
+                    Loyalty Program
+                </div>
                 <h2 class="loyalty-title">Earn points on every stay.<br><em>Redeem for free nights.</em></h2>
                 <p class="loyalty-copy">Every booking earns you loyalty points. Reach Gold, Platinum or Diamond status
                     to unlock exclusive perks, room upgrades, and complimentary stays.</p>
@@ -801,42 +822,36 @@ require '../../includes/_nav.php';
                     <div class="loyalty-perks-title">Rewards You Can Redeem</div>
                     <?php if (empty($loyaltyRewards)): ?>
                         <div class="loyalty-perk-row">
-                            <span class="loyalty-perk-text" style="color:rgba(255,255,255,.35);font-style:italic;">No
-                                rewards available yet.</span>
+                            <span class="loyalty-perk-text" style="color:rgba(255,255,255,.35);font-style:italic;">
+                                <?php echo empty($affordableRewards) && !empty($loyaltyPoints) ? 'Keep earning points — nothing redeemable yet.' : 'No rewards available yet.'; ?>
+                            </span>
                         </div>
                     <?php else: ?>
-                        <?php foreach ($loyaltyRewards as $rw):
-                            $canAfford = $loyaltyPoints >= (int) $rw['points_cost'];
-                            ?>
+                        <?php foreach ($loyaltyRewards as $rw): ?>
                             <div class="loyalty-perk-row">
-                                <span class="loyalty-perk-check"
-                                    style="color:<?php echo $canAfford ? $loyaltyTierDotColor : 'rgba(255,255,255,.2)'; ?>">
-                                    <?php if ($canAfford): ?>
-                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="3">
-                                            <polyline points="20 6 9 17 4 12" />
-                                        </svg>
-                                    <?php else: ?>
-                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                            stroke-width="2">
-                                            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-                                            <line x1="12" y1="8" x2="12" y2="12" />
-                                            <line x1="12" y1="16" x2="12.01" y2="16" />
-                                        </svg>
-                                    <?php endif; ?>
+                                <span class="loyalty-perk-check" style="color:<?php echo $loyaltyTierDotColor; ?>">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="3">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
                                 </span>
-                                <span class="loyalty-perk-text"
-                                    style="<?php echo $canAfford ? '' : 'color:rgba(255,255,255,.35);'; ?>;flex:1;">
+                                <span class="loyalty-perk-text" style="flex:1;">
                                     <?php echo htmlspecialchars($rw['name']); ?>
                                     <span
                                         style="font-size:.65rem;margin-left:4px;opacity:.6;"><?php echo number_format((int) $rw['points_cost']); ?>
                                         pts</span>
                                 </span>
-                                <?php if ($canAfford): ?>
-                                    <a href="loyalty.php" class="loyalty-redeem-badge">Redeem</a>
-                                <?php endif; ?>
+                                <a href="loyalty.php#rewards" class="loyalty-redeem-badge">Redeem</a>
                             </div>
                         <?php endforeach; ?>
+                        <?php if ($hasMoreAffordableRewards): ?>
+                            <a href="loyalty.php#rewards" class="loyalty-perk-row" style="justify-content:center;text-decoration:none;color:rgba(255,255,255,.65);font-size:.78rem;font-weight:600;padding-top:10px;">
+                                View All Rewards
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:4px;">
+                                    <polyline points="9 18 15 12 9 6" />
+                                </svg>
+                            </a>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -892,13 +907,29 @@ require '../../includes/_nav.php';
                 </div>
             </div>
             <div class="newsletter-card">
-                <div class="newsletter-form-label">Your email address</div>
-                <div class="newsletter-form">
-                    <input type="email" class="newsletter-input" placeholder="you@example.com"
-                        onfocus="this.style.borderColor='var(--navy-800)'"
-                        onblur="this.style.borderColor='var(--border)'">
-                    <button onclick="showToast('Thanks! You\'re subscribed. 🎉')"
-                        class="newsletter-btn">Subscribe</button>
+                <div id="newsletterFormWrap" style="<?php echo $isNewsletterSubscribed ? 'display:none;' : ''; ?>">
+                    <div class="newsletter-form-label">Your email address</div>
+                    <div class="newsletter-form">
+                        <input type="email" id="newsletterEmailInput" class="newsletter-input" placeholder="you@example.com"
+                            value="<?php echo htmlspecialchars($_SESSION['email'] ?? ''); ?>" maxlength="254"
+                            onfocus="this.style.borderColor='var(--navy-800)'"
+                            onblur="this.style.borderColor='var(--border)'">
+                        <button type="button" id="newsletterSubscribeBtn" onclick="subscribeNewsletter()"
+                            class="newsletter-btn">Subscribe</button>
+                    </div>
+                </div>
+                <div id="newsletterSubscribedWrap" class="newsletter-subscribed" style="<?php echo $isNewsletterSubscribed ? 'display:flex;' : 'display:none;'; ?>">
+                    <div class="newsletter-subscribed-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                    </div>
+                    <div class="newsletter-subscribed-text">
+                        <div class="newsletter-subscribed-label">Subscribed</div>
+                        <div class="newsletter-subscribed-email" id="newsletterSubscribedEmail"><?php echo htmlspecialchars($newsletterEmail); ?></div>
+                    </div>
+                    <button type="button" id="newsletterUnsubscribeBtn" onclick="unsubscribeNewsletter()"
+                        class="newsletter-unsubscribe-btn">Unsubscribe</button>
                 </div>
                 <p class="newsletter-note">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1172,6 +1203,76 @@ require '../../includes/_nav.php';
         window.PS_RT_PAGE = 'dashboard';
         window.PS_RT_ROLE = 'user';
         window.PS_RT_API = '../../api/realtime.php';
+
+        function subscribeNewsletter() {
+            const input = document.getElementById('newsletterEmailInput');
+            const btn = document.getElementById('newsletterSubscribeBtn');
+            const email = (input?.value || '').trim();
+
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showToast('Please enter a valid email address.');
+                input?.focus();
+                return;
+            }
+
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="newsletter-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M12 2a10 10 0 0110 10"/></svg> Subscribing…';
+
+            const body = window.psAppendCsrf(new URLSearchParams({ email, action: 'subscribe' }));
+
+            fetch('../../api/user/subscribe_newsletter.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            })
+                .then(r => r.json())
+                .then(data => {
+                    showToast(data.message || (data.success ? 'Subscribed!' : 'Something went wrong.'));
+                    if (data.success) {
+                        document.getElementById('newsletterFormWrap').style.display = 'none';
+                        document.getElementById('newsletterSubscribedWrap').style.display = 'flex';
+                        document.getElementById('newsletterSubscribedEmail').textContent = email;
+                    }
+                })
+                .catch(() => {
+                    showToast('Something went wrong. Please try again.');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                });
+        }
+
+        function unsubscribeNewsletter() {
+            const btn = document.getElementById('newsletterUnsubscribeBtn');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="newsletter-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M12 2a10 10 0 0110 10"/></svg> Unsubscribing…';
+
+            const body = window.psAppendCsrf(new URLSearchParams({ action: 'unsubscribe' }));
+
+            fetch('../../api/user/subscribe_newsletter.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            })
+                .then(r => r.json())
+                .then(data => {
+                    showToast(data.message || (data.success ? 'Unsubscribed.' : 'Something went wrong.'));
+                    if (data.success) {
+                        document.getElementById('newsletterSubscribedWrap').style.display = 'none';
+                        document.getElementById('newsletterFormWrap').style.display = '';
+                    }
+                })
+                .catch(() => {
+                    showToast('Something went wrong. Please try again.');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                });
+        }
     </script>
     <script src="../../assets/js/user-js/script.js?v=2"></script>
     <script src="../../assets/js/user-js/hero-weather.js"></script>

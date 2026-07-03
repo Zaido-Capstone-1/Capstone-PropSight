@@ -1475,6 +1475,14 @@ body {
     text-transform: uppercase;
     color: rgba(255, 255, 255, .45);
     margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.loyalty-eyebrow svg {
+    stroke: rgba(255, 255, 255, .45);
+    flex-shrink: 0;
 }
 
 .loyalty-title {
@@ -1847,6 +1855,92 @@ body {
     background: var(--navy-900);
 }
 
+.newsletter-subscribed {
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(201, 168, 76, .08);
+    border: 1px solid rgba(201, 168, 76, .3);
+    border-radius: 14px;
+}
+
+.newsletter-subscribed-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--navy-800);
+    color: var(--sand);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.newsletter-subscribed-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.newsletter-subscribed-label {
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.35;
+}
+
+.newsletter-subscribed-email {
+    font-size: .76rem;
+    color: var(--text-soft);
+    word-break: break-all;
+    line-height: 1.35;
+}
+
+.newsletter-unsubscribe-btn {
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 20px;
+    background: #fff;
+    color: var(--navy-800);
+    border: 1px solid var(--border-lt);
+    cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
+    transition: background .15s, border-color .15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.newsletter-unsubscribe-btn:hover {
+    background: rgba(17, 34, 64, .05);
+    border-color: rgba(17, 34, 64, .18);
+}
+
+.newsletter-unsubscribe-btn:disabled,
+.newsletter-btn:disabled {
+    opacity: .7;
+    cursor: default;
+}
+
+/* ── Spin util (loading state on subscribe/unsubscribe buttons) ── */
+@keyframes newsletterSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.newsletter-spin {
+    animation: newsletterSpin .7s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+
 .newsletter-note {
     font-size: .68rem;
     color: var(--ink-faint);
@@ -2002,6 +2096,15 @@ body {
     .newsletter-btn {
         width: 100%;
         min-width: 0;
+    }
+
+    .newsletter-subscribed {
+        flex-wrap: wrap;
+    }
+
+    .newsletter-unsubscribe-btn {
+        width: 100%;
+        text-align: center;
     }
 
     .newsletter-card {

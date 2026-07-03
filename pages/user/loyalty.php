@@ -181,7 +181,7 @@ function resolve_reward_icon(string $name, string $desc, array $map): string
         </div>
 
         <!-- ── Redeem Rewards ── -->
-        <div class="card reveal rd2">
+        <div class="card reveal rd2" id="rewards">
             <div class="card-title">
                 <svg viewBox="0 0 24 24" fill="none">
                     <path d="M20 12V22H4V12" />
