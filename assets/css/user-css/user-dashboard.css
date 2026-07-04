@@ -1098,6 +1098,53 @@
     color: #fef3c7;
 }
 
+/* Room card — location line */
+.room-location-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .7rem;
+    color: var(--ink-faint);
+    margin-bottom: 7px;
+}
+
+.room-location-chip svg {
+    width: 11px;
+    height: 11px;
+    stroke: var(--ink-faint);
+    fill: none;
+}
+
+/* Room card — SEASON badge (bottom-left overlay pill on the photo) */
+.room-season-badge {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "DM Sans", sans-serif;
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    padding: 4px 10px 4px 8px;
+    border-radius: 99px;
+    background: rgba(11, 24, 41, .55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, .18);
+    z-index: 8;
+}
+
+.room-season-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .25);
+}
+
 body.bm-open {
     overflow: hidden !important;
     position: fixed !important;

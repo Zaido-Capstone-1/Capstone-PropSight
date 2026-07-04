@@ -114,10 +114,61 @@
     }
 
     function _updatePriceDisplay() {
-        const minEl = $('priceMinDisplay');
-        const maxEl = $('priceMaxDisplay');
-        if (minEl) minEl.textContent = '₱' + _priceMin.toLocaleString('en-PH');
-        if (maxEl) maxEl.textContent = '₱' + _priceMax.toLocaleString('en-PH');
+        const minEl = $('priceMinInput');
+        const maxEl = $('priceMaxInput');
+        if (minEl) minEl.value = _priceMin;
+        if (maxEl) maxEl.value = _priceMax;
+    }
+
+    /* Typing in the min/max price fields — live preview of the slider only,
+       no filtering yet (avoids re-filtering on every half-typed number). */
+    function onPriceInputLive() {
+        const minInput = $('priceMinInput');
+        const maxInput = $('priceMaxInput');
+        const minEl    = $('priceRangeMin');
+        const maxEl    = $('priceRangeMax');
+        if (!minInput || !maxInput || !minEl || !maxEl) return;
+
+        let lo = parseInt(minInput.value, 10);
+        let hi = parseInt(maxInput.value, 10);
+        if (isNaN(lo)) lo = PRICE_MIN;
+        if (isNaN(hi)) hi = PRICE_MAX;
+        lo = Math.min(Math.max(lo, PRICE_MIN), PRICE_MAX);
+        hi = Math.min(Math.max(hi, PRICE_MIN), PRICE_MAX);
+
+        minEl.value = lo;
+        maxEl.value = hi;
+        _priceMin = lo;
+        _priceMax = hi;
+        _updateRangeFill();
+    }
+
+    /* Fires on blur / change (e.g. Enter, tab away) — clamps, fixes ordering,
+       syncs everything, and applies the filter. */
+    function onPriceInputCommit() {
+        const minInput = $('priceMinInput');
+        const maxInput = $('priceMaxInput');
+        if (!minInput || !maxInput) return;
+
+        let lo = parseInt(minInput.value, 10);
+        let hi = parseInt(maxInput.value, 10);
+        if (isNaN(lo)) lo = PRICE_MIN;
+        if (isNaN(hi)) hi = PRICE_MAX;
+        lo = Math.min(Math.max(lo, PRICE_MIN), PRICE_MAX);
+        hi = Math.min(Math.max(hi, PRICE_MIN), PRICE_MAX);
+        if (lo > hi) { [lo, hi] = [hi, lo]; }
+
+        _priceMin = lo;
+        _priceMax = hi;
+
+        const minEl = $('priceRangeMin');
+        const maxEl = $('priceRangeMax');
+        if (minEl) minEl.value = lo;
+        if (maxEl) maxEl.value = hi;
+
+        _updatePriceDisplay();
+        _updateRangeFill();
+        applyFilters();
     }
 
     function _updateRangeFill() {
@@ -130,8 +181,10 @@
         fill.style.width = (right - left) + '%';
     }
 
-    window.onPriceRange = onPriceRange;
-    window.resetPrice   = resetPrice;
+    window.onPriceRange       = onPriceRange;
+    window.resetPrice         = resetPrice;
+    window.onPriceInputLive   = onPriceInputLive;
+    window.onPriceInputCommit = onPriceInputCommit;
 
     /* ════════════════════════════════════════════════════════════════════════
        MASTER FILTER FUNCTION
@@ -207,77 +260,9 @@
        ACTIVE TAG CHIPS
     ════════════════════════════════════════════════════════════════════════ */
     function _renderActiveTags() {
+        // Active filter tag chips are hidden on this page.
         const wrap = $('activeTagsWrap');
-        if (!wrap) return;
-        wrap.innerHTML = '';
-
-        const tags = [];
-
-        if (_avail !== 'all') {
-            const label = _avail === 'vacant' ? '✓ Available' : 'Booked';
-            tags.push({
-                label,
-                clear: () => {
-                    _avail = 'all';
-                    document.querySelector('.sb-avail-btn[data-avail="all"]')?.click();
-                }
-            });
-        }
-
-        if (_priceMin > PRICE_MIN || _priceMax < PRICE_MAX) {
-            tags.push({
-                label: `₱${_priceMin.toLocaleString('en-PH')} – ₱${_priceMax.toLocaleString('en-PH')}`,
-                clear: resetPrice
-            });
-        }
-
-        _types.forEach(t => tags.push({
-            label: t,
-            clear: () => {
-                const cb = document.querySelector(`.type-cb[value="${CSS.escape(t)}"]`);
-                if (cb) { cb.checked = false; applyFilters(); }
-            }
-        }));
-
-        _floors.forEach(f => tags.push({
-            label: `Floor ${f}`,
-            clear: () => {
-                const btn = document.querySelector(`.sb-floor-btn[data-floor="${f}"]`);
-                if (btn) toggleFloor(f, btn);
-            }
-        }));
-
-        _seasons.forEach(s => tags.push({
-            label: `${s} Season`,
-            clear: () => {
-                const btn = document.querySelector(`.sb-season-btn[data-season="${CSS.escape(s)}"]`);
-                if (btn) toggleSeason(s, btn);
-            }
-        }));
-
-        _amenities.forEach(a => tags.push({
-            label: a,
-            clear: () => {
-                const cb = document.querySelector(`.amenity-cb[value="${CSS.escape(a)}"]`);
-                if (cb) { cb.checked = false; applyFilters(); }
-            }
-        }));
-
-        tags.forEach(tag => {
-            const el = document.createElement('span');
-            el.className = 'u-active-tag';
-            el.innerHTML = `${_esc(tag.label)} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-            el.onclick = tag.clear;
-            wrap.appendChild(el);
-        });
-
-        if (tags.length > 1) {
-            const btn = document.createElement('button');
-            btn.className   = 'u-clear-all';
-            btn.textContent = 'Clear all';
-            btn.onclick     = clearAllFilters;
-            wrap.appendChild(btn);
-        }
+        if (wrap) wrap.innerHTML = '';
     }
 
     function _updateClearBtn() {

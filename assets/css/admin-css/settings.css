@@ -143,3 +143,270 @@
     color: #e11d48;
     border-color: #fecdd3;
 }
+/* ── Site Policies edit modal ── */
+.policy-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 22, 40, .55);
+    backdrop-filter: blur(3px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.policy-modal-overlay.open {
+    display: flex;
+}
+
+.policy-modal {
+    background: var(--white, #fff);
+    border-radius: var(--radius-lg, 20px);
+    width: 100%;
+    max-width: 620px;
+    max-height: 88vh;
+    box-shadow: var(--shadow-lg, 0 20px 60px rgba(10, 22, 40, .22));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: policyModalIn .22s cubic-bezier(.4, 0, .2, 1) both;
+}
+
+@keyframes policyModalIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header */
+.policy-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 22px 26px;
+    background: linear-gradient(135deg, var(--blue-900, #0a1628), var(--blue-700, #153060));
+    flex-shrink: 0;
+}
+
+.policy-modal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.policy-modal-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(222, 175, 55, .16);
+    border: 1px solid rgba(222, 175, 55, .35);
+    color: var(--gold, #deaf37);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.policy-modal-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+}
+
+.policy-modal-subtitle {
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, .55);
+    margin-top: 2px;
+}
+
+.policy-modal-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, .08);
+    color: rgba(255, 255, 255, .75);
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, color .15s;
+}
+
+.policy-modal-close:hover {
+    background: rgba(255, 255, 255, .16);
+    color: #fff;
+}
+
+/* Body */
+.policy-modal-body {
+    padding: 24px 26px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.policy-modal-hint {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-soft, #64748b);
+    background: var(--blue-50, #eff6ff);
+    border: 1px solid var(--blue-100, #dbeafe);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    line-height: 1.5;
+}
+
+.policy-modal-hint strong {
+    color: var(--text-mid, #334155);
+}
+
+.policy-modal-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.policy-add-section-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 9px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--blue-500, #1e50a2);
+    background: var(--blue-50, #eff6ff);
+    border: 1px dashed var(--blue-200, #93c5fd);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+
+.policy-add-section-btn:hover {
+    background: var(--blue-100, #dbeafe);
+    border-color: var(--blue-300, #3b82f6);
+}
+
+/* Section rows */
+.policy-modal .policy-section-row {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 16px 12px 44px;
+    position: relative;
+    background: var(--gray-light, #f8fafc);
+    transition: border-color .15s, box-shadow .15s;
+}
+
+.policy-modal .policy-section-row:focus-within {
+    border-color: var(--blue-300, #3b82f6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+}
+
+.policy-section-index {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--blue-600, #1a3d7c);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.policy-modal .policy-section-remove {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: var(--danger-light, #fdecea);
+    color: var(--danger, #E74C3C);
+    border-radius: 7px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, color .15s;
+}
+
+.policy-modal .policy-section-remove:hover {
+    background: var(--danger, #E74C3C);
+    color: #fff;
+}
+
+.policy-modal .policy-section-row label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-soft, #64748b);
+    display: block;
+    margin-bottom: 5px;
+}
+
+.policy-modal .policy-section-row input,
+.policy-modal .policy-section-row textarea {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 9px 11px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text-dark, #0a1628);
+    box-sizing: border-box;
+    resize: vertical;
+    transition: border-color .15s;
+}
+
+.policy-modal .policy-section-row input:focus,
+.policy-modal .policy-section-row textarea:focus {
+    outline: none;
+    border-color: var(--blue-400, #2563c4);
+}
+
+/* Footer */
+.policy-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 26px;
+    border-top: 1px solid var(--border);
+    background: #fff;
+    flex-shrink: 0;
+}
+
+/* Scrollbar */
+.policy-modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.policy-modal-body::-webkit-scrollbar-thumb {
+    background: var(--blue-100, #dbeafe);
+    border-radius: 8px;
+}
+
+.policy-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}

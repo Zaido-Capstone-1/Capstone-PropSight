@@ -268,70 +268,82 @@ roomPreviewModal?.addEventListener('click', e => {
 const policyModal = document.getElementById('policyModal');
 const policyModalClose = document.getElementById('policyModalClose');
 const policyModalTitle = document.getElementById('policyModalTitle');
+const policyModalMeta = document.getElementById('policyModalMeta');
 const policyModalContent = document.getElementById('policyModalContent');
 
 const policyContentMapDefaults = {
     privacy: {
         title: 'Privacy Policy',
-        html: `
-            <h4>Information We Collect</h4>
-            <p>We collect your account details, contact information, booking preferences, and payment-related references required to process reservations.</p>
-            <h4>How We Use Your Data</h4>
-            <p>Your information is used to confirm bookings, send updates, provide support, and improve your experience on the platform.</p>
-            <h4>Data Protection</h4>
-            <p>We apply reasonable technical and organizational safeguards to protect your personal information from unauthorized access.</p>
-            <h4>Your Rights</h4>
-            <p>You may request access, correction, or deletion of your personal data by contacting support.</p>
-            <h4>Retention</h4>
-            <p>We keep essential booking and transaction records only as long as necessary for operations, compliance, and customer service.</p>
-        `,
+        sections: [
+            { heading: 'Information We Collect', body: 'We collect your account details, contact information, booking preferences, and payment-related references required to process reservations.' },
+            { heading: 'How We Use Your Data', body: 'Your information is used to confirm bookings, send updates, provide support, and improve your experience on the platform.' },
+            { heading: 'Data Protection', body: 'We apply reasonable technical and organizational safeguards to protect your personal information from unauthorized access.' },
+            { heading: 'Your Rights', body: 'You may request access, correction, or deletion of your personal data by contacting support.' },
+            { heading: 'Retention', body: 'We keep essential booking and transaction records only as long as necessary for operations, compliance, and customer service.' },
+        ],
     },
     terms: {
         title: 'Terms and Conditions',
-        html: `
-            <h4>Use of Service</h4>
-            <p>By using this site, you agree to provide accurate information and use the platform only for lawful booking purposes.</p>
-            <h4>Account Responsibility</h4>
-            <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account.</p>
-            <h4>Pricing and Availability</h4>
-            <p>Room rates, availability, and offers may change without prior notice. Confirmed bookings follow the details shown at checkout.</p>
-            <h4>Policy Updates</h4>
-            <p>We may revise these terms when needed. Continued use of the platform indicates acceptance of updated terms.</p>
-            <h4>Prohibited Use</h4>
-            <ul>
-                <li>Submitting false identity or payment details.</li>
-                <li>Attempting unauthorized access to accounts or systems.</li>
-                <li>Using the platform for unlawful or abusive activity.</li>
-            </ul>
-        `,
+        sections: [
+            { heading: 'Use of Service', body: 'By using this site, you agree to provide accurate information and use the platform only for lawful booking purposes.' },
+            { heading: 'Account Responsibility', body: 'You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account.' },
+            { heading: 'Pricing and Availability', body: 'Room rates, availability, and offers may change without prior notice. Confirmed bookings follow the details shown at checkout.' },
+            { heading: 'Policy Updates', body: 'We may revise these terms when needed. Continued use of the platform indicates acceptance of updated terms.' },
+            { heading: 'Prohibited Use', body: 'Submitting false identity or payment details, attempting unauthorized access to accounts or systems, or using the platform for unlawful or abusive activity is not allowed.' },
+        ],
     },
     booking: {
         title: 'Booking Policy',
-        html: `
-            <h4>Reservation Confirmation</h4>
-            <p>Bookings are confirmed once payment is completed and a confirmation notice is issued to your registered email.</p>
-            <h4>Check-In and Check-Out</h4>
-            <p>Standard check-in and check-out schedules apply unless otherwise stated in your booking confirmation.</p>
-            <h4>Cancellation and Changes</h4>
-            <p>Cancellation eligibility and fees depend on the selected room and date. Modification requests are subject to availability.</p>
-            <h4>No-Show</h4>
-            <p>Failure to arrive without notice may result in cancellation of reservation and applicable charges.</p>
-            <h4>Guest Responsibility</h4>
-            <p>Guests are accountable for damages beyond normal wear and must comply with posted house rules during the stay.</p>
-        `,
+        sections: [
+            { heading: 'Reservation Confirmation', body: 'Bookings are confirmed once payment is completed and a confirmation notice is issued to your registered email.' },
+            { heading: 'Check-In and Check-Out', body: 'Standard check-in and check-out schedules apply unless otherwise stated in your booking confirmation.' },
+            { heading: 'Cancellation and Changes', body: 'Cancellation eligibility and fees depend on the selected room and date. Modification requests are subject to availability.' },
+            { heading: 'No-Show', body: 'Failure to arrive without notice may result in cancellation of reservation and applicable charges.' },
+            { heading: 'Guest Responsibility', body: 'Guests are accountable for damages beyond normal wear and must comply with posted house rules during the stay.' },
+        ],
     },
 };
 
 function openPolicyModal(policyKey) {
     const dbData = (window.PS_POLICY_CONTENT && window.PS_POLICY_CONTENT[policyKey]) || {};
     const fallback = policyContentMapDefaults[policyKey] || {};
-    const data = {
-        title: (dbData.title && dbData.title.trim()) ? dbData.title : fallback.title,
-        html: (dbData.html && dbData.html.trim()) ? dbData.html : fallback.html,
-    };
-    if (!policyModal || !policyModalTitle || !policyModalContent || !data.html) return;
-    policyModalTitle.textContent = data.title;
-    policyModalContent.innerHTML = data.html;
+    const sections = (Array.isArray(dbData.sections) && dbData.sections.length > 0)
+        ? dbData.sections
+        : (fallback.sections || []);
+    const title = (dbData.title && dbData.title.trim()) ? dbData.title : fallback.title;
+
+    if (!policyModal || !policyModalTitle || !policyModalContent || sections.length === 0) return;
+
+    policyModalTitle.textContent = title;
+
+    if (policyModalMeta) {
+        const updatedAt = dbData.updatedAt && dbData.updatedAt.trim();
+        policyModalMeta.textContent = updatedAt ? `Last updated: ${updatedAt}` : 'Effective immediately';
+    }
+
+    // Build content safely via DOM nodes (no innerHTML injection of admin text)
+    policyModalContent.innerHTML = '';
+    sections.forEach((sec, i) => {
+        const item = document.createElement('div');
+        item.className = 'policy-modal-item';
+
+        if (sec.heading) {
+            const h4 = document.createElement('h4');
+            const num = document.createElement('span');
+            num.className = 'policy-modal-item-num';
+            num.textContent = i + 1;
+            h4.appendChild(num);
+            h4.appendChild(document.createTextNode(sec.heading));
+            item.appendChild(h4);
+        }
+        if (sec.body) {
+            const p = document.createElement('p');
+            p.textContent = sec.body;
+            item.appendChild(p);
+        }
+        policyModalContent.appendChild(item);
+    });
+
     policyModal.classList.add('open');
     document.body.style.overflow = 'hidden';
 }

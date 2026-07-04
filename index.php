@@ -5,9 +5,21 @@ session_start();
 $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 include_once __DIR__ . '/includes/fetch_units.php';
 
-$sysRes = mysqli_query($conn, "SELECT setting_key, value FROM admin_settings");
+$sysRes = mysqli_query($conn, "SELECT setting_key, value, updated_at FROM admin_settings");
 $sysCfg = [];
-while ($sr = mysqli_fetch_assoc($sysRes)) $sysCfg[$sr['setting_key']] = $sr['value'];
+$sysCfgUpdatedAt = [];
+while ($sr = mysqli_fetch_assoc($sysRes)) {
+    $sysCfg[$sr['setting_key']] = $sr['value'];
+    $sysCfgUpdatedAt[$sr['setting_key']] = $sr['updated_at'];
+}
+
+function policy_last_updated(array $sysCfgUpdatedAt, string $policyKey): string
+{
+    $raw = $sysCfgUpdatedAt["policy_{$policyKey}_sections"] ?? ($sysCfgUpdatedAt["policy_{$policyKey}_title"] ?? null);
+    if (!$raw) return '';
+    $ts = strtotime($raw);
+    return $ts ? date('F j, Y', $ts) : '';
+}
 
 $contactAddress = htmlspecialchars($sysCfg['contact_address'] ?? 'Station 3, Barangay Manoc-Manoc, Boracay Island, Aklan 5608');
 $contactPhone   = htmlspecialchars($sysCfg['contact_phone']   ?? '+63 33 123 4567');
@@ -874,9 +886,21 @@ if (isset($conn) && $conn) {
     <!-- ── Policy Modal ── -->
     <div class="policy-modal-overlay" id="policyModal">
         <div class="policy-modal-box">
-            <button class="policy-modal-close" id="policyModalClose" aria-label="Close policy modal">&times;</button>
-            <h3 class="policy-modal-title" id="policyModalTitle">Policy</h3>
-            <div class="policy-modal-meta">Last updated: April 2026</div>
+            <div class="policy-modal-head">
+                <div class="policy-modal-head-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="18" height="18">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                </div>
+                <div class="policy-modal-head-text">
+                    <h3 class="policy-modal-title" id="policyModalTitle">Policy</h3>
+                    <div class="policy-modal-meta" id="policyModalMeta">Last updated: —</div>
+                </div>
+                <button class="policy-modal-close" id="policyModalClose" aria-label="Close policy modal">&times;</button>
+            </div>
             <div class="policy-modal-content" id="policyModalContent"></div>
         </div>
     </div>
@@ -885,15 +909,18 @@ if (isset($conn) && $conn) {
         window.PS_POLICY_CONTENT = {
             privacy: {
                 title: <?php echo json_encode($sysCfg['policy_privacy_title'] ?? 'Privacy Policy'); ?>,
-                html: <?php echo json_encode($sysCfg['policy_privacy_content'] ?? ''); ?>,
+                sections: <?php echo json_encode(json_decode($sysCfg['policy_privacy_sections'] ?? '[]', true) ?: []); ?>,
+                updatedAt: <?php echo json_encode(policy_last_updated($sysCfgUpdatedAt, 'privacy')); ?>,
             },
             terms: {
                 title: <?php echo json_encode($sysCfg['policy_terms_title'] ?? 'Terms and Conditions'); ?>,
-                html: <?php echo json_encode($sysCfg['policy_terms_content'] ?? ''); ?>,
+                sections: <?php echo json_encode(json_decode($sysCfg['policy_terms_sections'] ?? '[]', true) ?: []); ?>,
+                updatedAt: <?php echo json_encode(policy_last_updated($sysCfgUpdatedAt, 'terms')); ?>,
             },
             booking: {
                 title: <?php echo json_encode($sysCfg['policy_booking_title'] ?? 'Booking Policy'); ?>,
-                html: <?php echo json_encode($sysCfg['policy_booking_content'] ?? ''); ?>,
+                sections: <?php echo json_encode(json_decode($sysCfg['policy_booking_sections'] ?? '[]', true) ?: []); ?>,
+                updatedAt: <?php echo json_encode(policy_last_updated($sysCfgUpdatedAt, 'booking')); ?>,
             },
         };
     </script>

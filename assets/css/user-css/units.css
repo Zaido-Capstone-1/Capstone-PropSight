@@ -548,6 +548,68 @@ body {
 .sb-price-sep {
     font-size: .75rem;
     color: var(--ink-faint);
+    align-self: flex-end;
+    padding-bottom: 9px;
+}
+
+.sb-price-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+}
+
+.sb-price-label {
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+
+.sb-price-input-group {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 5px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--white);
+    transition: border-color .15s;
+    flex: 1;
+    min-width: 0;
+}
+
+.sb-price-input-group:focus-within {
+    border-color: var(--navy-700);
+}
+
+.sb-price-currency {
+    font-family: var(--font-display);
+    font-size: .9rem;
+    font-weight: 700;
+    color: var(--ink);
+    flex-shrink: 0;
+}
+
+.sb-price-input {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--font-display);
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--ink);
+    -moz-appearance: textfield;
+}
+
+.sb-price-input::-webkit-outer-spin-button,
+.sb-price-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .sb-range-wrap {
@@ -862,25 +924,42 @@ body {
     fill: none;
 }
 
-/* Season vignette gradient at image bottom */
+/* Season badge — bottom-left overlay pill on the card image */
+.room-season-badge,
 .room-season-vignette {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, .62) 0%, transparent 100%);
-    padding: 24px 12px 9px;
-    font-size: .67rem;
-    color: rgba(255, 255, 255, .82);
-    display: flex;
+    bottom: 10px;
+    left: 10px;
+    display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
+    font-family: "DM Sans", sans-serif;
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    padding: 4px 10px 4px 8px;
+    border-radius: 99px;
+    background: rgba(11, 24, 41, .55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, .18);
+    z-index: 8;
+}
+
+.room-season-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .25);
 }
 
 .room-season-vignette svg {
     width: 11px;
     height: 11px;
     flex-shrink: 0;
+    stroke: #fff;
 }
 
 /* Badge positions */

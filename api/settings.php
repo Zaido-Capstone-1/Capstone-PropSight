@@ -142,15 +142,16 @@ if ($method === 'POST') {
             exit;
         }
         $fields = ['contact_address', 'contact_phone', 'contact_phone2', 'contact_email'];
+        $stmt = $conn->prepare(
+            "INSERT INTO admin_settings (setting_key, value, updated_by) VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)"
+        );
         foreach ($fields as $key) {
-            $val = mysqli_real_escape_string($conn, trim($_POST[$key] ?? ''));
-            $keyEsc = mysqli_real_escape_string($conn, $key);
-            mysqli_query(
-                $conn,
-                "INSERT INTO admin_settings (setting_key, value, updated_by) VALUES ('$keyEsc', '$val', $adminId)
-             ON DUPLICATE KEY UPDATE value='$val', updated_by=$adminId"
-            );
+            $val = trim($_POST[$key] ?? '');
+            $stmt->bind_param('ssi', $key, $val, $adminId);
+            $stmt->execute();
         }
+        $stmt->close();
         echo json_encode(['success' => true, 'message' => 'Contact info updated.']);
         exit;
     }
@@ -168,27 +169,43 @@ if ($method === 'POST') {
             exit;
         }
 
-        $title = mysqli_real_escape_string($conn, trim($_POST['title'] ?? ''));
-        $content = mysqli_real_escape_string($conn, trim($_POST['content'] ?? ''));
+        $title = trim($_POST['title'] ?? '');
+        $sectionsRaw = $_POST['sections'] ?? '[]';
+        $sections = json_decode($sectionsRaw, true);
 
-        if ($title === '' || $content === '') {
-            echo json_encode(['success' => false, 'message' => 'Title and content are required.']);
+        if ($title === '' || !is_array($sections) || count($sections) === 0) {
+            echo json_encode(['success' => false, 'message' => 'Title and at least one section are required.']);
+            exit;
+        }
+
+        // Sanitize each section: heading + body text only, no HTML tags accepted from admin input.
+        $cleanSections = [];
+        foreach ($sections as $sec) {
+            $heading = trim(strip_tags($sec['heading'] ?? ''));
+            $body = trim(strip_tags($sec['body'] ?? ''));
+            if ($heading === '' && $body === '')
+                continue;
+            $cleanSections[] = ['heading' => $heading, 'body' => $body];
+        }
+
+        if (count($cleanSections) === 0) {
+            echo json_encode(['success' => false, 'message' => 'At least one section needs a heading or text.']);
             exit;
         }
 
         $titleKey = "policy_{$policyKey}_title";
-        $contentKey = "policy_{$policyKey}_content";
+        $sectionsKey = "policy_{$policyKey}_sections";
+        $sectionsJson = json_encode($cleanSections);
 
-        mysqli_query(
-            $conn,
-            "INSERT INTO admin_settings (setting_key, value, updated_by) VALUES ('$titleKey', '$title', $adminId)
-             ON DUPLICATE KEY UPDATE value='$title', updated_by=$adminId"
+        $stmt = $conn->prepare(
+            "INSERT INTO admin_settings (setting_key, value, updated_by) VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)"
         );
-        mysqli_query(
-            $conn,
-            "INSERT INTO admin_settings (setting_key, value, updated_by) VALUES ('$contentKey', '$content', $adminId)
-             ON DUPLICATE KEY UPDATE value='$content', updated_by=$adminId"
-        );
+        $stmt->bind_param('ssi', $titleKey, $title, $adminId);
+        $stmt->execute();
+        $stmt->bind_param('ssi', $sectionsKey, $sectionsJson, $adminId);
+        $stmt->execute();
+        $stmt->close();
 
         echo json_encode(['success' => true, 'message' => ucfirst($policyKey) . ' policy updated.']);
         exit;

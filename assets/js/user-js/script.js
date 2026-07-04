@@ -68,7 +68,16 @@ function getAmenityIcon(name, iconSlug) {
 }
 
 // ── SIDEBAR ────────────────────────────────────────────────
+// body.sidebar-open uses position:fixed to lock background scroll while
+// the drawer is open. Because fixed elements anchor to the viewport (not
+// the document), applying it without compensation snaps the page visually
+// to the top and loses the scroll position once removed. We store the
+// scroll offset, shift body up by that amount via `top`, and restore the
+// real scroll position on close.
 function openSidebar() {
+    const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.dataset.scrollY = String(scrollY);
+    document.body.style.top = -scrollY + 'px';
     document.getElementById('sidebarOverlay').classList.add('open');
     document.getElementById('profileSidebar').classList.add('open');
     document.body.classList.add('sidebar-open');
@@ -78,6 +87,17 @@ function closeSidebar() {
     document.getElementById('sidebarOverlay')?.classList.remove('open');
     document.getElementById('profileSidebar')?.classList.remove('open');
     document.body.classList.remove('sidebar-open');
+    const scrollY = parseInt(document.body.dataset.scrollY || '0', 10);
+    document.body.style.top = '';
+
+    // html has scroll-behavior:smooth globally, which would otherwise
+    // animate this restore into a visible scroll-from-top. Disable it
+    // for one frame so the jump back is instant.
+    const htmlEl = document.documentElement;
+    const prevBehavior = htmlEl.style.scrollBehavior;
+    htmlEl.style.scrollBehavior = 'auto';
+    window.scrollTo(0, scrollY);
+    htmlEl.style.scrollBehavior = prevBehavior;
 }
 const profileBtn = document.getElementById('profileBtn');
 if (profileBtn) profileBtn.addEventListener('click', openSidebar);

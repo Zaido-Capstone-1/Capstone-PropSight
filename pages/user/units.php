@@ -152,8 +152,8 @@ $full_name = trim($_firstName . ' ' . $_lastName);
 $email = htmlspecialchars($_SESSION['email'] ?? '');
 $page_extra_head = '
     <link rel="stylesheet" href="../../assets/css/user-css/styles.css?v=3">
-    <link rel="stylesheet" href="../../assets/css/user-css/dashboard.css">
-    <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=5">
+    <link rel="stylesheet" href="../../assets/css/user-css/dashboard.css?v=2">
+    <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=7">
     <script>
         window.UNITS_CONFIG = {
             priceMin: ' . $priceMin . ',
@@ -222,9 +222,29 @@ echo '</div>';
                 <button onclick="resetPrice()">Reset</button>
             </div>
             <div class="sb-price-display">
-                <span class="sb-price-val" id="priceMinDisplay">₱<?php echo number_format($priceMin); ?></span>
+                <div class="sb-price-field">
+                    <label class="sb-price-label" for="priceMinInput">Min</label>
+                    <div class="sb-price-input-group">
+                        <span class="sb-price-currency">₱</span>
+                        <input type="number" class="sb-price-input" id="priceMinInput"
+                               min="<?php echo $priceMin; ?>" max="<?php echo $priceMax; ?>"
+                               value="<?php echo $priceMin; ?>" inputmode="numeric"
+                               oninput="onPriceInputLive()" onchange="onPriceInputCommit()"
+                               onblur="onPriceInputCommit()">
+                    </div>
+                </div>
                 <span class="sb-price-sep">—</span>
-                <span class="sb-price-val" id="priceMaxDisplay">₱<?php echo number_format($priceMax); ?></span>
+                <div class="sb-price-field">
+                    <label class="sb-price-label" for="priceMaxInput">Max</label>
+                    <div class="sb-price-input-group">
+                        <span class="sb-price-currency">₱</span>
+                        <input type="number" class="sb-price-input" id="priceMaxInput"
+                               min="<?php echo $priceMin; ?>" max="<?php echo $priceMax; ?>"
+                               value="<?php echo $priceMax; ?>" inputmode="numeric"
+                               oninput="onPriceInputLive()" onchange="onPriceInputCommit()"
+                               onblur="onPriceInputCommit()">
+                    </div>
+                </div>
             </div>
             <div class="sb-range-wrap">
                 <div class="sb-range-track"></div>
@@ -259,24 +279,6 @@ echo '</div>';
             </div>
         <?php endif; ?>
 
-        <!-- ④ Floor --------------------------------------------------------- -->
-        <?php if (!empty($floors)): ?>
-            <div class="sb-section">
-                <div class="sb-section-label">
-                    Floor
-                    <button onclick="clearFloorFilters()">Clear</button>
-                </div>
-                <div class="sb-floor-btns">
-                    <?php foreach (array_keys($floors) as $flr): ?>
-                            <button class="sb-floor-btn" data-floor="<?php echo $flr; ?>"
-                                    onclick="toggleFloor(<?php echo $flr; ?>, this)">
-                                Floor <?php echo $flr; ?>
-                            </button>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        <?php endif; ?>
-
         <!-- ⑤ Season -------------------------------------------------------- -->
         <?php
         $seasonDots = ['Low' => '#4ade80', 'High' => '#c9a84c', 'Peak' => '#c0694a'];
@@ -295,27 +297,6 @@ echo '</div>';
                                 <?php echo $s; ?> Season
                                 <span class="sb-avail-count"><?php echo $cnt; ?></span>
                             </button>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        <?php endif; ?>
-
-        <!-- ⑥ Amenities ----------------------------------------------------- -->
-        <?php if (!empty($allAmenities)): ?>
-            <div class="sb-section">
-                <div class="sb-section-label">
-                    Amenities
-                    <button onclick="clearAmenityFilters()">Clear</button>
-                </div>
-                <div class="sb-amenity-list">
-                    <?php foreach ($allAmenities as $am): ?>
-                            <label class="sb-check-item">
-                                <input type="checkbox" class="amenity-cb"
-                                       value="<?php echo htmlspecialchars($am); ?>"
-                                       onchange="applyFilters()">
-                                <span class="sb-check-label"><?php echo htmlspecialchars($am); ?></span>
-                                <span class="sb-check-count"><?php echo $amenityCounts[$am] ?? 0; ?></span>
-                            </label>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -491,12 +472,9 @@ echo '</div>';
                                     </svg>
                                 </button>
 
-                                <div class="room-season-vignette">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                                    </svg>
+                                <div class="room-season-badge">
+                                    <span class="room-season-dot" style="background:<?php echo $sColor; ?>;"></span>
                                     <?php echo ucfirst($unitSeason); ?> Season
-                                    <span style="margin-left:auto;font-weight:700;color:<?php echo $sColor; ?>;">●</span>
                                 </div>
                             </div><!-- /room-card-img -->
 
@@ -666,7 +644,7 @@ echo '</div>';
 </script>
 <script src="../../assets/js/toast.js"></script>
 <script src="../../assets/js/user-js/script.js?v=2"></script>
-<script src="../../assets/js/user-js/units.js"></script>
+<script src="../../assets/js/user-js/units.js?v=2"></script>
 <script src="../../assets/js/realtime.js"></script>
 <script src="../../assets/js/user-js/user-realtime-pages.js"></script>
 <script src="../../assets/js/user-js/floating-chat.js?v=5"></script>

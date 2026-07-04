@@ -78,10 +78,9 @@ $isOccupied = $unit['status'] === 'occupied';
 $isMaintenance = $unit['status'] === 'maintenance';
 
 $statusLabel = match ($unit['status']) {
-    'vacant' => '✓ Available',
-    'booked' => 'Booked',
-    'occupied' => 'Occupied',
-    'maintenance' => 'Maintenance',
+    'vacant' => 'AVAILABLE',
+    'booked' , 'occupied' => 'BOOKED',
+    'maintenance' => 'MAINTENANCE',
     default => ucfirst($unit['status'] ?? 'Unavailable'),
 };
 $statusBadgeClass = $isVacant ? 'avail-yes' : ($isBooked ? 'avail-booked' : 'avail-no');
@@ -763,7 +762,7 @@ require '../../includes/_nav.php';
                                 <?php endif; ?>
                                 <span
                                     class="ud-similar-badge <?php echo $su['status'] === 'vacant' ? 'avail-yes' : 'avail-no'; ?>">
-                                    <?php echo $su['status'] === 'vacant' ? '✓ Available' : ucfirst($su['status']); ?>
+                                    <?php echo $su['status'] === 'vacant' ? 'AVAILABLE' : strtoupper($su['status']); ?>
                                 </span>
                             </div>
                             <div class="ud-similar-info">
