@@ -4,10 +4,16 @@
  *
  * Rules:
  * - booked:      has a CONFIRMED booking and check-in date is in the future
- * - occupied:    has an active or confirmed booking and today >= checkin_date
+ * - occupied:    has an ACTIVE booking (guest manually checked in by admin) — stays
+ *                occupied regardless of checkout_date, until the admin manually checks
+ *                the guest out (booking status becomes 'completed'). A CONFIRMED
+ *                booking (not yet checked in) is only auto-treated as occupied while
+ *                today is within its checkin/checkout window.
  * - vacant:      no active bookings (or all completed/cancelled/pending)
  * - maintenance: never touched by this function
  * NOTE: pending bookings never affect unit status or tenant display.
+ * NOTE: checkout_date passing does NOT auto-vacate an 'active' booking — only an
+ * explicit admin checkout action (see endpoints/checkin.php) does that.
  */
 function syncUnitAvailabilityFromBookings(mysqli $conn, int $unitId): bool
 {
@@ -25,14 +31,20 @@ function syncUnitAvailabilityFromBookings(mysqli $conn, int $unitId): bool
     if ($current === 'maintenance')
         return true;
 
-    // Check if there's an active booking where today >= checkin_date (occupied)
+    // Check if there's an occupying booking:
+    // - status='active' (admin manually checked the guest in) stays occupied
+    //   NO MATTER the checkout_date -- only a manual admin checkout ends it.
+    // - status='confirmed' (not yet checked in) only counts as occupied while
+    //   today falls within its checkin/checkout window.
     $occupiedRes = mysqli_query($conn, "
         SELECT COUNT(*) AS c
         FROM bookings
         WHERE unit_id = $unitId
-          AND status IN ('confirmed', 'active')
           AND checkin_date <= CURDATE()
-          AND checkout_date > CURDATE()
+          AND (
+                status = 'active'
+                OR (status = 'confirmed' AND checkout_date > CURDATE())
+              )
     ");
     $occupiedCount = (int) (mysqli_fetch_assoc($occupiedRes)['c'] ?? 0);
 

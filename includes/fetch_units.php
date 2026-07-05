@@ -2,7 +2,11 @@
 
 include_once __DIR__ . '/db.php';
 
-// Ensure unit availability stays synced with actual bookings, including future pending/confirmed/active reservations.
+// Ensure unit availability stays synced with actual bookings, including future pending/confirmed reservations.
+// NOTE: an 'active' booking (guest manually checked in by admin) keeps the unit
+// occupied NO MATTER what the checkout_date is -- only an explicit admin checkout
+// action (endpoints/checkin.php, which sets status='completed') frees it up.
+// Pending/confirmed bookings (not yet checked in) still use the date window.
 mysqli_query($conn, "
     UPDATE units u
     SET u.status = CASE
@@ -10,8 +14,10 @@ mysqli_query($conn, "
         WHEN EXISTS (
             SELECT 1 FROM bookings b
             WHERE b.unit_id = u.unit_id
-              AND b.status IN ('pending', 'confirmed', 'active')
-              AND b.checkout_date > CURDATE()
+              AND (
+                    b.status = 'active'
+                    OR (b.status IN ('pending', 'confirmed') AND b.checkout_date > CURDATE())
+                  )
         ) THEN 'occupied'
         ELSE 'vacant'
     END
