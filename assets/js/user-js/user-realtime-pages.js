@@ -302,7 +302,7 @@
             /* ── Update Room Card Availability ──────────────────── */
             /* Only mark as Booked — never flip to Available from a single user's booking status
                because another user may still have an active booking on the same unit. */
-            if (b.unit_id && ['confirmed', 'active', 'pending'].includes(b.status)) {
+            if (b.unit_id && ['confirmed', 'active'].includes(b.status)) {
                 var roomCard = document.querySelector('.room-card[data-unit-id="' + String(b.unit_id) + '"]');
                 if (roomCard) {
                     roomCard.dataset.status = 'occupied';
@@ -348,7 +348,7 @@
         updates.forEach(function (b) {
             if (!b || !b.unit_id) return;
             var unitId = String(b.unit_id);
-            var isOccupied = ['pending', 'confirmed', 'active'].includes(b.status);
+            var isOccupied = ['confirmed', 'active'].includes(b.status);
             var priority = isOccupied ? 2 : 1;
 
             if (!unitStatusMap[unitId] || priority > unitStatusMap[unitId].priority) {
@@ -372,7 +372,7 @@
         /* Only mark as Booked — never flip to Available from user's own booking status */
         Object.keys(unitStatusMap).forEach(function (unitId) {
             var status = unitStatusMap[unitId].status;
-            if (!['confirmed', 'active', 'pending'].includes(status)) return;
+            if (!['confirmed', 'active'].includes(status)) return;
             var roomCard = document.querySelector('.room-card[data-unit-id="' + String(unitId) + '"]');
             if (!roomCard) return;
 

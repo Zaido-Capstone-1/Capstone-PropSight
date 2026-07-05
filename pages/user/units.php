@@ -153,7 +153,7 @@ $email = htmlspecialchars($_SESSION['email'] ?? '');
 $page_extra_head = '
     <link rel="stylesheet" href="../../assets/css/user-css/styles.css?v=3">
     <link rel="stylesheet" href="../../assets/css/user-css/dashboard.css?v=2">
-    <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=7">
+    <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=8">
     <script>
         window.UNITS_CONFIG = {
             priceMin: ' . $priceMin . ',
@@ -331,13 +331,37 @@ echo '</div>';
         </div>
 
         <!-- Sort -->
-        <select class="u-sort-select" id="unitSort" onchange="applySort(this.value)">
-            <option value="default">Sort: Default</option>
-            <option value="price-asc">Price: Low → High</option>
-            <option value="price-desc">Price: High → Low</option>
-            <option value="name-asc">Name: A → Z</option>
-            <option value="rating-desc">Top Rated</option>
-        </select>
+        <div class="u-sort-dropdown" id="sortDropdown">
+            <button type="button" class="u-sort-trigger" id="sortTrigger"
+                    onclick="toggleSortDropdown()" aria-haspopup="listbox" aria-expanded="false">
+                <span id="sortTriggerLabel">Sort: Default</span>
+                <svg class="u-sort-caret" viewBox="0 0 10 6" fill="none">
+                    <path d="M0 0l5 6 5-6z" fill="currentColor"/>
+                </svg>
+            </button>
+            <ul class="u-sort-menu" id="sortMenu" role="listbox" aria-labelledby="sortTrigger">
+                <li class="u-sort-option active" role="option" aria-selected="true"
+                    data-value="default" onclick="selectSortOption(this)">
+                    Sort: Default
+                </li>
+                <li class="u-sort-option" role="option" aria-selected="false"
+                    data-value="price-asc" onclick="selectSortOption(this)">
+                    Price: Low &rarr; High
+                </li>
+                <li class="u-sort-option" role="option" aria-selected="false"
+                    data-value="price-desc" onclick="selectSortOption(this)">
+                    Price: High &rarr; Low
+                </li>
+                <li class="u-sort-option" role="option" aria-selected="false"
+                    data-value="name-asc" onclick="selectSortOption(this)">
+                    Name: A &rarr; Z
+                </li>
+                <li class="u-sort-option" role="option" aria-selected="false"
+                    data-value="rating-desc" onclick="selectSortOption(this)">
+                    Top Rated
+                </li>
+            </ul>
+        </div>
 
         <!-- View toggle -->
         <div class="u-view-toggle">
@@ -644,7 +668,7 @@ echo '</div>';
 </script>
 <script src="../../assets/js/toast.js"></script>
 <script src="../../assets/js/user-js/script.js?v=2"></script>
-<script src="../../assets/js/user-js/units.js?v=2"></script>
+<script src="../../assets/js/user-js/units.js?v=3"></script>
 <script src="../../assets/js/realtime.js"></script>
 <script src="../../assets/js/user-js/user-realtime-pages.js"></script>
 <script src="../../assets/js/user-js/floating-chat.js?v=5"></script>

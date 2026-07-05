@@ -327,6 +327,53 @@
     window.applySort = applySort;
 
     /* ════════════════════════════════════════════════════════════════════════
+       SORT DROPDOWN (custom-built, replaces native <select>)
+    ════════════════════════════════════════════════════════════════════════ */
+    function toggleSortDropdown() {
+        const dd = $('sortDropdown');
+        if (!dd) return;
+        const willOpen = !dd.classList.contains('open');
+        dd.classList.toggle('open', willOpen);
+        $('sortTrigger')?.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }
+    window.toggleSortDropdown = toggleSortDropdown;
+
+    function closeSortDropdown() {
+        const dd = $('sortDropdown');
+        if (!dd) return;
+        dd.classList.remove('open');
+        $('sortTrigger')?.setAttribute('aria-expanded', 'false');
+    }
+
+    function selectSortOption(el) {
+        const dd = $('sortDropdown');
+        if (!dd) return;
+
+        $$('.u-sort-option').forEach(opt => {
+            opt.classList.toggle('active', opt === el);
+            opt.setAttribute('aria-selected', opt === el ? 'true' : 'false');
+        });
+
+        const label = $('sortTriggerLabel');
+        if (label) label.textContent = el.textContent.trim();
+
+        closeSortDropdown();
+        applySort(el.dataset.value);
+    }
+    window.selectSortOption = selectSortOption;
+
+    document.addEventListener('click', (e) => {
+        const dd = $('sortDropdown');
+        if (dd && dd.classList.contains('open') && !dd.contains(e.target)) {
+            closeSortDropdown();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeSortDropdown();
+    });
+
+    /* ════════════════════════════════════════════════════════════════════════
        VIEW TOGGLE
     ════════════════════════════════════════════════════════════════════════ */
     function setView(view) {

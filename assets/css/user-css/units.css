@@ -236,27 +236,109 @@ body {
 }
 
 /* Sort select */
-.u-sort-select {
-    appearance: none;
+/* Sort dropdown — custom-built to replace the native <select> */
+.u-sort-dropdown {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.u-sort-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     border: 1.5px solid var(--border);
     border-radius: var(--r-pill);
     background: var(--off-white);
-    padding: 8px 32px 8px 14px;
+    padding: 8px 14px;
     font-size: .78rem;
     font-weight: 600;
     color: var(--ink-soft);
     font-family: var(--font-body);
     cursor: pointer;
     outline: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a8bb'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    transition: border-color .18s;
     white-space: nowrap;
+    transition: border-color .18s, background .18s;
 }
 
-.u-sort-select:focus {
+.u-sort-trigger:hover {
+    background: var(--white);
     border-color: var(--navy-400);
+}
+
+.u-sort-dropdown.open .u-sort-trigger {
+    border-color: var(--navy-700);
+    background: var(--white);
+}
+
+.u-sort-caret {
+    width: 10px;
+    height: 6px;
+    color: var(--ink-faint);
+    transition: transform .18s;
+    flex-shrink: 0;
+}
+
+.u-sort-dropdown.open .u-sort-caret {
+    transform: rotate(180deg);
+    color: var(--navy-700);
+}
+
+.u-sort-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 200px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md, 12px);
+    box-shadow: var(--sh-md, 0 12px 28px rgba(11, 24, 41, .14));
+    padding: 6px;
+    list-style: none;
+    margin: 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity .16s ease, transform .16s ease, visibility .16s;
+    z-index: 30;
+}
+
+.u-sort-dropdown.open .u-sort-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.u-sort-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background .12s, color .12s;
+}
+
+.u-sort-option:hover {
+    background: var(--navy-50, #eef2f7);
+    color: var(--ink);
+}
+
+.u-sort-option.active {
+    background: var(--navy-700);
+    color: #fff;
+}
+
+.u-sort-option.active::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    flex-shrink: 0;
 }
 
 /* View toggle */
@@ -1159,7 +1241,7 @@ body {
         border-radius: var(--r-lg) var(--r-lg) 0 0;
     }
 
-    .u-sort-select {
+    .u-sort-dropdown {
         display: none;
     }
 
