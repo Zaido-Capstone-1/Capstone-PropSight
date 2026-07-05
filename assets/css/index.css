@@ -484,6 +484,70 @@ nav a:hover::after {
     text-decoration: underline;
 }
 
+/* ── Social login (Google / Facebook) ── */
+.social-login-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.btn-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 11px 14px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--blue-100);
+    background: var(--white);
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.btn-social:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(11, 24, 41, .1);
+}
+
+.btn-social-google:hover {
+    border-color: var(--blue-200);
+}
+
+.btn-social-facebook {
+    background: #1877F2;
+    border-color: #1877F2;
+    color: #fff;
+}
+
+.btn-social-facebook:hover {
+    background: #1465cf;
+    border-color: #1465cf;
+}
+
+.social-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    font-size: 0.74rem;
+    color: var(--text-soft);
+}
+
+.social-divider::before,
+.social-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--blue-100);
+}
+
 .btn-book-header {
     font-family: 'Jost', sans-serif;
     font-size: 0.85rem;
@@ -1999,6 +2063,7 @@ footer {
     overflow-y: auto;
     background: #fff;
     border-radius: 20px;
+    border: 1px solid var(--navy-100);
     box-shadow: 0 24px 60px rgba(6, 14, 26, 0.35);
     position: relative;
     animation: policyModalPop .22s cubic-bezier(.4, 0, .2, 1) both;
@@ -2491,8 +2556,12 @@ footer {
     }
 
     .modal-box {
-        padding: 28px 20px;
+        padding: 28px 14px;
         max-height: 92vh;
+    }
+
+    .modal-overlay {
+        padding: 0 20px;
     }
 }
 
@@ -2530,6 +2599,10 @@ footer {
 
     .carousel-label-type {
         font-size: 0.7rem;
+    }
+
+    .modal-box {
+        padding: 24px 10px;
     }
 }
 

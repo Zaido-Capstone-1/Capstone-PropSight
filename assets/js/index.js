@@ -1118,6 +1118,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.location.hash === '#login') {
         openModal('login');
     }
+
+    // Surface Google/Facebook sign-in errors after the OAuth redirect back
+    const oauthError = new URLSearchParams(window.location.search).get('oauth_error');
+    if (oauthError) {
+        openModal('login');
+        showLoginAlert(oauthError, 'error');
+        // Clean the URL so refreshing doesn't re-show the same error
+        const cleanUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
 });
 
 document.getElementById('signupCountryCode')?.addEventListener('change', function () {
