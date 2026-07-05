@@ -238,7 +238,7 @@
         fd.append('action',     'complete');
         fd.append('refund_id',  _completeRefundId);
         fd.append('csrf_token', window.PS_CSRF_TOKEN);
-        fetch('../../api/admin/process_refund.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/admin/process_refund.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(data => {
                 closeCompleteModal();
@@ -266,7 +266,7 @@
         fd.append('action',     'approve');
         fd.append('csrf_token', window.PS_CSRF_TOKEN ?? '');
 
-        fetch('../../api/admin/process_refund.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/admin/process_refund.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
@@ -310,7 +310,7 @@
         fd.append('reason',     reason);
         fd.append('csrf_token', window.PS_CSRF_TOKEN ?? '');
 
-        fetch('../../api/admin/process_refund.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/admin/process_refund.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {

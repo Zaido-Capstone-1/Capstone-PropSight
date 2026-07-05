@@ -630,7 +630,7 @@ echo '</div>';
     };
     window.PS_RT_PAGE = 'units';
     window.PS_RT_ROLE = 'user';
-    window.PS_RT_API = '../../api/realtime.php';
+    window.PS_RT_API = '../../endpoints/realtime.php';
     window.hasActiveBooking = false;
     window._psSessionFields = {
         fname: <?php echo json_encode($_SESSION['first_name'] ?? ''); ?>,

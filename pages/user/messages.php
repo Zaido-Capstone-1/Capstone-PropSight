@@ -173,7 +173,7 @@ require_once '../../lib/user-queries/messages_queries.php';
 <script>
     window.__PS_USER_MSG__ = {
         userId: <?= $userId ?>,
-        apiUrl: '../../api/user/messages.php'
+        apiUrl: '../../endpoints/user/messages.php'
     };
 </script>
 <script>window.PS_RT_PAGE = 'messages';</script>

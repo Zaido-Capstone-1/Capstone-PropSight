@@ -81,7 +81,7 @@ function saveCard() {
     fd.append('holder_name', holder);
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
 
-    fetch('../../api/user/payment_methods.php', { method: 'POST', body: fd })
+    fetch('../../endpoints/user/payment_methods.php', { method: 'POST', body: fd })
         .then(r => r.json())
         .then(d => {
             btn.disabled = false;
@@ -141,7 +141,7 @@ function handleSetDefault(id, type, btn) {
     fd.append('type', type);
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
 
-    fetch('../../api/user/payment_methods.php', { method: 'POST', body: fd })
+    fetch('../../endpoints/user/payment_methods.php', { method: 'POST', body: fd })
         .then(r => r.json())
         .then(d => {
             btn.disabled = false;
@@ -181,7 +181,7 @@ function handleRemoveCard(id, btn) {
     fd.append('type', 'card');
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
 
-    fetch('../../api/user/payment_methods.php', { method: 'POST', body: fd })
+    fetch('../../endpoints/user/payment_methods.php', { method: 'POST', body: fd })
         .then(r => r.json())
         .then(d => {
             if (!d.success) { btn.disabled = false; btn.textContent = 'Remove'; showToast(d.message || 'Error', true); return; }
@@ -226,7 +226,7 @@ document.querySelectorAll('.ewallet-item .btn-secondary').forEach(btn => {
         fd.append('account_number', account);
         if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
 
-        fetch('../../api/user/payment_methods.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/user/payment_methods.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(d => {
                 if (!d.success) { this.disabled = false; this.textContent = 'Link'; showToast(d.message || 'Error', true); return; }
@@ -245,7 +245,7 @@ function downloadInvoice(paymentId, btn) {
     btn.disabled = true;
     btn.textContent = '…';
     const a = document.createElement('a');
-    a.href = '../../api/user/booking_receipt.php?booking_id=' + paymentId;
+    a.href = '../../endpoints/user/booking_receipt.php?booking_id=' + paymentId;
     a.target = '_blank';
     a.click();
     setTimeout(() => { btn.disabled = false; btn.textContent = orig; showToast('Invoice opened.'); }, 800);

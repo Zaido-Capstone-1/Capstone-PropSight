@@ -678,7 +678,7 @@
             const currentStep = window._bmCurrentStep || 0;
             const pendingBid = window._bmPendingBookingId || null;
             if (currentStep === 4 && pendingBid && !window.hasActiveBooking) {
-                fetch(`../../api/user/check_payment_status.php?booking_id=${pendingBid}`)
+                fetch(`../../endpoints/user/check_payment_status.php?booking_id=${pendingBid}`)
                     .then(r => r.json())
                     .then(st => {
                         if (st.payment_status === 'paid' || st.booking_status === 'confirmed') {
@@ -691,7 +691,7 @@
                         const cfd = new FormData();
                         cfd.append('booking_id', pendingBid);
                         window.psAppendCsrf?.(cfd);
-                        fetch('../../api/user/cancel_booking.php', {
+                        fetch('../../endpoints/user/cancel_booking.php', {
                                 method: 'POST',
                                 body: cfd
                             })
@@ -855,7 +855,7 @@
             });
             $('bmFooter')?.querySelectorAll('button').forEach(b => b.style.display = 'none');
 
-            fetch('../../api/user/book_unit.php', {
+            fetch('../../endpoints/user/book_unit.php', {
                     method: 'POST',
                     body: fd
                 })
@@ -973,7 +973,7 @@
                     pmFd.append('payment_method', method);
                     window.psAppendCsrf?.(pmFd);
 
-                    fetch('../../api/user/create_paymongo_link.php', {
+                    fetch('../../endpoints/user/create_paymongo_link.php', {
                             method: 'POST',
                             body: pmFd
                         })
@@ -999,7 +999,7 @@
                             showToast?.('Could not reach payment service.', 'error');
                         });
 
-                    _bmStartPoll(`../../api/user/check_payment_status.php?booking_id=${bid}`);
+                    _bmStartPoll(`../../endpoints/user/check_payment_status.php?booking_id=${bid}`);
 
                 })
                 .catch(err => {
@@ -1419,7 +1419,7 @@ function toggleSaveRoom(unitId, btn) {
 
     applyState(!isSaved); // optimistic
 
-    fetch('../../api/user/save_toggle.php', { method: 'POST', body: fd })
+    fetch('../../endpoints/user/save_toggle.php', { method: 'POST', body: fd })
         .then(r => r.json())
         .then(data => {
             if (!data.success) {
@@ -1460,7 +1460,7 @@ function udLoadReviews(unitId, page, limit, showHide) {
 
     list.style.opacity = '0.4';
 
-    fetch(`../../api/user/get_reviews.php?unit_id=${unitId}&page=${page}&limit=${limit}`)
+    fetch(`../../endpoints/user/get_reviews.php?unit_id=${unitId}&page=${page}&limit=${limit}`)
         .then(r => r.json())
         .then(data => {
             if (!data.success) return;
@@ -1586,7 +1586,7 @@ function udLoadReviewsFiltered(unitId, page, limit, star) {
 
     list.style.opacity = '0.4';
 
-    fetch(`../../api/user/get_reviews.php?unit_id=${unitId}&page=${page}&limit=${limit}&star=${star}`)
+    fetch(`../../endpoints/user/get_reviews.php?unit_id=${unitId}&page=${page}&limit=${limit}&star=${star}`)
         .then(r => r.json())
         .then(data => {
             if (!data.success) return;

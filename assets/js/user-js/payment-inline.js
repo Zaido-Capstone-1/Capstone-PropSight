@@ -7,7 +7,7 @@ function removePaymentMethod(id, type, btn) {
         fd.append('id', id);
         fd.append('type', type);
         if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
-        fetch('../../api/user/payment_methods.php', {
+        fetch('../../endpoints/user/payment_methods.php', {
                 method: 'POST',
                 body: fd
             })
@@ -28,7 +28,7 @@ function removePaymentMethod(id, type, btn) {
         fd.append('id', id);
         fd.append('type', type);
         if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
-        fetch('../../api/user/payment_methods.php', {
+        fetch('../../endpoints/user/payment_methods.php', {
                 method: 'POST',
                 body: fd
             })

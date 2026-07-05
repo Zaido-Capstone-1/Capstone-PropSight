@@ -112,7 +112,7 @@ if ($userRow) {
     $scriptDir = dirname(dirname($_SERVER['SCRIPT_NAME'] ?? '/'));
     $resetLink = rtrim($protocol . '://' . $host . $scriptDir, '/') . '/reset_password.php?token=' . urlencode($token);
 
-    require_once '../includes/email_service.php';
+    require_once '../integrations/email_service.php';
 
     try {
       // Validate email configuration first

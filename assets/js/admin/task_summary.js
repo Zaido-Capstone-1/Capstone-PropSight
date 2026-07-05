@@ -251,7 +251,7 @@ async function updateTaskStatus() {
     fd.append('status', status);
 
     try {
-        const res = await fetch('../../api/admin/update_maintenance.php', {
+        const res = await fetch('../../endpoints/admin/update_maintenance.php', {
             method: 'POST',
             body: fd
         });
@@ -324,7 +324,7 @@ async function deleteTask(taskId) {
     fd.append('request_id', taskId);
 
     try {
-        const res = await fetch('../../api/admin/update_maintenance.php', {
+        const res = await fetch('../../endpoints/admin/update_maintenance.php', {
             method: 'POST',
             body: fd
         });

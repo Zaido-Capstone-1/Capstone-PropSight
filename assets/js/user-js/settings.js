@@ -8,7 +8,7 @@ function showSection(id, el, evt) {
     return false;
 }
 
-const SETTINGS_API_URL = '../../api/user/settings.php';
+const SETTINGS_API_URL = '../../endpoints/user/settings.php';
 
 async function postSettings(formData) {
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(formData);

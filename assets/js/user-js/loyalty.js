@@ -119,7 +119,7 @@ function confirmRedeem() {
     fd.append('points', pendingReward.pts);
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
 
-    fetch('../../api/user/redeem.php', {
+    fetch('../../endpoints/user/redeem.php', {
             method: 'POST',
             body: fd
         })
@@ -439,7 +439,7 @@ function renderLoyalty(payload) {
 
 /* ── Fetch fresh data ── */
 function refreshLoyaltyData() {
-    fetch('../../api/user/loyalty.php')
+    fetch('../../endpoints/user/loyalty.php')
         .then(r => r.json())
         .then(data => {
             if (data.success) renderLoyalty(data);

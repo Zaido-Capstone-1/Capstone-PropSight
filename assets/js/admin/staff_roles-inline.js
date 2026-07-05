@@ -72,7 +72,7 @@ function submitInvite() {
         btn.textContent = 'Sending…';
     }
 
-    fetch('../../api/staff.php', {
+    fetch('../../endpoints/staff.php', {
         method: 'POST',
 
         headers: {
@@ -151,7 +151,7 @@ function toggleActive(userId, name, current) {
 
     showToast('Updating…', 'info');
 
-    fetch('../../api/staff.php', {
+    fetch('../../endpoints/staff.php', {
         method: 'POST',
 
         headers: {
@@ -217,7 +217,7 @@ function removeStaff(userId, name) {
 
     showToast('Removing…', 'info');
 
-    fetch('../../api/staff.php', {
+    fetch('../../endpoints/staff.php', {
         method: 'POST',
 
         headers: {

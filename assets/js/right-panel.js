@@ -197,7 +197,7 @@
         fd.append('id', dbId);
         // keepalive: true guarantees delivery even during page navigation,
         // and unlike sendBeacon it correctly sends session cookies
-        fetch('../../api/admin/notifications.php', {
+        fetch('../../endpoints/admin/notifications.php', {
           method: 'POST', body: fd, keepalive: true
         }).catch(() => {});
       }
@@ -214,7 +214,7 @@
     const fd = new FormData();
     fd.append('action', 'mark_all_read');
     fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
-    fetch('../../api/admin/notifications.php', { method: 'POST', body: fd }).catch(() => {});
+    fetch('../../endpoints/admin/notifications.php', { method: 'POST', body: fd }).catch(() => {});
     notifState.forEach(n => { n.is_read = 1; });
     unreadCount = 0;
     renderNotifs();
@@ -225,7 +225,7 @@
     notifLoadingMore = true;
     renderNotifs();
     try {
-      const res = await fetch(`../../api/admin/notifications.php?action=list&offset=${notifOffset}&limit=${notifPageSize}`);
+      const res = await fetch(`../../endpoints/admin/notifications.php?action=list&offset=${notifOffset}&limit=${notifPageSize}`);
       const data = await res.json();
       if (data && data.success) {
         (data.notifications || []).forEach(n => {

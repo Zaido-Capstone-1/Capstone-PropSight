@@ -74,7 +74,7 @@ endif;
             <p class="dash-subtitle">Track rent collections and payment status.</p>
         </div>
         <div class="dash-header-actions">
-            <a href="../../api/admin/payments_export.php?<?= http_build_query($_GET) ?>" class="btn btn-outline">
+            <a href="../../endpoints/admin/payments_export.php?<?= http_build_query($_GET) ?>" class="btn btn-outline">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="7 10 12 15 17 10" />
@@ -423,7 +423,7 @@ endif;
             <h3 id="modalTitle">Record Payment</h3>
             <button class="modal-close" onclick="closeModal()">×</button>
         </div>
-        <form id="paymentForm" method="POST" action="../../api/payments.php">
+        <form id="paymentForm" method="POST" action="../../endpoints/payments.php">
             <input type="hidden" name="csrf_token"
                 value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">
             <input type="hidden" name="form_action" id="formAction" value="add">

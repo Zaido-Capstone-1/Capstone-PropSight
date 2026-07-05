@@ -21,7 +21,7 @@ define('MAIL_FROM_EMAIL', (!empty($_ENV['MAIL_FROM_EMAIL'])) ? $_ENV['MAIL_FROM_
 define('MAIL_ENCRYPTION', $_ENV['MAIL_ENCRYPTION']);
 
 // ── Social Login (Google / Facebook) ────────────────────────────────────
-// Redirect URIs are auto-detected per-request (see includes/oauth_helpers.php),
+// Redirect URIs are auto-detected per-request (see integrations/oauth_helpers.php),
 // so only the Client ID / Secret need to live in .env.
 define('GOOGLE_CLIENT_ID', $_ENV['GOOGLE_CLIENT_ID'] ?? '');
 define('GOOGLE_CLIENT_SECRET', $_ENV['GOOGLE_CLIENT_SECRET'] ?? '');

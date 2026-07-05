@@ -10,7 +10,7 @@ function saveNotifications() {
         if (el) fd.append(k, el.checked ? '1' : '0');
     });
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
-    fetch('../../api/user/settings.php', { method: 'POST', body: fd })
+    fetch('../../endpoints/user/settings.php', { method: 'POST', body: fd })
         .then(r => r.json())
         .then(d => {
             if (typeof showToast === 'function') {

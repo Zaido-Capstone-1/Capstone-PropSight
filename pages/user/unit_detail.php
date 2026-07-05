@@ -1146,7 +1146,7 @@ require '../../includes/_nav.php';
         window.PS_USER_ID = <?php echo json_encode((int) ($_SESSION['user_id'] ?? 0)); ?>;
         window.psGetCsrfToken = () => String(window.PS_CSRF_TOKEN || '');
         window.psAppendCsrf = t => { const k = window.psGetCsrfToken(); if (k && t?.append) t.append('csrf_token', k); return t; };
-        window.PS_RT_PAGE = 'unit_detail'; window.PS_RT_ROLE = 'user'; window.PS_RT_API = '../../api/realtime.php';
+        window.PS_RT_PAGE = 'unit_detail'; window.PS_RT_ROLE = 'user'; window.PS_RT_API = '../../endpoints/realtime.php';
         window.UD_IMAGES = <?php echo json_encode($images, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
         window.UD_UNIT = {
             lat: <?php echo (float) ($unit['latitude'] ?? 0); ?>,
@@ -1157,7 +1157,7 @@ require '../../includes/_nav.php';
             seasonality: { 0: 1.30, 1: 1.30, 2: 1.10, 3: 1.15, 4: 1.15, 5: 0.80, 6: 0.80, 7: 0.80, 8: 0.80, 9: 0.80, 10: 1.15, 11: 1.30 },
             seasonLabel: { 0: 'Peak', 1: 'Peak', 2: 'High', 3: 'High', 4: 'High', 5: 'Low', 6: 'Low', 7: 'Low', 8: 'Low', 9: 'Low', 10: 'High', 11: 'Peak' },
         };
-        fetch('../../api/user/sync_unit_statuses.php').catch(() => { });
+        fetch('../../endpoints/user/sync_unit_statuses.php').catch(() => { });
     </script>
 
     <script>

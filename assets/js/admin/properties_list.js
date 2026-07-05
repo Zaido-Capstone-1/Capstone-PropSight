@@ -9,7 +9,7 @@ function animateStat(el, newVal) {
 
 async function refreshStats() {
     try {
-        const res = await fetch('../../api/admin/get_property_stats.php');
+        const res = await fetch('../../endpoints/admin/get_property_stats.php');
         const data = await res.json();
         if (data.status !== 'success') return;
 
@@ -123,7 +123,7 @@ document.querySelectorAll('.delete-property-btn').forEach(btn => {
                     formData.append('csrf_token', window.PS_CSRF_TOKEN || '');
                     formData.append('property_id', id);
 
-                    const response = await fetch('../../api/admin/delete_property.php', {
+                    const response = await fetch('../../endpoints/admin/delete_property.php', {
                         method: 'POST',
                         body: formData
                     });

@@ -239,7 +239,7 @@
         btn.classList.add('loading');
         btn.disabled = true;
 
-        let url = `api/user/unit_availability.php?date=${encodeURIComponent(dateIn)}`;
+        let url = `endpoints/user/unit_availability.php?date=${encodeURIComponent(dateIn)}`;
         if (propertyId) url += `&property_id=${encodeURIComponent(propertyId)}`;
 
         fetch(url)

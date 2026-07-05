@@ -75,7 +75,7 @@ function handleYearChange(year) {
 }
 
 function loadFinancialData(year) {
-  fetch('../../api/financial_report.php?year=' + year, { credentials: 'same-origin' })
+  fetch('../../endpoints/financial_report.php?year=' + year, { credentials: 'same-origin' })
     .then(r => r.json())
     .then(data => {
       if (!data.success) return;

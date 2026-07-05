@@ -107,7 +107,7 @@ function doCancel() {
     fd.append('reason', 'User-requested cancellation');
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
     showToast('Cancelling booking…', 'info');
-    fetch('../../api/user/cancel_booking.php', {
+    fetch('../../endpoints/user/cancel_booking.php', {
             method: 'POST',
             body: fd
         })
@@ -218,7 +218,7 @@ function submitReview() {
     fd.append('comment', document.getElementById('reviewText').value.trim());
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
 
-    fetch('../../api/user/submit_review.php', {
+    fetch('../../endpoints/user/submit_review.php', {
             method: 'POST',
             body: fd
         })

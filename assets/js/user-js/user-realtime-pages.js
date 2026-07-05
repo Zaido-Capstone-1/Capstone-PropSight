@@ -103,7 +103,7 @@
     // Seed profile badge on load — fetch unread count directly from the realtime API
     // so the badge is populated on first page load, not just after the next poll fires.
     document.addEventListener('DOMContentLoaded', function () {
-        var apiBase = window.PS_RT_API || '../../api/realtime.php';
+        var apiBase = window.PS_RT_API || '../../endpoints/realtime.php';
         var page = window.PS_RT_PAGE || 'dashboard';
         fetch(apiBase + '?since=2000-01-01+00:00:00&page=' + page + '&role=user&_=' + Date.now(), {
             credentials: 'same-origin'

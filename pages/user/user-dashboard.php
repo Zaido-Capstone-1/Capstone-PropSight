@@ -1214,7 +1214,7 @@ require '../../includes/_nav.php';
         };
         window.PS_RT_PAGE = 'dashboard';
         window.PS_RT_ROLE = 'user';
-        window.PS_RT_API = '../../api/realtime.php';
+        window.PS_RT_API = '../../endpoints/realtime.php';
 
         function subscribeNewsletter() {
             const input = document.getElementById('newsletterEmailInput');
@@ -1233,7 +1233,7 @@ require '../../includes/_nav.php';
 
             const body = window.psAppendCsrf(new URLSearchParams({ email, action: 'subscribe' }));
 
-            fetch('../../api/user/subscribe_newsletter.php', {
+            fetch('../../endpoints/user/subscribe_newsletter.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()
@@ -1264,7 +1264,7 @@ require '../../includes/_nav.php';
 
             const body = window.psAppendCsrf(new URLSearchParams({ action: 'unsubscribe' }));
 
-            fetch('../../api/user/subscribe_newsletter.php', {
+            fetch('../../endpoints/user/subscribe_newsletter.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()

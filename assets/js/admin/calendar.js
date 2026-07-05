@@ -112,7 +112,7 @@ function submitBlock() {
     const reason = document.getElementById('blockReasonInput').value;
     if (!date) { showToast('Please select a date.', 'warning'); return; }
 
-    fetch('../../api/admin/block_date.php', {
+    fetch('../../endpoints/admin/block_date.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ action: 'block', date, reason, csrf_token: window.PS_CSRF_TOKEN ?? '' })
@@ -132,7 +132,7 @@ function submitBlock() {
 
 function submitUnblock() {
     const date = document.getElementById('blockDateInput').value;
-    fetch('../../api/admin/block_date.php', {
+    fetch('../../endpoints/admin/block_date.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ action: 'unblock', date, csrf_token: window.PS_CSRF_TOKEN ?? '' })

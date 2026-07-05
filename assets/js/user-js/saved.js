@@ -70,7 +70,7 @@ function toggleSaveRoom(unitId, btn) {
         b.classList.toggle('saved', !isSaved);
     });
 
-    fetch('../../api/user/save_toggle.php', {
+    fetch('../../endpoints/user/save_toggle.php', {
         method: 'POST',
         body: fd
     })

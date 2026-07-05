@@ -110,7 +110,7 @@ include '../../lib/admin-queries/messages_queries.php';
 </script>
 <script>
     const ADMIN_ID = <?php echo $adminId; ?>;
-    const ADMIN_API = '../../api/messages.php';
+    const ADMIN_API = '../../endpoints/messages.php';
     window.__PS_ADMIN_MSG_USERS__ = <?php echo json_encode($userList); ?>;
     window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
 </script>

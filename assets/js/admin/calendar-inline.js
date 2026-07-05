@@ -8,7 +8,7 @@ function refreshCalendarView() {
     // For calendar, we need to refresh blocked dates and re-render
     // Fetch current month's blocked dates
     const params = new URLSearchParams(window.location.search);
-    fetch('../../api/admin/block_date.php?action=list&' + params.toString() + '&_=' + Date.now(), { credentials: 'same-origin' })
+    fetch('../../endpoints/admin/block_date.php?action=list&' + params.toString() + '&_=' + Date.now(), { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
             if (!data || !data.success) { location.reload(); return; }

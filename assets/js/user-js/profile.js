@@ -23,7 +23,7 @@ function openVerifyEmailModal() {
 }
 
 function setupEditProfileSubmitLoading() {
-    const editForm = document.querySelector('#editModal form[action="../../api/user/edit_profile.php"]');
+    const editForm = document.querySelector('#editModal form[action="../../endpoints/user/edit_profile.php"]');
     if (!editForm) return;
 
     editForm.addEventListener('submit', () => {
@@ -132,7 +132,7 @@ function submitUpload() {
     fd.append('id_document', file);
     fd.append('csrf_token', csrfToken);
 
-    fetch('../../api/user/upload_id.php', {
+    fetch('../../endpoints/user/upload_id.php', {
             method: 'POST',
             body: fd,
         })
@@ -175,7 +175,7 @@ function confirmDelete() {
     fd.append('confirm_text', 'DELETE');
     fd.append('csrf_token', csrfToken);
 
-    fetch('../../api/user/delete_account.php', {
+    fetch('../../endpoints/user/delete_account.php', {
             method: 'POST',
             body: fd,
         })
@@ -226,7 +226,7 @@ function sendVerificationCode() {
     setVerifyError('');
     setVerifyButtonLoading(sendBtn, true, 'Sending...', 'Send Code');
 
-    fetch('../../api/user/send_verification_code.php', {
+    fetch('../../endpoints/user/send_verification_code.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -271,7 +271,7 @@ function confirmEmailVerification() {
     setVerifyError('');
     setVerifyButtonLoading(verifyBtn, true, 'Verifying...', 'Verify Email');
 
-    fetch('../../api/user/verify_email_code.php', {
+    fetch('../../endpoints/user/verify_email_code.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -375,7 +375,7 @@ function submitProfilePhoto() {
     fd.append('profile_photo', file);
     fd.append('csrf_token', csrf);
 
-    fetch('../../api/user/update_profile_photo.php', {
+    fetch('../../endpoints/user/update_profile_photo.php', {
             method: 'POST',
             body: fd
         })

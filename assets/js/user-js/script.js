@@ -354,7 +354,7 @@ if (burger && mob) {
         container.innerHTML = '<div id="pdReviewsLoading" style="padding:20px 0;text-align:center;color:#8aa4c0;font-size:.83rem;">Loading reviews…</div>';
         if (pager) pager.style.display = 'none';
 
-        fetch(`../../api/user/unit_reviews.php?unit_id=${unitId}&page=${page}&limit=5`)
+        fetch(`../../endpoints/user/unit_reviews.php?unit_id=${unitId}&page=${page}&limit=5`)
             .then(r => r.json())
             .then(data => {
                 if (!data.success) {
@@ -551,7 +551,7 @@ if (burger && mob) {
             unitId
         } = pendingBookingPayload;
         showToast('Submitting your booking request…', 'info');
-        fetch('../../api/user/book_unit.php', {
+        fetch('../../endpoints/user/book_unit.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -992,7 +992,7 @@ if (burger && mob) {
         if (ccmBtn) { ccmBtn.disabled = true; ccmBtn.textContent = 'Cancelling…'; }
         closeCancelConfirmModal();
         showToast('Cancelling your reservation…', 'info');
-        fetch('../../api/user/cancel_booking.php', {
+        fetch('../../endpoints/user/cancel_booking.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -1154,7 +1154,7 @@ if (burger && mob) {
         fd.append('unit_id', unitId);
         fd.append('action', isSaved ? 'unsave' : 'save');
         window.psAppendCsrf(fd);
-        fetch('../../api/user/save_toggle.php', {
+        fetch('../../endpoints/user/save_toggle.php', {
                 method: 'POST',
                 body: fd
             })

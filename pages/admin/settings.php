@@ -469,7 +469,7 @@ foreach ($policyDefs as $pk => $pd) {
         fd.append('title', title);
         fd.append('sections', JSON.stringify(sections));
 
-        fetch('../../api/settings.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/settings.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(d => {
                 showToast(d.message || 'Saved.', d.success ? 'success' : 'error');

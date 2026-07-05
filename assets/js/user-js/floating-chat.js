@@ -4,7 +4,7 @@
    a conversation to open a small popup window, bottom-right,
    stacking side by side (Messenger-style chat heads).
 
-   Reuses the existing api/user/messages.php endpoints:
+   Reuses the existing endpoints/user/messages.php endpoints:
      GET  ?action=threads
      GET  ?action=conversation&admin_id=X
      GET  ?action=poll&admin_id=X&since=...
@@ -12,7 +12,7 @@
      POST action=send
    ════════════════════════════════════════════════════════════ */
 (function () {
-    const API = '../../api/user/messages.php';
+    const API = '../../endpoints/user/messages.php';
     const MY_ID = parseInt(window.PS_USER_ID || (window.__PS_USER_MSG__ && window.__PS_USER_MSG__.userId) || 0, 10);
 
     // Open popups, keyed by admin_id → { el, adminId, adminName, adminPhoto, lastTs, pollTimer, minimized }
@@ -559,7 +559,7 @@
 
     function renderAttachment(url, messageId) {
         const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-        const proxyUrl = `../../api/view_message_attachment.php?message_id=${messageId}`;
+        const proxyUrl = `../../endpoints/view_message_attachment.php?message_id=${messageId}`;
         if (isImage) {
             return `<img src="${proxyUrl}" loading="lazy" onclick="window.__fcOpenImage && window.__fcOpenImage('${proxyUrl}')" title="Click to enlarge">`;
         }
@@ -649,7 +649,7 @@
                             if (tempImgUrl) {
                                 const img = tmp.querySelector(`img[src="${tempImgUrl}"]`);
                                 if (img) {
-                                    const proxyUrl = `../../api/view_message_attachment.php?message_id=${data.message_id}`;
+                                    const proxyUrl = `../../endpoints/view_message_attachment.php?message_id=${data.message_id}`;
                                     URL.revokeObjectURL(tempImgUrl);
                                     img.src = proxyUrl;
                                     img.setAttribute('onclick', `window.__fcOpenImage && window.__fcOpenImage('${proxyUrl}')`);

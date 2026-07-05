@@ -46,4 +46,4 @@ const menuToggle = document.getElementById('menuToggle');
 window._psToastReady = true;
 
 window.PS_RT_ROLE = 'admin';
-window.PS_RT_API  = '../../api/realtime.php';
+window.PS_RT_API  = '../../endpoints/realtime.php';

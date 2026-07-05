@@ -15,7 +15,7 @@ function animateStat(el, val) {
 
 async function refreshStats() {
   try {
-    const data = await fetch('../../api/admin/get_unit_stats.php').then(r => r.json());
+    const data = await fetch('../../endpoints/admin/get_unit_stats.php').then(r => r.json());
     if (data.status !== 'success') return;
     animateStat(document.getElementById('stat-total'), data.stats.total);
     animateStat(document.getElementById('stat-occupied'), data.stats.occupied);
@@ -107,7 +107,7 @@ async function fetchPropertyAmenities(propertyId) {
   if (!propertyId) return [];
   try {
     const data = await fetch(
-      `../../api/admin/get_property_amenities.php?property_id=${propertyId}`
+      `../../endpoints/admin/get_property_amenities.php?property_id=${propertyId}`
     ).then(r => r.json());
     return data.status === 'success' ? data.amenities : [];
   } catch (e) {
@@ -120,7 +120,7 @@ async function fetchUnitAmenities(unitId) {
   if (!unitId) return [];
   try {
     const data = await fetch(
-      `../../api/admin/get_unit_amenities.php?unit_id=${unitId}`
+      `../../endpoints/admin/get_unit_amenities.php?unit_id=${unitId}`
     ).then(r => r.json());
     return data.status === 'success' ? data.amenities : [];
   } catch (e) {
@@ -812,7 +812,7 @@ async function openViewModal(unit) {
         // New photo files
         newFiles.forEach(f => fd.append('unit_images[]', f));
 
-        const data = await fetch('../../api/admin/update_unit.php', { method: 'POST', body: fd }).then(r => r.json());
+        const data = await fetch('../../endpoints/admin/update_unit.php', { method: 'POST', body: fd }).then(r => r.json());
 
         if (data.status === 'success') {
           if (typeof showToast === 'function') showToast('Unit updated successfully.', 'success');
@@ -1134,7 +1134,7 @@ document.getElementById('open-add-unit-modal').addEventListener('click', () => {
           fd.append('description', bd.querySelector('#m-description').value.trim());
           getCheckedAmenityIds(bd).forEach(id => fd.append('amenity_ids[]', id));
           files.forEach(f => fd.append('unit_images[]', f));
-          const data = await fetch('../../api/admin/add_unit.php', { method: 'POST', body: fd }).then(r => r.json());
+          const data = await fetch('../../endpoints/admin/add_unit.php', { method: 'POST', body: fd }).then(r => r.json());
           if (data.status === 'success') {
             PS.toast(data.message, 'success');
             bd.classList.remove('open');
@@ -1242,7 +1242,7 @@ function attachDeleteHandler(btn) {
         const fd = new FormData();
         fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
         fd.append('unit_id', id);
-        const data = await fetch('../../api/admin/delete_unit.php', { method: 'POST', body: fd }).then(r => r.json());
+        const data = await fetch('../../endpoints/admin/delete_unit.php', { method: 'POST', body: fd }).then(r => r.json());
         if (data.status === 'success') {
           PS.toast(data.message, 'success');
           card.style.transition = 'opacity .3s,transform .3s';

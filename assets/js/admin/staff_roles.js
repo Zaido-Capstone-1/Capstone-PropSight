@@ -80,7 +80,7 @@ function refreshStaffTable(search, role) {
     if (q) params.set('search', q);
     if (r) params.set('role', r);
     const qs = params.toString();
-    const url = '../../api/staff.php' + (qs ? '?' + qs : '');
+    const url = '../../endpoints/staff.php' + (qs ? '?' + qs : '');
 
     fetch(url, { credentials: 'same-origin' })
         .then(r => r.json())
@@ -234,7 +234,7 @@ function confirmToggleActive() {
     btn.style.opacity = '0.7';
     btn.textContent = 'Saving…';
 
-    fetch('../../api/staff.php', {
+    fetch('../../endpoints/staff.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -294,7 +294,7 @@ function confirmRemoveStaff() {
     btn.style.opacity = '0.7';
     btn.textContent = 'Removing…';
 
-    fetch('../../api/staff.php', {
+    fetch('../../endpoints/staff.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -361,7 +361,7 @@ function submitInvite() {
         btn.textContent = 'Sending…';
     }
 
-    fetch('../../api/staff.php', {
+    fetch('../../endpoints/staff.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'

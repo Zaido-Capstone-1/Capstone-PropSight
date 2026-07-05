@@ -40,8 +40,8 @@
     'use strict';
 
     // ── Config ────────────────────────────────────────────────────────────────
-    var API_CREATE = '../../api/user/create_card_checkout.php';
-    var API_STATUS = '../../api/user/check_card_checkout_status.php';
+    var API_CREATE = '../../endpoints/user/create_card_checkout.php';
+    var API_STATUS = '../../endpoints/user/check_card_checkout_status.php';
     var POLL_INTERVAL_MS = 5000;
     var MAX_POLLS = 72;   // 72 × 5 s = 6 minutes
 

@@ -48,7 +48,7 @@ function animateStat(el, val) {
 // ── Stats ─────────────────────────────────────────────────────────────────────
 async function refreshStats() {
     try {
-        var data = await fetch('../../api/admin/get_amenity_stats.php').then(function (r) { return r.json(); });
+        var data = await fetch('../../endpoints/admin/get_amenity_stats.php').then(function (r) { return r.json(); });
         if (data.status !== 'success') return;
         animateStat(document.getElementById('stat-total'), data.stats.total);
         animateStat(document.getElementById('stat-available'), data.stats.available);
@@ -220,7 +220,7 @@ function openAddModal(pid, pname) {
                         fd.append('name', name);
                         fd.append('status', status);
                         fd.append('icon', icon);
-                        var data = await fetch('../../api/admin/add_amenity.php', { method: 'POST', body: fd }).then(function (r) { return r.json(); });
+                        var data = await fetch('../../endpoints/admin/add_amenity.php', { method: 'POST', body: fd }).then(function (r) { return r.json(); });
                         if (data.status === 'success') {
                             PS.toast(data.message, 'success');
                             bd.classList.remove('open');
@@ -284,7 +284,7 @@ function openEditModal(amenityId, name, icon, status, pid) {
 
                         console.log('Sending amenity_id:', amenityId); // verify in browser console
 
-                        var data = await fetch('../../api/admin/edit_amenity.php', { method: 'POST', body: fd }).then(function (r) { return r.json(); });
+                        var data = await fetch('../../endpoints/admin/edit_amenity.php', { method: 'POST', body: fd }).then(function (r) { return r.json(); });
                         if (data.status === 'success') {
                             PS.toast(data.message, 'success');
                             bd.classList.remove('open');
@@ -407,7 +407,7 @@ function bindCard(card) {
                     var fd = new FormData();
                     fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
                     fd.append('amenity_id', id);
-                    var data = await fetch('../../api/admin/delete_amenity.php', { method: 'POST', body: fd }).then(function (r) { return r.json(); });
+                    var data = await fetch('../../endpoints/admin/delete_amenity.php', { method: 'POST', body: fd }).then(function (r) { return r.json(); });
                     if (data.status === 'success') {
                         PS.toast(data.message, 'success');
                         el.style.transition = 'opacity .3s,transform .3s';

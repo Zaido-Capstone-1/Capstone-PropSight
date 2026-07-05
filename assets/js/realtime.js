@@ -1,7 +1,7 @@
 /**
  * realtime.js — PropSight Real-Time Engine
  * ─────────────────────────────────────────
- * Polls /api/realtime.php every PS_RT_INTERVAL ms.
+ * Polls /endpoints/realtime.php every PS_RT_INTERVAL ms.
  * Emits custom events on window so each page can react independently.
  *
  * Events emitted (window.dispatchEvent):
@@ -24,7 +24,7 @@
 
     /* ── Config ─────────────────────────────────────── */
     const INTERVAL = window.PS_RT_INTERVAL || 8000; // ms between polls
-    const API_BASE = window.PS_RT_API || '../../api/realtime.php';
+    const API_BASE = window.PS_RT_API || '../../endpoints/realtime.php';
     const PAGE = window.PS_RT_PAGE || 'dashboard';
     const ROLE = window.PS_RT_ROLE || 'user';
 
@@ -815,7 +815,7 @@
             const viewMoreBtn = document.getElementById('notifViewMoreBtn');
             if (viewMoreBtn) { viewMoreBtn.textContent = 'Loading…'; viewMoreBtn.disabled = true; }
 
-            fetch(`../../api/user/notifications.php?limit=${_notifPageSize}&offset=${offset}`)
+            fetch(`../../endpoints/user/notifications.php?limit=${_notifPageSize}&offset=${offset}`)
                 .then(r => r.json())
                 .then(data => {
                     if (!data.success) return;
@@ -893,7 +893,7 @@
             const fd = new FormData();
             fd.append('action', 'mark_all_read');
             if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
-            fetch('../../api/user/notifications.php', {
+            fetch('../../endpoints/user/notifications.php', {
                     method: 'POST',
                     body: fd
                 })
@@ -982,7 +982,7 @@
                 fd.append('action', 'mark_read');
                 fd.append('id', n.id);
                 if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
-                fetch('../../api/user/notifications.php', {
+                fetch('../../endpoints/user/notifications.php', {
                     method: 'POST',
                     body: fd
                 }).catch(() => {});

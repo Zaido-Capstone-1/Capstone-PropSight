@@ -602,7 +602,7 @@ $status_map = [
             await _loadPdfLibs();
 
             // Fetch receipt HTML (view=1 suppresses auto-download inside that page)
-            const res = await fetch('../../api/user/booking_receipt.php?booking_id=' + bookingId + '&view=1', { credentials: 'same-origin' });
+            const res = await fetch('../../endpoints/user/booking_receipt.php?booking_id=' + bookingId + '&view=1', { credentials: 'same-origin' });
             if (!res.ok) throw new Error('Fetch failed ' + res.status);
             const html = await res.text();
 
@@ -617,7 +617,7 @@ $status_map = [
             doc.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
                 const href = link.getAttribute('href');
                 if (!href) return;
-                const base = new URL('../../api/user/booking_receipt.php', window.location.href);
+                const base = new URL('../../endpoints/user/booking_receipt.php', window.location.href);
                 const absHref = new URL(href, base).href;
                 stylePromises.push(
                     fetch(absHref).then(r => r.text()).catch(() => '')

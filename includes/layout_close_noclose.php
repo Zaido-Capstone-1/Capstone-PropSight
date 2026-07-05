@@ -61,7 +61,7 @@
 <script>window._psToastReady = true;</script>
 <script>
   window.PS_RT_ROLE = 'admin';
-  window.PS_RT_API = '../../api/realtime.php';
+  window.PS_RT_API = '../../endpoints/realtime.php';
 </script>
 <script src="../../assets/js/realtime.js"></script>
 <script>
@@ -166,7 +166,7 @@
       if (_initialFetched) { if (cb) cb(); return; }
       _initialFetched = true;
       _bellList.innerHTML = '<div style="padding:24px 14px;text-align:center;color:#94a3b8;font-size:13px;">Loading…</div>';
-      fetch('../../api/admin/notifications.php?action=list&offset=0&limit=' + (window.__mobileNotifPageSize || 10))
+      fetch('../../endpoints/admin/notifications.php?action=list&offset=0&limit=' + (window.__mobileNotifPageSize || 10))
         .then(function (r) { return r.json(); })
         .then(function (data) {
           if (data && data.success) {
@@ -222,7 +222,7 @@
             var _fd = new FormData();
             _fd.append('action', 'mark_read');
             _fd.append('id', _dbId);
-            fetch('../../api/admin/notifications.php', { method: 'POST', body: _fd, keepalive: true }).catch(function () { });
+            fetch('../../endpoints/admin/notifications.php', { method: 'POST', body: _fd, keepalive: true }).catch(function () { });
           }
           if (_id && _st.has(_id)) { _st.get(_id).is_read = 1; }
           window.__mobileNotifUnreadCount = Math.max(0, window.__mobileNotifUnreadCount - 1);
@@ -236,7 +236,7 @@
       _bellMark.addEventListener('click', function () {
         var _fd = new FormData();
         _fd.append('action', 'mark_all_read');
-        fetch('../../api/admin/notifications.php', { method: 'POST', body: _fd }).catch(function () { });
+        fetch('../../endpoints/admin/notifications.php', { method: 'POST', body: _fd }).catch(function () { });
         _st.forEach(function (n) { n.is_read = 1; });
         window.__mobileNotifUnreadCount = 0; _render();
         _bellDrop.style.display = 'none';
@@ -248,7 +248,7 @@
         if (window.__mobileNotifLoadingMore || !window.__mobileNotifHasMore) return;
         window.__mobileNotifLoadingMore = true;
         _render();
-        fetch('../../api/admin/notifications.php?action=list&offset=' + window.__mobileNotifOffset + '&limit=' + window.__mobileNotifPageSize)
+        fetch('../../endpoints/admin/notifications.php?action=list&offset=' + window.__mobileNotifOffset + '&limit=' + window.__mobileNotifPageSize)
           .then(function (r) { return r.json(); })
           .then(function (data) {
             if (data && data.success) {

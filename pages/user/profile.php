@@ -284,7 +284,7 @@ require_once '../../lib/user-queries/profile_queries.php';
         <div class="modal-title">Change Profile Picture</div>
         <div class="modal-sub">Upload a clear square image (JPG, PNG, WEBP · max 2MB).</div>
 
-        <form action="../../api/user/update_profile_photo.php" method="POST" enctype="multipart/form-data">
+        <form action="../../endpoints/user/update_profile_photo.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token"
                 value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">
 
@@ -337,7 +337,7 @@ require_once '../../lib/user-queries/profile_queries.php';
 
 <div class="modal-overlay" id="editModal">
     <div class="modal-box edit-profile-modal-box">
-        <form action="../../api/user/edit_profile.php" method="POST">
+        <form action="../../endpoints/user/edit_profile.php" method="POST">
             <input type="hidden" name="csrf_token"
                 value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">
             <input type="hidden" name="edit_profile" value="1">

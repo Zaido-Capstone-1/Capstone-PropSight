@@ -277,7 +277,7 @@ function deletePayment() {
     const id = document.getElementById('deletePaymentId').value;
     if (!id) return;
 
-    fetch('../../api/payments.php', {
+    fetch('../../endpoints/payments.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `form_action=delete&payment_id=${id}&csrf_token=${encodeURIComponent(window.PS_CSRF_TOKEN)}`
@@ -302,7 +302,7 @@ function fmtPeso(v) {
 }
 
 function refreshPaymentsTable() {
-    fetch('../../api/payments.php?status=all&month=all&_=' + Date.now(), { credentials: 'same-origin' })
+    fetch('../../endpoints/payments.php?status=all&month=all&_=' + Date.now(), { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
             if (!data || !data.success) { location.reload(); return; }

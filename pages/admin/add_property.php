@@ -82,7 +82,7 @@ function errClass($key)
     <div class="card">
       <div class="card-header"><span class="card-title">Property Information</span></div>
 
-      <form method="POST" action="../../api/admin/add_property.php" novalidate>
+      <form method="POST" action="../../endpoints/admin/add_property.php" novalidate>
 
         <input type="hidden" name="csrf_token"
           value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">

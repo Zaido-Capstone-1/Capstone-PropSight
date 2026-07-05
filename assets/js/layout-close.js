@@ -47,5 +47,5 @@ window._psToastReady = true;
 
 /* ── PropSight Real-Time bootstrap ── */
 window.PS_RT_ROLE = 'admin';
-window.PS_RT_API  = '../../api/realtime.php';
+window.PS_RT_API  = '../../endpoints/realtime.php';
 /* PS_RT_PAGE is set by each page before this script runs */

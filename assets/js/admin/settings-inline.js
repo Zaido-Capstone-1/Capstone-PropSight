@@ -12,7 +12,7 @@ function uploadAdminPhoto(input) {
         const fd = new FormData();
         fd.append('action', 'upload_photo');
         fd.append('photo', file);
-        fetch('../../api/admin/update_profile_photo.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/admin/update_profile_photo.php', { method: 'POST', body: fd })
             .then(r => r.json()).then(d => {
                 if (d.success && d.photo_url) {
                     const img = document.getElementById('settingsAvatarImg');
@@ -44,7 +44,7 @@ function uploadAdminPhoto(input) {
         if (!confirm('Remove your profile photo?')) return;
         const fd = new FormData();
         fd.append('action', 'remove_photo');
-        fetch('../../api/admin/update_profile_photo.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/admin/update_profile_photo.php', { method: 'POST', body: fd })
             .then(r => r.json()).then(d => {
                 if (d.success) {
                     const img = document.getElementById('settingsAvatarImg');
@@ -67,7 +67,7 @@ function uploadAdminPhoto(input) {
         fd.append('email', document.getElementById('adm_email')?.value || '');
         fd.append('phone', document.getElementById('adm_phone')?.value || '');
         fd.append('address', document.getElementById('adm_addr')?.value || '');
-        fetch('../../api/settings.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/settings.php', { method: 'POST', body: fd })
             .then(r => r.json()).then(d => {
                 showToast(d.message, d.success ? 'success' : 'error');
             }).catch(() => showToast('An error occurred.', 'error'));
@@ -78,7 +78,7 @@ function uploadAdminPhoto(input) {
         fd.append('current_password', document.getElementById('cur_pw')?.value || '');
         fd.append('new_password', document.getElementById('new_pw')?.value || '');
         fd.append('confirm_password', document.getElementById('conf_pw')?.value || '');
-        fetch('../../api/settings.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/settings.php', { method: 'POST', body: fd })
             .then(r => r.json()).then(d => {
                 showToast(d.message, d.success ? 'success' : 'error');
                 if (d.success) { document.getElementById('cur_pw').value = ''; document.getElementById('new_pw').value = ''; document.getElementById('conf_pw').value = ''; }
@@ -87,7 +87,7 @@ function uploadAdminPhoto(input) {
     function saveSystemPrefs() {
         const fd = new FormData(); fd.append('action', 'update_system');
         document.querySelectorAll('[data-setting]').forEach(el => fd.append(el.dataset.setting, el.value));
-        fetch('../../api/settings.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/settings.php', { method: 'POST', body: fd })
             .then(r => r.json()).then(d => {
                 showToast(d.message, d.success ? 'success' : 'error');
             }).catch(() => showToast('An error occurred.', 'error'));

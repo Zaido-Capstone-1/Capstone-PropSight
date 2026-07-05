@@ -96,7 +96,7 @@
     }
 
     function refreshGuestTable() {
-        fetch('../../api/guests.php', {
+        fetch('../../endpoints/guests.php', {
                 credentials: 'same-origin'
             })
             .then(r => r.json())
@@ -158,7 +158,7 @@
         const action = blacklist ? 'block' : 'unblock';
         if (!confirm(`Are you sure you want to ${action} ${name}?`)) return;
         showToast(`${blacklist ? 'Blocking' : 'Unblocking'} guest…`, 'info');
-        fetch('../../api/guests.php', {
+        fetch('../../endpoints/guests.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -232,7 +232,7 @@
         this.textContent = 'Processing…';
         showToast(_blockAction ? 'Blocking guest…' : 'Unblocking guest…', 'info');
 
-        fetch('../../api/guests.php', {
+        fetch('../../endpoints/guests.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -299,7 +299,7 @@ function reviewId(userId, action, reason = '') {
     fd.append('action', action);
     if (reason) fd.append('reject_reason', reason);
 
-    fetch('../../api/admin/review_id.php', {
+    fetch('../../endpoints/admin/review_id.php', {
             method: 'POST',
             body: fd
         })
@@ -329,7 +329,7 @@ let _currentViewIdUserId = null;
 function openViewIdModal(userId, imagePath) {
     _currentViewIdUserId = userId;
     // Use secure proxy instead of direct path
-    document.getElementById('viewIdImage').src = `../../api/admin/view_id_document.php?user_id=${userId}`;
+    document.getElementById('viewIdImage').src = `../../endpoints/admin/view_id_document.php?user_id=${userId}`;
     document.getElementById('viewIdModal').classList.add('open');
 }
 

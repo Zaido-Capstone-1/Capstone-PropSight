@@ -248,7 +248,7 @@ function updateTransactionStats(stats) {
 /* ── Real-time refresh ──────────────────────────────────────────────────── */
 function refreshTransactionsTable() {
     const year = new Date().getFullYear();
-    fetch('../../api/transactions.php?year=' + year + '&_=' + Date.now(), {
+    fetch('../../endpoints/transactions.php?year=' + year + '&_=' + Date.now(), {
             credentials: 'same-origin'
         })
         .then(r => r.json())

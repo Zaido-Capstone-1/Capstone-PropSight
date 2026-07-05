@@ -150,7 +150,7 @@ function _actionButtons(bookingId, status) {
     const viewBtn = `<button class="action-btn btn-view" onclick="openDetail(${bookingId})">View</button>`;
     const viewItem = `<button class="res-menu-item" onclick="openDetail(${bookingId});_closeRowMenus();">${icoView}View Details</button>`;
     const copyItem = `<button class="res-menu-item" onclick="_copyBookingRef(${bookingId},this)">${icoCopy}Copy Reference</button>`;
-    const receiptItem = `<a href="../../api/user/booking_receipt.php?booking_id=${bookingId}" target="_blank" class="res-menu-item" onclick="_closeRowMenus()">${icoReceipt}Download Receipt</a>`;
+    const receiptItem = `<a href="../../endpoints/user/booking_receipt.php?booking_id=${bookingId}" target="_blank" class="res-menu-item" onclick="_closeRowMenus()">${icoReceipt}Download Receipt</a>`;
     const resendItem = `<button class="res-menu-item" onclick="_resendConfirmation(${bookingId},this)">${icoMail}Resend Confirmation</button>`;
     const cancelItem = `<button class="res-menu-item res-menu-item-danger" onclick="_closeRowMenus();updateStatus(${bookingId},'cancelled',this)">${icoX}Cancel Booking</button>`;
     const deleteItem = `<button class="res-menu-item res-menu-item-danger" onclick="_closeRowMenus();deleteBooking(${bookingId},this)">${icoTrash}Delete Booking</button>`;
@@ -283,7 +283,7 @@ function openDetail(bookingId) {
 window.openDetail = openDetail;
 
 function _loadDetail(bookingId, body) {
-    fetch(`../../api/reservations.php?detail=${bookingId}`, { credentials: 'same-origin' })
+    fetch(`../../endpoints/reservations.php?detail=${bookingId}`, { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
             if (!data.success || !data.booking) {
@@ -488,7 +488,7 @@ function _detailHtml(b, payments) {
 /* ─── Contextual footer buttons for the detail modal ─────────────────────── */
 function _detailFooterButtons(b) {
     const id = b.booking_id;
-    const receiptBtn = `<a href="../../api/user/booking_receipt.php?booking_id=${id}" target="_blank" class="action-btn btn-receipt" style="text-decoration:none;">Receipt</a>`;
+    const receiptBtn = `<a href="../../endpoints/user/booking_receipt.php?booking_id=${id}" target="_blank" class="action-btn btn-receipt" style="text-decoration:none;">Receipt</a>`;
     const resendBtn = `<button type="button" class="action-btn btn-view" onclick="_resendConfirmation(${id}, this)">Resend Email</button>`;
     const deleteBtn = `<button type="button" class="action-btn btn-cancel" onclick="_deleteFromDetail(${id}, this)">Delete</button>`;
 
@@ -578,7 +578,7 @@ async function updateStatus(bookingId, newStatus, btn) {
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
     // if (typeof showToast === 'function') showToast('Updating…', 'info');
 
-    return fetch('../../api/reservations.php', {
+    return fetch('../../endpoints/reservations.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -667,7 +667,7 @@ async function _resendConfirmation(bookingId, btn) {
     const orig = btn ? btn.innerHTML : '';
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
 
-    fetch('../../api/reservations.php', {
+    fetch('../../endpoints/reservations.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -702,7 +702,7 @@ async function deleteBooking(bookingId, btn) {
     const orig = btn ? btn.innerHTML : '';
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
 
-    return fetch('../../api/reservations.php', {
+    return fetch('../../endpoints/reservations.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -739,7 +739,7 @@ window.deleteBooking = deleteBooking;
 
 /* ─── Stats ──────────────────────────────────────────────────────────────── */
 function _refreshStatsOnly() {
-    fetch('../../api/reservations.php?stats_only=1', { credentials: 'same-origin' })
+    fetch('../../endpoints/reservations.php?stats_only=1', { credentials: 'same-origin' })
         .then(r => r.json())
         .then(d => { if (d.stats) _applyStats(d.stats); })
         .catch(() => { });
@@ -1011,7 +1011,7 @@ applyFilter();
         if (document.hidden) return;
 
         // Call the same API the page uses — limit=200 to always get full list
-        const url = '../../api/reservations.php?' + new URLSearchParams({
+        const url = '../../endpoints/reservations.php?' + new URLSearchParams({
             status: 'all',
             search: '',
             limit: '200',

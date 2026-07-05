@@ -15,7 +15,7 @@ function processAction(bookingId, type) {
     // wire confirm click
     confirmBtn.onclick = function () {
         closeCicoModal();
-        fetch('../../api/checkin.php', {
+        fetch('../../endpoints/checkin.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -281,7 +281,7 @@ function submitExtend() {
         showToast('Please pick a new check-out date.', 'error');
         return;
     }
-    fetch('../../api/extend_stay.php', {
+    fetch('../../endpoints/extend_stay.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -366,7 +366,7 @@ function lookupVoucher() {
     fd.append('action', 'check');
     fd.append('voucher_code', code);
 
-    fetch('../../api/admin/mark_voucher_used.php', {
+    fetch('../../endpoints/admin/mark_voucher_used.php', {
             method: 'POST',
             body: fd
         })
@@ -422,7 +422,7 @@ function useVoucher(code) {
     fd.append('action', 'use');
     fd.append('voucher_code', code);
 
-    fetch('../../api/admin/mark_voucher_used.php', {
+    fetch('../../endpoints/admin/mark_voucher_used.php', {
             method: 'POST',
             body: fd
         })

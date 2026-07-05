@@ -409,7 +409,7 @@
         fd.append('unit_id', unitId);
         fd.append('action', isSaved ? 'unsave' : 'save');
         if (window.psAppendCsrf) window.psAppendCsrf(fd);
-        fetch('../../api/user/save_toggle.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/user/save_toggle.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(d => {
                 btn.classList.remove('saving');

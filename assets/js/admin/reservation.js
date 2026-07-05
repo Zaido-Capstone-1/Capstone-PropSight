@@ -5,7 +5,7 @@ function updateStatus(bookingId, newStatus, btn) {
 
     showToast('Updating booking status…', 'info');
 
-    fetch('../../api/reservations.php', {
+    fetch('../../endpoints/reservations.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ action: 'update_status', booking_id: bookingId, status: newStatus })

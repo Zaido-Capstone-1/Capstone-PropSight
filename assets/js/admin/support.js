@@ -105,7 +105,7 @@ function openTicketModal(ticketId, data) {
 async function loadTicketMessages(ticketId) {
     const wrap = document.getElementById('ticketMsgThread');
     try {
-        const res = await fetch(`../../api/admin/support.php?action=messages&ticket_id=${ticketId}`);
+        const res = await fetch(`../../endpoints/admin/support.php?action=messages&ticket_id=${ticketId}`);
         const data = await res.json();
 
         if (!data.success || !data.messages?.length) {
@@ -144,7 +144,7 @@ async function sendTicketReply() {
     fd.append('body', body);
 
     try {
-        const res = await fetch('../../api/admin/support.php', { method: 'POST', body: fd });
+        const res = await fetch('../../endpoints/admin/support.php', { method: 'POST', body: fd });
         const data = await res.json();
         if (data.success) {
             document.getElementById('ticketReplyBody').value = '';
@@ -175,7 +175,7 @@ async function updateTicketStatus() {
     fd.append('status', status);
 
     try {
-        const res = await fetch('../../api/admin/support.php', { method: 'POST', body: fd });
+        const res = await fetch('../../endpoints/admin/support.php', { method: 'POST', body: fd });
         const data = await res.json();
 
         if (data.success) {
@@ -396,7 +396,7 @@ async function _doDeleteTicket(ticketId) {
     fd.append('ticket_id', ticketId);
 
     try {
-        const res  = await fetch('../../api/admin/support.php', { method: 'POST', body: fd });
+        const res  = await fetch('../../endpoints/admin/support.php', { method: 'POST', body: fd });
         const data = await res.json();
 
         if (data.success) {

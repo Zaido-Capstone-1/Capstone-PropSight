@@ -14,7 +14,7 @@
 (() => {
     'use strict';
 
-    const API = '../../api/admin/invoice.php';
+    const API = '../../endpoints/admin/invoice.php';
 
     /* ─── DOM shortcuts ──────────────────────────────────────────────────── */
     const $ = (id) => document.getElementById(id);
@@ -512,7 +512,7 @@
         }
     });
 
-    /* Poll api/admin/invoice.php?action=check_paid until invoice flips to Paid.
+    /* Poll endpoints/admin/invoice.php?action=check_paid until invoice flips to Paid.
        Uses the existing admin endpoint so no session mismatch. */
     function startInvoicePaymentPoll(rowId, invoiceId) {
         if (!invoiceId) return;
@@ -534,7 +534,7 @@
                 fd.append('action', 'check_paid');
                 fd.append('id', invoiceId);
                 fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
-                const res = await fetch('../../api/admin/invoice.php', {
+                const res = await fetch('../../endpoints/admin/invoice.php', {
                     method: 'POST', credentials: 'same-origin', body: fd
                 });
                 const d = await res.json();

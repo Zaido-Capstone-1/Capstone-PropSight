@@ -70,7 +70,7 @@
 <script>window._psToastReady = true;</script>
 <script>
     window.PS_RT_ROLE = 'user';
-    window.PS_RT_API = '../../api/realtime.php';
+    window.PS_RT_API = '../../endpoints/realtime.php';
 </script>
 <script src="../../assets/js/realtime.js"></script>
 <script src="../../assets/js/user-js/user-realtime-pages.js"></script>

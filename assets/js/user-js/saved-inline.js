@@ -260,7 +260,7 @@ showToast("You do not have permission to access this page.", "error", "Unauthori
                 csrf_token: (typeof window.psGetCsrfToken === 'function' ? window.psGetCsrfToken() : ''),
             };
 
-            fetch('../../api/user/book_unit.php', {
+            fetch('../../endpoints/user/book_unit.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams(payload)
@@ -420,7 +420,7 @@ function removeSaved(savedId, unitId, btn) {
         fd.append('action', 'remove');
         fd.append('unit_id', unitId);
         if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
-        fetch('../../api/user/saved.php', {
+        fetch('../../endpoints/user/saved.php', {
                 method: 'POST',
                 body: fd
             })

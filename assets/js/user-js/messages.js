@@ -250,7 +250,7 @@ function unsentMessage(msgId) {
 
 function renderAttachment(url, messageId) {
     const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-    const proxyUrl = `../../api/view_message_attachment.php?message_id=${messageId}`;
+    const proxyUrl = `../../endpoints/view_message_attachment.php?message_id=${messageId}`;
     if (isImage) {
         return `<img src="${proxyUrl}" style="max-width:220px;max-height:200px;border-radius:8px;margin-top:6px;display:block;cursor:pointer;" onclick="openImageModal('${proxyUrl}')" title="Click to enlarge">`;
     }
@@ -404,7 +404,7 @@ function sendMsg() {
                     if (data.message_id) {
                         tmp.dataset.msgId = data.message_id;
                         // Replace blob URL with real proxy URL and remove opacity
-                        const proxyUrl = `../../api/view_message_attachment.php?message_id=${data.message_id}`;
+                        const proxyUrl = `../../endpoints/view_message_attachment.php?message_id=${data.message_id}`;
                         tmp.querySelectorAll('img[src^="blob:"]').forEach(el => {
                             URL.revokeObjectURL(el.src);
                             el.src = proxyUrl;

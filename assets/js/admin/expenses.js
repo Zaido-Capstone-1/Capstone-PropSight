@@ -7,7 +7,7 @@
 //  CONFIG
 // ─────────────────────────────────────────────────────────
 const EXPENSES = {
-    apiUrl: '../../api/expenses.php',
+    apiUrl: '../../endpoints/expenses.php',
 
     catColours: {
         Maintenance: '#E74C3C',

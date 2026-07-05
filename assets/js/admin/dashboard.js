@@ -81,7 +81,7 @@ function loadRevenueYear(year) {
   const chart = window._psRevenueChart;
   if (!chart) return;
 
-  fetch(`../../api/admin/get_financial_data.php?year=${encodeURIComponent(y)}`, {
+  fetch(`../../endpoints/admin/get_financial_data.php?year=${encodeURIComponent(y)}`, {
     credentials: 'same-origin'
   })
     .then(r => r.json())
@@ -385,7 +385,7 @@ window.addEventListener('ps:recent_activity', e => {
     const sinceDate = new Date(Date.now() - 60 * 60 * 1000);
     const sinceParam = encodeURIComponent(sinceDate.toISOString().slice(0, 19).replace('T', ' '));
 
-    fetch('../../api/realtime.php?since=' + sinceParam + '&page=dashboard&role=admin&_=' + Date.now(), { credentials: 'same-origin' })
+    fetch('../../endpoints/realtime.php?since=' + sinceParam + '&page=dashboard&role=admin&_=' + Date.now(), { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
             if (data.recent_activity && data.recent_activity.length) {

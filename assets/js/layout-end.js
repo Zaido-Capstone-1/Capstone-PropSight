@@ -62,4 +62,4 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeSidebar();
 window._psToastReady = true;
 
 window.PS_RT_ROLE = 'user';
-window.PS_RT_API  = '../../api/realtime.php';
+window.PS_RT_API  = '../../endpoints/realtime.php';

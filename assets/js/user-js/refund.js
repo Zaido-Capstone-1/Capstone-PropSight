@@ -56,11 +56,11 @@ function submitRefundRequest() {
     if (_refundInvoiceId) {
         // Invoice refund → new endpoint
         fd.append('invoice_id', _refundInvoiceId);
-        endpoint = '../../api/user/request_invoice_refund.php';
+        endpoint = '../../endpoints/user/request_invoice_refund.php';
     } else {
         // Booking refund → existing endpoint
         fd.append('booking_id', _refundBookingId);
-        endpoint = '../../api/user/request_refund.php';
+        endpoint = '../../endpoints/user/request_refund.php';
     }
 
     fetch(endpoint, { method: 'POST', body: fd })
