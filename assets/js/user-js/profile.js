@@ -353,6 +353,48 @@ document.querySelector('.btn-danger')?.addEventListener('click', () => {
 
 setupEditProfileSubmitLoading();
 
+function removeProfilePhoto() {
+    const csrf = document.getElementById('profilePhotoCsrf')?.value || '';
+    const removeBtn = document.getElementById('profilePhotoRemoveBtn');
+    const msgEl = document.getElementById('profilePhotoMsg');
+
+    if (!confirm('Remove your profile photo? This cannot be undone.')) return;
+
+    const originalHtml = removeBtn.innerHTML;
+    removeBtn.disabled = true;
+    removeBtn.innerHTML = 'Removing…';
+    msgEl.style.display = 'none';
+
+    const fd = new FormData();
+    fd.append('csrf_token', csrf);
+
+    fetch('../../endpoints/user/remove_profile_picture.php', {
+            method: 'POST',
+            body: fd
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                closeModal('profilePhotoModal');
+                if (typeof showToast === 'function') showToast(data.message || 'Profile picture removed.', 'success');
+                setTimeout(() => location.reload(), 800);
+            } else {
+                msgEl.textContent = data.message || 'Could not remove photo. Please try again.';
+                msgEl.style.color = '#dc2626';
+                msgEl.style.display = 'block';
+                removeBtn.disabled = false;
+                removeBtn.innerHTML = originalHtml;
+            }
+        })
+        .catch(() => {
+            msgEl.textContent = 'Network error. Please try again.';
+            msgEl.style.color = '#dc2626';
+            msgEl.style.display = 'block';
+            removeBtn.disabled = false;
+            removeBtn.innerHTML = originalHtml;
+        });
+}
+
 function submitProfilePhoto() {
     const fileInput = document.getElementById('profilePhotoFileInput');
     const csrf = document.getElementById('profilePhotoCsrf')?.value || '';
@@ -375,7 +417,7 @@ function submitProfilePhoto() {
     fd.append('profile_photo', file);
     fd.append('csrf_token', csrf);
 
-    fetch('../../endpoints/user/update_profile_photo.php', {
+    fetch('../../endpoints/user/update_profile_picture.php', {
             method: 'POST',
             body: fd
         })

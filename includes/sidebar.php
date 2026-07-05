@@ -35,7 +35,7 @@ if ($_sb_photo_raw === '' && isset($_SESSION['user_id']) && !empty($conn)) {
 // Build a URL two levels up from pages/admin/
 $_sb_photo_url = '';
 if ($_sb_photo_raw !== '') {
-  $_sb_photo_url = '../../' . ltrim($_sb_photo_raw, '/');
+  $_sb_photo_url = preg_match('#^https?://#i', $_sb_photo_raw) ? $_sb_photo_raw : '../../' . ltrim($_sb_photo_raw, '/');
 }
 // Compute initials from session name
 $_sb_name = trim((string) ($_SESSION['name'] ?? 'Admin'));

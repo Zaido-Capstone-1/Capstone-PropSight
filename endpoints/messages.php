@@ -227,7 +227,7 @@ if ($method === 'POST') {
         // Handle file attachment
         $attachmentUrl = 'NULL';
         if (!empty($_FILES['attachment']['name']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = __DIR__ . '/../assets/uploads/messages/';
+            $uploadDir = __DIR__ . '/../uploads/messages/';
             if (!is_dir($uploadDir))
                 mkdir($uploadDir, 0755, true);
 
@@ -246,7 +246,7 @@ if ($method === 'POST') {
 
             $filename = uniqid('msg_', true) . '.' . $ext;
             if (move_uploaded_file($_FILES['attachment']['tmp_name'], $uploadDir . $filename)) {
-                $urlPath = 'assets/uploads/messages/' . $filename;
+                $urlPath = 'uploads/messages/' . $filename;
                 $attachmentUrl = "'" . mysqli_real_escape_string($conn, $urlPath) . "'";
             }
         }

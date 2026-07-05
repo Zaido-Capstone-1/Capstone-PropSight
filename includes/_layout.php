@@ -12,7 +12,9 @@ if ($sidebarPhotoRaw === '' && isset($_SESSION['user_id']) && $conn) {
         $_SESSION['profile_photo'] = $sidebarPhotoRaw;
     }
 }
-$sidebarPhoto = $sidebarPhotoRaw !== '' ? '../../' . ltrim($sidebarPhotoRaw, '/') : '';
+$sidebarPhoto = $sidebarPhotoRaw !== ''
+    ? (preg_match('#^https?://#i', $sidebarPhotoRaw) ? $sidebarPhotoRaw : '../../' . ltrim($sidebarPhotoRaw, '/'))
+    : '';
 $nav_items = [
     'profile' => ['label' => 'View Profile', 'sub' => 'Personal details & preferences', 'href' => 'profile.php', 'badge' => null, 'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
     'bookings' => [

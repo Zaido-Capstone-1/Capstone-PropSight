@@ -17,7 +17,9 @@ if ($_rp_photo_raw === '' && isset($_SESSION['user_id']) && !empty($conn)) {
     $_SESSION['profile_photo'] = $_rp_photo_raw;
   }
 }
-$_rp_photo_url = $_rp_photo_raw !== '' ? '../../' . ltrim($_rp_photo_raw, '/') : '';
+$_rp_photo_url = $_rp_photo_raw !== ''
+    ? (preg_match('#^https?://#i', $_rp_photo_raw) ? $_rp_photo_raw : '../../' . ltrim($_rp_photo_raw, '/'))
+    : '';
 $_rp_name = trim((string) ($_SESSION['name'] ?? 'Admin'));
 $_rp_parts = array_filter(explode(' ', $_rp_name));
 $_rp_initials = '';

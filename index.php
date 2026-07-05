@@ -50,6 +50,10 @@ function hero_img_path(?string $raw): string {
 $landingUnits = $units ?? [];
 $heroUnits = array_slice($landingUnits, 0, 8);
 
+$featuredUnits = $landingUnits;
+shuffle($featuredUnits);
+$featuredUnits = array_slice($featuredUnits, 0, 4);
+
 // ── Dynamic hero stats ───────────────────────────────────────────────────────
 $statRooms = count($units ?? []);
 
@@ -128,6 +132,12 @@ if (isset($conn) && $conn) {
         <div style="display:flex;align-items:center;gap:0.75rem;">
             <button class="btn-login-header">Log In</button>
             <button class="btn-book-header" onclick="openModal('signup')">Sign Up</button>
+            <button class="btn-account-header" id="accountHeaderBtn" aria-label="Log in or sign up" title="Log in or sign up">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"></path>
+                </svg>
+            </button>
             <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
         </div>
     </header>
@@ -138,8 +148,6 @@ if (isset($conn) && $conn) {
         <a href="#rooms" onclick="closeMob()">Rooms</a>
         <a href="#reviews" onclick="closeMob()">Reviews</a>
         <a href="#contact" onclick="closeMob()">Contact</a>
-        <a href="#" onclick="closeMob();openModal('signup');return false;" style="color:var(--gold);font-weight:600;">Sign Up</a>
-        <button class="btn-login-header">Log In</button>
     </div>
 
     <div class="modal-overlay" id="loginModal">
@@ -238,40 +246,6 @@ if (isset($conn) && $conn) {
                     </div>
 
                     <div class="modal-field">
-                        <label>Phone Number</label>
-                        <div class="phone-input-wrap">
-                            <div class="phone-flag-select" id="phoneFlagSelect">
-                                <span class="phone-flag-icon" id="phoneFlagIcon">🇵🇭</span>
-                                <span class="phone-dial-code" id="phoneDialCode">+63</span>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11" class="phone-chevron">
-                                    <polyline points="6 9 12 15 18 9"/>
-                                </svg>
-                                <select id="signupCountryCode" name="country_code" required autocomplete="tel-country-code" class="phone-select-hidden">
-                                    <option value="+63" data-flag="🇵🇭" selected>🇵🇭 Philippines +63</option>
-                                    <option value="+1"  data-flag="🇺🇸">🇺🇸 United States +1</option>
-                                    <option value="+44" data-flag="🇬🇧">🇬🇧 United Kingdom +44</option>
-                                    <option value="+61" data-flag="🇦🇺">🇦🇺 Australia +61</option>
-                                    <option value="+65" data-flag="🇸🇬">🇸🇬 Singapore +65</option>
-                                    <option value="+81" data-flag="🇯🇵">🇯🇵 Japan +81</option>
-                                    <option value="+82" data-flag="🇰🇷">🇰🇷 South Korea +82</option>
-                                    <option value="+91" data-flag="🇮🇳">🇮🇳 India +91</option>
-                                    <option value="+971" data-flag="🇦🇪">🇦🇪 UAE +971</option>
-                                    <option value="+966" data-flag="🇸🇦">🇸🇦 Saudi Arabia +966</option>
-                                    <option value="+974" data-flag="🇶🇦">🇶🇦 Qatar +974</option>
-                                    <option value="+973" data-flag="🇧🇭">🇧🇭 Bahrain +973</option>
-                                    <option value="+965" data-flag="🇰🇼">🇰🇼 Kuwait +965</option>
-                                </select>
-                            </div>
-                            <div class="phone-divider"></div>
-                            <input id="signupPhoneNumber" type="tel" name="phone" placeholder="9123456789"
-                                inputmode="numeric" maxlength="10" required class="phone-number-input">
-                        </div>
-                        <small style="display:block;margin-top:6px;color:var(--text-soft);font-size:.72rem;">
-                            Use your local number without leading 0.
-                        </small>
-                    </div>
-
-                    <div class="modal-field">
                         <label>Password</label>
                         <div class="password-field-wrap">
                             <input id="signupPassword" type="password" name="password" placeholder="••••••••" required
@@ -310,20 +284,6 @@ if (isset($conn) && $conn) {
                         </div>
                         <small id="signupConfirmPasswordAlert"
                             style="display:none;margin-top:6px;color:#dc2626;font-size:.72rem;"></small>
-                    </div>
-
-                    <div class="form-field" style="margin-bottom:14px;">
-                        <label style="display:block;margin-bottom:6px;font-size:.8rem;font-weight:600;">Country</label>
-                        <select name="nationality"
-                            style="width:100%;padding:10px 12px;border:1.5px solid var(--border,#e2e8f0);border-radius:8px;font-size:.85rem;font-family:inherit;background:#fff;color:var(--text-dark);">
-                            <option value="">Select your country</option>
-                            <?php
-                            $reg_countries = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"];
-                            foreach ($reg_countries as $c) {
-                                echo '<option value="' . htmlspecialchars($c) . '">' . htmlspecialchars($c) . "</option>\n";
-                            }
-                            ?>
-                        </select>
                     </div>
 
                     <div class="signup-consent">
@@ -574,19 +534,18 @@ if (isset($conn) && $conn) {
 
     <section class="rooms" id="rooms">
         <div class="rooms-header reveal">
-            <div class="eyebrow" style="justify-content:center;"><span
-                    style="width:24px;height:1.5px;background:var(--gold);display:block;"></span>Featured Rooms
+            <div class="eyebrow" style="justify-content:center;">&nbsp;Featured Rooms
             </div>
             <h2 class="section-heading">Find Your <em>Perfect</em> Room</h2>
         </div>
 
         <div class="rooms-grid">
-            <?php if (empty($landingUnits)): ?>
+            <?php if (empty($featuredUnits)): ?>
                 <div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text-soft);">
                     No rooms available right now.
                 </div>
             <?php else: ?>
-                <?php foreach ($landingUnits as $idx => $unit):
+                <?php foreach ($featuredUnits as $idx => $unit):
                     $name = landing_unit_name($unit);
                     $image = hero_img_path($unit['image_path']);
                     $amenities = $amenitiesMap[$unit['unit_id']] ?? [];
@@ -873,7 +832,6 @@ if (isset($conn) && $conn) {
 
     <script src="assets/js/toast.js"></script>
 
-    <!-- ── Room Preview Modal ── -->
     <div class="room-preview-overlay" id="roomPreviewModal">
         <div class="room-preview-box">
             <button class="room-preview-close" id="roomPreviewClose">&times;</button>
@@ -894,7 +852,6 @@ if (isset($conn) && $conn) {
         </div>
     </div>
 
-    <!-- ── Forgot Password Modal ── -->
     <div class="modal-overlay" id="forgotModal">
         <div class="modal-box" style="max-width:420px;">
             <button class="modal-close" onclick="closeForgotModal()">&times;</button>
@@ -922,7 +879,6 @@ if (isset($conn) && $conn) {
         </div>
     </div>
 
-    <!-- ── Policy Modal ── -->
     <div class="policy-modal-overlay" id="policyModal">
         <div class="policy-modal-box">
             <div class="policy-modal-head">

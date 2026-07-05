@@ -38,7 +38,7 @@ if (!$row || !$row['attachment_url']) {
 
 $relativePath = $row['attachment_url'];
 $absolutePath = realpath(__DIR__ . '/../' . $relativePath);
-$uploadsRoot = realpath(__DIR__ . '/../assets/uploads/messages/');
+$uploadsRoot = realpath(__DIR__ . '/../uploads/messages/');
 
 // Security: Ensure the file is within the allowed directory (prevent path traversal)
 if ($absolutePath === false || strpos($absolutePath, $uploadsRoot) !== 0) {

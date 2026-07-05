@@ -1,10 +1,15 @@
 <?php
 declare(strict_types=1);
 
+// ── TEMPORARY DEBUG — remove once the 500 error is fixed ──
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/../../includes/session_params.php';
 session_start();
 require_once __DIR__ . '/../../includes/db.php';
-require_once __DIR__ . '/../../includes/oauth_helpers.php';
+require_once __DIR__ . '/../../integrations/oauth_helpers.php';
 
 function google_fail(string $message)
 {

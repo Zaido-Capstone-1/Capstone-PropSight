@@ -13,7 +13,9 @@ $idVerified = $userRow['id_verified'] ?? 'none';         // none | pending | app
 $idRejectReason = $userRow['id_reject_reason'] ?? '';
 $idDocPath = $userRow['id_document_path'] ?? '';
 $profilePhotoRaw = trim((string) ($userRow['profile_photo'] ?? ''));
-$profilePhoto = $profilePhotoRaw !== '' ? '../../' . ltrim($profilePhotoRaw, '/') : '';
+$profilePhoto = $profilePhotoRaw !== ''
+    ? (preg_match('#^https?://#i', $profilePhotoRaw) ? $profilePhotoRaw : '../../' . ltrim($profilePhotoRaw, '/'))
+    : '';
 
 // Keep session in sync
 $_SESSION['id_verified'] = $idVerified;

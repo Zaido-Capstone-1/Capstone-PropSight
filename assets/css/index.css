@@ -580,6 +580,31 @@ nav a:hover::after {
     padding: 4px;
 }
 
+.btn-account-header {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(12, 26, 46, 0.06);
+    color: var(--ink);
+    border: 1px solid rgba(12, 26, 46, 0.12);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, border-color 0.2s;
+}
+
+.btn-account-header svg {
+    width: 19px;
+    height: 19px;
+}
+
+.btn-account-header:hover {
+    background: rgba(12, 26, 46, 0.1);
+    border-color: rgba(12, 26, 46, 0.2);
+    transform: translateY(-1px);
+}
+
 .hamburger span {
     display: block;
     width: 22px;
@@ -2063,7 +2088,6 @@ footer {
     overflow-y: auto;
     background: #fff;
     border-radius: 20px;
-    border: 1px solid var(--navy-100);
     box-shadow: 0 24px 60px rgba(6, 14, 26, 0.35);
     position: relative;
     animation: policyModalPop .22s cubic-bezier(.4, 0, .2, 1) both;
@@ -2380,6 +2404,10 @@ footer {
         display: flex;
     }
 
+    .btn-account-header {
+        display: flex;
+    }
+
     .mobile-nav {
         display: flex;
     }
@@ -2409,10 +2437,34 @@ footer {
         padding: 0 1rem;
     }
 
+    .rooms {
+        padding: 70px 0;
+    }
+
+    .rooms-header {
+        padding: 0 1.2rem;
+    }
+
     .rooms-grid {
-        grid-template-columns: 1fr;
-        max-width: 420px;
-        margin: 0 auto;
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 1rem;
+        max-width: 100%;
+        margin: 0;
+        padding: 0 1.2rem 1rem;
+    }
+
+    .rooms-grid::-webkit-scrollbar {
+        display: none;
+    }
+
+    .rooms-grid .room-card {
+        scroll-snap-align: center;
+        flex: 0 0 82%;
+        max-width: 340px;
     }
 
     .testi-grid {
@@ -2556,12 +2608,12 @@ footer {
     }
 
     .modal-box {
-        padding: 28px 14px;
+        padding: 28px 32px;
         max-height: 92vh;
     }
 
     .modal-overlay {
-        padding: 0 20px;
+        padding: 0 14px;
     }
 }
 

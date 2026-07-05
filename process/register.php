@@ -145,24 +145,18 @@ if (!isset($_POST['register'])) {
 $first_name = trim($_POST['first_name'] ?? '');
 $last_name = trim($_POST['last_name'] ?? '');
 $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
-$phone = trim($_POST['phone'] ?? '');
-$nationality = $_POST['nationality'] ?? null;
-$birthday = $_POST['birthday'] ?? null;
-$gender = $_POST['gender'] ?? null;
+$phone = null;
+$nationality = null;
+$birthday = null;
+$gender = null;
 $password = $_POST['password'] ?? '';
 $confirm = $_POST['confirm_password'] ?? '';
 
 if (
     $first_name === '' || $last_name === '' ||
-    $email === '' || $phone === '' ||
-    $password === '' || $confirm === ''
+    $email === '' || $password === '' || $confirm === ''
 ) {
     json_error('All fields are required!');
-}
-
-
-if (!preg_match('/^\+?[0-9]{7,15}$/', $phone)) {
-    json_error('Invalid phone number!');
 }
 
 
@@ -204,16 +198,16 @@ if (!preg_match('/[A-Z]/', $password) || !preg_match('/[0-9]/', $password)) {
     json_error('Password must contain at least 1 uppercase letter and 1 number!');
 }
 
-//Checking of existing email or phone number
+//Checking of existing email
 
-$check = $conn->prepare("SELECT user_id FROM users WHERE email = ? OR phone = ? LIMIT 1");
-$check->bind_param('ss', $email, $phone);
+$check = $conn->prepare("SELECT user_id FROM users WHERE email = ? LIMIT 1");
+$check->bind_param('s', $email);
 $check->execute();
 $check->store_result();
 
 if ($check->num_rows > 0) {
     $check->close();
-    json_error('Email or phone number already exists!');
+    json_error('An account with this email already exists!');
 }
 
 $check->close();
@@ -257,7 +251,7 @@ $_SESSION['first_name'] = $first_name;
 $_SESSION['last_name'] = $last_name;
 $_SESSION['name'] = $first_name . ' ' . $last_name;
 $_SESSION['email'] = $email;
-$_SESSION['phone'] = $phone;
+$_SESSION['phone'] = '';
 $_SESSION['role'] = 'user';
 $_SESSION['verification_status'] = 'Not Verified';
 

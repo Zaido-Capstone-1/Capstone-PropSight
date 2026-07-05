@@ -320,14 +320,33 @@ require_once '../../lib/user-queries/profile_queries.php';
             </div>
             <p id="profilePhotoMsg" style="font-size:.8rem;margin-top:-.5rem;margin-bottom:8px;display:none;"></p>
 
-            <div style="display:flex;gap:10px;justify-content:flex-end;">
-                <button type="button" class="btn-secondary" onclick="closeModal('profilePhotoModal')">Cancel</button>
-                <button type="button" class="btn-primary" id="profilePhotoSubmitBtn" onclick="submitProfilePhoto()">
-                    <svg viewBox="0 0 24 24">
-                        <polyline points="20 6 9 17 4 12" />
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <?php if ($profilePhoto): ?>
+                <button type="button" class="btn-secondary" id="profilePhotoRemoveBtn" onclick="removeProfilePhoto()"
+                    title="Remove photo"
+                    style="color:#dc2626;border-color:#fecaca;white-space:nowrap;flex-shrink:0;font-size:.78rem;padding:9px 16px;gap:5px;">
+                    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;flex-shrink:0;">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                        <path d="M10 11v6" /><path d="M14 11v6" />
+                        <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
                     </svg>
-                    Upload Photo
+                    Remove
                 </button>
+                <?php else: ?>
+                <span></span>
+                <?php endif; ?>
+                <div style="display:flex;gap:8px;flex-shrink:0;">
+                    <button type="button" class="btn-secondary" onclick="closeModal('profilePhotoModal')"
+                        style="white-space:nowrap;font-size:.78rem;padding:9px 18px;">Cancel</button>
+                    <button type="button" class="btn-primary" id="profilePhotoSubmitBtn" onclick="submitProfilePhoto()"
+                        style="white-space:nowrap;font-size:.78rem;padding:9px 18px;">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Upload Photo
+                    </button>
+                </div>
             </div>
             <input type="hidden" id="profilePhotoCsrf"
                 value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">

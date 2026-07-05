@@ -205,7 +205,9 @@ if ($dashboardPhotoRaw === '') {
         $_SESSION['profile_photo'] = $dashboardPhotoRaw;
     }
 }
-$dashboardPhoto = $dashboardPhotoRaw !== '' ? '../../' . ltrim($dashboardPhotoRaw, '/') : '';
+$dashboardPhoto = $dashboardPhotoRaw !== ''
+    ? (preg_match('#^https?://#i', $dashboardPhotoRaw) ? $dashboardPhotoRaw : '../../' . ltrim($dashboardPhotoRaw, '/'))
+    : '';
 ?>
 <?php
 $page_title = 'Home';
@@ -231,7 +233,7 @@ $nav_items = [
 $page_extra_head = '
     <link rel="stylesheet" href="../../assets/css/user-css/styles.css?v=3">
     <link rel="stylesheet" href="../../assets/css/user-css/dashboard.css">
-    <link rel="stylesheet" href="../../assets/css/user-css/user-dashboard.css?v=2">
+    <link rel="stylesheet" href="../../assets/css/user-css/user-dashboard.css">
     <link rel="stylesheet" href="../../assets/css/user-css/user-dashboard-inline.css">
 ';
 require '../../includes/_nav.php';
@@ -528,11 +530,6 @@ require '../../includes/_nav.php';
                                             d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
                                     </svg>
                                 </button>
-
-                                <div class="room-season-badge">
-                                    <span class="room-season-dot" style="background:<?php echo $curColor; ?>;"></span>
-                                    <?php echo htmlspecialchars($unitSeason); ?> Season
-                                </div>
                             </div>
 
                             <div class="room-card-body">
@@ -551,16 +548,6 @@ require '../../includes/_nav.php';
                                         <?php endif; ?>
                                     </div>
                                 </div>
-
-                                <?php if ($propName || $cityPart): ?>
-                                    <div class="room-location-chip">
-                                        <svg viewBox="0 0 24 24">
-                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                                            <circle cx="12" cy="10" r="3" />
-                                        </svg>
-                                        <?php echo $propName . htmlspecialchars($cityPart); ?>
-                                    </div>
-                                <?php endif; ?>
 
                                 <div class="room-meta">
                                     <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -592,11 +579,14 @@ require '../../includes/_nav.php';
                                 <div class="room-price-row">
                                     <div class="room-price">
                                         <?php echo $price; ?> <sub>/ night</sub>
+                                        <?php $sColor = $seasonColor[$unitSeason] ?? '#2ECC71'; ?>
+                                        <span
+                                            style="background:<?php echo $sColor; ?>20;color:<?php echo $sColor; ?>;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;"><?php echo $unitSeason; ?></span>
                                     </div>
                                     <div style="display:flex;gap:8px;align-items:center;" data-action-buttons>
                                         <button class="btn-view-details"
                                             onclick="window.location.href='unit_detail.php?id=<?php echo (int) $unit['unit_id']; ?>'">
-                                            Details
+                                            View Details
                                         </button>
                                         <?php if ($isVacant): ?>
                                             <button class="btn-rent" data-book-btn
@@ -1214,7 +1204,7 @@ require '../../includes/_nav.php';
         };
         window.PS_RT_PAGE = 'dashboard';
         window.PS_RT_ROLE = 'user';
-        window.PS_RT_API = '../../endpoints/realtime.php';
+        window.PS_RT_API = '../../api/realtime.php';
 
         function subscribeNewsletter() {
             const input = document.getElementById('newsletterEmailInput');
@@ -1233,7 +1223,7 @@ require '../../includes/_nav.php';
 
             const body = window.psAppendCsrf(new URLSearchParams({ email, action: 'subscribe' }));
 
-            fetch('../../endpoints/user/subscribe_newsletter.php', {
+            fetch('../../api/user/subscribe_newsletter.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()
@@ -1264,7 +1254,7 @@ require '../../includes/_nav.php';
 
             const body = window.psAppendCsrf(new URLSearchParams({ action: 'unsubscribe' }));
 
-            fetch('../../endpoints/user/subscribe_newsletter.php', {
+            fetch('../../api/user/subscribe_newsletter.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()

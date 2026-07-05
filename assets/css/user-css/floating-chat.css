@@ -227,7 +227,6 @@
     flex-direction: column;
     overflow: hidden;
     font-family: inherit;
-    border: 1px solid #e2e8f0;
     border-bottom: none;
     transition: height .18s ease;
     flex-shrink: 0;

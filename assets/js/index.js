@@ -67,6 +67,10 @@ document.querySelectorAll('.btn-login-header').forEach(btn => btn.addEventListen
 document.querySelector('.btn-book-header')?.addEventListener('click', () => {
     openModal('signup');
 });
+document.getElementById('accountHeaderBtn')?.addEventListener('click', () => {
+    closeMob();
+    openModal('login');
+});
 document.querySelector('.btn-book-big')?.addEventListener('click', () => {
     openModal('login');
 });
