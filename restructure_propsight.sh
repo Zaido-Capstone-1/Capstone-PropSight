@@ -41,15 +41,15 @@ else
 fi
 
 echo "Step 1/4: Recording the list of files currently under api/ ..."
-find api -type f > /tmp/_api_files_list.txt
-API_FILE_COUNT=$(wc -l < /tmp/_api_files_list.txt)
+find api -type f > ._api_files_list.txt
+API_FILE_COUNT=$(wc -l < ._api_files_list.txt)
 echo "  Found $API_FILE_COUNT files under api/"
 
 echo "Step 2/4: Rewriting path references across the project (before moving files) ..."
 python3 << 'PYEOF'
 import os
 
-with open('/tmp/_api_files_list.txt') as f:
+with open('._api_files_list.txt') as f:
     api_paths = [l.strip() for l in f if l.strip()]
 
 include_map = {
@@ -98,6 +98,8 @@ for fp in targets:
 
 print(f"  Rewrote references in {changed} files")
 PYEOF
+
+rm -f ._api_files_list.txt
 
 echo "Step 3/4: Moving folders/files ..."
 if [ -d ".git" ]; then
