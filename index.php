@@ -575,7 +575,7 @@ if (isset($conn) && $conn) {
     <section class="rooms" id="rooms">
         <div class="rooms-header reveal">
             <div class="eyebrow" style="justify-content:center;"><span
-                    style="width:24px;height:1.5px;background:var(--gold);display:block;"></span>&nbsp;Featured Rooms
+                    style="width:24px;height:1.5px;background:var(--gold);display:block;"></span>Featured Rooms
             </div>
             <h2 class="section-heading">Find Your <em>Perfect</em> Room</h2>
         </div>
