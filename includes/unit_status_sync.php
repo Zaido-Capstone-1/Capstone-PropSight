@@ -7,8 +7,9 @@
  * - occupied:    has an ACTIVE booking (guest manually checked in by admin) — stays
  *                occupied regardless of checkout_date, until the admin manually checks
  *                the guest out (booking status becomes 'completed'). A CONFIRMED
- *                booking (not yet checked in) is only auto-treated as occupied while
- *                today is within its checkin/checkout window.
+ *                booking (not yet checked in) is auto-treated as occupied while
+ *                today is within its checkin/checkout window, INCLUSIVE of the
+ *                checkout date itself — it only flips the day *after* checkout.
  * - vacant:      no active bookings (or all completed/cancelled/pending)
  * - maintenance: never touched by this function
  * NOTE: pending bookings never affect unit status or tenant display.
@@ -34,8 +35,9 @@ function syncUnitAvailabilityFromBookings(mysqli $conn, int $unitId): bool
     // Check if there's an occupying booking:
     // - status='active' (admin manually checked the guest in) stays occupied
     //   NO MATTER the checkout_date -- only a manual admin checkout ends it.
-    // - status='confirmed' (not yet checked in) only counts as occupied while
-    //   today falls within its checkin/checkout window.
+    // - status='confirmed' (not yet checked in) counts as occupied through
+    //   the *entire* checkout day itself (checkout_date >= today) — it should
+    //   not flip to available at midnight before the guest has actually left.
     $occupiedRes = mysqli_query($conn, "
         SELECT COUNT(*) AS c
         FROM bookings
@@ -43,7 +45,7 @@ function syncUnitAvailabilityFromBookings(mysqli $conn, int $unitId): bool
           AND checkin_date <= CURDATE()
           AND (
                 status = 'active'
-                OR (status = 'confirmed' AND checkout_date > CURDATE())
+                OR (status = 'confirmed' AND checkout_date >= CURDATE())
               )
     ");
     $occupiedCount = (int) (mysqli_fetch_assoc($occupiedRes)['c'] ?? 0);

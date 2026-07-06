@@ -343,7 +343,9 @@
         const email = String(p.email || '').trim();
         const verified = String(p.verification_status || '').toLowerCase() === 'verified';
         const rawPhoto = String(p.profile_photo || '').trim();
-        const photoSrc = rawPhoto ? `../../${rawPhoto.replace(/^\/+/, '')}` : '';
+        const photoSrc = rawPhoto
+            ? (/^https?:\/\//i.test(rawPhoto) ? rawPhoto : `../../${rawPhoto.replace(/^\/+/, '')}`)
+            : '';
         const initials = ((first[0] || '') + (last[0] || '')).toUpperCase() || (first[0] || 'G').toUpperCase();
 
         // Sidebar + profile header text

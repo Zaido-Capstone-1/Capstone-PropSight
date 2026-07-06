@@ -1118,7 +1118,7 @@ require '../../includes/_nav.php';
                             <circle cx="12" cy="12" r="10"/>
                             <line x1="15" y1="9" x2="9" y2="15"/>
                             <line x1="9" y1="9" x2="15" y2="15"/>
-                        </svg>
+                        </svg>git init
                     </div>
                     <div>
                         <div style="color:#fff;font-size:1.05rem;font-weight:700;letter-spacing:-.01em;">Cancel Reservation?</div>
@@ -1204,7 +1204,7 @@ require '../../includes/_nav.php';
         };
         window.PS_RT_PAGE = 'dashboard';
         window.PS_RT_ROLE = 'user';
-        window.PS_RT_API = '../../api/realtime.php';
+        window.PS_RT_API = '../../endpoints/realtime.php';
 
         function subscribeNewsletter() {
             const input = document.getElementById('newsletterEmailInput');
@@ -1223,7 +1223,7 @@ require '../../includes/_nav.php';
 
             const body = window.psAppendCsrf(new URLSearchParams({ email, action: 'subscribe' }));
 
-            fetch('../../api/user/subscribe_newsletter.php', {
+            fetch('../../endpoints/user/subscribe_newsletter.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()
@@ -1254,7 +1254,7 @@ require '../../includes/_nav.php';
 
             const body = window.psAppendCsrf(new URLSearchParams({ action: 'unsubscribe' }));
 
-            fetch('../../api/user/subscribe_newsletter.php', {
+            fetch('../../endpoints/user/subscribe_newsletter.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()

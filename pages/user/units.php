@@ -155,7 +155,7 @@ $email = htmlspecialchars($_SESSION['email'] ?? '');
 $page_extra_head = '
     <link rel="stylesheet" href="../../assets/css/user-css/styles.css?v=3">
     <link rel="stylesheet" href="../../assets/css/user-css/dashboard.css">
-    <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=5">
+    <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=9">
     <script>
         window.UNITS_CONFIG = {
             priceMin: ' . $priceMin . ',
@@ -261,24 +261,6 @@ echo '</div>';
             </div>
         <?php endif; ?>
 
-        <!-- ④ Floor --------------------------------------------------------- -->
-        <?php if (!empty($floors)): ?>
-            <div class="sb-section">
-                <div class="sb-section-label">
-                    Floor
-                    <button onclick="clearFloorFilters()">Clear</button>
-                </div>
-                <div class="sb-floor-btns">
-                    <?php foreach (array_keys($floors) as $flr): ?>
-                            <button class="sb-floor-btn" data-floor="<?php echo $flr; ?>"
-                                    onclick="toggleFloor(<?php echo $flr; ?>, this)">
-                                Floor <?php echo $flr; ?>
-                            </button>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        <?php endif; ?>
-
         <!-- ⑤ Season -------------------------------------------------------- -->
         <?php
         $seasonDots = ['Low' => '#4ade80', 'High' => '#c9a84c', 'Peak' => '#c0694a'];
@@ -297,27 +279,6 @@ echo '</div>';
                                 <?php echo $s; ?> Season
                                 <span class="sb-avail-count"><?php echo $cnt; ?></span>
                             </button>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        <?php endif; ?>
-
-        <!-- ⑥ Amenities ----------------------------------------------------- -->
-        <?php if (!empty($allAmenities)): ?>
-            <div class="sb-section">
-                <div class="sb-section-label">
-                    Amenities
-                    <button onclick="clearAmenityFilters()">Clear</button>
-                </div>
-                <div class="sb-amenity-list">
-                    <?php foreach ($allAmenities as $am): ?>
-                            <label class="sb-check-item">
-                                <input type="checkbox" class="amenity-cb"
-                                       value="<?php echo htmlspecialchars($am); ?>"
-                                       onchange="applyFilters()">
-                                <span class="sb-check-label"><?php echo htmlspecialchars($am); ?></span>
-                                <span class="sb-check-count"><?php echo $amenityCounts[$am] ?? 0; ?></span>
-                            </label>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -352,13 +313,37 @@ echo '</div>';
         </div>
 
         <!-- Sort -->
-        <select class="u-sort-select" id="unitSort" onchange="applySort(this.value)">
-            <option value="default">Sort: Default</option>
-            <option value="price-asc">Price: Low → High</option>
-            <option value="price-desc">Price: High → Low</option>
-            <option value="name-asc">Name: A → Z</option>
-            <option value="rating-desc">Top Rated</option>
-        </select>
+        <div class="u-sort-dropdown" id="sortDropdown">
+            <button type="button" class="u-sort-trigger" id="sortTrigger"
+                    onclick="toggleSortDropdown()" aria-haspopup="listbox" aria-expanded="false">
+                <span id="sortTriggerLabel">Sort: Default</span>
+                <svg class="u-sort-caret" viewBox="0 0 10 6" fill="none">
+                    <path d="M0 0l5 6 5-6z" fill="currentColor"/>
+                </svg>
+            </button>
+            <ul class="u-sort-menu" id="sortMenu" role="listbox" aria-labelledby="sortTrigger">
+                <li class="u-sort-option active" role="option" aria-selected="true"
+                    data-value="default" onclick="selectSortOption(this)">
+                    Sort: Default
+                </li>
+                <li class="u-sort-option" role="option" aria-selected="false"
+                    data-value="price-asc" onclick="selectSortOption(this)">
+                    Price: Low &rarr; High
+                </li>
+                <li class="u-sort-option" role="option" aria-selected="false"
+                    data-value="price-desc" onclick="selectSortOption(this)">
+                    Price: High &rarr; Low
+                </li>
+                <li class="u-sort-option" role="option" aria-selected="false"
+                    data-value="name-asc" onclick="selectSortOption(this)">
+                    Name: A &rarr; Z
+                </li>
+                <li class="u-sort-option" role="option" aria-selected="false"
+                    data-value="rating-desc" onclick="selectSortOption(this)">
+                    Top Rated
+                </li>
+            </ul>
+        </div>
 
         <!-- View toggle -->
         <div class="u-view-toggle">
@@ -630,7 +615,7 @@ echo '</div>';
     };
     window.PS_RT_PAGE = 'units';
     window.PS_RT_ROLE = 'user';
-    window.PS_RT_API = '../../api/realtime.php';
+    window.PS_RT_API = '../../endpoints/realtime.php';
     window.hasActiveBooking = false;
     window._psSessionFields = {
         fname: <?php echo json_encode($_SESSION['first_name'] ?? ''); ?>,
@@ -668,7 +653,7 @@ echo '</div>';
 </script>
 <script src="../../assets/js/toast.js"></script>
 <script src="../../assets/js/user-js/script.js?v=2"></script>
-<script src="../../assets/js/user-js/units.js"></script>
+<script src="../../assets/js/user-js/units.js?v=4"></script>
 <script src="../../assets/js/realtime.js"></script>
 <script src="../../assets/js/user-js/user-realtime-pages.js"></script>
 <script src="../../assets/js/user-js/floating-chat.js?v=5"></script>
