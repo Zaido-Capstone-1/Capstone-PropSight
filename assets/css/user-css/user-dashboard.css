@@ -1150,3 +1150,14 @@ body.bm-open {
     position: fixed !important;
     width: 100% !important;
 }
+
+.bm-field input[readonly] {
+    background: #f4f6f8;
+    color: #4a5568;
+    cursor: default;
+}
+
+.bm-field input[readonly]:focus {
+    border-color: #e2e8f0;
+    box-shadow: none;
+}

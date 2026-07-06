@@ -6,7 +6,9 @@ include_once __DIR__ . '/db.php';
 // NOTE: an 'active' booking (guest manually checked in by admin) keeps the unit
 // occupied NO MATTER what the checkout_date is -- only an explicit admin checkout
 // action (endpoints/checkin.php, which sets status='completed') frees it up.
-// Pending/confirmed bookings (not yet checked in) still use the date window.
+// Pending/confirmed bookings (not yet checked in) still use the date window,
+// INCLUSIVE of the checkout date itself -- it only frees up the day *after*
+// checkout, not at midnight of the checkout day.
 mysqli_query($conn, "
     UPDATE units u
     SET u.status = CASE
@@ -16,7 +18,7 @@ mysqli_query($conn, "
             WHERE b.unit_id = u.unit_id
               AND (
                     b.status = 'active'
-                    OR (b.status IN ('pending', 'confirmed') AND b.checkout_date > CURDATE())
+                    OR (b.status IN ('pending', 'confirmed') AND b.checkout_date >= CURDATE())
                   )
         ) THEN 'occupied'
         ELSE 'vacant'

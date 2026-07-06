@@ -16,6 +16,7 @@
  *   ps:recent_activity — { detail: activityArray }
  *   ps:total_revenue   — { detail: number }
  *   ps:unit_ratings    — { detail: ratingsArray }
+ *   ps:unit_status_snapshot — { detail: [{unit_id, status}, ...] } (all users)
  *   ps:manage_stay_booking - { detail: bookingObj|null } (user dashboard)
  */
 
@@ -182,6 +183,8 @@
                 if (data.user_metrics) emit('user_metrics', data.user_metrics);
                 if (data.unit_ratings && data.unit_ratings.length)
                     emit('unit_ratings', data.unit_ratings);
+                if (data.unit_status_snapshot)
+                    emit('unit_status_snapshot', data.unit_status_snapshot);
                 if (Object.prototype.hasOwnProperty.call(data, 'manage_stay_booking'))
                     emit('manage_stay_booking', data.manage_stay_booking);
             })
@@ -224,6 +227,7 @@
                 if (typeof data.unread_messages === 'number') emit('unread_messages', data.unread_messages);
                 if (data.booking_updates && data.booking_updates.length) emit('booking_updates', data.booking_updates);
                 if (data.user_metrics) emit('user_metrics', data.user_metrics);
+                if (data.unit_status_snapshot) emit('unit_status_snapshot', data.unit_status_snapshot);
             })
             .catch(() => {});
     });

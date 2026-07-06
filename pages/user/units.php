@@ -464,7 +464,7 @@ echo '</div>';
                                 <span class="room-badge-img badge-gold">
                                     <?php echo htmlspecialchars(strtoupper($unit['unit_type'] ?? 'UNIT')); ?>
                                 </span>
-                                <span class="room-avail <?php echo $availClass; ?>">
+                                <span class="room-avail <?php echo $availClass; ?>" data-avail-status>
                                     <?php if ($isVacant): ?>Available
                                     <?php elseif ($unit['status'] === 'maintenance'): ?>Maintenance
                                     <?php else: ?>Booked<?php endif; ?>
@@ -555,20 +555,20 @@ echo '</div>';
                                     <div class="room-price">
                                         ₱<?php echo number_format((int) $baseRate); ?> <sub>/ night</sub>
                                     </div>
-                                    <div style="display:flex;gap:8px;align-items:center;" onclick="event.stopPropagation()">
+                                    <div class="room-card-actions" style="display:flex;gap:8px;align-items:center;" onclick="event.stopPropagation()">
                                         <button class="btn-view-details"
                                                 onclick="location.href='<?php echo $detailUrl; ?>'">
                                             Details
                                         </button>
                                         <?php if ($isVacant): ?>
-                                                <button class="btn-rent"
+                                                <button class="btn-rent" data-book-btn
                                                         onclick="location.href='<?php echo $bookUrl; ?>'">
                                                     Book Now
                                                 </button>
                                         <?php elseif (in_array((int) $unit['unit_id'], $bookedUnitIds)): ?>
-                                                <button class="btn-rent" disabled style="opacity:.6;cursor:default;">Already Booked</button>
+                                                <button class="btn-rent" data-book-btn disabled style="opacity:.6;cursor:default;">Already Booked</button>
                                         <?php else: ?>
-                                                <button class="btn-rent"
+                                                <button class="btn-rent" data-book-btn
                                                         onclick="location.href='<?php echo $detailUrl; ?>'">
                                                     Reserve Date
                                                 </button>

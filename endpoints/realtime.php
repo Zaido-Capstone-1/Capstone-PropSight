@@ -401,6 +401,19 @@ if ($role === 'admin') {
     fmt_dt_rows($bkChanges);
     $payload['booking_updates'] = $bkChanges;
 
+    // ── Global unit availability snapshot ──────────────
+    // Sent to EVERY connected user (not scoped to $userId) — the "confirmed"
+    // and "avail-no" badges other guests see on the dashboard/units/unit
+    // detail pages need to reflect what's actually booked right now, not
+    // just the current viewer's own bookings. Cheap query, small table, so
+    // it's sent unconditionally on every poll rather than diffed by $since.
+    $unitStatusRes = mysqli_query($conn, "SELECT unit_id, status FROM units WHERE status != 'maintenance'");
+    $unitStatusSnapshot = [];
+    while ($u = mysqli_fetch_assoc($unitStatusRes)) {
+        $unitStatusSnapshot[] = ['unit_id' => (int) $u['unit_id'], 'status' => $u['status']];
+    }
+    $payload['unit_status_snapshot'] = $unitStatusSnapshot;
+
     // ── User booking stats ─────────────────────────────
     $statsRow = mysqli_fetch_assoc(mysqli_query(
         $conn,

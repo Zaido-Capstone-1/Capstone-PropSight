@@ -337,8 +337,6 @@ require_once '../../lib/user-queries/payment_queries.php';
                     </tbody>
                 </table>
             </div>
-            <div class="billing-empty" id="billingEmpty" style="display:none;">No transactions match your filter.
-            </div>
             <div id="txPaginationWrap" style="width:100%;overflow-x:hidden;"></div>
         </div>
 

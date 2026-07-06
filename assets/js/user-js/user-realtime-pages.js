@@ -806,4 +806,82 @@
         }
     });
 
+    /* ═══════════════════════════════════════════════════════
+     *  UNIT AVAILABILITY — Global Snapshot Reconciliation
+     * ═══════════════════════════════════════════════════════
+     * Unlike the single-booking handlers above (which deliberately only
+     * ever flip a card to "Booked" — they can't safely flip back to
+     * "Available" because they only know about ONE user's booking, and
+     * someone else's booking could still be occupying the same unit),
+     * this snapshot is the authoritative status of ALL units straight
+     * from the units table. Every connected user's page gets this, so
+     * it's safe to reconcile in BOTH directions here. This is what keeps
+     * the badge consistent across different users' sessions viewing the
+     * same unit at the same time, instead of only updating for whoever
+     * made the booking. */
+    window.addEventListener('ps:unit_status_snapshot', function (e) {
+        var snapshot = e.detail || [];
+        if (!snapshot.length) return;
+
+        snapshot.forEach(function (u) {
+            if (!u || !u.unit_id) return;
+            var status = String(u.status || '').toLowerCase();
+            var isVacant = status === 'vacant';
+
+            /* Dashboard / units.php room cards */
+            var roomCard = document.querySelector('.room-card[data-unit-id="' + String(u.unit_id) + '"]');
+            if (roomCard) {
+                roomCard.dataset.status = status;
+
+                var availBadge = roomCard.querySelector('[data-avail-status]');
+                if (availBadge) {
+                    availBadge.className = 'room-avail ' + (isVacant ? 'avail-yes' : 'avail-no');
+                    availBadge.textContent = isVacant ? 'Available' : 'Booked';
+                }
+
+                var bookBtn = roomCard.querySelector('[data-book-btn]');
+                if (bookBtn) {
+                    var unitId = parseInt(roomCard.dataset.unitId, 10);
+                    var isMyBooking = window.PS_BOOKED_UNIT_IDS && window.PS_BOOKED_UNIT_IDS.includes(unitId);
+
+                    if (isVacant && !isMyBooking) {
+                        bookBtn.disabled = false;
+                        bookBtn.textContent = 'Book Now';
+                        bookBtn.style.opacity = '';
+                        bookBtn.style.cursor = '';
+                        bookBtn.onclick = function (ev) {
+                            if (ev) ev.stopPropagation();
+                            if (unitId) window.location.href = 'unit_detail.php?id=' + unitId + '&book=1';
+                        };
+                    } else if (isMyBooking) {
+                        bookBtn.disabled = true;
+                        bookBtn.textContent = 'Already Booked';
+                        bookBtn.style.opacity = '0.6';
+                        bookBtn.style.cursor = 'default';
+                        bookBtn.onclick = null;
+                    } else {
+                        bookBtn.disabled = false;
+                        bookBtn.textContent = 'Reserve Date';
+                        bookBtn.style.opacity = '';
+                        bookBtn.style.cursor = '';
+                        bookBtn.onclick = function (ev) {
+                            if (ev) ev.stopPropagation();
+                            if (unitId) window.location.href = 'unit_detail.php?id=' + unitId;
+                        };
+                    }
+                }
+            }
+
+            /* unit_detail.php "Explore more" similar-unit cards */
+            var similarCard = document.querySelector('.ud-similar-card[data-unit-id="' + String(u.unit_id) + '"]');
+            if (similarCard) {
+                var similarBadge = similarCard.querySelector('[data-avail-status]');
+                if (similarBadge) {
+                    similarBadge.className = 'ud-similar-badge ' + (isVacant ? 'avail-yes' : 'avail-no');
+                    similarBadge.textContent = isVacant ? 'AVAILABLE' : 'BOOKED';
+                }
+            }
+        });
+    });
+
 })();
