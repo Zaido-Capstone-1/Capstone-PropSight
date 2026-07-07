@@ -30,6 +30,11 @@ $page_hero_sub = 'Your personal wishlist of favorite rooms and suites.';
 $page_hero_icon = '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>';
 $active_nav = 'saved';
 require '../../includes/_layout.php';
+
+// Keep u.status accurate before saved_queries.php reads it (same sync used by admin/units_rooms.php).
+require_once '../../includes/unit_status_sync.php';
+syncAllUnitStatuses($conn);
+
 require_once '../../lib/user-queries/saved_queries.php';
 
 ?>

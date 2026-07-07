@@ -4,16 +4,16 @@
  *
  * Rules:
  * - booked:      has a CONFIRMED booking and check-in date is in the future
- * - occupied:    has an ACTIVE booking (guest manually checked in by admin) — stays
- *                occupied regardless of checkout_date, until the admin manually checks
- *                the guest out (booking status becomes 'completed'). A CONFIRMED
- *                booking (not yet checked in) is auto-treated as occupied while
- *                today is within its checkin/checkout window, INCLUSIVE of the
- *                checkout date itself — it only flips the day *after* checkout.
- * - vacant:      no active bookings (or all completed/cancelled/pending)
+ * - occupied:    has an ACTIVE or CONFIRMED booking whose check-in date has
+ *                arrived (checkin_date <= today) — stays occupied regardless
+ *                of checkout_date, indefinitely, until an explicit admin
+ *                checkout action (booking status becomes 'completed').
+ *                Neither 'active' nor 'confirmed' bookings auto-vacate by
+ *                date passing -- only that explicit admin action does.
+ * - vacant:      no active/confirmed bookings (or all completed/cancelled/pending)
  * - maintenance: never touched by this function
  * NOTE: pending bookings never affect unit status or tenant display.
- * NOTE: checkout_date passing does NOT auto-vacate an 'active' booking — only an
+ * NOTE: checkout_date passing does NOT auto-vacate a unit on its own — only an
  * explicit admin checkout action (see endpoints/checkin.php) does that.
  */
 function syncUnitAvailabilityFromBookings(mysqli $conn, int $unitId): bool
@@ -32,21 +32,17 @@ function syncUnitAvailabilityFromBookings(mysqli $conn, int $unitId): bool
     if ($current === 'maintenance')
         return true;
 
-    // Check if there's an occupying booking:
-    // - status='active' (admin manually checked the guest in) stays occupied
-    //   NO MATTER the checkout_date -- only a manual admin checkout ends it.
-    // - status='confirmed' (not yet checked in) counts as occupied through
-    //   the *entire* checkout day itself (checkout_date >= today) — it should
-    //   not flip to available at midnight before the guest has actually left.
+    // Check if there's an occupying booking: a booking with status='active'
+    // OR 'confirmed' whose checkin_date has arrived stays occupied
+    // NO MATTER the checkout_date -- only an explicit admin checkout action
+    // (endpoints/checkin.php, setting status='completed') ends it. Neither
+    // status auto-vacates just because checkout_date has passed.
     $occupiedRes = mysqli_query($conn, "
         SELECT COUNT(*) AS c
         FROM bookings
         WHERE unit_id = $unitId
           AND checkin_date <= CURDATE()
-          AND (
-                status = 'active'
-                OR (status = 'confirmed' AND checkout_date >= CURDATE())
-              )
+          AND status IN ('active', 'confirmed')
     ");
     $occupiedCount = (int) (mysqli_fetch_assoc($occupiedRes)['c'] ?? 0);
 

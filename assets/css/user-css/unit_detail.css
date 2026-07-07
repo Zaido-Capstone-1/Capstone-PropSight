@@ -398,8 +398,8 @@ body {
 }
 
 .ud-badge-avail.avail-no {
-  background: rgba(185, 28, 28, 0.85);
-  color: #fecaca;
+  background: #dc2626;
+    color: #fff;
 }
 
 .ud-badge-avail.avail-booked {

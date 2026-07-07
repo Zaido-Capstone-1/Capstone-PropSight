@@ -2,13 +2,19 @@
 
 include_once __DIR__ . '/db.php';
 
-// Ensure unit availability stays synced with actual bookings, including future pending/confirmed reservations.
-// NOTE: an 'active' booking (guest manually checked in by admin) keeps the unit
-// occupied NO MATTER what the checkout_date is -- only an explicit admin checkout
-// action (endpoints/checkin.php, which sets status='completed') frees it up.
-// Pending/confirmed bookings (not yet checked in) still use the date window,
-// INCLUSIVE of the checkout date itself -- it only frees up the day *after*
-// checkout, not at midnight of the checkout day.
+// Ensure unit availability stays synced with actual bookings.
+// This query must stay in EXACT lockstep with the per-unit logic in
+// includes/unit_status_sync.php::syncUnitAvailabilityFromBookings() --
+// same three states (occupied / booked / vacant), same date constraints,
+// same exclusion of 'pending' bookings. Any divergence between the two
+// causes the badge to flip back and forth depending on which one last
+// touched the row.
+// - occupied: an 'active' OR 'confirmed' booking whose checkin_date has
+//   arrived stays occupied INDEFINITELY -- checkout_date passing does NOT
+//   auto-vacate it. Only an explicit admin checkout action (endpoints/
+//   checkin.php, which sets status='completed') frees the unit.
+// - booked: a 'confirmed' booking whose stay hasn't started yet.
+// - pending bookings never affect unit status.
 mysqli_query($conn, "
     UPDATE units u
     SET u.status = CASE
@@ -16,11 +22,16 @@ mysqli_query($conn, "
         WHEN EXISTS (
             SELECT 1 FROM bookings b
             WHERE b.unit_id = u.unit_id
-              AND (
-                    b.status = 'active'
-                    OR (b.status IN ('pending', 'confirmed') AND b.checkout_date >= CURDATE())
-                  )
+              AND b.checkin_date <= CURDATE()
+              AND b.status IN ('active', 'confirmed')
         ) THEN 'occupied'
+        WHEN EXISTS (
+            SELECT 1 FROM bookings b
+            WHERE b.unit_id = u.unit_id
+              AND b.status = 'confirmed'
+              AND b.checkin_date > CURDATE()
+              AND b.checkout_date > CURDATE()
+        ) THEN 'booked'
         ELSE 'vacant'
     END
 ");

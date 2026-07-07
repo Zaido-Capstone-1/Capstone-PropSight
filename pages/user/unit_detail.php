@@ -25,6 +25,10 @@ $reviewPage = max(1, (int) ($_GET['rp'] ?? 1));
 $reviewLimit = 5;
 $reviewOffset = ($reviewPage - 1) * $reviewLimit;
 
+// ── Keep unit statuses fresh (same sync used by admin/units_rooms.php) ────────
+require_once '../../includes/unit_status_sync.php';
+syncAllUnitStatuses($conn);
+
 // ── All SQL queries ───────────────────────────────────────────────────────────
 require '../../lib/user-queries/unit_detail_queries.php';
 
@@ -869,17 +873,17 @@ require '../../includes/_nav.php';
                         <div class="bm-panel-sub">We'll use these details for your reservation.</div>
                         <div class="bm-row">
                             <div class="bm-field"><label>First name</label><input type="text" id="bm-fname"
-                                    placeholder="Ana" autocomplete="given-name" readonly></div>
+                                    placeholder="Ana" autocomplete="given-name"></div>
                             <div class="bm-field"><label>Last name</label><input type="text" id="bm-lname"
-                                    placeholder="Jimenez" autocomplete="family-name" readonly></div>
+                                    placeholder="Jimenez" autocomplete="family-name"></div>
                         </div>
                         <div class="bm-row full">
                             <div class="bm-field"><label>Email</label><input type="email" id="bm-email"
-                                    placeholder="ana@email.com" autocomplete="email" readonly></div>
+                                    placeholder="ana@email.com" autocomplete="email"></div>
                         </div>
                         <div class="bm-row full">
                             <div class="bm-field"><label>Contact number</label><input type="tel" id="bm-phone"
-                                    placeholder="+63 912 345 6789" autocomplete="tel" readonly></div>
+                                    placeholder="+63 912 345 6789" autocomplete="tel"></div>
                         </div>
                         <div class="bm-row">
                             <div class="bm-field"><label>Check-in</label><input type="text" id="bm-checkin"
@@ -961,16 +965,8 @@ require '../../includes/_nav.php';
                                 <div class="bm-pay-radio"></div>
                             </div>
                             <div class="bm-pay-option" data-method="Bank Transfer">
-                                <div class="bm-pay-icon" style="background:#f0f4ff;border-radius:8px;display:flex;align-items:center;justify-content:center;width:44px;height:44px;">
-                                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e50a2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="3" y1="21" x2="21" y2="21" />
-                                        <line x1="5" y1="21" x2="5" y2="10" />
-                                        <line x1="19" y1="21" x2="19" y2="10" />
-                                        <line x1="9" y1="21" x2="9" y2="10" />
-                                        <line x1="15" y1="21" x2="15" y2="10" />
-                                        <polygon points="12 3 21 8 3 8" />
-                                    </svg>
-                                </div>
+                                <div class="bm-pay-icon"><img src="../../assets/images/logo-icon/mobile-banking.png"
+                                        alt="Bank"></div>
                                 <div class="bm-pay-info">
                                     <div class="bm-pay-name">Bank Transfer</div>
                                     <div class="bm-pay-desc">Transfer via online banking</div>
@@ -978,13 +974,7 @@ require '../../includes/_nav.php';
                                 <div class="bm-pay-radio"></div>
                             </div>
                             <div class="bm-pay-option" data-method="Cash">
-                                <div class="bm-pay-icon" style="background:#eafaf0;border-radius:8px;display:flex;align-items:center;justify-content:center;width:44px;height:44px;">
-                                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1a7a4a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="1" y="6" width="22" height="12" rx="2" ry="2" />
-                                        <circle cx="12" cy="12" r="3" />
-                                        <line x1="5" y1="9" x2="5" y2="9.01" />
-                                        <line x1="19" y1="15" x2="19" y2="15.01" />
-                                    </svg>
+                                <div class="bm-pay-icon"><img src="../../assets/images/logo-icon/dollar.png" alt="Cash">
                                 </div>
                                 <div class="bm-pay-info">
                                     <div class="bm-pay-name">Cash (On-site)</div>

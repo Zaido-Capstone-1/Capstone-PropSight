@@ -478,13 +478,6 @@ echo '</div>';
                                     </svg>
                                 </button>
 
-                                <div class="room-season-vignette">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                                    </svg>
-                                    <?php echo ucfirst($unitSeason); ?> Season
-                                    <span style="margin-left:auto;font-weight:700;color:<?php echo $sColor; ?>;">●</span>
-                                </div>
                             </div><!-- /room-card-img -->
 
                             <!-- Body -->
@@ -554,12 +547,12 @@ echo '</div>';
                                 <div class="room-price-row">
                                     <div class="room-price">
                                         ₱<?php echo number_format((int) $baseRate); ?> <sub>/ night</sub>
+                                        <?php $sColor = $seasonColor[$unitSeason] ?? '#2ECC71'; ?>
+                                        <span style="background:<?php echo $sColor; ?>20;color:<?php echo $sColor; ?>;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;">
+                                            <?php echo $unitSeason; ?>
+                                        </span>
                                     </div>
                                     <div class="room-card-actions" style="display:flex;gap:8px;align-items:center;" onclick="event.stopPropagation()">
-                                        <button class="btn-view-details"
-                                                onclick="location.href='<?php echo $detailUrl; ?>'">
-                                            Details
-                                        </button>
                                         <?php if ($isVacant): ?>
                                                 <button class="btn-rent" data-book-btn
                                                         onclick="location.href='<?php echo $bookUrl; ?>'">

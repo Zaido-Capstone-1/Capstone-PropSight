@@ -499,7 +499,8 @@ require '../../includes/_nav.php';
                             data-name="<?php echo strtolower($unitName . ' ' . $propName); ?>"
                             data-status="<?php echo htmlspecialchars($unit['status']); ?>"
                             data-room-payload="<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>"
-                            data-rent="<?php echo (float) $unit['rent_amount']; ?>">
+                            data-rent="<?php echo (float) $unit['rent_amount']; ?>"
+                            onclick="window.location.href='unit_detail.php?id=<?php echo (int) $unit['unit_id']; ?>'">
 
                             <div class="room-card-img">
                                 <img src="<?php echo $imgSrc; ?>" alt="<?php echo $unitName; ?>" class="room-img-placeholder"
@@ -549,6 +550,16 @@ require '../../includes/_nav.php';
                                     </div>
                                 </div>
 
+                                <?php if ($propName || $cityPart): ?>
+                                    <div class="room-location-chip">
+                                        <svg viewBox="0 0 24 24">
+                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                                            <circle cx="12" cy="10" r="3" />
+                                        </svg>
+                                        <?php echo $propName . htmlspecialchars($cityPart); ?>
+                                    </div>
+                                <?php endif; ?>
+
                                 <div class="room-meta">
                                     <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                                             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -580,14 +591,11 @@ require '../../includes/_nav.php';
                                     <div class="room-price">
                                         <?php echo $price; ?> <sub>/ night</sub>
                                         <?php $sColor = $seasonColor[$unitSeason] ?? '#2ECC71'; ?>
-                                        <span
-                                            style="background:<?php echo $sColor; ?>20;color:<?php echo $sColor; ?>;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;"><?php echo $unitSeason; ?></span>
+                                        <span style="background:<?php echo $sColor; ?>20;color:<?php echo $sColor; ?>;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;">
+                                            <?php echo $unitSeason; ?>
+                                        </span>
                                     </div>
-                                    <div style="display:flex;gap:8px;align-items:center;" data-action-buttons>
-                                        <button class="btn-view-details"
-                                            onclick="window.location.href='unit_detail.php?id=<?php echo (int) $unit['unit_id']; ?>'">
-                                            View Details
-                                        </button>
+                                    <div class="room-card-actions" style="display:flex;gap:8px;align-items:center;" data-action-buttons onclick="event.stopPropagation()">
                                         <?php if ($isVacant): ?>
                                             <button class="btn-rent" data-book-btn
                                                 onclick="window.location.href='unit_detail.php?id=<?php echo (int) $unit['unit_id']; ?>&book=1'">
