@@ -52,6 +52,7 @@ $status_map = [
 
 <link rel="stylesheet" href="../../assets/css/user-css/booking.css">
 <link rel="stylesheet" href="../../assets/css/user-css/bookings-inline.css">
+<link rel="stylesheet" href="../../assets/css/receipt_modal.css">
 
 <div class="summary-strip reveal">
     <div class="sstat">
@@ -249,7 +250,7 @@ $status_map = [
                                 <?php if (in_array($rawSt, ['confirmed', 'pending', 'active', 'completed'])): ?>
                                     <?php if (in_array($rawSt, ['confirmed', 'completed'])): ?>
                                         <button class="bc-btn-receipt" id="receipt-btn-<?= $b['booking_id'] ?>"
-                                            onclick="downloadReceipt(<?= $b['booking_id'] ?>, this)" title="Download Receipt as PDF">
+                                            onclick="openReceiptModal(<?= $b['booking_id'] ?>)" title="View Receipt">
                                             <svg viewBox="0 0 24 24"
                                                 style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;flex-shrink:0;">
                                                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
@@ -504,6 +505,7 @@ $status_map = [
 <script src="../../assets/js/user-js/bookings.js"
     onerror="this.remove(); var s=document.createElement('script'); s.src='../../assets/js/user-js/booking.js'; document.body.appendChild(s);">
     </script>
+<script src="../../assets/js/receipt_modal.js"></script>
 
 <script>
     // ── Pagination ──
@@ -569,116 +571,6 @@ $status_map = [
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         if (btn) btn.classList.add('active');
         renderPagination();
-    }
-
-    // ── PDF Receipt Download (no new tab) ──
-    let _pdfLibsLoaded = false;
-
-    function _loadPdfLibs() {
-        if (_pdfLibsLoaded) return Promise.resolve();
-        return new Promise((resolve, reject) => {
-            const s1 = document.createElement('script');
-            s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-            s1.onload = () => {
-                const s2 = document.createElement('script');
-                s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-                s2.onload = () => { _pdfLibsLoaded = true; resolve(); };
-                s2.onerror = reject;
-                document.head.appendChild(s2);
-            };
-            s1.onerror = reject;
-            document.head.appendChild(s1);
-        });
-    }
-
-    async function downloadReceipt(bookingId, btn) {
-        const svgSpinner = `<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;animation:spin .7s linear infinite;flex-shrink:0;"><circle cx="12" cy="12" r="10" stroke-opacity=".3"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg>`;
-        const svgDoc = `<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;flex-shrink:0;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;
-        const origHTML = btn ? btn.innerHTML : '';
-
-        if (btn) { btn.disabled = true; btn.innerHTML = svgSpinner + ' Generating…'; }
-
-        try {
-            await _loadPdfLibs();
-
-            // Fetch receipt HTML (view=1 suppresses auto-download inside that page)
-            const res = await fetch('../../endpoints/user/booking_receipt.php?booking_id=' + bookingId + '&view=1', { credentials: 'same-origin' });
-            if (!res.ok) throw new Error('Fetch failed ' + res.status);
-            const html = await res.text();
-
-            // Parse into a detached DOM to extract receipt card
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const card = doc.getElementById('receiptCard');
-            if (!card) throw new Error('receiptCard not found');
-
-            // Collect all stylesheets from the receipt page and inline them
-            const stylePromises = [];
-            doc.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
-                const href = link.getAttribute('href');
-                if (!href) return;
-                const base = new URL('../../endpoints/user/booking_receipt.php', window.location.href);
-                const absHref = new URL(href, base).href;
-                stylePromises.push(
-                    fetch(absHref).then(r => r.text()).catch(() => '')
-                );
-            });
-
-            // Grab any inline styles from the receipt doc
-            let inlineStyles = '';
-            doc.querySelectorAll('style').forEach(s => { inlineStyles += s.textContent; });
-
-            const sheetTexts = await Promise.all(stylePromises);
-            const allCss = sheetTexts.join('\n') + '\n' + inlineStyles;
-
-            // Mount card in a hidden iframe for accurate rendering
-            const iframe = document.createElement('iframe');
-            iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:900px;height:1px;border:0;visibility:hidden;';
-            document.body.appendChild(iframe);
-
-            const idoc = iframe.contentDocument || iframe.contentWindow.document;
-            idoc.open();
-            idoc.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
-                <style>${allCss}</style>
-                </head><body style="margin:0;padding:24px;background:#f8fafc;">${card.outerHTML}</body></html>`);
-            idoc.close();
-
-            // Wait for fonts/images to render
-            await new Promise(r => setTimeout(r, 600));
-
-            const iCard = idoc.getElementById('receiptCard') || idoc.body.firstElementChild;
-            const canvas = await html2canvas(iCard, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                logging: false,
-                allowTaint: true,
-            });
-
-            document.body.removeChild(iframe);
-
-            const { jsPDF } = window.jspdf;
-            const imgData = canvas.toDataURL('image/png');
-            const pdfW = 210;
-            const pdfH = (canvas.height * pdfW) / canvas.width;
-            const pdf = new jsPDF({
-                orientation: pdfH > pdfW ? 'portrait' : 'landscape',
-                unit: 'mm',
-                format: pdfH <= 297 ? 'a4' : [pdfW, pdfH],
-            });
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
-            pdf.save('Receipt-BK-' + String(bookingId).padStart(6, '0') + '.pdf');
-
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = svgDoc + ' Downloaded!';
-                setTimeout(() => { btn.innerHTML = svgDoc + ' Receipt'; }, 3000);
-            }
-        } catch (err) {
-            console.error('Receipt download failed:', err);
-            if (typeof showToast === 'function') showToast('Could not generate receipt PDF. Try again.', 'error');
-            if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
-        }
     }
 
     document.addEventListener('DOMContentLoaded', () => { renderPagination(); });

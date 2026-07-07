@@ -22,6 +22,7 @@ require_once '../../lib/user-queries/payment_queries.php';
 ?>
 
 <link rel="stylesheet" href="../../assets/css/user-css/payment.css">
+<link rel="stylesheet" href="../../assets/css/receipt_modal.css">
 <div class="page-two-col">
 
     <!-- ════════════ MAIN COLUMN ════════════ -->
@@ -283,7 +284,7 @@ require_once '../../lib/user-queries/payment_queries.php';
 
                                             <?php if (!$isInvoiceRow): // booking receipt button ?>
                                                 <button class="btn-secondary" style="font-size:.7rem;padding:5px 12px;"
-                                                    onclick="downloadInvoice(<?php echo (int) $row['booking_id']; ?>,this)">
+                                                    onclick="openReceiptModal(<?php echo (int) $row['booking_id']; ?>)">
                                                     Receipt
                                                 </button>
                                             <?php endif; ?>
@@ -433,6 +434,7 @@ require_once '../../lib/user-queries/payment_queries.php';
 
 <script src="../../assets/js/user-js/payment.js"></script>
 <script src="../../assets/js/user-js/refund.js"></script>
+<script src="../../assets/js/receipt_modal.js"></script>
 <script>window.PS_RT_PAGE = 'payment';</script>
 <script>
     // Render payment history datetimes via datetime.js psDate() so UTC→local is correct.

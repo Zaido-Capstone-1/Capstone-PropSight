@@ -1,0 +1,194 @@
+/* ================================
+   Shared Receipt Preview Modal
+   Used by: pages/user/bookings.php, pages/user/payment.php,
+            pages/admin/reservations.php
+================================ */
+
+.rcpt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.72);
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 10000;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+
+.rcpt-modal-overlay.open {
+  display: flex;
+}
+
+.rcpt-modal {
+  position: relative;
+  width: min(460px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  font-family: "DM Sans", sans-serif;
+}
+
+.rcpt-modal-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  transition: transform .15s ease, background .15s ease;
+  z-index: 2;
+}
+
+.rcpt-modal-close:hover {
+  background: #f1f5f9;
+  transform: scale(1.06);
+}
+
+.rcpt-modal-close svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.rcpt-modal-body {
+  flex: 1;
+  position: relative;
+  min-height: 160px;
+  display: flex;
+  justify-content: center;
+}
+
+.rcpt-modal-body iframe {
+  width: 100%;
+  border: 0;
+  display: block;
+  background: transparent;
+}
+
+.rcpt-modal-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #f1f5f9;
+}
+
+.rcpt-modal-loading .rcpt-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: rcpt-spin .7s linear infinite;
+}
+
+@keyframes rcpt-spin {
+  to { transform: rotate(360deg); }
+}
+
+.rcpt-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 4px 4px;
+  flex-wrap: wrap;
+}
+
+.rcpt-modal-status {
+  font-size: 12px;
+  color: #e2e8f0;
+  width: 100%;
+  justify-content: center;
+  margin-right: 0;
+  display: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.rcpt-modal-status.visible {
+  display: flex;
+}
+
+.rcpt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  transition: opacity .15s ease, background .15s ease, transform .15s ease;
+}
+
+.rcpt-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.rcpt-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.5;
+  flex-shrink: 0;
+}
+
+.rcpt-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.rcpt-btn-secondary {
+  background: #fff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.rcpt-btn-secondary:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.rcpt-btn-image {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #3730a3;
+}
+
+.rcpt-btn-image:hover:not(:disabled) {
+  background: #e0e7ff;
+}
+
+.rcpt-btn-pdf {
+  background: #0f172a;
+  color: #fff;
+}
+
+.rcpt-btn-pdf:hover:not(:disabled) {
+  background: #1e293b;
+}
+
+@media (max-width: 560px) {
+  .rcpt-modal-overlay { padding: 24px 12px; align-items: flex-start; }
+  .rcpt-modal-footer { justify-content: stretch; }
+  .rcpt-btn { flex: 1; justify-content: center; }
+  .rcpt-modal-status { width: 100%; margin: 0 0 6px; }
+}

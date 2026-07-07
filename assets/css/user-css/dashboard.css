@@ -1014,8 +1014,8 @@ body {
 }
 
 .avail-no {
-    background: #dc2626;
-    color: #fff;
+    background: rgba(185, 28, 28, 0.85);
+    color: #fecaca;
 }
 
 .avail-maintenance {

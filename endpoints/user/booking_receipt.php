@@ -129,134 +129,84 @@ header('Content-Type: text/html; charset=UTF-8');
     </button>
   </div>
 
-  <div class="receipt" id="receiptCard">
+  <div class="receipt-wrap">
+    <div class="receipt" id="receiptCard">
+      <div class="zigzag zigzag-top"></div>
 
-    <div class="receipt-header">
-      <div class="logo">PropSight <span>/ Boracay Accommodation</span></div>
-      <div class="ref">
-        <div class="label">Booking Receipt</div>
-        <div class="value"><?= $bkRef ?></div>
-      </div>
-    </div>
+      <div class="receipt-inner">
 
-    <div class="status-banner"><?= $status ?></div>
+        <div class="r-store">
+          <div class="r-store-name">PROPSIGHT</div>
+          <div class="r-store-sub">Boracay Accommodation</div>
+          <div class="r-store-addr"><?= $propAddr ?></div>
+        </div>
 
-    <div class="receipt-body">
+        <div class="r-stamp-wrap">
+          <span class="r-stamp" style="color:<?= $statusColor ?>;"><?= $status ?></span>
+        </div>
 
-      <div class="section-title">Guest Information</div>
-      <div class="info-grid" style="margin-bottom:20px;">
-        <div class="info-item">
-          <div class="label">Full Name</div>
-          <div class="value"><?= $guestName ?></div>
-        </div>
-        <div class="info-item">
-          <div class="label">Email</div>
-          <div class="value"><?= htmlspecialchars($row['email']) ?></div>
-        </div>
-        <div class="info-item">
-          <div class="label">Phone</div>
-          <div class="value"><?= htmlspecialchars($row['phone'] ?? '—') ?></div>
-        </div>
-        <div class="info-item">
-          <div class="label">Booked On</div>
-          <div class="value"><?= $bookedOn ?></div>
-        </div>
-      </div>
+        <div class="r-dash"></div>
 
-      <hr class="divider">
+        <div class="r-line"><span>Receipt No.</span><span><?= $bkRef ?></span></div>
+        <div class="r-line"><span>Booked On</span><span><?= $bookedOn ?></span></div>
 
-      <div class="section-title">Property Details</div>
-      <div class="info-grid" style="margin-bottom:20px;">
-        <div class="info-item">
-          <div class="label">Property</div>
-          <div class="value"><?= $propName ?></div>
-        </div>
-        <div class="info-item">
-          <div class="label">Unit</div>
-          <div class="value"><?= htmlspecialchars($unitLabel) ?></div>
-        </div>
-        <div class="info-item" style="grid-column:1/-1;">
-          <div class="label">Address</div>
-          <div class="value"><?= $propAddr ?></div>
-        </div>
-      </div>
+        <div class="r-dash"></div>
 
-      <hr class="divider">
+        <div class="r-section-label">Guest</div>
+        <div class="r-line"><span>Name</span><span><?= $guestName ?></span></div>
+        <div class="r-line"><span>Email</span><span><?= htmlspecialchars($row['email']) ?></span></div>
+        <div class="r-line"><span>Phone</span><span><?= htmlspecialchars($row['phone'] ?? '—') ?></span></div>
 
-      <div class="section-title">Stay Details</div>
-      <div class="info-grid" style="margin-bottom:20px;">
-        <div class="info-item">
-          <div class="label">Check-in</div>
-          <div class="value"><?= $checkin ?></div>
-        </div>
-        <div class="info-item">
-          <div class="label">Check-out</div>
-          <div class="value"><?= $checkout ?></div>
-        </div>
-        <div class="info-item">
-          <div class="label">Nights</div>
-          <div class="value"><?= $nights ?></div>
-        </div>
-        <div class="info-item">
-          <div class="label">Guests</div>
-          <div class="value"><?= $guests ?></div>
-        </div>
-      </div>
+        <div class="r-dash"></div>
 
-      <hr class="divider">
+        <div class="r-section-label">Stay</div>
+        <div class="r-line"><span>Property</span><span><?= $propName ?></span></div>
+        <div class="r-line"><span>Unit</span><span><?= htmlspecialchars($unitLabel) ?></span></div>
+        <div class="r-line"><span>Check-in</span><span><?= $checkin ?></span></div>
+        <div class="r-line"><span>Check-out</span><span><?= $checkout ?></span></div>
+        <div class="r-line"><span>Nights</span><span><?= $nights ?></span></div>
+        <div class="r-line"><span>Guests</span><span><?= $guests ?></span></div>
 
-      <div class="section-title">Charges</div>
-      <table class="items-table">
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th>Rate</th>
-            <th>Qty</th>
-            <th style="text-align:right;">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><?= htmlspecialchars($unitLabel) ?> — Accommodation</td>
-            <td>₱<?= $ratePerNight ?>/night</td>
-            <td><?= $nights ?> nights</td>
-            <td style="text-align:right;">₱<?= $total ?></td>
-          </tr>
-          <tr class="total-row">
-            <td colspan="3" style="text-align:right;">Total Amount</td>
-            <td style="text-align:right;">₱<?= $total ?></td>
-          </tr>
-        </tbody>
-      </table>
+        <div class="r-dash"></div>
 
-      <div class="section-title">Payment</div>
-      <div class="info-grid">
-        <div class="info-item">
-          <div class="label">Method</div>
-          <div class="value"><?= $payMethod ?></div>
-        </div>
-        <div class="info-item">
-          <div class="label">Payment Status</div>
-          <div class="value" style="color:<?= $payStatus === 'Paid' ? '#16a34a' : '#d97706' ?>;"><?= $payStatus ?></div>
-        </div>
-        <?php if ($payDate !== '—'): ?>
-          <div class="info-item">
-            <div class="label">Payment Date</div>
-            <div class="value"><?= $payDate ?></div>
+        <div class="r-section-label">Charges</div>
+        <div class="r-item">
+          <div class="r-item-desc"><?= htmlspecialchars($unitLabel) ?> — Accommodation</div>
+          <div class="r-item-row">
+            <span>₱<?= $ratePerNight ?> × <?= $nights ?> night<?= $nights == 1 ? '' : 's' ?></span>
+            <span>₱<?= $total ?></span>
           </div>
+        </div>
+
+        <div class="r-dash r-dash-solid"></div>
+
+        <div class="r-total"><span>TOTAL</span><span>₱<?= $total ?></span></div>
+
+        <div class="r-dash"></div>
+
+        <div class="r-section-label">Payment</div>
+        <div class="r-line"><span>Method</span><span><?= $payMethod ?></span></div>
+        <div class="r-line"><span>Status</span><span style="color:<?= $payStatus === 'Paid' ? '#16a34a' : '#d97706' ?>;"><?= $payStatus ?></span></div>
+        <?php if ($payDate !== '—'): ?>
+          <div class="r-line"><span>Paid On</span><span><?= $payDate ?></span></div>
         <?php endif; ?>
+
+        <div class="r-dash"></div>
+
+        <div class="r-barcode"></div>
+        <div class="r-barcode-code">*<?= $bkRef ?>*</div>
+
+        <div class="r-footer">
+          <strong>Thank you for choosing us!</strong>
+          This is an official receipt generated by PropSight.<br>
+          For inquiries, message us through your account.
+          <span class="r-footer-small">Generated <?= gmdate('M d, Y H:i') ?> UTC</span>
+        </div>
+
       </div>
 
+      <div class="zigzag zigzag-bottom"></div>
     </div>
-
-    <div class="receipt-footer">
-      <strong>Thank you for choosing Boracay Accommodation!</strong><br>
-      This is an official receipt generated by PropSight.<br>
-      For inquiries, contact us through the messaging section of your account.<br>
-      <span style="font-size:10px;margin-top:6px;display:block;">Generated on <?= gmdate('M d, Y H:i') ?> UTC · Booking
-        <?= $bkRef ?></span>
-    </div>
-
   </div>
 
   <!-- jsPDF + html2canvas from CDN -->
