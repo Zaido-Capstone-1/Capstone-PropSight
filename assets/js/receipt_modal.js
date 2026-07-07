@@ -9,8 +9,8 @@
  * any booking, users only their own — enforced server-side).
  */
 (function () {
-    let _pdfLibsLoaded = false;
-    let _overlay, _iframe, _loading, _status, _btnImage, _btnPdf;
+    let _html2canvasLoaded = false;
+    let _overlay, _iframe, _loading, _status, _btnImage;
     let _currentBookingId = null;
 
     function _endpointBase() {
@@ -18,20 +18,14 @@
         return '../../endpoints/user/booking_receipt.php';
     }
 
-    function _loadPdfLibs() {
-        if (_pdfLibsLoaded) return Promise.resolve();
+    function _loadHtml2Canvas() {
+        if (_html2canvasLoaded) return Promise.resolve();
         return new Promise((resolve, reject) => {
             const s1 = document.createElement('script');
             s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
             s1.onload = () => {
-                const s2 = document.createElement('script');
-                s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-                s2.onload = () => {
-                    _pdfLibsLoaded = true;
-                    resolve();
-                };
-                s2.onerror = reject;
-                document.head.appendChild(s2);
+                _html2canvasLoaded = true;
+                resolve();
             };
             s1.onerror = reject;
             document.head.appendChild(s1);
@@ -61,10 +55,6 @@
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
             Download Image
           </button>
-          <button type="button" class="rcpt-btn rcpt-btn-pdf" id="rcptModalPdfBtn">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            Download PDF
-          </button>
         </div>
       </div>`;
         document.body.appendChild(_overlay);
@@ -73,7 +63,6 @@
         _loading = _overlay.querySelector('#rcptModalLoading');
         _status = _overlay.querySelector('#rcptModalStatus');
         _btnImage = _overlay.querySelector('#rcptModalImageBtn');
-        _btnPdf = _overlay.querySelector('#rcptModalPdfBtn');
 
         _overlay.querySelector('#rcptModalClose').addEventListener('click', closeReceiptModal);
         _overlay.querySelector('#rcptModalCancel').addEventListener('click', closeReceiptModal);
@@ -84,8 +73,7 @@
             if (e.key === 'Escape' && _overlay.classList.contains('open')) closeReceiptModal();
         });
 
-        _btnImage.addEventListener('click', () => _exportReceipt('image'));
-        _btnPdf.addEventListener('click', () => _exportReceipt('pdf'));
+        _btnImage.addEventListener('click', () => _exportReceipt());
     }
 
     function _setStatus(msg) {
@@ -99,18 +87,17 @@
 
     function _setButtonsDisabled(disabled) {
         _btnImage.disabled = disabled;
-        _btnPdf.disabled = disabled;
     }
 
-    async function _exportReceipt(kind) {
+    async function _exportReceipt() {
         const iCard = _iframe.contentDocument && _iframe.contentDocument.getElementById('receiptCard');
         if (!iCard) return;
 
         _setButtonsDisabled(true);
-        _setStatus(kind === 'pdf' ? 'Generating PDF…' : 'Generating image…');
+        _setStatus('Generating image…');
 
         try {
-            await _loadPdfLibs();
+            await _loadHtml2Canvas();
 
             const canvas = await html2canvas(iCard, {
                 scale: 2,
@@ -122,35 +109,19 @@
 
             const fileBase = 'Receipt-BK-' + String(_currentBookingId).padStart(6, '0');
 
-            if (kind === 'image') {
-                const url = canvas.toDataURL('image/png');
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileBase + '.png';
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            } else {
-                const {
-                    jsPDF
-                } = window.jspdf;
-                const imgData = canvas.toDataURL('image/png');
-                const pdfW = 210;
-                const pdfH = (canvas.height * pdfW) / canvas.width;
-                const pdf = new jsPDF({
-                    orientation: pdfH > pdfW ? 'portrait' : 'landscape',
-                    unit: 'mm',
-                    format: pdfH <= 297 ? 'a4' : [pdfW, pdfH],
-                });
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
-                pdf.save(fileBase + '.pdf');
-            }
+            const url = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileBase + '.png';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
 
             _setStatus('');
         } catch (err) {
             console.error('Receipt export failed:', err);
             if (typeof showToast === 'function') {
-                showToast('Could not generate the receipt ' + (kind === 'pdf' ? 'PDF' : 'image') + '. Try again.', 'error');
+                showToast('Could not generate the receipt image. Try again.', 'error');
             }
             _setStatus('');
         } finally {

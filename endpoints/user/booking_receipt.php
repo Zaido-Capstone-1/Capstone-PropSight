@@ -1,9 +1,9 @@
 <?php
 /**
  * endpoints/user/booking_receipt.php
- * Renders a receipt page that auto-downloads as PDF using jsPDF + html2canvas.
- * ?booking_id=XX         → view page with auto PDF download
- * ?booking_id=XX&view=1  → view only, no auto-download
+ * Renders a receipt page for viewing (used standalone and inside the
+ * shared receipt modal). ?view=1 is used by the modal to fetch the
+ * markup without the page's own action bar.
  */
 
 include '../../includes/session.php';
@@ -70,7 +70,12 @@ $pay = mysqli_fetch_assoc(mysqli_query(
 )) ?: [];
 
 $bkRef = 'BK-' . str_pad($row['booking_id'], 6, '0', STR_PAD_LEFT);
-$unitLabel = !empty($row['unit_name']) ? $row['unit_name'] : 'Unit ' . ($row['unit_number'] ?? $bookingId);
+$unitNumberRaw = trim((string) ($row['unit_number'] ?? ''));
+$unitLabel = !empty($row['unit_name'])
+  ? $row['unit_name']
+  : (($unitNumberRaw !== '' && stripos($unitNumberRaw, 'unit') === 0)
+    ? $unitNumberRaw
+    : 'Unit ' . ($unitNumberRaw !== '' ? $unitNumberRaw : $bookingId));
 $guestName = htmlspecialchars(trim($row['first_name'] . ' ' . $row['last_name']));
 $propName = htmlspecialchars($row['property_name'] ?? '');
 $propAddr = htmlspecialchars(trim(($row['address'] ?? '') . ', ' . ($row['city'] ?? '') . ' ' . ($row['state'] ?? '')));
@@ -109,115 +114,120 @@ header('Content-Type: text/html; charset=UTF-8');
 <body>
 
   <div class="action-bar">
-    <span class="dl-status" id="dlStatus">
-      <span class="dl-spinner"></span>
-      Generating PDF…
-    </span>
     <button class="action-btn secondary" onclick="history.back()">
       <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5;">
         <polyline points="15 18 9 12 15 6" />
       </svg>
       Back
     </button>
-    <button class="action-btn primary" id="dlBtn" onclick="downloadPDF()">
-      <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5;">
-        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-        <polyline points="7 10 12 15 17 10" />
-        <line x1="12" y1="15" x2="12" y2="3" />
-      </svg>
-      Download PDF
-    </button>
   </div>
 
   <div class="receipt-wrap">
     <div class="receipt" id="receiptCard">
-      <div class="zigzag zigzag-top"></div>
+      <div class="r-watermark"></div>
 
-      <div class="receipt-inner">
+      <div class="r-main">
 
-        <div class="r-store">
-          <div class="r-store-name">PROPSIGHT</div>
-          <div class="r-store-sub">Boracay Accommodation</div>
-          <div class="r-store-addr"><?= $propAddr ?></div>
-        </div>
-
-        <div class="r-stamp-wrap">
-          <span class="r-stamp" style="color:<?= $statusColor ?>;"><?= $status ?></span>
-        </div>
-
-        <div class="r-dash"></div>
-
-        <div class="r-line"><span>Receipt No.</span><span><?= $bkRef ?></span></div>
-        <div class="r-line"><span>Booked On</span><span><?= $bookedOn ?></span></div>
-
-        <div class="r-dash"></div>
-
-        <div class="r-section-label">Guest</div>
-        <div class="r-line"><span>Name</span><span><?= $guestName ?></span></div>
-        <div class="r-line"><span>Email</span><span><?= htmlspecialchars($row['email']) ?></span></div>
-        <div class="r-line"><span>Phone</span><span><?= htmlspecialchars($row['phone'] ?? '—') ?></span></div>
-
-        <div class="r-dash"></div>
-
-        <div class="r-section-label">Stay</div>
-        <div class="r-line"><span>Property</span><span><?= $propName ?></span></div>
-        <div class="r-line"><span>Unit</span><span><?= htmlspecialchars($unitLabel) ?></span></div>
-        <div class="r-line"><span>Check-in</span><span><?= $checkin ?></span></div>
-        <div class="r-line"><span>Check-out</span><span><?= $checkout ?></span></div>
-        <div class="r-line"><span>Nights</span><span><?= $nights ?></span></div>
-        <div class="r-line"><span>Guests</span><span><?= $guests ?></span></div>
-
-        <div class="r-dash"></div>
-
-        <div class="r-section-label">Charges</div>
-        <div class="r-item">
-          <div class="r-item-desc"><?= htmlspecialchars($unitLabel) ?> — Accommodation</div>
-          <div class="r-item-row">
-            <span>₱<?= $ratePerNight ?> × <?= $nights ?> night<?= $nights == 1 ? '' : 's' ?></span>
-            <span>₱<?= $total ?></span>
+        <div class="r-header-row">
+          <div class="r-brand">
+            <div class="r-brand-name">PROPSIGHT</div>
+            <div class="r-brand-sub">Boracay Accommodation</div>
+          </div>
+          <div class="r-pass-label">
+            <div class="r-pass-label-title">Receipt</div>
+            <span class="r-stamp" style="color:<?= $statusColor ?>;"><?= $status ?></span>
           </div>
         </div>
 
-        <div class="r-dash r-dash-solid"></div>
+        <div class="r-dash"></div>
 
-        <div class="r-total"><span>TOTAL</span><span>₱<?= $total ?></span></div>
+        <div class="r-route">
+          <div class="r-route-pt">
+            <div class="r-route-date"><?= $checkin ?></div>
+            <div class="r-route-sub">Check-in</div>
+          </div>
+          <div class="r-route-arrow">
+            <span class="r-route-line"></span>
+            <span class="r-route-nights"><?= $nights ?> Night<?= $nights == 1 ? '' : 's' ?></span>
+            <span class="r-route-line"></span>
+          </div>
+          <div class="r-route-pt" style="text-align:right;">
+            <div class="r-route-date"><?= $checkout ?></div>
+            <div class="r-route-sub">Check-out</div>
+          </div>
+        </div>
+        <div class="r-route-prop"><?= $propName ?> &middot; <?= htmlspecialchars($unitLabel) ?></div>
 
         <div class="r-dash"></div>
 
-        <div class="r-section-label">Payment</div>
-        <div class="r-line"><span>Method</span><span><?= $payMethod ?></span></div>
-        <div class="r-line"><span>Status</span><span style="color:<?= $payStatus === 'Paid' ? '#16a34a' : '#d97706' ?>;"><?= $payStatus ?></span></div>
-        <?php if ($payDate !== '—'): ?>
-          <div class="r-line"><span>Paid On</span><span><?= $payDate ?></span></div>
-        <?php endif; ?>
+        <div class="r-fields">
+          <div class="r-field"><span class="r-field-label">Guest</span><span
+              class="r-field-value"><?= $guestName ?></span></div>
+          <div class="r-field"><span class="r-field-label">Nights</span><span
+              class="r-field-value"><?= $nights ?></span></div>
+          <div class="r-field"><span class="r-field-label">Guests</span><span
+              class="r-field-value"><?= $guests ?></span></div>
+          <div class="r-field"><span class="r-field-label">Unit</span><span
+              class="r-field-value"><?= htmlspecialchars($unitLabel) ?></span></div>
+        </div>
+
+        <div class="r-fields">
+          <div class="r-field"><span class="r-field-label">Email</span><span
+              class="r-field-value"><?= htmlspecialchars($row['email']) ?></span></div>
+          <div class="r-field"><span class="r-field-label">Phone</span><span
+              class="r-field-value"><?= htmlspecialchars($row['phone'] ?? '—') ?></span></div>
+          <div class="r-field"><span class="r-field-label">Receipt No.</span><span
+              class="r-field-value"><?= $bkRef ?></span></div>
+          <div class="r-field"><span class="r-field-label">Booked On</span><span
+              class="r-field-value"><?= $bookedOn ?></span></div>
+        </div>
 
         <div class="r-dash"></div>
 
-        <div class="r-barcode"></div>
-        <div class="r-barcode-code">*<?= $bkRef ?>*</div>
-
-        <div class="r-footer">
-          <strong>Thank you for choosing us!</strong>
-          This is an official receipt generated by PropSight.<br>
-          For inquiries, message us through your account.
-          <span class="r-footer-small">Generated <?= gmdate('M d, Y H:i') ?> UTC</span>
+        <div class="r-fields">
+          <div class="r-field"><span class="r-field-label">Rate</span><span
+              class="r-field-value">&#8369;<?= $ratePerNight ?> / night</span></div>
+          <div class="r-field"><span class="r-field-label">Method</span><span
+              class="r-field-value"><?= $payMethod ?></span></div>
+          <div class="r-field"><span class="r-field-label">Payment</span><span class="r-field-value"
+              style="color:<?= $payStatus === 'Paid' ? '#16a34a' : '#d97706' ?>;"><?= $payStatus ?></span></div>
+          <?php if ($payDate !== '—'): ?>
+            <div class="r-field"><span class="r-field-label">Paid On</span><span
+                class="r-field-value"><?= $payDate ?></span></div>
+          <?php endif; ?>
         </div>
 
       </div>
 
-      <div class="zigzag zigzag-bottom"></div>
+      <div class="r-stub">
+        <div class="r-stub-label">Total Due</div>
+        <div class="r-stub-total">&#8369;<?= $total ?></div>
+        <div class="r-stub-sub">&#8369;<?= $ratePerNight ?> &times; <?= $nights ?> night<?= $nights == 1 ? '' : 's' ?>
+        </div>
+
+        <div class="r-stub-divider"></div>
+
+        <div class="r-stub-seal">
+          <svg viewBox="0 0 24 24">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        </div>
+        <div class="r-stub-seal-label">Verified Receipt</div>
+
+        <div class="r-stub-divider"></div>
+
+        <div class="r-stub-address-label">Property Address</div>
+        <div class="r-stub-address"><?= $propAddr ?></div>
+
+        <div class="r-stub-spacer"></div>
+
+        <div class="r-stub-barcode"></div>
+        <div class="r-stub-code">*<?= $bkRef ?>*</div>
+        <div class="r-stub-foot">Thank you for choosing us!</div>
+      </div>
+
     </div>
   </div>
-
-  <!-- jsPDF + html2canvas from CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-  <script>
-    const FILENAME = 'Receipt-<?= $bkRef ?>.pdf';
-    const AUTO_DOWNLOAD = <?= $viewOnly ? 'false' : 'true' ?>;
-  </script>
-  <script src="../../assets/js/user-js/booking_receipt.js"></script>
 
 </body>
 
