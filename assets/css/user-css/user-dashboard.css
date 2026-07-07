@@ -685,12 +685,11 @@
     justify-content: space-between;
     align-items: center;
     padding: 9px 0;
-    border-bottom: 1px solid #e2e8f0;
     font-size: .8rem;
 }
 
-.bm-summary-row:last-child {
-    border-bottom: none;
+.bm-summary-row + .bm-summary-row {
+    border-top: 1px solid #e2e8f0;
 }
 
 .bm-summary-key {

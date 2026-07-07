@@ -72,10 +72,10 @@ $pay = mysqli_fetch_assoc(mysqli_query(
 $bkRef = 'BK-' . str_pad($row['booking_id'], 6, '0', STR_PAD_LEFT);
 $unitNumberRaw = trim((string) ($row['unit_number'] ?? ''));
 $unitLabel = !empty($row['unit_name'])
-  ? $row['unit_name']
-  : (($unitNumberRaw !== '' && stripos($unitNumberRaw, 'unit') === 0)
-    ? $unitNumberRaw
-    : 'Unit ' . ($unitNumberRaw !== '' ? $unitNumberRaw : $bookingId));
+    ? $row['unit_name']
+    : (($unitNumberRaw !== '' && stripos($unitNumberRaw, 'unit') === 0)
+        ? $unitNumberRaw
+        : 'Unit ' . ($unitNumberRaw !== '' ? $unitNumberRaw : $bookingId));
 $guestName = htmlspecialchars(trim($row['first_name'] . ' ' . $row['last_name']));
 $propName = htmlspecialchars($row['property_name'] ?? '');
 $propAddr = htmlspecialchars(trim(($row['address'] ?? '') . ', ' . ($row['city'] ?? '') . ' ' . ($row['state'] ?? '')));
@@ -161,56 +161,46 @@ header('Content-Type: text/html; charset=UTF-8');
         <div class="r-dash"></div>
 
         <div class="r-fields">
-          <div class="r-field"><span class="r-field-label">Guest</span><span
-              class="r-field-value"><?= $guestName ?></span></div>
-          <div class="r-field"><span class="r-field-label">Nights</span><span
-              class="r-field-value"><?= $nights ?></span></div>
-          <div class="r-field"><span class="r-field-label">Guests</span><span
-              class="r-field-value"><?= $guests ?></span></div>
-          <div class="r-field"><span class="r-field-label">Unit</span><span
-              class="r-field-value"><?= htmlspecialchars($unitLabel) ?></span></div>
+          <div class="r-field"><span class="r-field-label">Guest</span><span class="r-field-value"><?= $guestName ?></span></div>
+          <div class="r-field"><span class="r-field-label">Nights</span><span class="r-field-value"><?= $nights ?></span></div>
+          <div class="r-field"><span class="r-field-label">Guests</span><span class="r-field-value"><?= $guests ?></span></div>
+          <div class="r-field"><span class="r-field-label">Unit</span><span class="r-field-value"><?= htmlspecialchars($unitLabel) ?></span></div>
         </div>
 
         <div class="r-fields">
-          <div class="r-field"><span class="r-field-label">Email</span><span
-              class="r-field-value"><?= htmlspecialchars($row['email']) ?></span></div>
-          <div class="r-field"><span class="r-field-label">Phone</span><span
-              class="r-field-value"><?= htmlspecialchars($row['phone'] ?? '—') ?></span></div>
-          <div class="r-field"><span class="r-field-label">Receipt No.</span><span
-              class="r-field-value"><?= $bkRef ?></span></div>
-          <div class="r-field"><span class="r-field-label">Booked On</span><span
-              class="r-field-value"><?= $bookedOn ?></span></div>
+          <div class="r-field"><span class="r-field-label">Email</span><span class="r-field-value"><?= htmlspecialchars($row['email']) ?></span></div>
+          <div class="r-field"><span class="r-field-label">Phone</span><span class="r-field-value"><?= htmlspecialchars($row['phone'] ?? '—') ?></span></div>
+          <div class="r-field"><span class="r-field-label">Receipt No.</span><span class="r-field-value"><?= $bkRef ?></span></div>
+          <div class="r-field"><span class="r-field-label">Booked On</span><span class="r-field-value"><?= $bookedOn ?></span></div>
         </div>
 
         <div class="r-dash"></div>
 
         <div class="r-fields">
-          <div class="r-field"><span class="r-field-label">Rate</span><span
-              class="r-field-value">&#8369;<?= $ratePerNight ?> / night</span></div>
-          <div class="r-field"><span class="r-field-label">Method</span><span
-              class="r-field-value"><?= $payMethod ?></span></div>
-          <div class="r-field"><span class="r-field-label">Payment</span><span class="r-field-value"
-              style="color:<?= $payStatus === 'Paid' ? '#16a34a' : '#d97706' ?>;"><?= $payStatus ?></span></div>
+          <div class="r-field"><span class="r-field-label">Rate</span><span class="r-field-value">&#8369;<?= $ratePerNight ?> / night</span></div>
+          <div class="r-field"><span class="r-field-label">Method</span><span class="r-field-value"><?= $payMethod ?></span></div>
+          <div class="r-field"><span class="r-field-label">Payment</span><span class="r-field-value" style="color:<?= $payStatus === 'Paid' ? '#16a34a' : '#d97706' ?>;"><?= $payStatus ?></span></div>
           <?php if ($payDate !== '—'): ?>
-            <div class="r-field"><span class="r-field-label">Paid On</span><span
-                class="r-field-value"><?= $payDate ?></span></div>
+            <div class="r-field"><span class="r-field-label">Paid On</span><span class="r-field-value"><?= $payDate ?></span></div>
           <?php endif; ?>
         </div>
 
       </div>
 
+      <div class="r-perforation">
+        <span class="r-notch r-notch-top"></span>
+        <span class="r-notch r-notch-bottom"></span>
+      </div>
+
       <div class="r-stub">
         <div class="r-stub-label">Total Due</div>
         <div class="r-stub-total">&#8369;<?= $total ?></div>
-        <div class="r-stub-sub">&#8369;<?= $ratePerNight ?> &times; <?= $nights ?> night<?= $nights == 1 ? '' : 's' ?>
-        </div>
+        <div class="r-stub-sub">&#8369;<?= $ratePerNight ?> &times; <?= $nights ?> night<?= $nights == 1 ? '' : 's' ?></div>
 
         <div class="r-stub-divider"></div>
 
         <div class="r-stub-seal">
-          <svg viewBox="0 0 24 24">
-            <path d="M20 6L9 17l-5-5" />
-          </svg>
+          <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" /></svg>
         </div>
         <div class="r-stub-seal-label">Verified Receipt</div>
 

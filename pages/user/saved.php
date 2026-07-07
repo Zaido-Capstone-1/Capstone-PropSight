@@ -110,7 +110,7 @@ require_once '../../lib/user-queries/saved_queries.php';
                             </div>
                             <span class="sc-badge badge-gold"><?php echo $unitType; ?></span>
                             <span
-                                class="sc-avail <?php echo $avail ? 'avail-yes' : 'avail-no'; ?>"><?php echo $avail ? '✓ Available' : 'Booked'; ?></span>
+                                class="sc-avail <?php echo $avail ? 'avail-yes' : 'avail-no'; ?>"><?php echo $avail ? 'Available' : 'Booked'; ?></span>
                             <button class="sc-heart active"
                                 onclick="removeSaved(<?php echo $r['saved_id']; ?>, <?php echo $r['unit_id']; ?>, this)"
                                 title="Remove from saved">

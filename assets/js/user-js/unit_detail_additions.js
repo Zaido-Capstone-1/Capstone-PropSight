@@ -485,6 +485,9 @@
 
             const fpCi = flatpickr(ciEl, {
                 dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'F j, Y',
+                altInputClass: 'ud-date-alt',
                 minDate: tomorrow,
                 disableMobile: false,
                 disable: [date => isCheckinBlocked(date)],
@@ -514,6 +517,9 @@
 
             const fpCo = flatpickr(coEl, {
                 dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'F j, Y',
+                altInputClass: 'ud-date-alt',
                 minDate: today,
                 disableMobile: false,
                 disable: [date => isBooked(date)],
@@ -614,6 +620,7 @@
             }
             set('bmSbName', room.name || '—');
             set('bmSbLoc', room.location || '—');
+            set('sb-rent-label', 'Price per night');
             set('sb-rent', fmt(room.priceNum) + ' / night (base)');
             set('sb-deposit', '—');
             set('sb-total', '—');
@@ -777,6 +784,8 @@
                 window._bmRoom._computedTotal = total; // store for submit
 
                 // ✅ Sync sidebar with the same total computed above
+                set('sb-rent-label', nights > 0 ? `${nights} night${nights !== 1 ? 's' : ''} × ${fmt(baseRate)}` : 'Price per night');
+                set('sb-rent', nights > 0 ? fmt(nightsTotal) : fmt(baseRate) + ' / night (base)');
                 set('sb-total', fmt(total));
 
                 _bmGoToRunning = false;
@@ -1079,18 +1088,22 @@
                 }
             }
 
-            const ciMinDate = prefillCI ? new Date(prefillCI + 'T12:00:00') : tomorrow;
+            const ciMinDate = prefillCI ? new Date(prefillCI + 'T00:00:00') : tomorrow;
             const fpCi = flatpickr(ciInput, {
                 dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'F j, Y',
+                altInputClass: 'bm-date-alt',
                 minDate: ciMinDate,
-                defaultDate: prefillCI || tomorrow,
                 disableMobile: false,
                 disable: [date => isCheckinBlocked(date)],
                 onReady(_, __, fp) {
                     setTimeout(() => {
                         injectYearDropdown(fp);
+                        // explicitly set check-in (defaultDate is unreliable here)
+                        fp.setDate(prefillCI || tomorrow, false);
                         // set check-out minDate based on prefill or default
-                        const ciBase = prefillCI ? new Date(prefillCI + 'T12:00:00') : tomorrow;
+                        const ciBase = prefillCI ? new Date(prefillCI + 'T00:00:00') : tomorrow;
                         const minCo = new Date(ciBase);
                         minCo.setDate(minCo.getDate() + 1);
                         fpCo.set('minDate', minCo);
@@ -1126,6 +1139,9 @@
 
             const fpCo = flatpickr(coInput, {
                 dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'F j, Y',
+                altInputClass: 'bm-date-alt',
                 minDate: today,
                 disableMobile: false,
                 disable: [date => isBooked(date)],
@@ -1156,6 +1172,8 @@
             const baseRate = room.priceNum || 0;
 
             if (!ci || !co || !baseRate) {
+                set('sb-rent-label', 'Price per night');
+                set('sb-rent', fmt(baseRate) + ' / night (base)');
                 set('sb-total', '—');
                 return;
             }
@@ -1165,9 +1183,15 @@
             const total = nightsTotal + guestSurcharge;
 
             if (nights <= 0) {
+                set('sb-rent-label', 'Price per night');
+                set('sb-rent', fmt(baseRate) + ' / night (base)');
                 set('sb-total', '—');
                 return;
             }
+
+            // Show price × nights = subtotal
+            set('sb-rent-label', `${nights} night${nights !== 1 ? 's' : ''} × ${fmt(baseRate)}`);
+            set('sb-rent', fmt(nightsTotal));
 
             // Update guest surcharge row in sidebar
             const sbGuestEl = $('sb-guest-surcharge');

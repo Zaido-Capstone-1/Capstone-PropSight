@@ -91,16 +91,14 @@
 .rcpt-modal-loading .rcpt-spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, .35);
+  border: 2px solid rgba(255,255,255,.35);
   border-top-color: #fff;
   border-radius: 50%;
   animation: rcpt-spin .7s linear infinite;
 }
 
 @keyframes rcpt-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .rcpt-modal-footer {
@@ -181,22 +179,8 @@
 }
 
 @media (max-width: 560px) {
-  .rcpt-modal-overlay {
-    padding: 24px 12px;
-    align-items: flex-start;
-  }
-
-  .rcpt-modal-footer {
-    justify-content: stretch;
-  }
-
-  .rcpt-btn {
-    flex: 1;
-    justify-content: center;
-  }
-
-  .rcpt-modal-status {
-    width: 100%;
-    margin: 0 0 6px;
-  }
+  .rcpt-modal-overlay { padding: 24px 12px; align-items: flex-start; }
+  .rcpt-modal-footer { justify-content: stretch; }
+  .rcpt-btn { flex: 1; justify-content: center; }
+  .rcpt-modal-status { width: 100%; margin: 0 0 6px; }
 }

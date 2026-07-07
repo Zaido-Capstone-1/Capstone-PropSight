@@ -1096,7 +1096,7 @@ require '../../includes/_nav.php';
                     </div>
                     <div class="bm-summary-title">Booking summary</div>
                     <div class="bm-summary-rows">
-                        <div class="bm-summary-row"><span class="bm-summary-key">Price per night</span><span
+                        <div class="bm-summary-row"><span class="bm-summary-key" id="sb-rent-label">Price per night</span><span
                                 class="bm-summary-val" id="sb-rent">—</span>
                         </div>
                         <div class="bm-summary-row" style="display:none;"><span class="bm-summary-key">Guest
