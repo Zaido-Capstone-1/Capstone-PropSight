@@ -1,8 +1,13 @@
-# PropSight — Apartment Rental & Property Management System
+# PropSight
+### A Financial Monitoring and Reporting System for Data-Driven Rental Property Management
 
-PropSight is a PHP-based web application for managing apartment rentals. It provides a tenant-facing portal for browsing units and managing bookings, and a full admin back-office for properties, reservations, payments, maintenance, and reporting.
+PropSight is a PHP-based web application for managing apartment rentals and other small- to medium-scale rental properties. It provides a tenant-facing portal for browsing units and managing bookings, and a full admin back-office for properties, reservations, payments, maintenance, and financial reporting.
 
-Developed as a capstone project for the Bachelor of Science in Information Technology program.
+Rental property management in the Philippines is often handled manually or through fragmented tools, especially among small-scale landlords, leaving owners with little real-time visibility into payments, outstanding balances, and expenses. PropSight was built to centralize that financial data in one place, automate reporting, and support more data-driven decision-making for property owners.
+
+Developed as a capstone project for the Bachelor of Science in Information Technology program (Business Analytics Management track), PHINMA University of Iloilo — College of Information Technology Education, Second Semester 2025–26.
+
+PropSight is built primarily for property owners managing apartments, boarding houses, dormitories, and other small commercial rental setups, giving them a centralized view of their income, expenses, and overall financial health. Tenants also benefit indirectly, through clearer billing, payment tracking, and a more transparent booking process.
 
 ---
 
