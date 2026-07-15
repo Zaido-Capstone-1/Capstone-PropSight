@@ -873,23 +873,23 @@ require '../../includes/_nav.php';
                         <div class="bm-panel-sub">We'll use these details for your reservation.</div>
                         <div class="bm-row">
                             <div class="bm-field"><label>First name</label><input type="text" id="bm-fname"
-                                    placeholder="Ana" autocomplete="given-name"></div>
+                                    placeholder="Ana" autocomplete="given-name" readonly></div>
                             <div class="bm-field"><label>Last name</label><input type="text" id="bm-lname"
-                                    placeholder="Jimenez" autocomplete="family-name"></div>
+                                    placeholder="Jimenez" autocomplete="family-name" readonly></div>
                         </div>
                         <div class="bm-row full">
                             <div class="bm-field"><label>Email</label><input type="email" id="bm-email"
-                                    placeholder="ana@email.com" autocomplete="email"></div>
+                                    placeholder="ana@email.com" autocomplete="email" readonly></div>
                         </div>
                         <div class="bm-row full">
                             <div class="bm-field"><label>Contact number</label><input type="tel" id="bm-phone"
-                                    placeholder="+63 912 345 6789" autocomplete="tel"></div>
+                                    placeholder="+63 912 345 6789" autocomplete="tel" readonly></div>
                         </div>
                         <div class="bm-row">
                             <div class="bm-field"><label>Check-in</label><input type="text" id="bm-checkin"
-                                    placeholder="Select date" readonly></div>
+                                    placeholder="Select date"></div>
                             <div class="bm-field"><label>Check-out</label><input type="text" id="bm-lease"
-                                    placeholder="Select date" readonly></div>
+                                    placeholder="Select date"></div>
                         </div>
                         <div class="fp-legend">
                             <span><span class="fp-legend-dot avail"></span> Selected</span>

@@ -111,6 +111,25 @@ function startCountdown(seconds) {
     }, 1000);
 }
 
+function initFromServerState() {
+    const state = window.VERIFY_STATE || { codeAlreadySent: false, remainingCooldown: 0 };
+    if (!state.codeAlreadySent) return; // brand-new session with no code sent yet, keep button
+
+    // A code was already emailed (e.g. during registration) — skip straight
+    // to the input instead of showing a "Send" button that will just fail.
+    sendBtn.style.display = 'none';
+    otpSection.classList.add('visible');
+    otpInput.focus();
+
+    if (state.remainingCooldown > 0) {
+        startCountdown(state.remainingCooldown);
+    } else {
+        resendBtn.style.display = 'inline';
+    }
+}
+
+initFromServerState();
+
 otpInput.addEventListener('input', () => {
     otpInput.value = otpInput.value.replace(/\D/g, '');
     if (otpInput.value.length === 6) submitOtp();

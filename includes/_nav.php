@@ -31,6 +31,7 @@
     <link rel="stylesheet" href="../../assets/css/user-css/layout.css?v=7">
     <link rel="stylesheet" href="../../assets/css/user-css/bottom-nav.css">
     <link rel="stylesheet" href="../../assets/css/user-css/floating-chat.css?v=4">
+    <link rel="stylesheet" href="../../assets/css/skeleton.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=block"
         rel="stylesheet">
@@ -39,6 +40,30 @@
 </head>
 
 <body>
+    <div id="psSkeleton" data-skel="user" aria-hidden="true">
+        <div class="ps-skel-main">
+            <div class="ps-skel-header">
+                <div class="ps-skel-block ps-skel-header-logo"></div>
+                <div class="ps-skel-header-actions">
+                    <div class="ps-skel-block ps-skel-pill"></div>
+                    <div class="ps-skel-block ps-skel-circle"></div>
+                    <div class="ps-skel-block ps-skel-circle"></div>
+                </div>
+            </div>
+            <div class="ps-skel-block ps-skel-hero"></div>
+            <div class="ps-skel-body">
+                <div class="ps-skel-stats">
+                    <div class="ps-skel-block ps-skel-stat"></div>
+                    <div class="ps-skel-block ps-skel-stat"></div>
+                    <div class="ps-skel-block ps-skel-stat"></div>
+                </div>
+                <div class="ps-skel-block ps-skel-panel"></div>
+                <div class="ps-skel-block ps-skel-row w-80"></div>
+                <div class="ps-skel-block ps-skel-row"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../../assets/js/skeleton.js"></script>
     <script>
         window.PS_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
         window.PS_USER_ID = <?php echo json_encode((int) ($_SESSION['user_id'] ?? 0)); ?>;

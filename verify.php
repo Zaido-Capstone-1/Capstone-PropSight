@@ -23,6 +23,14 @@ function maskEmail(string $e): string
     return substr($local, 0, min(2, strlen($local))) . str_repeat('*', max(0, strlen($local) - 2)) . '@' . $domain;
 }
 $maskedEmail = htmlspecialchars(maskEmail($email), ENT_QUOTES, 'UTF-8');
+
+// A code is sent automatically during registration, so figure out how much
+// of the 60s rate-limit window is still remaining, if any.
+$rateLimitSeconds = 60;
+$lastSent = (int) ($_SESSION['otp_last_sent'] ?? 0);
+$elapsed = $lastSent > 0 ? time() - $lastSent : $rateLimitSeconds;
+$remainingCooldown = max(0, $rateLimitSeconds - $elapsed);
+$codeAlreadySent = $lastSent > 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -115,6 +123,12 @@ $maskedEmail = htmlspecialchars(maskEmail($email), ENT_QUOTES, 'UTF-8');
 
     </div>
 
+    <script>
+        window.VERIFY_STATE = {
+            codeAlreadySent: <?= $codeAlreadySent ? 'true' : 'false' ?>,
+            remainingCooldown: <?= (int) $remainingCooldown ?>
+        };
+    </script>
     <script src="assets/js/verify.js"></script>
 </body>
 

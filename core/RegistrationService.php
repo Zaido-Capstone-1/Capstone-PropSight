@@ -141,7 +141,7 @@ class RegistrationService
         $stmt->close();
 
         // Create default settings row (2FA off, etc.)
-        $settings = $this->db->prepare('INSERT IGNORE INTO user_settings (user_id) VALUES (?)');
+        $settings = $this->db->prepare('INSERT IGNORE INTO user_settings (user_id, two_factor_enabled) VALUES (?, DEFAULT)');
         if ($settings) {
             $settings->bind_param('i', $newUserId);
             $settings->execute();

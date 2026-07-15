@@ -212,15 +212,34 @@ try {
 
     $conn->begin_transaction();
 
-    $bookingStmt = $conn->prepare(
-        "INSERT INTO bookings
-         (unit_id, tenant_id, user_id, checkin_date, checkout_date, guests, total_amount, payment_method, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')"
-    );
-    $bookingStmt->bind_param('iiissids', $unitId, $tenantId, $userId, $checkin, $checkout, $guests, $totalAmount, $paymentMethod);
-    $bookingStmt->execute();
-    $bookingId = (int) $bookingStmt->insert_id;
-    $bookingStmt->close();
+    // Generate a random, non-sequential booking reference (instead of the
+    // predictable AUTO_INCREMENT sequence), retrying on the rare collision.
+    $bookingId = null;
+    $maxAttempts = 8;
+    for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+        $candidateId = random_int(100000, 999999);
+        try {
+            $bookingStmt = $conn->prepare(
+                "INSERT INTO bookings
+                 (booking_id, unit_id, tenant_id, user_id, checkin_date, checkout_date, guests, total_amount, payment_method, status)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')"
+            );
+            $bookingStmt->bind_param('iiiissids', $candidateId, $unitId, $tenantId, $userId, $checkin, $checkout, $guests, $totalAmount, $paymentMethod);
+            $bookingStmt->execute();
+            $bookingStmt->close();
+            $bookingId = $candidateId;
+            break;
+        } catch (\mysqli_sql_exception $dupErr) {
+            // 1062 = duplicate key (booking_id collision) — try another random number.
+            if ($dupErr->getCode() === 1062 && $attempt < $maxAttempts) {
+                continue;
+            }
+            throw $dupErr;
+        }
+    }
+    if ($bookingId === null) {
+        throw new \RuntimeException('Could not generate a unique booking ID. Please try again.');
+    }
 
     $tenantUpdateStmt = $conn->prepare(
         'UPDATE units SET tenant_name = ?, tenant_id = ? WHERE unit_id = ?'

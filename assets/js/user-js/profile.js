@@ -417,7 +417,7 @@ function submitProfilePhoto() {
     fd.append('profile_photo', file);
     fd.append('csrf_token', csrf);
 
-    fetch('../../endpoints/user/update_profile_picture.php', {
+    fetch('../../endpoints/user/update_profile_photo.php', {
             method: 'POST',
             body: fd
         })

@@ -1,0 +1,261 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   skeleton.css — Global page-load skeleton screen
+   Shown as a full-screen overlay the instant the page starts rendering,
+   and faded out once the real content has finished loading.
+   Included on every admin page (via includes/layout_open.php) and every
+   user page (via includes/_nav.php).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#psSkeleton {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  background: #f4f6fa;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity .35s ease;
+}
+
+#psSkeleton.ps-skel-hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── shimmer primitive ───────────────────────────────────────────────────── */
+.ps-skel-block {
+  position: relative;
+  overflow: hidden;
+  background: #e4e8f0;
+  border-radius: 8px;
+}
+
+.ps-skel-block::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, .75) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: ps-skel-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes ps-skel-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* ── admin variant: sidebar rail + top bar + content ─────────────────────── */
+#psSkeleton[data-skel="admin"] {
+  flex-direction: row;
+}
+
+.ps-skel-rail {
+  width: 240px;
+  min-width: 240px;
+  height: 100%;
+  background: #1a2744;
+  padding: 22px 16px;
+  box-sizing: border-box;
+  display: none;
+}
+
+.ps-skel-rail .ps-skel-block {
+  background: rgba(255, 255, 255, .08);
+}
+
+.ps-skel-rail .ps-skel-block::after {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, .18) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.ps-skel-logo {
+  width: 70%;
+  height: 28px;
+  margin-bottom: 32px;
+}
+
+.ps-skel-navitem {
+  width: 100%;
+  height: 38px;
+  margin-bottom: 12px;
+}
+
+.ps-skel-main {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  padding: 28px clamp(16px, 4vw, 48px);
+  box-sizing: border-box;
+}
+
+.ps-skel-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.ps-skel-title { width: min(280px, 40vw); height: 26px; }
+.ps-skel-avatar { width: 40px; height: 40px; border-radius: 50%; }
+
+.ps-skel-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ps-skel-stat { height: 84px; }
+
+.ps-skel-panel {
+  height: 300px;
+  margin-bottom: 20px;
+}
+
+.ps-skel-row {
+  height: 46px;
+  margin-bottom: 10px;
+}
+
+.ps-skel-row.w-80 { width: 80%; }
+.ps-skel-row.w-60 { width: 60%; }
+
+/* ── user variant: top header + hero + content ───────────────────────────── */
+#psSkeleton[data-skel="user"] {
+  flex-direction: column;
+}
+
+#psSkeleton[data-skel="user"] .ps-skel-main {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ps-skel-header {
+  height: 68px;
+  min-height: 68px;
+  background: #fff;
+  border-bottom: 1px solid #e7eaf1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(16px, 4vw, 48px);
+  box-sizing: border-box;
+}
+
+.ps-skel-header-logo { width: 160px; height: 24px; }
+.ps-skel-header-actions { display: flex; gap: 12px; align-items: center; }
+.ps-skel-pill { width: 90px; height: 34px; border-radius: 99px; }
+.ps-skel-circle { width: 34px; height: 34px; border-radius: 50%; }
+
+.ps-skel-hero {
+  height: 150px;
+  margin: 20px clamp(16px, 4vw, 48px) 0;
+  border-radius: 14px;
+  background: #1a2744;
+}
+
+.ps-skel-hero .ps-skel-block::after {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, .15) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.ps-skel-body {
+  padding: 24px clamp(16px, 4vw, 48px) 40px;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── landing variant: fixed 70px nav + two-column hero ───────────────────── */
+#psSkeleton[data-skel="landing"] {
+  flex-direction: column;
+  background: #eef4fb;
+}
+
+.ps-skel-landing-header {
+  height: 70px;
+  min-height: 70px;
+  background: rgba(239, 246, 255, .95);
+  border-bottom: 1px solid rgba(37, 99, 196, .12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5vw;
+  box-sizing: border-box;
+}
+
+.ps-skel-landing-nav {
+  display: none;
+  gap: 26px;
+}
+
+.ps-skel-navlink { width: 54px; height: 12px; }
+
+.ps-skel-landing-actions { display: flex; gap: 10px; align-items: center; }
+.ps-skel-btn { width: 84px; height: 36px; border-radius: 10px; }
+
+.ps-skel-hero-split {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 3.5rem;
+  padding: 100px 5vw 60px;
+  box-sizing: border-box;
+}
+
+.ps-skel-hero-text .ps-skel-block { margin-bottom: 18px; }
+.ps-skel-eyebrow { width: 140px; height: 14px; }
+.ps-skel-headline { width: 90%; height: 40px; }
+.ps-skel-headline2 { width: 70%; height: 40px; }
+.ps-skel-desc-line { width: 100%; height: 14px; }
+.ps-skel-desc-line.w-70 { width: 70%; }
+.ps-skel-hero-stats-row { display: flex; gap: 28px; margin-top: 26px; }
+.ps-skel-hero-stat-mini { width: 80px; height: 34px; }
+
+.ps-skel-hero-image {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: 24px;
+}
+
+@media (min-width: 861px) {
+  .ps-skel-landing-nav { display: flex; }
+}
+
+@media (max-width: 860px) {
+  .ps-skel-hero-split {
+    grid-template-columns: 1fr;
+    padding: 100px 6vw 40px;
+    gap: 2rem;
+  }
+  .ps-skel-hero-image { aspect-ratio: 16 / 10; }
+}
+
+/* show sidebar rail only when there's room for it, mirrors real admin layout */
+@media (min-width: 981px) {
+  .ps-skel-rail { display: block; }
+}
+
+@media (max-width: 640px) {
+  .ps-skel-stats { grid-template-columns: 1fr 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-skel-block::after { animation: none; }
+  #psSkeleton { transition: none; }
+}

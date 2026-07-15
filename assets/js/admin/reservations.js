@@ -150,7 +150,7 @@ function _actionButtons(bookingId, status) {
     const viewBtn = `<button class="action-btn btn-view" onclick="openDetail(${bookingId})">View</button>`;
     const viewItem = `<button class="res-menu-item" onclick="openDetail(${bookingId});_closeRowMenus();">${icoView}View Details</button>`;
     const copyItem = `<button class="res-menu-item" onclick="_copyBookingRef(${bookingId},this)">${icoCopy}Copy Reference</button>`;
-    const receiptItem = `<a href="../../endpoints/user/booking_receipt.php?booking_id=${bookingId}" target="_blank" class="res-menu-item" onclick="_closeRowMenus()">${icoReceipt}Download Receipt</a>`;
+    const receiptItem = `<button class="res-menu-item" onclick="_closeRowMenus();openReceiptModal(${bookingId})">${icoReceipt}View Receipt</button>`;
     const resendItem = `<button class="res-menu-item" onclick="_resendConfirmation(${bookingId},this)">${icoMail}Resend Confirmation</button>`;
     const cancelItem = `<button class="res-menu-item res-menu-item-danger" onclick="_closeRowMenus();updateStatus(${bookingId},'cancelled',this)">${icoX}Cancel Booking</button>`;
     const deleteItem = `<button class="res-menu-item res-menu-item-danger" onclick="_closeRowMenus();deleteBooking(${bookingId},this)">${icoTrash}Delete Booking</button>`;
@@ -488,7 +488,7 @@ function _detailHtml(b, payments) {
 /* ─── Contextual footer buttons for the detail modal ─────────────────────── */
 function _detailFooterButtons(b) {
     const id = b.booking_id;
-    const receiptBtn = `<a href="../../endpoints/user/booking_receipt.php?booking_id=${id}" target="_blank" class="action-btn btn-receipt" style="text-decoration:none;">Receipt</a>`;
+    const receiptBtn = `<button type="button" class="action-btn btn-receipt" onclick="openReceiptModal(${id})">Receipt</button>`;
     const resendBtn = `<button type="button" class="action-btn btn-view" onclick="_resendConfirmation(${id}, this)">Resend Email</button>`;
     const deleteBtn = `<button type="button" class="action-btn btn-cancel" onclick="_deleteFromDetail(${id}, this)">Delete</button>`;
 

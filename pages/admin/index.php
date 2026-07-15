@@ -26,9 +26,39 @@ $active_page = 'dashboard';
   <link rel="icon" type="image/png" href="../../assets/images/final logo.png" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="../../assets/css/admin-css/index-inline.css">
+  <link rel="stylesheet" href="../../assets/css/skeleton.css">
 </head>
 
 <body>
+
+  <div id="psSkeleton" data-skel="admin" aria-hidden="true">
+    <div class="ps-skel-rail">
+      <div class="ps-skel-block ps-skel-logo"></div>
+      <div class="ps-skel-block ps-skel-navitem"></div>
+      <div class="ps-skel-block ps-skel-navitem"></div>
+      <div class="ps-skel-block ps-skel-navitem"></div>
+      <div class="ps-skel-block ps-skel-navitem"></div>
+      <div class="ps-skel-block ps-skel-navitem"></div>
+      <div class="ps-skel-block ps-skel-navitem"></div>
+    </div>
+    <div class="ps-skel-main">
+      <div class="ps-skel-topbar">
+        <div class="ps-skel-block ps-skel-title"></div>
+        <div class="ps-skel-block ps-skel-avatar"></div>
+      </div>
+      <div class="ps-skel-stats">
+        <div class="ps-skel-block ps-skel-stat"></div>
+        <div class="ps-skel-block ps-skel-stat"></div>
+        <div class="ps-skel-block ps-skel-stat"></div>
+        <div class="ps-skel-block ps-skel-stat"></div>
+      </div>
+      <div class="ps-skel-block ps-skel-panel"></div>
+      <div class="ps-skel-block ps-skel-row w-80"></div>
+      <div class="ps-skel-block ps-skel-row"></div>
+      <div class="ps-skel-block ps-skel-row w-60"></div>
+    </div>
+  </div>
+  <script src="../../assets/js/skeleton.js"></script>
 
   <?php
   include '../../includes/sidebar.php';

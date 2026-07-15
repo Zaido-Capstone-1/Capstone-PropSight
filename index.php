@@ -106,9 +106,44 @@ if (isset($conn) && $conn) {
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/skeleton.css">
 </head>
 
 <body>
+
+    <div id="psSkeleton" data-skel="landing" aria-hidden="true">
+        <div class="ps-skel-landing-header">
+            <div class="ps-skel-block ps-skel-header-logo"></div>
+            <div class="ps-skel-landing-nav">
+                <div class="ps-skel-block ps-skel-navlink"></div>
+                <div class="ps-skel-block ps-skel-navlink"></div>
+                <div class="ps-skel-block ps-skel-navlink"></div>
+                <div class="ps-skel-block ps-skel-navlink"></div>
+                <div class="ps-skel-block ps-skel-navlink"></div>
+            </div>
+            <div class="ps-skel-landing-actions">
+                <div class="ps-skel-block ps-skel-btn"></div>
+                <div class="ps-skel-block ps-skel-btn"></div>
+                <div class="ps-skel-block ps-skel-circle"></div>
+            </div>
+        </div>
+        <div class="ps-skel-hero-split">
+            <div class="ps-skel-hero-text">
+                <div class="ps-skel-block ps-skel-eyebrow"></div>
+                <div class="ps-skel-block ps-skel-headline"></div>
+                <div class="ps-skel-block ps-skel-headline2"></div>
+                <div class="ps-skel-block ps-skel-desc-line"></div>
+                <div class="ps-skel-block ps-skel-desc-line w-70"></div>
+                <div class="ps-skel-hero-stats-row">
+                    <div class="ps-skel-block ps-skel-hero-stat-mini"></div>
+                    <div class="ps-skel-block ps-skel-hero-stat-mini"></div>
+                    <div class="ps-skel-block ps-skel-hero-stat-mini"></div>
+                </div>
+            </div>
+            <div class="ps-skel-block ps-skel-hero-image"></div>
+        </div>
+    </div>
+    <script src="assets/js/skeleton.js"></script>
 
     <header id="hdr">
         <a href="#" class="logo">

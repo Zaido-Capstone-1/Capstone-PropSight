@@ -7,10 +7,16 @@ require_once __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
+// define('DB_SERVER', $_ENV['DB_SERVER']);
+// define('DB_USERNAME', $_ENV['DB_USERNAME']);
+// define('DB_PASSWORD', $_ENV['DB_PASSWORD']);
+// define('DB_NAME', $_ENV['DB_NAME']);
+
 define('DB_SERVER', $_ENV['DB_SERVER']);
 define('DB_USERNAME', $_ENV['DB_USERNAME']);
 define('DB_PASSWORD', $_ENV['DB_PASSWORD']);
 define('DB_NAME', $_ENV['DB_NAME']);
+define('DB_PORT', (int) ($_ENV['DB_PORT'] ?? 3306));
 
 define('MAIL_HOST', $_ENV['MAIL_HOST']);
 define('MAIL_PORT', $_ENV['MAIL_PORT']);

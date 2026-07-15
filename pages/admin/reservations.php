@@ -12,6 +12,7 @@ require_once '../../lib/admin-queries/reservations_queries.php';
 
 <link rel="stylesheet" href="../../assets/css/admin-css/reservation.css">
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
+<link rel="stylesheet" href="../../assets/css/receipt_modal.css">
 
 <div class="page-inner res-page">
     <div class="dash-page-header">
@@ -239,6 +240,14 @@ require_once '../../lib/admin-queries/reservations_queries.php';
                                                     </svg>
                                                     Cancel
                                                 </button>
+                                            <?php elseif ($b['status'] === 'active'): ?>
+                                                <button class="action-btn btn-complete"
+                                                    onclick="updateStatus(<?= $b['booking_id'] ?>, 'completed', this)">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                                        <polyline points="20 6 9 17 4 12" />
+                                                    </svg>
+                                                    Complete
+                                                </button>
                                             <?php else: ?>
                                                 <span style="font-size:12px;color:#cbd5e1;">—</span>
                                             <?php endif; ?>
@@ -326,5 +335,6 @@ require_once '../../lib/admin-queries/reservations_queries.php';
 <script src="../../assets/js/toast.js"></script>
 <script>window.PS_RT_PAGE = 'reservations';</script>
 <script src="../../assets/js/admin/reservations.js"></script>
+<script src="../../assets/js/receipt_modal.js"></script>
 
 <?php include '../../includes/layout_close.php'; ?>

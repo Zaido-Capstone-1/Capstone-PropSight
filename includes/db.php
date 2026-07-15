@@ -67,7 +67,8 @@ if (!function_exists('createDatabaseConnection')):
 
         for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
             try {
-                $conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
+                // $conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
+                $conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME, DB_PORT);
 
                 // Set connection options for better security and performance
                 $conn->set_charset("utf8mb4");

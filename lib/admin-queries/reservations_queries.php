@@ -7,15 +7,11 @@
 
 function autoCompleteExpiredBookings(mysqli $conn): void
 {
-    $conn->query(
-        "UPDATE bookings SET status='completed', checkout_date=CURDATE()
-         WHERE status IN ('confirmed','active') AND checkout_date < CURDATE()"
-    );
-    $ur = $conn->query(
-        "SELECT DISTINCT unit_id FROM bookings WHERE status='completed' AND checkout_date=CURDATE()"
-    );
-    while ($ur && ($row = $ur->fetch_assoc()))
-        syncUnitAvailabilityFromBookings($conn, (int) $row['unit_id']);
+    // NOTE: Bookings are no longer auto-marked 'completed' just because the
+    // checkout date has passed — that requires an explicit admin action
+    // (the "Complete" button), same as check-in requires one. This function
+    // is intentionally left as a no-op call site in case a future explicit
+    // (admin-triggered) sweep is needed.
 }
 
 $statusFilter = $_GET['status'] ?? 'all';

@@ -12,16 +12,9 @@ require_once __DIR__ . '/../includes/unit_status_sync.php';
 
 function autoCompleteExpiredBookings(mysqli $conn): void
 {
-    mysqli_query($conn, "UPDATE bookings
-        SET status='completed', checkout_date=CURDATE()
-        WHERE status IN ('confirmed','active')
-          AND checkout_date < CURDATE()");
-
-    $unitRes = mysqli_query($conn, "SELECT DISTINCT unit_id FROM bookings
-        WHERE status = 'completed' AND checkout_date = CURDATE()");
-    while ($unitRes && ($unitRow = mysqli_fetch_assoc($unitRes))) {
-        syncUnitAvailabilityFromBookings($conn, (int) $unitRow['unit_id']);
-    }
+    // NOTE: Bookings are no longer auto-marked 'completed' just because the
+    // checkout date has passed — that requires an explicit admin action
+    // (the "Complete" button), same as check-in requires one.
 }
 
 /**
