@@ -24,8 +24,6 @@ function maskEmail(string $e): string
 }
 $maskedEmail = htmlspecialchars(maskEmail($email), ENT_QUOTES, 'UTF-8');
 
-// A code is sent automatically during registration, so figure out how much
-// of the 60s rate-limit window is still remaining, if any.
 $rateLimitSeconds = 60;
 $lastSent = (int) ($_SESSION['otp_last_sent'] ?? 0);
 $elapsed = $lastSent > 0 ? time() - $lastSent : $rateLimitSeconds;

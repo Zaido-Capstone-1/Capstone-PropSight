@@ -16,14 +16,15 @@ while ($sr = mysqli_fetch_assoc($sysRes)) {
 function policy_last_updated(array $sysCfgUpdatedAt, string $policyKey): string
 {
     $raw = $sysCfgUpdatedAt["policy_{$policyKey}_sections"] ?? ($sysCfgUpdatedAt["policy_{$policyKey}_title"] ?? null);
-    if (!$raw) return '';
+    if (!$raw)
+        return '';
     $ts = strtotime($raw);
     return $ts ? date('F j, Y', $ts) : '';
 }
 
 $contactAddress = htmlspecialchars($sysCfg['contact_address'] ?? 'Station 3, Barangay Manoc-Manoc, Boracay Island, Aklan 5608');
-$contactPhone   = htmlspecialchars($sysCfg['contact_phone']   ?? '+63 33 123 4567');
-$contactEmail   = htmlspecialchars($sysCfg['contact_email']   ?? 'hello@boracayaccommodation.ph');
+$contactPhone = htmlspecialchars($sysCfg['contact_phone'] ?? '+63 33 123 4567');
+$contactEmail = htmlspecialchars($sysCfg['contact_email'] ?? 'hello@boracayaccommodation.ph');
 
 function landing_unit_name(array $unit): string
 {
@@ -40,8 +41,10 @@ function landing_unit_name(array $unit): string
     return 'Unit #' . ($unit['unit_id'] ?? '');
 }
 
-function hero_img_path(?string $raw): string {
-    if (empty($raw)) return '';
+function hero_img_path(?string $raw): string
+{
+    if (empty($raw))
+        return '';
     // Strip leading ../ or / so path is always relative to site root
     $clean = preg_replace('#^(\\.\\./)+#', '', ltrim($raw, '/'));
     return $clean;
@@ -167,8 +170,10 @@ if (isset($conn) && $conn) {
         <div style="display:flex;align-items:center;gap:0.75rem;">
             <button class="btn-login-header">Log In</button>
             <button class="btn-book-header" onclick="openModal('signup')">Sign Up</button>
-            <button class="btn-account-header" id="accountHeaderBtn" aria-label="Log in or sign up" title="Log in or sign up">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button class="btn-account-header" id="accountHeaderBtn" aria-label="Log in or sign up"
+                title="Log in or sign up">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
                     <circle cx="12" cy="8" r="4"></circle>
                     <path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"></path>
                 </svg>
@@ -224,16 +229,21 @@ if (isset($conn) && $conn) {
                     <div class="social-login-row">
                         <a href="endpoints/auth/google_start.php" class="btn-social btn-social-google">
                             <svg viewBox="0 0 48 48" width="18" height="18">
-                                <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/>
-                                <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
-                                <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3C29.3 35.4 26.8 36 24 36c-5.3 0-9.6-3.1-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
-                                <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.1 5.5l6.3 5.3C40.9 36.4 44 30.8 44 24c0-1.3-.1-2.7-.4-3.5z"/>
+                                <path fill="#FFC107"
+                                    d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z" />
+                                <path fill="#FF3D00"
+                                    d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.6 8.3 6.3 14.7z" />
+                                <path fill="#4CAF50"
+                                    d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3C29.3 35.4 26.8 36 24 36c-5.3 0-9.6-3.1-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+                                <path fill="#1976D2"
+                                    d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.1 5.5l6.3 5.3C40.9 36.4 44 30.8 44 24c0-1.3-.1-2.7-.4-3.5z" />
                             </svg>
                             Continue with Google
                         </a>
                         <a href="endpoints/auth/facebook_start.php" class="btn-social btn-social-facebook">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff">
-                                <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.99 3.66 9.13 8.44 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99C18.34 21.13 22 16.99 22 12z"/>
+                                <path
+                                    d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.99 3.66 9.13 8.44 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99C18.34 21.13 22 16.99 22 12z" />
                             </svg>
                             Continue with Facebook
                         </a>
@@ -342,16 +352,21 @@ if (isset($conn) && $conn) {
                     <div class="social-login-row">
                         <a href="endpoints/auth/google_start.php" class="btn-social btn-social-google">
                             <svg viewBox="0 0 48 48" width="18" height="18">
-                                <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/>
-                                <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
-                                <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3C29.3 35.4 26.8 36 24 36c-5.3 0-9.6-3.1-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
-                                <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.1 5.5l6.3 5.3C40.9 36.4 44 30.8 44 24c0-1.3-.1-2.7-.4-3.5z"/>
+                                <path fill="#FFC107"
+                                    d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z" />
+                                <path fill="#FF3D00"
+                                    d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.6 8.3 6.3 14.7z" />
+                                <path fill="#4CAF50"
+                                    d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3C29.3 35.4 26.8 36 24 36c-5.3 0-9.6-3.1-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+                                <path fill="#1976D2"
+                                    d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.1 5.5l6.3 5.3C40.9 36.4 44 30.8 44 24c0-1.3-.1-2.7-.4-3.5z" />
                             </svg>
                             Continue with Google
                         </a>
                         <a href="endpoints/auth/facebook_start.php" class="btn-social btn-social-facebook">
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff">
-                                <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.99 3.66 9.13 8.44 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99C18.34 21.13 22 16.99 22 12z"/>
+                                <path
+                                    d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.99 3.66 9.13 8.44 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99C18.34 21.13 22 16.99 22 12z" />
                             </svg>
                             Continue with Facebook
                         </a>
@@ -400,23 +415,28 @@ if (isset($conn) && $conn) {
                 <div class="carousel-slides" id="carouselSlides">
 
                     <?php if (empty($heroUnits)): ?>
-                        <div class="carousel-slide active room-1" data-label="Featured Room" data-type="No units available yet">
-                            <div style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#93c5fd,#1a3d7c);flex-direction:column;gap:12px;">
-                                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2">
-                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
-                                    <circle cx="8.5" cy="8.5" r="1.5"/>
-                                    <path d="M21 15l-5-5L5 21"/>
+                        <div class="carousel-slide active room-1" data-label="Featured Room"
+                            data-type="No units available yet">
+                            <div
+                                style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#93c5fd,#1a3d7c);flex-direction:column;gap:12px;">
+                                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)"
+                                    stroke-width="1.2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                    <circle cx="8.5" cy="8.5" r="1.5" />
+                                    <path d="M21 15l-5-5L5 21" />
                                 </svg>
-                                <span style="color:rgba(255,255,255,0.6);font-size:13px;letter-spacing:0.05em;">No rooms listed yet</span>
+                                <span style="color:rgba(255,255,255,0.6);font-size:13px;letter-spacing:0.05em;">No rooms
+                                    listed yet</span>
                             </div>
                         </div>
                     <?php else: ?>
                         <?php foreach ($heroUnits as $idx => $unit):
                             $heroName = landing_unit_name($unit);
                             $heroType = $unit['unit_type'] ?: 'Room';
-                            $heroImg  = hero_img_path($unit['image_path']);
-                            if ($heroImg && !file_exists(__DIR__ . '/' . $heroImg)) $heroImg = '';
-                        ?>
+                            $heroImg = hero_img_path($unit['image_path']);
+                            if ($heroImg && !file_exists(__DIR__ . '/' . $heroImg))
+                                $heroImg = '';
+                            ?>
                             <div class="carousel-slide <?php echo $idx === 0 ? 'active' : ''; ?> room-<?php echo ($idx % 5) + 1; ?>"
                                 data-label="<?php echo htmlspecialchars($heroName); ?>"
                                 data-type="<?php echo htmlspecialchars($heroType); ?>">
@@ -425,11 +445,13 @@ if (isset($conn) && $conn) {
                                         alt="<?php echo htmlspecialchars($heroName); ?>"
                                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
                                 <?php endif; ?>
-                                <div style="display:<?php echo $heroImg ? 'none' : 'flex'; ?>;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6,#1a3d7c);color:#fff;position:absolute;top:0;left:0;">
-                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6">
-                                        <rect x="3" y="3" width="18" height="18" rx="2"/>
-                                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                                        <path d="M21 15l-5-5L5 21"/>
+                                <div
+                                    style="display:<?php echo $heroImg ? 'none' : 'flex'; ?>;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6,#1a3d7c);color:#fff;position:absolute;top:0;left:0;">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="1.2" opacity="0.6">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                                        <circle cx="8.5" cy="8.5" r="1.5" />
+                                        <path d="M21 15l-5-5L5 21" />
                                     </svg>
                                 </div>
                             </div>
@@ -472,17 +494,22 @@ if (isset($conn) && $conn) {
                 <?php foreach ($heroUnits as $idx => $unit):
                     $heroName = landing_unit_name($unit);
                     $heroImg = hero_img_path($unit['image_path']);
-                    if ($heroImg && !file_exists(__DIR__ . '/' . $heroImg)) $heroImg = '';
+                    if ($heroImg && !file_exists(__DIR__ . '/' . $heroImg))
+                        $heroImg = '';
                     ?>
                     <div class="thumb <?php echo $idx === 0 ? 'active' : ''; ?>" data-idx="<?php echo $idx; ?>">
                         <?php if ($heroImg): ?>
-                           <img src="<?php echo htmlspecialchars($heroImg); ?>"
-    alt="<?php echo htmlspecialchars($heroName); ?>"
-    onerror="console.log('Failed to load:', this.src); this.style.display='none';this.nextElementSibling.style.display='flex'">
+                            <img src="<?php echo htmlspecialchars($heroImg); ?>"
+                                alt="<?php echo htmlspecialchars($heroName); ?>"
+                                onerror="console.log('Failed to load:', this.src); this.style.display='none';this.nextElementSibling.style.display='flex'">
                         <?php endif; ?>
-                        <div style="display:<?php echo $heroImg ? 'none' : 'flex' ?>;position:absolute;inset:0;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6);color:#fff;">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+                        <div
+                            style="display:<?php echo $heroImg ? 'none' : 'flex' ?>;position:absolute;inset:0;align-items:center;justify-content:center;background:linear-gradient(145deg,#dbeafe,#3b82f6);color:#fff;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <path d="M21 15l-5-5L5 21" />
                             </svg>
                         </div>
                     </div>
@@ -593,7 +620,8 @@ if (isset($conn) && $conn) {
                         'description' => $unit['description'] ?: 'Comfortable room with essential amenities.',
                         'image' => $image,
                         'amenities' => array_map(function ($am) {
-                            return $am['name'] ?? ''; }, $amenities),
+                            return $am['name'] ?? '';
+                        }, $amenities),
                     ];
                     $badgeClass = '';
                     $badgeLabel = !empty($unit['unit_type']) ? ucwords(trim((string) $unit['unit_type'])) : 'Unit';
@@ -620,7 +648,8 @@ if (isset($conn) && $conn) {
                             <div class="room-divider"></div>
                             <div class="room-price-row">
                                 <div class="room-price">₱<?php echo number_format((float) ($unit['rent_amount'] ?? 0), 0); ?>
-                                    <sub>/ night</sub></div>
+                                    <sub>/ night</sub>
+                                </div>
                                 <button class="btn-room"
                                     data-room="<?php echo htmlspecialchars(json_encode($roomData), ENT_QUOTES); ?>">View
                                     Room</button>
@@ -929,7 +958,8 @@ if (isset($conn) && $conn) {
                     <h3 class="policy-modal-title" id="policyModalTitle">Policy</h3>
                     <div class="policy-modal-meta" id="policyModalMeta">Last updated: —</div>
                 </div>
-                <button class="policy-modal-close" id="policyModalClose" aria-label="Close policy modal">&times;</button>
+                <button class="policy-modal-close" id="policyModalClose"
+                    aria-label="Close policy modal">&times;</button>
             </div>
             <div class="policy-modal-content" id="policyModalContent"></div>
         </div>

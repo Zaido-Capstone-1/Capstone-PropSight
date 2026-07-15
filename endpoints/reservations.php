@@ -359,7 +359,6 @@ if ($method === 'POST') {
     $action = $_POST['action'] ?? '';
 
     // ── UPDATE STATUS ──────────────────────────
-    // ── UPDATE STATUS ──────────────────────────
     if ($action === 'update_status') {
         $bookingId = (int) ($_POST['booking_id'] ?? 0);
         $newStatus = trim($_POST['status'] ?? '');

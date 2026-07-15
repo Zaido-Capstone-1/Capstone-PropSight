@@ -1,12 +1,4 @@
 <?php
-/**
- * Unit Detail — SQL Queries
- * Path: pages/user/unit_detail_queries.php
- *
- * Requires: $conn, $unit_id, $_uid, $reviewPage, $reviewLimit, $reviewOffset
- * All variables are made available to the including file via the shared scope.
- */
-
 // ── 1. Unit (with property info + average rating) ─────────────────────────────
 $unit = mysqli_fetch_assoc(mysqli_query(
     $conn,

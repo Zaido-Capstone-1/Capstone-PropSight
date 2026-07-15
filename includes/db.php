@@ -1,7 +1,5 @@
 <?php
-// ─── UTC datetime helpers ─────────────────────────────────────────────────
-// Defined before DB_LOADED guard so they're always available regardless of
-// include order (session.php also includes db.php).
+// UTC datetime helpers
 if (!function_exists('fmt_dt')) {
     function fmt_dt(?string $dt): ?string
     {

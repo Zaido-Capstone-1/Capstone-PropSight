@@ -478,7 +478,7 @@ echo '</div>';
                                     </svg>
                                 </button>
 
-                            </div><!-- /room-card-img -->
+                            </div>
 
                             <!-- Body -->
                             <div class="room-card-body">
