@@ -1,0 +1,194 @@
+/* ── Generate Report modal (shared: financial / booking / occupancy) ───── */
+.repgen-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 22, 40, .45);
+  z-index: 1200;
+  align-items: center;
+  justify-content: center;
+}
+
+.repgen-overlay.open {
+  display: flex;
+}
+
+.repgen-modal {
+  background: var(--white, #fff);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 460px;
+  padding: 26px 28px 24px;
+  box-shadow: var(--shadow-lg, 0 20px 60px rgba(0, 0, 0, .22));
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.repgen-modal h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-dark, #0a1628);
+  margin-bottom: 4px;
+}
+
+.repgen-modal .repgen-sub {
+  font-size: 12.5px;
+  color: var(--text-soft, #64748b);
+  margin-bottom: 20px;
+}
+
+.repgen-close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-soft, #888);
+}
+
+.repgen-field {
+  margin-bottom: 16px;
+}
+
+.repgen-field label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-mid, #334155);
+  margin-bottom: 6px;
+}
+
+.repgen-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.repgen-field input[type="date"] {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--border, #dbeafe);
+  border-radius: var(--radius, 12px);
+  font-size: 13.5px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-dark, #0a1628);
+}
+
+.repgen-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.repgen-preset {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1.5px solid var(--border, #dbeafe);
+  background: var(--blue-50, #eff6ff);
+  color: var(--blue-500, #1e50a2);
+  cursor: pointer;
+  transition: background .2s;
+}
+
+.repgen-preset:hover {
+  background: var(--blue-100, #dbeafe);
+}
+
+.repgen-preset.active {
+  background: var(--blue-400, #2563c4);
+  border-color: var(--blue-400, #2563c4);
+  color: #fff;
+}
+
+.repgen-formats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.repgen-format {
+  border: 1.5px solid var(--border, #dbeafe);
+  border-radius: var(--radius, 12px);
+  padding: 12px 8px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--white, #fff);
+  transition: border-color .2s, background .2s;
+}
+
+.repgen-format:hover {
+  background: var(--blue-50, #eff6ff);
+}
+
+.repgen-format.active {
+  border-color: var(--blue-400, #2563c4);
+  background: var(--blue-50, #eff6ff);
+  box-shadow: 0 0 0 2px rgba(37, 99, 196, .15);
+}
+
+.repgen-format .repgen-format-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.repgen-format .repgen-format-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dark, #0a1628);
+}
+
+.repgen-format .repgen-format-desc {
+  font-size: 10.5px;
+  color: var(--text-soft, #64748b);
+  margin-top: 2px;
+}
+
+.repgen-error {
+  display: none;
+  font-size: 12px;
+  color: var(--danger, #E74C3C);
+  background: var(--danger-light, #fdecea);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+}
+
+.repgen-error.show {
+  display: block;
+}
+
+.repgen-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.repgen-generate-btn[disabled] {
+  opacity: .65;
+  cursor: not-allowed;
+}
+
+.repgen-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, .4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: repgen-spin .7s linear infinite;
+  margin-right: 6px;
+  vertical-align: -2px;
+}
+
+@keyframes repgen-spin {
+  to { transform: rotate(360deg); }
+}
