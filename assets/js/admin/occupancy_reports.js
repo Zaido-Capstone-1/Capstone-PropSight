@@ -105,13 +105,3 @@ new Chart(document.getElementById('occBarChart'), {
         }
     }]
 });
-
-function exportCSV() {
-    const rows = [['Month', 'Occupied', 'Total Units', 'Rate (%)']];
-    window.__PS_OCCUPANCY__.trendRows.forEach(r => rows.push(r));
-    const csv = rows.map(r => r.join(',')).join('\n');
-    const a = document.createElement('a');
-    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-    a.download = 'occupancy_' + window.__PS_OCCUPANCY__.selectedMonth + '.csv';
-    a.click();
-}

@@ -23,6 +23,7 @@ include '../../lib/admin-queries/booking_reports_queries.php';
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
+<link rel="stylesheet" href="../../assets/css/admin-css/report-generate.css">
 
 <div class="page-inner">
 
@@ -41,13 +42,13 @@ include '../../lib/admin-queries/booking_reports_queries.php';
           <option value="all" <?= $range === 'all' ? 'selected' : '' ?>>All time</option>
         </select>
       </form>
-      <button class="btn btn-secondary" onclick="exportCSV()">
+      <button class="btn btn-secondary" id="repgenOpenBtn" type="button">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px;">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="7 10 12 15 17 10" />
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
-        Export
+        Generate Report
       </button>
     </div>
   </div>
@@ -327,5 +328,12 @@ include '../../lib/admin-queries/booking_reports_queries.php';
   };
 </script>
 <script src="../../assets/js/admin/booking_reports.js"></script>
+
+<?php $repgen_title = 'Booking Report';
+include '../../includes/_report_generate_modal.php'; ?>
+<script src="../../assets/js/admin/report-generate.js"></script>
+<script>
+  initReportGenerator({ type: 'booking' });
+</script>
 
 <?php include '../../includes/layout_close.php'; ?>

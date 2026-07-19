@@ -461,17 +461,6 @@ function initExpenseBreakChart() {
 }
 
 /* ── Export ── */
-function exportPDF() {
-  const element = document.querySelector('.page-inner');
-  html2pdf().set({
-    margin: 10,
-    filename: `Financial_Report_${selectedYear}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
-  }).from(element).save();
-}
-
 /* ── Auto-refresh ── */
 function startAutoRefresh() {
   autoRefreshInterval = setInterval(() => loadFinancialData(selectedYear), 30000);

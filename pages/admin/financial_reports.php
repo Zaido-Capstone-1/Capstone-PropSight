@@ -22,6 +22,7 @@ include '../../includes/layout_open.php';
 require_once '../../lib/admin-queries/financial_reports_queries.php';  // ← all SQL lives here
 ?>
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
+<link rel="stylesheet" href="../../assets/css/admin-css/report-generate.css">
 
 <div class="page-inner">
 
@@ -39,12 +40,12 @@ require_once '../../lib/admin-queries/financial_reports_queries.php';  // ← al
           </option>
         <?php endforeach; ?>
       </select>
-      <button class="btn btn-secondary" onclick="exportPDF()">
+      <button class="btn btn-secondary" id="repgenOpenBtn" type="button">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="7 10 12 15 17 10" />
           <line x1="12" y1="15" x2="12" y2="3" />
-        </svg>Export
+        </svg>Generate Report
       </button>
     </div>
   </div>
@@ -221,7 +222,6 @@ require_once '../../lib/admin-queries/financial_reports_queries.php';  // ← al
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
   window.__PS_FINANCIAL__ = window.__PS_DATA__ || {};
@@ -230,6 +230,13 @@ require_once '../../lib/admin-queries/financial_reports_queries.php';  // ← al
   window.__PS_FINANCIAL__.years = <?php echo json_encode($available_years); ?>;
 </script>
 <script src="../../assets/js/admin/financial_reports.js"></script>
+
+<?php $repgen_title = 'Financial Report';
+include '../../includes/_report_generate_modal.php'; ?>
+<script src="../../assets/js/admin/report-generate.js"></script>
+<script>
+  initReportGenerator({ type: 'financial' });
+</script>
 
 <?php
 $conn->close();
