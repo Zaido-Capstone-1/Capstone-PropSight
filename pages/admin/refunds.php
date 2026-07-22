@@ -147,13 +147,16 @@ function fmt_peso(float $v): string
             </div>
 
             <div id="refundEmptyState" style="display:none;text-align:center;padding:52px 16px;">
-                <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"
-                    style="margin:0 auto 12px;display:block;">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="15" y1="9" x2="9" y2="15" />
-                    <line x1="9" y1="9" x2="15" y2="15" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="IconChangeColor" height="40"
+                    width="40">
+                    <g>
+                        <path fill="none" d="M0 0h24v24H0z" id="mainIconPathAttribute"></path>
+                        <path
+                            d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10a9.96 9.96 0 0 1-6.383-2.302l-.244-.209.902-1.902a8 8 0 1 0-2.27-5.837l-.005.25h2.5l-2.706 5.716A9.954 9.954 0 0 1 2 12C2 6.477 6.477 2 12 2zm1 4v2h2.5v2H10a.5.5 0 0 0-.09.992L10 11h4a2.5 2.5 0 1 1 0 5h-1v2h-2v-2H8.5v-2H14a.5.5 0 0 0 .09-.992L14 13h-4a2.5 2.5 0 1 1 0-5h1V6h2z"
+                            id="mainIconPathAttribute"></path>
+                    </g>
                 </svg>
-                <div style="color:#aaa;font-size:14px;">No refund requests found.</div>
+                <div style="color:#aaa;font-size:14px;">No refund requests yet.</div>
             </div>
 
             <div id="refTableFoot" style="border-top:1.5px solid var(--border);">
@@ -231,7 +234,8 @@ function fmt_peso(float $v): string
                 <strong id="completeGuest"></strong> (<span id="completeBkRef"></span>) as completed.
             </p>
             <p style="color:var(--text-soft);margin:0;font-size:13px;">
-                This confirms that you have manually returned the amount to the guest. The guest will be notified by email.
+                This confirms that you have manually returned the amount to the guest. The guest will be notified by
+                email.
             </p>
         </div>
         <div class="modal-footer">

@@ -45,14 +45,12 @@ if ($_bn_bookings_badge === null && isset($_SESSION['user_id'])) {
         <span class="ubn-badge" data-rt="bookings-count"
             style="<?php echo $_bn_bookings_badge ? '' : 'display:none;'; ?>"><?php echo htmlspecialchars($_bn_bookings_badge ?? ''); ?></span>
     </a>
-    <a href="units.php" class="ubn-item ubn-center">
-        <div class="ubn-fab">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
-                stroke-linejoin="round" width="20" height="20" style="width:20px;height:20px;">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-        </div>
+    <a href="units.php" class="ubn-item<?php echo $_bn_active === 'browse' ? ' ubn-active' : ''; ?>">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round" width="20" height="20" style="width:20px;height:20px;flex-shrink:0;">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
         <span>Browse</span>
     </a>
     <a href="payment.php" class="ubn-item<?php echo $_bn_active === 'payment' ? ' ubn-active' : ''; ?>">

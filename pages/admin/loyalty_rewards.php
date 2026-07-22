@@ -158,7 +158,7 @@ $avg_pts = $total ? (int) round(array_sum(array_column($rewards, 'points_cost'))
                         <tr>
                             <td colspan="6">
                                 <div class="rw-empty">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg fill="none" stroke="#000000" viewBox="0 0 24 24">
                                         <path d="M20 12V22H4V12" />
                                         <path d="M22 7H2v5h20V7z" stroke-linejoin="round" />
                                         <path d="M12 22V7" />

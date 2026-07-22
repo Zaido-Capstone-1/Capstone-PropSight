@@ -45,7 +45,7 @@ if ($stmt->execute()) {
     $stmt->close();
     echo json_encode([
         'status'  => 'success',
-        'message' => "Unit \"{$unit['unit_number']}\" has been deleted."
+        'message' => "\"{$unit['unit_number']}\" has been deleted."
     ]);
 } else {
     $err = $stmt->error;

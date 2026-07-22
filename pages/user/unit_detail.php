@@ -641,9 +641,6 @@ require '../../includes/_nav.php';
                     <div class="ud-price-breakdown" id="udPriceBreakdown" style="display:none">
                         <div id="udSeasonRows"></div>
                         <div class="ud-pb-divider"></div>
-                        <div class="ud-pb-row ud-pb-demand">
-                            <span id="udDemandBadge"></span>
-                        </div>
                         <div class="ud-pb-total"><span>Total</span><span id="udTotalDue">—</span></div>
                     </div>
                     <div id="udGuestSurcharge"
@@ -965,8 +962,18 @@ require '../../includes/_nav.php';
                                 <div class="bm-pay-radio"></div>
                             </div>
                             <div class="bm-pay-option" data-method="Bank Transfer">
-                                <div class="bm-pay-icon"><img src="../../assets/images/logo-icon/mobile-banking.png"
-                                        alt="Bank"></div>
+                                <div class="bm-pay-icon"
+                                    style="background:#eef2ff;border-radius:8px;display:flex;align-items:center;justify-content:center;width:44px;height:44px;">
+                                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#4338ca"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 3 3 9 21 9" />
+                                        <line x1="5" y1="9" x2="5" y2="21" />
+                                        <line x1="9" y1="9" x2="9" y2="21" />
+                                        <line x1="15" y1="9" x2="15" y2="21" />
+                                        <line x1="19" y1="9" x2="19" y2="21" />
+                                        <line x1="3" y1="21" x2="21" y2="21" />
+                                    </svg>
+                                </div>
                                 <div class="bm-pay-info">
                                     <div class="bm-pay-name">Bank Transfer</div>
                                     <div class="bm-pay-desc">Transfer via online banking</div>
@@ -974,7 +981,15 @@ require '../../includes/_nav.php';
                                 <div class="bm-pay-radio"></div>
                             </div>
                             <div class="bm-pay-option" data-method="Cash">
-                                <div class="bm-pay-icon"><img src="../../assets/images/logo-icon/dollar.png" alt="Cash">
+                                <div class="bm-pay-icon"
+                                    style="background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;width:44px;height:44px;">
+                                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#16a34a"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="2" y="6" width="20" height="12" rx="2" ry="2" />
+                                        <circle cx="12" cy="12" r="2.5" />
+                                        <line x1="6" y1="12" x2="6.01" y2="12" />
+                                        <line x1="18" y1="12" x2="18.01" y2="12" />
+                                    </svg>
                                 </div>
                                 <div class="bm-pay-info">
                                     <div class="bm-pay-name">Cash (On-site)</div>

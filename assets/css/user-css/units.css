@@ -996,7 +996,6 @@ body {
     gap: 4px;
     font-size: .7rem;
     color: var(--ink-faint);
-    margin-bottom: 7px;
 }
 
 .room-location-chip svg {
@@ -1272,6 +1271,6 @@ body {
 /* Save button — keep it clear of the badge row */
 .room-card-img .btn-save-room {
     top: auto;
-    bottom: 44px;
+    bottom: 15px;
     right: 10px;
 }

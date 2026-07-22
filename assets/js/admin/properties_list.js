@@ -166,7 +166,8 @@ document.querySelectorAll('.delete-property-btn').forEach(btn => {
             {
                 title: 'Remove Property',
                 confirmLabel: 'Remove',
-                confirmClass: 'btn btn-danger'
+                confirmClass: 'btn btn-danger',
+                loadingLabel: 'Removing...'
             }
         );
     });

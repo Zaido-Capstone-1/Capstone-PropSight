@@ -210,3 +210,11 @@ $stats = calculateStatsFromDB($conn, $selected_year);
 
 if (!$financial_data)
     $financial_data = ['revenue' => [], 'expenses' => [], 'refunds' => [], 'maintenance' => [], 'utilities' => [], 'salaries' => [], 'admin' => [], 'revenue_mix' => [], 'pnl_summary' => []];
+
+// -- Authoritative "has data" flags --------------------------------------
+// Derived from the real SUM query totals in $stats, not from summing the
+// per-month chart arrays, so a legitimately zero month does not get
+// mislabeled as "no data for the year".
+$hasFinancialActivity = ($stats['total_revenue'] > 0 || $stats['total_expenses'] > 0 || $stats['total_refunds'] > 0);
+$hasRevenueMix = !empty($financial_data['revenue_mix']);
+$hasExpenseBreakdown = (array_sum($financial_data['maintenance'] ?? []) + array_sum($financial_data['utilities'] ?? []) + array_sum($financial_data['salaries'] ?? []) + array_sum($financial_data['admin'] ?? [])) > 0;

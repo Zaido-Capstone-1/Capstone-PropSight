@@ -1066,7 +1066,6 @@ body {
 
 .btn-save-room.saving {
     pointer-events: none;
-    opacity: .6;
 }
 
 .room-card-body {

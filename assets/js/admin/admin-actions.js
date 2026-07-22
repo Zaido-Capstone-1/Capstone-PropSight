@@ -71,27 +71,6 @@
       .ps-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
       .ps-modal-grid .full { grid-column: 1 / -1; }
 
-      /* Toast */
-      #ps-toast-container {
-        position: fixed; top: 24px; left: 50%; 
-        transform: translateX(-50%);
-        display: flex; flex-direction: column; gap: 10px;
-        z-index: 9999; pointer-events: none;
-        align-items: center;
-        }
-      .ps-toast {
-        border-radius: 10px;
-        padding: 12px 18px; font-size: 13.5px;
-        box-shadow: 0 6px 24px rgba(0,0,0,.18);
-        opacity: 0; transform: translateY(10px);
-        transition: opacity .25s, transform .25s;
-        pointer-events: none; max-width: 320px;
-      }
-      .ps-toast.show { opacity: 1; transform: none; }
-      .ps-toast.success { background: var(--success, #27ae60); }
-      .ps-toast.error   { background: var(--danger,  #e74c3c); }
-      .ps-toast.info    { background: var(--blue-400, #2563c4); }
-
       /* Confirm dialog */
       .ps-confirm-modal { max-width: 380px; }
       .ps-confirm-modal .ps-modal-title { font-size: 15px; }
@@ -109,26 +88,20 @@
         document.head.appendChild(style);
     }
 
-    // Toast container
-    if (!document.getElementById('ps-toast-container')) {
-        const tc = document.createElement('div');
-        tc.id = 'ps-toast-container';
-        document.body.appendChild(tc);
-    }
-
     /* ── Public helpers ── */
     window.PS = window.PS || {};
 
     PS.toast = function (msg, type = 'success', duration = 3000) {
-        const t = document.createElement('div');
-        t.className = 'ps-toast ' + type;
-        t.textContent = msg;
-        document.getElementById('ps-toast-container').appendChild(t);
-        requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
-        setTimeout(() => {
-            t.classList.remove('show');
-            setTimeout(() => t.remove(), 300);
-        }, duration);
+        /* Delegate to the shared toast.js widget (pale bg, colored text,
+           close button) so every toast across the admin panel looks the
+           same. Legacy 'info' still maps through; toast.js normalizes
+           unknown/legacy values itself. */
+        if (window._psToastReady && typeof window.showToast === 'function') {
+            window.showToast(msg, type, duration);
+            return;
+        }
+        /* toast.js hasn't finished loading yet — queue and retry shortly. */
+        setTimeout(() => PS.toast(msg, type, duration), 80);
     };
 
     PS.openModal = function (html, opts = {}) {
@@ -158,8 +131,8 @@
     };
 
     PS.confirm = function (message, onConfirm, opts = {}) {
-        const { title = 'Are you sure?', confirmLabel = 'Confirm', confirmClass = 'btn btn-danger' } = opts;
-        const { close } = PS.openModal(`
+        const { title = 'Are you sure?', confirmLabel = 'Confirm', confirmClass = 'btn btn-danger', loadingLabel } = opts;
+        const { backdrop, close } = PS.openModal(`
       <div class="ps-modal-title">${title}</div>
       <p class="ps-confirm-msg">${message}</p>
       <div class="ps-modal-footer">
@@ -167,7 +140,19 @@
         <button class="${confirmClass}" id="ps-confirm-ok">${confirmLabel}</button>
       </div>
     `);
-        document.getElementById('ps-confirm-ok').addEventListener('click', () => { close(); onConfirm(); });
+        const okBtn = document.getElementById('ps-confirm-ok');
+        okBtn.addEventListener('click', () => {
+            if (loadingLabel) {
+                const cancelBtn = backdrop.querySelector('[data-ps-cancel]');
+                okBtn.disabled = true;
+                if (cancelBtn) cancelBtn.disabled = true;
+                okBtn.textContent = loadingLabel;
+                Promise.resolve(onConfirm()).finally(close);
+            } else {
+                close();
+                onConfirm();
+            }
+        });
     };
 
     /* ─── Generic detail-row helper ─── */

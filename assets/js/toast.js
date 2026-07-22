@@ -21,10 +21,12 @@
             #ps-toast-container {
                 position: fixed;
                 top: 20px;
-                right: 20px;
+                left: 50%;
+                transform: translateX(-50%);
                 z-index: 99999;
                 display: flex;
                 flex-direction: column;
+                align-items: center;
                 gap: 10px;
                 pointer-events: none;
                 max-width: 360px;
@@ -41,7 +43,7 @@
                 pointer-events: all;
                 cursor: default;
                 opacity: 0;
-                transform: translateX(110%);
+                transform: translateY(-16px);
                 transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
                 min-width: 0;
                 position: relative;
@@ -49,12 +51,12 @@
 
             .ps-toast.ps-toast--show {
                 opacity: 1;
-                transform: translateX(0);
+                transform: translateY(0);
             }
 
             .ps-toast.ps-toast--hide {
                 opacity: 0;
-                transform: translateX(110%);
+                transform: translateY(-16px);
                 transition: opacity 0.25s ease, transform 0.25s ease;
             }
 
@@ -119,7 +121,6 @@
             @media (max-width: 480px) {
                 #ps-toast-container {
                     top: 12px;
-                    right: 12px;
                     min-width: auto;
                 }
             }

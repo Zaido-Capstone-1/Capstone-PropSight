@@ -617,37 +617,6 @@
     });
 
     /* ────────────────────────────────────────────────────
-     *  ADMIN: DASHBOARD RECENT ACTIVITY FEED
-     * ──────────────────────────────────────────────────── */
-    // window.addEventListener('ps:recent_activity', e => {
-    //     const items = e.detail;
-    //     const feed = document.getElementById('rt-activity-feed');
-    //     if (!feed) return;
-
-    //     items.forEach(b => {
-    //         const key = `act-${b.booking_id}-${b.status}`;
-    //         if (feed.querySelector(`[data-act-key="${key}"]`)) return;
-
-    //         const lbl = statusLabel(b.status);
-    //         const div = document.createElement('div');
-    //         div.className = 'rt-activity-item';
-    //         div.dataset.actKey = key;
-    //         div.innerHTML = `
-    //             <div class="rt-act-dot" style="background:${_statusColor(b.status)}"></div>
-    //             <div class="rt-act-body">
-    //                 <span class="rt-act-name">${_escHtml(b.user_name)}</span>
-    //                 booked <strong>${_escHtml(b.unit_name)}</strong>
-    //                 — <span class="rt-act-badge ${lbl.cls}">${lbl.text}</span>
-    //             </div>
-    //             <div class="rt-act-time">${_relativeTime(b.created_at)}</div>`;
-    //         feed.prepend(div);
-
-    //         // Keep max 8 items
-    //         while (feed.children.length > 8) feed.lastElementChild.remove();
-    //     });
-    // });
-
-    /* ────────────────────────────────────────────────────
      *  ADMIN: MESSAGES — unread thread highlight
      * ──────────────────────────────────────────────────── */
     window.addEventListener('ps:new_messages', e => {
@@ -836,7 +805,7 @@
                     }
 
                     if (!items.length && !append) {
-                        if (empty) empty.style.display = '';
+                        if (empty) { empty.textContent = 'No new notifications'; empty.style.display = ''; }
                         if (viewMoreWrap) viewMoreWrap.style.display = 'none';
                         return;
                     }
@@ -876,6 +845,8 @@
                 // Reset and load first page
                 _notifOffset = 0;
                 _notifHasMore = false;
+                const empty = document.getElementById('notifEmptyState');
+                if (empty) { empty.textContent = 'Loading notifications…'; empty.style.display = ''; }
                 _loadNotifs(0, false);
             }
         });
@@ -1001,6 +972,15 @@
                     el.textContent = next;
                     el.style.display = next > 0 ? 'flex' : 'none';
                 });
+            }
+            if (n.type === 'message' && typeof window.__fcOpenPopupByAdminId === 'function') {
+                const m = /[?&]admin_id=(\d+)/.exec(n.link || '');
+                if (m) {
+                    window.__fcOpenPopupByAdminId(m[1]);
+                    const notifDrop = document.getElementById('notifDropdown');
+                    if (notifDrop) notifDrop.style.display = 'none';
+                    return;
+                }
             }
             if (n.link) window.location.href = '../../' + n.link;
         });

@@ -2,7 +2,43 @@ const propTrendDatasets = window.__PS_OCCUPANCY__.propTrendDatasets;
 const last6Labels = window.__PS_OCCUPANCY__.last6Labels;
 const perPropLabels = window.__PS_OCCUPANCY__.perPropLabels;
 const perPropRates = window.__PS_OCCUPANCY__.perPropRates;
+const hasOccupancyData = !!window.__PS_OCCUPANCY__.hasOccupancyData;
 const propColors = ['#2563c4', '#deaf37', '#2ECC71', '#93c5fd', '#E74C3C', '#8B5CF6'];
+
+// Replaces a canvas's parent .chart-wrap with a centered "no data" message.
+function showEmptyState(canvasId, message = 'No data available yet') {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const wrap = canvas.closest('.chart-wrap') || canvas.parentElement;
+    wrap.innerHTML = `
+      <div style="height:100%;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#94a3b8;">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 3v18h18" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M7 15l4-4 3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span style="font-size:13px;font-weight:500;">${message}</span>
+      </div>`;
+}
+
+if (!hasOccupancyData) {
+    showEmptyState('occTrendChart', 'No properties to report on yet');
+    showEmptyState('occBarChart', 'No properties to report on yet');
+} else {
+
+// Properties exist (so we render the real charts above), but if every
+// value in them happens to be zero, a flat/invisible chart can still read
+// as "broken" to the eye. Add a small supplementary note alongside the
+// real chart rather than hiding it — the data itself stays accurate.
+const allTrendZero = propTrendDatasets.every(ds => (ds.data || []).every(v => Number(v) === 0));
+const allBarZero = perPropRates.every(v => Number(v) === 0);
+if (allTrendZero) {
+    const note = document.getElementById('occTrendNote');
+    if (note) note.style.display = 'block';
+}
+if (allBarZero) {
+    const note = document.getElementById('occBarNote');
+    if (note) note.style.display = 'block';
+}
 
 new Chart(document.getElementById('occTrendChart'), {
     type: 'line',
@@ -93,15 +129,27 @@ new Chart(document.getElementById('occBarChart'), {
             const { ctx, data } = chart;
             chart.getDatasetMeta(0).data.forEach((bar, i) => {
                 const val = data.datasets[0].data[i];
-                if (val === 0) return;
                 ctx.save();
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 13px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(val + '%', bar.x, bar.y + 16);
+                if (val === 0) {
+                    // Zero-height bars are invisible, so draw the label
+                    // just above the baseline in a muted color instead of
+                    // white-on-nothing, so the property still shows up.
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '600 12px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText('0%', bar.x, bar.y - 6);
+                } else {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 13px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(val + '%', bar.x, bar.y + 16);
+                }
                 ctx.restore();
             });
         }
     }]
 });
+
+}

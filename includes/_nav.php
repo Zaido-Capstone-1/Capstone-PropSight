@@ -140,7 +140,7 @@
                         <?php echo $initials; ?>
                     </span>
                 </button>
-                <span class="profile-dot"></span>
+                <!-- <span class="profile-dot"></span> -->
             </div>
             <button class="hamburger" id="hamburger" aria-label="Menu">
                 <span></span><span></span><span></span>

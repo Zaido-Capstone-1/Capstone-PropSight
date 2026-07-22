@@ -66,6 +66,12 @@ while ($r = $propRes->fetch_assoc()) {
     $perProperty[] = $r;
 }
 
+// Authoritative "has data" signal: whether any properties exist at all,
+// not whether their occupancy rates happen to be 0% (a property can
+// legitimately have 0% occupancy right now — that's real data, not
+// missing data).
+$hasOccupancyData = !empty($perProperty);
+
 // 12-month overall trend
 $stmtTrend = $conn->prepare(
     "SELECT COUNT(DISTINCT unit_id) AS c FROM bookings

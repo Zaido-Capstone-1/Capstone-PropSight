@@ -200,6 +200,12 @@ require_once '../../lib/admin-queries/guest_clients_queries.php';
                 $fullName = htmlspecialchars(trim($g['first_name'] . ' ' . $g['last_name']));
                 $initials = strtoupper(substr($g['first_name'], 0, 1)) . strtoupper(substr($g['last_name'], 0, 1));
                 $photo = $g['profile_photo'] ?? '';
+                // SSO logins (Google/Facebook) store the provider's full avatar
+                // URL here instead of a local upload path — don't prepend
+                // "../../" to an absolute URL, or the <img> src breaks.
+                $photoUrl = $photo !== ''
+                  ? (preg_match('#^https?://#i', $photo) ? $photo : '../../' . ltrim($photo, '/'))
+                  : '';
 
                 $filterStatus = $g['is_blacklisted'] ? 'blacklisted'
                   : ($g['is_active'] ? 'active'
@@ -215,7 +221,7 @@ require_once '../../lib/admin-queries/guest_clients_queries.php';
                   <td>
                     <div style="display:flex;align-items:center;gap:9px;">
                       <?php if ($photo): ?>
-                        <img src="../../<?= htmlspecialchars($photo) ?>" class="guest-avatar-img"
+                        <img src="<?= htmlspecialchars($photoUrl) ?>" class="guest-avatar-img"
                           onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                         <div class="guest-avatar" style="display:none;"><?= $initials ?></div>
                       <?php else: ?>

@@ -187,7 +187,7 @@ $last_name = htmlspecialchars($_SESSION['last_name'] ?? '');
 $full_name = trim($first_name . ' ' . $last_name);
 $email = htmlspecialchars($_SESSION['email'] ?? '');
 $initials = strtoupper(mb_substr($first_name, 0, 1) . mb_substr($last_name, 0, 1));
-$hour = (int) date('G');
+$hour = (int) (new DateTime('now', new DateTimeZone('Asia/Manila')))->format('G');
 $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
 $todayLong = date('F j, Y');
 $isVerifiedSidebar = (($_SESSION['verification_status'] ?? '') === 'Verified');
@@ -238,9 +238,7 @@ $page_extra_head = '
 ';
 require '../../includes/_nav.php';
 ?>
-
-
-        <section class="user-hero" id="account">
+    <section class="user-hero" id="account">
         <div class="user-hero-inner">
             <div class="hero-banner reveal">
                 <div class="hero-banner-photo"></div>
@@ -248,7 +246,7 @@ require '../../includes/_nav.php';
                 <div class="hero-banner-content">
                     <div class="hero-banner-left">
                         <div class="user-hero-greeting">
-                            <?php echo $greeting; ?>
+                            <?php echo $greeting; ?>,
                         </div>
                         <h1>Welcome back, <em><?php echo htmlspecialchars($_SESSION['first_name']); ?></em>!</h1>
                         <div class="hero-banner-meta">
@@ -1290,7 +1288,6 @@ require '../../includes/_nav.php';
 
     <script src="../../assets/js/realtime.js"></script>
     <script src="../../assets/js/user-js/user-realtime-pages.js"></script>
-    <script src="../../assets/js/user-js/floating-chat.js?v=5"></script>
 
 
 <?php require '../../includes/_bottom_nav.php'; ?>

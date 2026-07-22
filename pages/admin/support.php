@@ -91,9 +91,6 @@ include '../../lib/admin-queries/support_queries.php';
         <div class="card-header-with-filters">
             <div class="header-left">
                 Support Tickets
-                <span
-                    style="font-size:12px;font-weight:600;background:var(--hover,#f1f5f9);color:var(--text-soft,#666);border-radius:20px;padding:2px 10px;margin-left:8px;"
-                    id="sptTicketCount"><?= $ticketTotal ?></span>
             </div>
             <div class="header-right">
                 <div class="filter-bar" style="margin:0;">
@@ -104,13 +101,13 @@ include '../../lib/admin-queries/support_queries.php';
                             <line x1="21" y1="21" x2="16.65" y2="16.65" />
                         </svg>
                         <input type="text" id="sptSearch" value="<?= htmlspecialchars($search) ?>"
-                            placeholder="Search subject, user, category…" style="padding-left:28px;">
+                            placeholder="Search subject, user, category…" style="padding-left:28px;height:30px;">
                     </div>
 
                     <!-- Custom status dropdown -->
                     <div class="inv-status-dropdown-wrap" id="sptStatusWrap">
                         <button type="button" class="inv-status-trigger" id="sptStatusTrigger"
-                            onclick="toggleSptStatus()">
+                            onclick="toggleSptStatus()" style="height: 30px;">
                             <span
                                 id="sptStatusLabel"><?= $statusFilter === 'all' ? 'All Status' : ucwords(str_replace('_', ' ', $statusFilter)) ?></span>
                             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12"
@@ -230,37 +227,39 @@ include '../../lib/admin-queries/support_queries.php';
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
-                </table>
+            </table>
         </div>
 
         <div id="sptTableFoot" style="display:none;border-top:1.5px solid var(--border);">
-                            <div class="txn-pagination">
-                                <span class="txn-page-info" id="sptPageInfo"></span>
-                                <div class="txn-page-controls" id="sptPageControls" style="display:none;">
-                                    <button type="button" id="sptPrevBtn" class="txn-chevron-btn"
-                                        onclick="sptChangePage(-1)" disabled>
-                                        <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"
-                                            width="14" height="14">
-                                            <polyline points="15 18 9 12 15 6" />
-                                        </svg>
-                                    </button>
-                                    <span id="sptPageNumbers" class="txn-page-numbers"></span>
-                                    <button type="button" id="sptNextBtn" class="txn-chevron-btn"
-                                        onclick="sptChangePage(1)" disabled>
-                                        <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"
-                                            width="14" height="14">
-                                            <polyline points="9 18 15 12 9 6" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
+            <div class="txn-pagination">
+                <span class="txn-page-info" id="sptPageInfo"></span>
+                <div class="txn-page-controls" id="sptPageControls" style="display:none;">
+                    <button type="button" id="sptPrevBtn" class="txn-chevron-btn" onclick="sptChangePage(-1)" disabled>
+                        <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
+                            height="14">
+                            <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                    </button>
+                    <span id="sptPageNumbers" class="txn-page-numbers"></span>
+                    <button type="button" id="sptNextBtn" class="txn-chevron-btn" onclick="sptChangePage(1)" disabled>
+                        <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
+                            height="14">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div id="sptEmptyState" style="display:none;text-align:center;padding:52px 16px;">
-            <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"
-                style="margin:0 auto 12px;display:block;">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" stroke-width="1.5"
+                class="bi bi-ticket-perforated" viewBox="0 0 16 16" id="IconChangeColor">
+                <path
+                    d="M4 4.85v.9h1v-.9H4Zm7 0v.9h1v-.9h-1Zm-7 1.8v.9h1v-.9H4Zm7 0v.9h1v-.9h-1Zm-7 1.8v.9h1v-.9H4Zm7 0v.9h1v-.9h-1Zm-7 1.8v.9h1v-.9H4Zm7 0v.9h1v-.9h-1Z"
+                    id="mainIconPathAttribute"></path>
+                <path
+                    d="M1.5 3A1.5 1.5 0 0 0 0 4.5V6a.5.5 0 0 0 .5.5 1.5 1.5 0 1 1 0 3 .5.5 0 0 0-.5.5v1.5A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5V10a.5.5 0 0 0-.5-.5 1.5 1.5 0 0 1 0-3A.5.5 0 0 0 16 6V4.5A1.5 1.5 0 0 0 14.5 3h-13ZM1 4.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v1.05a2.5 2.5 0 0 0 0 4.9v1.05a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-1.05a2.5 2.5 0 0 0 0-4.9V4.5Z"
+                    id="mainIconPathAttribute"></path>
             </svg>
             <div style="color:#aaa;font-size:14px;" id="sptEmptyText">No tickets yet.</div>
         </div>

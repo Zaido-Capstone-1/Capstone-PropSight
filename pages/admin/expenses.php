@@ -290,6 +290,13 @@ require_once '../../lib/admin-queries/expenses_queries.php';
       </div>
 
       <div id="emptyState" class="table-empty" style="display:none;">
+        <svg class="table-empty-icon" width="48" height="48" viewBox="0 0 24 24" fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M3 7L5 3H19L21 7M3 7V19C3 19.5304 3.21071 20.0391 3.58579 20.4142C3.96086 20.7893 4.46957 21 5 21H19C19.5304 21 20.0391 20.7893 20.4142 20.4142C20.7893 20.0391 21 19.5304 21 19V7M3 7H21"
+            stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M9 11H15" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
         <div class="table-empty-text">No expenses found.</div>
       </div>
     </div>

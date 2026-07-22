@@ -128,10 +128,20 @@ function oauth_find_or_create_user(
     $stmt->close();
 
     if ($user) {
-        $link = $conn->prepare("UPDATE users SET oauth_provider = ?, oauth_id = ? WHERE user_id = ?");
-        $link->bind_param('ssi', $provider, $providerId, $user['user_id']);
-        $link->execute();
-        $link->close();
+        // Only fill in profile_photo if the account doesn't already have one
+        // (e.g. via a manual upload) — don't overwrite an existing choice.
+        if (!empty($avatarUrl) && empty($user['profile_photo'])) {
+            $link = $conn->prepare("UPDATE users SET oauth_provider = ?, oauth_id = ?, profile_photo = ? WHERE user_id = ?");
+            $link->bind_param('sssi', $provider, $providerId, $avatarUrl, $user['user_id']);
+            $link->execute();
+            $link->close();
+            $user['profile_photo'] = $avatarUrl;
+        } else {
+            $link = $conn->prepare("UPDATE users SET oauth_provider = ?, oauth_id = ? WHERE user_id = ?");
+            $link->bind_param('ssi', $provider, $providerId, $user['user_id']);
+            $link->execute();
+            $link->close();
+        }
         $user['oauth_provider'] = $provider;
         $user['oauth_id'] = $providerId;
         return $user;

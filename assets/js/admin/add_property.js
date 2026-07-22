@@ -167,3 +167,15 @@
       }, 200);
     }
   })();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('form[action*="add_property.php"]');
+    if (!form) return;
+    form.addEventListener('submit', function () {
+      const btn = form.querySelector('button[type="submit"]');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+      }
+    });
+  });

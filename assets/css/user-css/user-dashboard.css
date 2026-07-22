@@ -688,10 +688,6 @@
     font-size: .8rem;
 }
 
-.bm-summary-row + .bm-summary-row {
-    border-top: 1px solid #e2e8f0;
-}
-
 .bm-summary-key {
     color: #5a7185;
 }

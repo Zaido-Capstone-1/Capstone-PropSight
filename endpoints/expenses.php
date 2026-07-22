@@ -112,15 +112,26 @@ if ($method === 'GET') {
     ];
 
     // ── 6-month trend ─────────────────────────────
+    $trend_from = date('Y-m-01', strtotime("-5 months", strtotime($date_from)));
+    $trend_rows = db_query(
+        $conn,
+        "SELECT DATE_FORMAT(expense_date, '%Y-%m') AS ym, COALESCE(SUM(amount),0) AS t
+         FROM expenses
+         WHERE expense_date BETWEEN ? AND ?
+         GROUP BY DATE_FORMAT(expense_date, '%Y-%m')",
+        [$trend_from, $date_to]
+    );
+    $trend_map = [];
+    foreach ($trend_rows as $r) {
+        $trend_map[$r['ym']] = (float) $r['t'];
+    }
     $trends = [];
     for ($i = 5; $i >= 0; $i--) {
         $ts = strtotime("-$i months", strtotime($date_from));
-        $mf = date('Y-m-01', $ts);
-        $mt = date('Y-m-t', $ts);
-        $row = db_query($conn, "SELECT COALESCE(SUM(amount),0) AS t FROM expenses WHERE expense_date BETWEEN ? AND ?", [$mf, $mt])[0] ?? ['t' => 0];
+        $ym = date('Y-m', $ts);
         $trends[] = [
             'label' => date('M', $ts),
-            'amount' => (float) $row['t'],
+            'amount' => $trend_map[$ym] ?? 0,
         ];
     }
 

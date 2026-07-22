@@ -863,6 +863,23 @@ async function openViewModal(unit) {
             const priceEl = card.querySelector('.price-value');
             if (priceEl) priceEl.textContent = '₱' + Number(mergedUnit.rent_amount).toLocaleString('en-US', { minimumFractionDigits: 0 });
 
+            // Update season badge next to the price
+            const seasonColors = { Peak: '#E74C3C', High: '#deaf37', Low: '#2ECC71' };
+            const seasonVal = mergedUnit.season || 'Low';
+            const seasonColor = seasonColors[seasonVal] || seasonColors.Low;
+            let seasonBadge = card.querySelector('.season-badge');
+            if (!seasonBadge && priceEl) {
+              seasonBadge = document.createElement('span');
+              seasonBadge.className = 'season-badge';
+              seasonBadge.style.cssText = 'font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;';
+              priceEl.insertAdjacentElement('afterend', seasonBadge);
+            }
+            if (seasonBadge) {
+              seasonBadge.style.background = seasonColor + '20';
+              seasonBadge.style.color = seasonColor;
+              seasonBadge.textContent = seasonVal;
+            }
+
             // Update card thumbnail immediately
             // Update card thumbnail — handle removed photos
             const photoWrap = card.querySelector('.photo-wrap');
@@ -1199,6 +1216,7 @@ function buildCardHTML(unit) {
         <div class="price">
           <span class="price-value">₱${Number(unit.rent_amount).toLocaleString('en-US', { minimumFractionDigits: 0 })}</span>
           <span class="price-label">/ month</span>
+          <span class="season-badge" style="background:${(({Peak:'#E74C3C',High:'#deaf37',Low:'#2ECC71'})[unit.season || 'Low'] || '#2ECC71')}20;color:${(({Peak:'#E74C3C',High:'#deaf37',Low:'#2ECC71'})[unit.season || 'Low'] || '#2ECC71')};font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;">${unit.season || 'Low'}</span>
         </div>
         <div class="card-actions">
           <button class="btn-view view-unit-btn" data-unit="${unitJson}">
@@ -1268,7 +1286,7 @@ function attachDeleteHandler(btn) {
         console.error(err);
         PS.toast('Server error. Please try again.', 'error');
       }
-    }, { title: 'Remove Unit', confirmLabel: 'Remove', confirmClass: 'btn btn-danger' });
+    }, { title: 'Remove Unit', confirmLabel: 'Remove', confirmClass: 'btn btn-danger', loadingLabel: 'Removing...' });
   });
 }
 document.querySelectorAll('.delete-unit-btn').forEach(attachDeleteHandler);

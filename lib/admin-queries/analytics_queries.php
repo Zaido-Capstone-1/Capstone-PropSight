@@ -235,3 +235,10 @@ if ($currentMonth >= 2) {
 // ── Revenue by property as percentage ─────────────────────────────────────
 $revByPropTotal = array_sum($revByPropData) ?: 1;
 $revByPropPct = array_map(fn($v) => round($v / $revByPropTotal * 100, 1), $revByPropData);
+
+// ── Authoritative "has data" flags ─────────────────────────────────────────
+// Derived from the real query results ($totalRevenue / $totalBookings are
+// COUNT/SUM values from the DB), not from summing the chart-ready arrays.
+// This avoids treating a legitimate all-zero month/property as "no data".
+$hasRevenueData = $totalRevenue > 0;
+$hasBookingData = $totalBookings > 0;

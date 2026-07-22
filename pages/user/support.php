@@ -15,7 +15,7 @@ $last_name = htmlspecialchars($_SESSION['last_name'] ?? '');
 $full_name = trim($first_name . ' ' . $last_name);
 $initials = strtoupper(mb_substr($first_name, 0, 1) . mb_substr($last_name, 0, 1));
 $email = htmlspecialchars($_SESSION['email'] ?? '');
-$hour = (int) date('G');
+$hour = (int) (new DateTime('now', new DateTimeZone('Asia/Manila')))->format('G');
 $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
 
 $page_title = 'Support & Help';
@@ -77,11 +77,10 @@ $faqs = [
     </div>
 <?php endif; ?>
 
-<!-- ── Hero ──────────────────────────────────────────── -->
 <div class="support-hero reveal">
     <div class="support-hero-text">
         <div class="support-hero-eyebrow">Help Center</div>
-        <h1><?php echo $greeting; ?>, <?php echo $first_name; ?> <em>👋</em></h1>
+        <h1><?php echo $greeting; ?>, <?php echo $first_name; ?></h1>
         <p class="support-hero-sub">We're here for you 24/7 — find answers instantly or reach our team directly below.
         </p>
     </div>
@@ -103,7 +102,6 @@ $faqs = [
     </div>
 </div>
 
-<!-- ── Contact cards ─────────────────────────────────── -->
 <div class="contact-grid reveal">
     <div class="contact-card">
         <div class="contact-icon blue">
@@ -130,10 +128,8 @@ $faqs = [
 <div class="page-two-col">
     <div class="col-main">
 
-        <!-- ── Row 1: My Tickets + Maintenance ──────────────── -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-bottom:16px;">
 
-            <!-- MY TICKETS -->
             <div class="card reveal rd1" id="myTicketsList" data-current-page="<?php echo (int) $ticketPage; ?>">
                 <div class="card-title">
                     <svg viewBox="0 0 24 24">
@@ -210,7 +206,6 @@ $faqs = [
                 <?php endif; ?>
             </div>
 
-            <!-- MAINTENANCE REQUESTS LIST -->
             <div class="card reveal rd1">
                 <div class="card-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -281,7 +276,6 @@ $faqs = [
 
         </div><!-- /row-1 -->
 
-        <!-- ── FAQ ──────────────────────────────────────────── -->
         <div class="card reveal rd2" style="margin-bottom:16px;">
             <div class="card-title">
                 <svg viewBox="0 0 24 24">
@@ -323,7 +317,6 @@ $faqs = [
     </div><!-- /col-main -->
 </div><!-- /page-two-col -->
 
-<!-- ── Ticket view modal ────────────────────────────── -->
 <div class="modal-overlay" id="ticketViewModal">
     <div class="modal-box ticket-modal-box" style="max-width:680px;">
         <button class="modal-close-btn" onclick="closeTicketModal()">✕</button>
@@ -333,7 +326,6 @@ $faqs = [
     </div>
 </div>
 
-<!-- ── New Ticket Modal ──────────────────────────────── -->
 <div class="modal-overlay" id="newTicketModal">
     <div class="modal-box" style="max-width:560px;">
         <button class="modal-close-btn" onclick="closeNewTicketModal()">✕</button>
@@ -377,7 +369,6 @@ $faqs = [
     </div>
 </div>
 
-<!-- ── New Maintenance Modal ─────────────────────────── -->
 <?php if ($hasActiveBooking): ?>
     <div class="modal-overlay" id="newMaintenanceModal">
         <div class="modal-box" style="max-width:560px;">

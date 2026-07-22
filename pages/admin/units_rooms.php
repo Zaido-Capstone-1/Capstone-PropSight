@@ -366,7 +366,7 @@ require_once '../../lib/admin-queries/units_rooms_queries.php';
                   $s = $unit['season'] ?? 'Low';
                   $sColor = ['Peak' => '#E74C3C', 'High' => '#deaf37', 'Low' => '#2ECC71'][$s] ?? '#2ECC71';
                   ?>
-                  <span
+                  <span class="season-badge"
                     style="background:<?= $sColor ?>20;color:<?= $sColor ?>;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle;"><?= $s ?></span>
                 </div>
                 <div class="card-actions">

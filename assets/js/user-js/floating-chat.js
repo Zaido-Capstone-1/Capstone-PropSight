@@ -529,6 +529,11 @@
         let lastDate = clearFirst ? null : body.dataset.lastDate;
 
         msgs.forEach(m => {
+            // Already rendered (e.g. this is our own just-sent message and the
+            // optimistic "sending" bubble already resolved to it, or an earlier
+            // poll already added it) — skip to avoid a duplicate bubble.
+            if (m.message_id && body.querySelector(`.fc-bubble[data-msg-id="${m.message_id}"]`)) return;
+
             const mine = parseInt(m.from_user) === MY_ID;
             const d = psDate(m.created_at);
             const dateStr = d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
@@ -643,17 +648,24 @@
                 const tmp = document.getElementById(tempId);
                 if (data.success) {
                     if (tmp) {
-                        tmp.classList.remove('sending');
-                        if (data.message_id) {
-                            tmp.dataset.msgId = data.message_id;
-                            if (tempImgUrl) {
-                                const img = tmp.querySelector(`img[src="${tempImgUrl}"]`);
-                                if (img) {
-                                    const proxyUrl = `../../endpoints/view_message_attachment.php?message_id=${data.message_id}`;
-                                    URL.revokeObjectURL(tempImgUrl);
-                                    img.src = proxyUrl;
-                                    img.setAttribute('onclick', `window.__fcOpenImage && window.__fcOpenImage('${proxyUrl}')`);
-                                    img.title = 'Click to enlarge';
+                        if (data.message_id && bodyEl.querySelector(`.fc-bubble[data-msg-id="${data.message_id}"]:not(#${tempId})`)) {
+                            // A poll already rendered the real bubble while this
+                            // request was in flight — drop the optimistic one.
+                            tmp.remove();
+                            if (tempImgUrl) URL.revokeObjectURL(tempImgUrl);
+                        } else {
+                            tmp.classList.remove('sending');
+                            if (data.message_id) {
+                                tmp.dataset.msgId = data.message_id;
+                                if (tempImgUrl) {
+                                    const img = tmp.querySelector(`img[src="${tempImgUrl}"]`);
+                                    if (img) {
+                                        const proxyUrl = `../../endpoints/view_message_attachment.php?message_id=${data.message_id}`;
+                                        URL.revokeObjectURL(tempImgUrl);
+                                        img.src = proxyUrl;
+                                        img.setAttribute('onclick', `window.__fcOpenImage && window.__fcOpenImage('${proxyUrl}')`);
+                                        img.title = 'Click to enlarge';
+                                    }
                                 }
                             }
                         }
@@ -685,7 +697,8 @@
                     if (!data.success) return;
                     const msgs = data.messages || [];
                     if (msgs.length) {
-                        renderPopupMessages(adminId, msgs, false);
+                        const incoming = msgs.filter(m => parseInt(m.from_user) !== MY_ID);
+                        if (incoming.length) renderPopupMessages(adminId, incoming, false);
                         state.lastTs = msgs[msgs.length - 1].created_at;
                     }
                 })
@@ -702,6 +715,31 @@
             if (el.style.display !== 'none') el.style.display = next > 0 ? '' : 'none';
         });
     }
+
+    function openPopupByAdminId(adminId, opts) {
+        adminId = parseInt(adminId, 10);
+        if (!adminId) return;
+
+        const cached = _threadsCache.find(t => parseInt(t.admin_id) === adminId);
+        if (cached) {
+            openPopup(adminId, cached.admin_name, cached.admin_photo || '', opts);
+            return;
+        }
+
+        // Threads not loaded yet (dropdown never opened this session) — fetch once
+        fetch(`${API}?action=threads`)
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.success) {
+                    _threadsCache = data.threads || [];
+                    _adminsCache = data.admins || [];
+                }
+                const t = _threadsCache.find(x => parseInt(x.admin_id) === adminId);
+                openPopup(adminId, t ? t.admin_name : 'Admin', t ? (t.admin_photo || '') : '', opts);
+            })
+            .catch(() => openPopup(adminId, 'Admin', '', opts));
+    }
+    window.__fcOpenPopupByAdminId = openPopupByAdminId;
 
     /* ── Intercept every "Messages" link sitewide so the popup
          system replaces full-page navigation entirely ────────── */

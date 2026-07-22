@@ -62,6 +62,9 @@
         const fullName = esc((g.first_name + ' ' + g.last_name).trim());
         const initials = ((g.first_name || '').charAt(0) + (g.last_name || '').charAt(0)).toUpperCase();
         const photo = g.profile_photo || '';
+        // SSO logins store the provider's full avatar URL here instead of a
+        // local upload path — don't prepend "../../" to an absolute URL.
+        const photoUrl = photo ? (/^https?:\/\//i.test(photo) ? photo : '../../' + photo.replace(/^\/+/, '')) : '';
         const searchIdx = [g.first_name, g.last_name, g.email, g.phone || ''].join(' ').toLowerCase();
         const memberSince = new Date(g.created_at).toLocaleDateString('en-US', {
             month: 'short',
@@ -78,7 +81,7 @@
         tr.innerHTML = `
           <td><div style="display:flex;align-items:center;gap:9px;">
               ${photo
-                ? `<img src="../../${esc(photo)}" class="guest-avatar-img"
+                ? `<img src="${esc(photoUrl)}" class="guest-avatar-img"
             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
        <div class="guest-avatar" style="display:none;">${initials}</div>`
                 : `<div class="guest-avatar">${initials}</div>`

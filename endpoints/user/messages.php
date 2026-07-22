@@ -81,6 +81,14 @@ if ($method === 'GET') {
         $markStmt->execute();
         $markStmt->close();
 
+        // Those messages have now been seen — clear their notification entries
+        $delNotifStmt = $conn->prepare(
+            "DELETE FROM notifications WHERE user_id = ? AND type = 'message'"
+        );
+        $delNotifStmt->bind_param('i', $userId);
+        $delNotifStmt->execute();
+        $delNotifStmt->close();
+
         $convStmt = $conn->prepare("
             SELECT m.*,
                    CONCAT(u.first_name,' ',u.last_name) AS sender_name,
@@ -303,7 +311,7 @@ if ($method === 'POST') {
                 'message',
                 'msg-' . $newId,
                 $notifTitle . ': ' . mb_substr($bodyPreview, 0, 80),
-                'messages.php',
+                'messages.php?user_id=' . $userId,
                 gmdate('Y-m-d H:i:s')
             );
 

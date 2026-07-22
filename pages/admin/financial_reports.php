@@ -228,6 +228,9 @@ require_once '../../lib/admin-queries/financial_reports_queries.php';  // ← al
   window.__PS_FINANCIAL__.chartData = <?php echo json_encode($financial_data); ?>;
   window.__PS_FINANCIAL__.selectedYear = <?php echo json_encode($selected_year); ?>;
   window.__PS_FINANCIAL__.years = <?php echo json_encode($available_years); ?>;
+  window.__PS_FINANCIAL__.hasFinancialActivity = <?php echo json_encode($hasFinancialActivity); ?>;
+  window.__PS_FINANCIAL__.hasRevenueMix = <?php echo json_encode($hasRevenueMix); ?>;
+  window.__PS_FINANCIAL__.hasExpenseBreakdown = <?php echo json_encode($hasExpenseBreakdown); ?>;
 </script>
 <script src="../../assets/js/admin/financial_reports.js"></script>
 

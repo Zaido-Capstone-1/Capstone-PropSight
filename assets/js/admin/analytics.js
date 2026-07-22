@@ -2,7 +2,41 @@ const blue = '#2563c4', gold = '#deaf37', grn = '#2ECC71', red = '#E74C3C';
 const sourceColors = ['#2563c4', '#2ECC71', '#deaf37', '#1a3d7c', '#93c5fd', '#E74C3C'];
 const d = window.__PS_ANALYTICS__;
 
+// ── Empty-state helper ────────────────────────────────────────────────────
+// Replaces a canvas's parent .chart-wrap with a centered "no data" message.
+// Pass containerId when the chart has a sibling (like a legend list) so the
+// whole row gets replaced and the message centers across the full card
+// width, rather than just centering inside the small chart box.
+function showEmptyState(canvasId, message = 'No data available yet', containerId = null) {
+  const target = containerId
+    ? document.getElementById(containerId)
+    : (document.getElementById(canvasId)?.closest('.chart-wrap') || document.getElementById(canvasId)?.parentElement);
+  if (!target) return;
+  target.innerHTML = `
+    <div style="width:100%;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#94a3b8;">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 3v18h18" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M7 15l4-4 3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span style="font-size:13px;font-weight:500;">${message}</span>
+    </div>`;
+}
+
+// ── Has-data flags (computed server-side from real DB totals) ────────────
+// See lib/admin-queries/analytics_queries.php — these come from actual
+// SUM/COUNT query results, not from inspecting the chart arrays here.
+// That matters: a property or month can legitimately have 0 revenue/bookings
+// without the *whole dataset* being empty, so we don't want to infer
+// "no data" from a zero sum on the client.
+const hasRevByProp = !!d.hasRevenueData;
+const hasSourceData = !!d.hasBookingData;
+const hasMonthlyBookings = !!d.hasBookingData;
+const hasRevTrend = !!d.hasRevenueData;
+
 // ── Revenue by Property (% share) ────────────────────────────────────────
+if (!hasRevByProp) {
+  showEmptyState('revByPropChart', 'No revenue recorded yet');
+} else {
 new Chart(document.getElementById('revByPropChart'), {
   type: 'bar',
   data: {
@@ -29,8 +63,12 @@ new Chart(document.getElementById('revByPropChart'), {
     }
   }
 });
+}
 
 // ── Monthly Bookings + Forecast ───────────────────────────────────────────
+if (!hasMonthlyBookings) {
+  showEmptyState('monthlyOccChart', 'No bookings recorded yet');
+} else {
 new Chart(document.getElementById('monthlyOccChart'), {
   type: 'line',
   data: {
@@ -65,8 +103,12 @@ new Chart(document.getElementById('monthlyOccChart'), {
     }
   }
 });
+}
 
 // ── Booking Status Donut (already %) ─────────────────────────────────────
+if (!hasSourceData) {
+  showEmptyState('sourceDonut', 'No bookings yet', 'sourceRow');
+} else {
 const srcTotal = d.srcData.reduce((a, b) => a + b, 0) || 1;
 
 new Chart(document.getElementById('sourceDonut'), {
@@ -95,8 +137,12 @@ d.srcLabels.forEach((lbl, i) => {
       <span class="legend-val">${pct}%</span>
     </div>`;
 });
+}
 
 // ── Revenue Trend + Forecast ──────────────────────────────────────────────
+if (!hasRevTrend) {
+  showEmptyState('revTrendChart', 'No revenue recorded yet');
+} else {
 new Chart(document.getElementById('revTrendChart'), {
   type: 'line',
   data: {
@@ -138,3 +184,4 @@ new Chart(document.getElementById('revTrendChart'), {
     }
   }
 });
+}

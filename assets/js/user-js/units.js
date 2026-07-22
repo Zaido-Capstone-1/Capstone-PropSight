@@ -403,17 +403,24 @@
        SAVE / HEART TOGGLE
     ════════════════════════════════════════════════════════════════════════ */
     function toggleSaveRoom(unitId, btn) {
-        const isSaved = btn.classList.contains('saved');
+        const wasSaved = btn.classList.contains('saved');
+        const nextSaved = !wasSaved;
+
+        // Optimistic UI — fill/unfill the heart immediately, don't wait on the network.
+        btn.classList.toggle('saved', nextSaved);
+        btn.setAttribute('aria-label', nextSaved ? 'Remove from saved' : 'Save room');
         btn.classList.add('saving');
+
         const fd = new FormData();
         fd.append('unit_id', unitId);
-        fd.append('action', isSaved ? 'unsave' : 'save');
+        fd.append('action', wasSaved ? 'unsave' : 'save');
         if (window.psAppendCsrf) window.psAppendCsrf(fd);
         fetch('../../endpoints/user/save_toggle.php', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(d => {
                 btn.classList.remove('saving');
                 if (d.success) {
+                    // Reconcile with the server's actual state in case it differs.
                     btn.classList.toggle('saved', !!d.saved);
                     btn.setAttribute('aria-label', d.saved ? 'Remove from saved' : 'Save room');
                     // Update all saved count badges
@@ -428,11 +435,17 @@
                         });
                     }
                 } else {
+                    // Revert the optimistic change — the save didn't actually happen.
+                    btn.classList.toggle('saved', wasSaved);
+                    btn.setAttribute('aria-label', wasSaved ? 'Remove from saved' : 'Save room');
                     window.showToast?.(d.message || 'Could not update saved status.', 'error');
                 }
             })
             .catch(() => {
                 btn.classList.remove('saving');
+                // Revert the optimistic change on network failure.
+                btn.classList.toggle('saved', wasSaved);
+                btn.setAttribute('aria-label', wasSaved ? 'Remove from saved' : 'Save room');
                 window.showToast?.('Network error. Please try again.', 'error');
             });
     }

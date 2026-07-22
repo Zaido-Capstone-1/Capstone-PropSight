@@ -400,7 +400,28 @@ function renderCharts(trends, categories) {
 // ─────────────────────────────────────────────────────────
 //  DATA LOADING
 // ─────────────────────────────────────────────────────────
+function showExpTableSkeleton() {
+    if (!DOM.expensesBody) return;
+    DOM.emptyState.style.display = 'none';
+    const foot = $('expTableFoot');
+    if (foot) foot.style.display = 'none';
+
+    const cols = 7;
+    const widths = [70, 55, 40, 50, 45, 35, 60]; // % width per skeleton bar, roughly matches column content
+    let rows = '';
+    for (let r = 0; r < 5; r++) {
+        let cells = '';
+        for (let c = 0; c < cols; c++) {
+            cells += `<td><div class="ps-skel-block" style="height:12px;width:${widths[c]}%;"></div></td>`;
+        }
+        rows += `<tr class="ts-skel-row">${cells}</tr>`;
+    }
+    DOM.expensesBody.innerHTML = rows;
+}
+
 async function loadExpenses() {
+    showExpTableSkeleton();
+
     const params = new URLSearchParams({
         month: EXPENSES.currentMonth,
     });

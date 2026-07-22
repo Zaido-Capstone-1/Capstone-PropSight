@@ -131,6 +131,7 @@
             data-notif-id="${escHtml(n.id)}"
             data-db-id="${escHtml(String(n.db_id || ''))}"
             data-path="${escHtml(n.path || '')}"
+            data-type="${escHtml(n.type || '')}"
             data-is-read="${isRead ? '1' : '0'}"
             style="${itemStyle}">
             <div style="display:flex;align-items:flex-start;gap:6px;">
@@ -185,8 +186,9 @@
     const item = e.target.closest('.rp-notif-item');
     if (!item) return;
     const notifId = item.dataset.notifId || '';
-    const dbId    = item.dataset.dbId || '';
-    const path    = item.dataset.path || '';
+    const dbId = item.dataset.dbId || '';
+    const path = item.dataset.path || '';
+    const type = item.dataset.type || '';
     const wasRead = item.dataset.isRead === '1';
 
     if (notifId && !wasRead) {
@@ -199,12 +201,21 @@
         // and unlike sendBeacon it correctly sends session cookies
         fetch('../../endpoints/admin/notifications.php', {
           method: 'POST', body: fd, keepalive: true
-        }).catch(() => {});
+        }).catch(() => { });
       }
       const existing = notifState.get(String(notifId));
       if (existing) existing.is_read = 1;
       unreadCount = Math.max(0, unreadCount - 1);
       renderNotifs();
+    }
+
+    if (type === 'message' && typeof window.__psMsgwOpenUser === 'function') {
+      const m = /[?&]user_id=(\d+)/.exec(path);
+      if (m) {
+        window.__psMsgwOpenUser(m[1]);
+        notifDrop.style.display = 'none';
+        return;
+      }
     }
 
     if (path) window.location.href = path;
@@ -214,7 +225,7 @@
     const fd = new FormData();
     fd.append('action', 'mark_all_read');
     fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
-    fetch('../../endpoints/admin/notifications.php', { method: 'POST', body: fd }).catch(() => {});
+    fetch('../../endpoints/admin/notifications.php', { method: 'POST', body: fd }).catch(() => { });
     notifState.forEach(n => { n.is_read = 1; });
     unreadCount = 0;
     renderNotifs();
@@ -318,12 +329,12 @@
             <div class="time-col">${escHtml(time)}</div>
             <div class="event-card ${eventClass}">
               ${({
-                'plumbing':         '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3-3a1 1 0 0 0 0-1.4l-1.6-1.6a1 1 0 0 0-1.4 0l-3 3z"/><path d="M3 21l9.3-9.3"/><path d="M9.4 14.6 3 21"/></svg>',
-                'electrical':       '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
-                'air conditioning': '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07"/></svg>',
-                'furniture':        '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>',
-                'other':            '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
-              }[t.task_type] || '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>')}
+          'plumbing': '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3-3a1 1 0 0 0 0-1.4l-1.6-1.6a1 1 0 0 0-1.4 0l-3 3z"/><path d="M3 21l9.3-9.3"/><path d="M9.4 14.6 3 21"/></svg>',
+          'electrical': '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+          'air conditioning': '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07"/></svg>',
+          'furniture': '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>',
+          'other': '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+        }[t.task_type] || '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>')}
               ${escHtml(t.task_type.charAt(0).toUpperCase() + t.task_type.slice(1))}
               ${t.property_name ? `<span style="opacity:.7;font-size:.8em;">· ${escHtml(t.property_name)}</span>` : ''}
             </div>

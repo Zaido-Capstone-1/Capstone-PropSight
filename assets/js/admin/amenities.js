@@ -421,7 +421,9 @@ function bindCard(card) {
                                 var e = document.createElement('div');
                                 e.id = 'empty-' + pid;
                                 e.className = 'am-empty';
-                                e.textContent = 'No amenities added yet.';
+                                e.innerHTML = '<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:32px;height:32px;">' +
+                                    '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z" />' +
+                                    '</svg>No amenities added yet for this property.';
                                 grid.appendChild(e);
                             }
                             var countEl = grid && grid.closest('.prop-section') && grid.closest('.prop-section').querySelector('.prop-count');
@@ -436,7 +438,7 @@ function bindCard(card) {
                     console.error(e);
                     PS.toast('Server error.', 'error');
                 }
-            }, { title: 'Remove Amenity', confirmLabel: 'Remove', confirmClass: 'btn btn-danger' });
+            }, { title: 'Remove Amenity', confirmLabel: 'Remove', confirmClass: 'btn btn-danger', loadingLabel: 'Removing...' });
         });
     }
 }

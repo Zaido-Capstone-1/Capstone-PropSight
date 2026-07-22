@@ -183,7 +183,13 @@ include '../../lib/admin-queries/booking_reports_queries.php';
         <?php if (!empty($payLabels)): ?>
           <div class="chart-wrap" style="height:200px;"><canvas id="paymentChart"></canvas></div>
         <?php else: ?>
-          <div style="padding:32px;text-align:center;color:#94a3b8;font-size:13px;">No payment data available.</div>
+          <div style="height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#94a3b8;">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 3v18h18" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M7 15l4-4 3 3 5-6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span style="font-size:13px;font-weight:500;">No payment data yet</span>
+          </div>
         <?php endif; ?>
       </div>
     </div>
@@ -322,6 +328,7 @@ include '../../lib/admin-queries/booking_reports_queries.php';
     donutColors: <?= json_encode($donutColors) ?>,
     payLabels: <?= !empty($payLabels) ? json_encode($payLabels) : 'null' ?>,
     payData: <?= !empty($payLabels) ? json_encode($payData) : 'null' ?>,
+    hasBookingData: <?= json_encode($hasBookingData) ?>,
     demographics: <?= json_encode(array_map(function ($d) {
       return ['nationality' => $d['nationality'], 'bookings' => (int) $d['bookings'], 'guests' => (int) $d['guests'], 'revenue' => (float) $d['revenue']];
     }, $demographics ?? [])) ?>

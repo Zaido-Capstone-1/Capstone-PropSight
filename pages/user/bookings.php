@@ -383,29 +383,6 @@ $status_map = [
             </div>
         </div>
 
-        <div class="widget-card reveal rd3">
-            <div class="widget-title">
-                <svg viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-                Policies
-            </div>
-            <div class="activity-item">
-                <div class="activity-dot green"></div>
-                <div class="activity-desc"><strong>Free cancellation</strong> up to 48 hrs before check-in</div>
-            </div>
-            <div class="activity-item">
-                <div class="activity-dot gold"></div>
-                <div class="activity-desc"><strong>50% fee</strong> for cancellations within 48 hrs</div>
-            </div>
-            <div class="activity-item">
-                <div class="activity-dot red"></div>
-                <div class="activity-desc"><strong>No-shows</strong> are charged in full</div>
-            </div>
-        </div>
-
     </div><!-- /col-side -->
 </div><!-- /page-two-col -->
 

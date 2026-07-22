@@ -312,16 +312,6 @@ if ($_sb_initials === '')
 
     <div class="nav-section-label">System</div>
 
-    <a href="messages.php" class="nav-item<?= nav_active('messages') ?>">
-      <div class="nav-icon">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-      </div>
-      <span class="nav-label">Messages</span>
-      <span class="nav-badge" data-rt="messages" style="display:none;">0</span>
-    </a>
-
     <a href="settings.php" class="nav-item<?= nav_active('settings') ?>">
       <div class="nav-icon">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -363,3 +353,5 @@ if ($_sb_initials === '')
   </div>
 
 </nav>
+
+<?php include 'messages_widget.php'; ?>

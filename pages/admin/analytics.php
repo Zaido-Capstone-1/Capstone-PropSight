@@ -117,7 +117,7 @@ include '../../lib/admin-queries/analytics_queries.php';
     <div class="two-col">
       <div class="card">
         <div class="card-header"><span class="card-title">Booking Status Breakdown</span></div>
-        <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+        <div id="sourceRow" style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
           <div class="chart-wrap" style="height:180px;width:180px;flex-shrink:0;">
             <canvas id="sourceDonut"></canvas>
           </div>
@@ -245,7 +245,9 @@ include '../../lib/admin-queries/analytics_queries.php';
     monthLabels: <?= json_encode($monthLabels) ?>,
     revActual: <?= json_encode(array_values($revActual)) ?>,
     forecastRev: <?= json_encode(array_values($forecastRev)) ?>,
-    currentMonth: <?= $currentMonth ?>
+    currentMonth: <?= $currentMonth ?>,
+    hasRevenueData: <?= json_encode($hasRevenueData) ?>,
+    hasBookingData: <?= json_encode($hasBookingData) ?>
   };
 </script>
 <script src="../../assets/js/admin/analytics.js"></script>

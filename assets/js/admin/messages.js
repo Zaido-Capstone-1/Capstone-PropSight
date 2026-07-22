@@ -687,7 +687,11 @@ document.addEventListener('visibilitychange', () => {
 // On load: ensure no thread starts with active class (no conversation pre-selected)
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.msg-thread').forEach(t => t.classList.remove('active'));
-    // Restore last open conversation on reload
+    // Restore last open conversation on reload — only on the standalone inbox
+    // page. When the floating widget (#psMsgwPanel) is present, this file is
+    // loaded on every admin page, so auto-restoring here would silently open
+    // a conversation and start background polling on every page load.
+    if (document.getElementById('psMsgwPanel')) return;
     const saved = sessionStorage.getItem('ps_active_user');
     if (saved) {
         try {
@@ -782,8 +786,14 @@ function refreshThreadBadges() {
         .catch(() => {}); // silent — never disrupt UX
 }
 
-// Start on load, pause when tab is hidden
-document.addEventListener('DOMContentLoaded', startThreadPoll);
-document.addEventListener('visibilitychange', () => {
-    document.hidden ? stopThreadPoll() : startThreadPoll();
-});
+// Start on load, pause when tab is hidden — but only on the standalone inbox
+// page. When the floating widget is present, messages-widget.js starts/stops
+// this poll based on whether the panel is actually open, since this file is
+// now loaded on every admin page and shouldn't poll in the background on all
+// of them at once.
+if (!document.getElementById('psMsgwPanel')) {
+    document.addEventListener('DOMContentLoaded', startThreadPoll);
+    document.addEventListener('visibilitychange', () => {
+        document.hidden ? stopThreadPoll() : startThreadPoll();
+    });
+}

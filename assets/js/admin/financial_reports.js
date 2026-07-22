@@ -1,6 +1,29 @@
 let chartData = window.__PS_FINANCIAL__.chartData;
 let selectedYear = window.__PS_FINANCIAL__.selectedYear;
 
+// Authoritative "has data" flags — computed server-side from real SUM
+// query totals (see lib/admin-queries/financial_reports_queries.php),
+// not from inspecting the chart arrays here. Updated on each AJAX year
+// switch using the same total_income/total_expenses/etc. fields.
+let hasFinancialActivity = !!window.__PS_FINANCIAL__.hasFinancialActivity;
+let hasRevenueMix        = !!window.__PS_FINANCIAL__.hasRevenueMix;
+let hasExpenseBreakdown  = !!window.__PS_FINANCIAL__.hasExpenseBreakdown;
+
+// Replaces a canvas's parent .chart-wrap with a centered "no data" message.
+function showEmptyState(canvasId, message = 'No data available yet') {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const wrap = canvas.closest('.chart-wrap') || canvas.parentElement;
+  wrap.innerHTML = `
+    <div style="height:100%;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#94a3b8;">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 3v18h18" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M7 15l4-4 3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span style="font-size:13px;font-weight:500;">${message}</span>
+    </div>`;
+}
+
 /* ── Design tokens (matching PropSight navy/gold system) ── */
 const C = {
   navy:    '#0f2447',
@@ -104,6 +127,13 @@ function loadFinancialData(year) {
         profit_growth:   data.profit_growth   || 0,
       });
 
+      // Recompute has-data flags from this year's authoritative totals
+      // (same fields the stat cards use), not from the chart arrays.
+      hasFinancialActivity = (data.total_income || 0) > 0 || (data.total_expenses || 0) > 0 || (data.total_refunds || 0) > 0;
+      hasRevenueMix = Object.keys(data.revenue_mix || {}).length > 0;
+      hasExpenseBreakdown = ['maintenance', 'utilities', 'salaries', 'admin']
+        .reduce((sum, k) => sum + (data[k] || []).reduce((a, b) => a + Number(b || 0), 0), 0) > 0;
+
       updateCharts();
       updateTable(chartData.pnl_summary);
       updateLegend(chartData.revenue_mix);
@@ -135,9 +165,10 @@ function updateCharts() {
   const ref = chartData.refunds  || [];
   const profit = rev.map((r, i) => r - (exp[i] || 0) - (ref[i] || 0));
 
-  if (!rev.length) return;
-
-  if (plChartInstance) {
+  if (!hasFinancialActivity) {
+    if (plChartInstance) { plChartInstance.destroy(); plChartInstance = null; }
+    showEmptyState('plChart', 'No financial activity recorded yet');
+  } else if (plChartInstance) {
     plChartInstance.data.labels = months.slice(0, rev.length);
     plChartInstance.data.datasets[0].data = rev;
     plChartInstance.data.datasets[1].data = exp;
@@ -148,30 +179,32 @@ function updateCharts() {
     initPLChart(rev, exp, ref, profit);
   }
 
-  if (Object.keys(chartData.revenue_mix || {}).length > 0) {
-    if (revMixChartInstance) {
-      const labels = Object.keys(chartData.revenue_mix);
-      const vals   = Object.values(chartData.revenue_mix);
-      revMixChartInstance.data.labels = labels;
-      revMixChartInstance.data.datasets[0].data = vals;
-      revMixChartInstance.update('active');
-    } else {
-      initRevenueMixChart();
-    }
+  if (!hasRevenueMix) {
+    if (revMixChartInstance) { revMixChartInstance.destroy(); revMixChartInstance = null; }
+    showEmptyState('revMixDonut', 'No revenue recorded yet');
+  } else if (revMixChartInstance) {
+    const labels = Object.keys(chartData.revenue_mix);
+    const vals   = Object.values(chartData.revenue_mix);
+    revMixChartInstance.data.labels = labels;
+    revMixChartInstance.data.datasets[0].data = vals;
+    revMixChartInstance.update('active');
+  } else {
+    initRevenueMixChart();
   }
 
-  if ((chartData.maintenance || []).length > 0) {
-    if (expBreakChartInstance) {
-      const len = chartData.maintenance.length;
-      expBreakChartInstance.data.labels = months.slice(0, len);
-      expBreakChartInstance.data.datasets[0].data = chartData.maintenance;
-      expBreakChartInstance.data.datasets[1].data = chartData.utilities;
-      expBreakChartInstance.data.datasets[2].data = chartData.salaries;
-      expBreakChartInstance.data.datasets[3].data = chartData.admin;
-      expBreakChartInstance.update('active');
-    } else {
-      initExpenseBreakChart();
-    }
+  if (!hasExpenseBreakdown) {
+    if (expBreakChartInstance) { expBreakChartInstance.destroy(); expBreakChartInstance = null; }
+    showEmptyState('expBreakChart', 'No expenses recorded yet');
+  } else if (expBreakChartInstance) {
+    const len = chartData.maintenance.length;
+    expBreakChartInstance.data.labels = months.slice(0, len);
+    expBreakChartInstance.data.datasets[0].data = chartData.maintenance;
+    expBreakChartInstance.data.datasets[1].data = chartData.utilities;
+    expBreakChartInstance.data.datasets[2].data = chartData.salaries;
+    expBreakChartInstance.data.datasets[3].data = chartData.admin;
+    expBreakChartInstance.update('active');
+  } else {
+    initExpenseBreakChart();
   }
 }
 
@@ -471,13 +504,7 @@ function stopAutoRefresh() {
 
 /* ── Boot ── */
 document.addEventListener('DOMContentLoaded', () => {
-  const rev  = chartData.revenue  || [];
-  const exp  = chartData.expenses || [];
-  const ref  = chartData.refunds  || [];
-  const prf  = rev.map((r, i) => r - (exp[i] || 0) - (ref[i] || 0));
-  initPLChart(rev, exp, ref, prf);
-  initRevenueMixChart();
-  initExpenseBreakChart();
+  updateCharts();
   startAutoRefresh();
 });
 

@@ -268,12 +268,22 @@ function formatPeso(int $n): string
             </div>
 
             <div id="emptyState" style="display:none;text-align:center;padding:52px 16px;">
-                <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"
-                    style="margin:0 auto 12px;display:block;">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <svg width="40" height="40" viewBox="0 0 48 48" fill="none"
+                    xmlns="http://www.w3.org/2000/svg" id="IconChangeColor">
+                    <rect x="9" y="8" width="30" height="36" rx="2" fill="none" stroke="#333" stroke-width="1.5"
+                        stroke-linejoin="round"></rect>
+                    <path d="M18 4V10" stroke="#333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                        id="mainIconPathAttribute"></path>
+                    <path d="M30 4V10" stroke="#333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                        id="mainIconPathAttribute"></path>
+                    <path d="M16 19L32 19" stroke="#333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                        id="mainIconPathAttribute"></path>
+                    <path d="M16 27L28 27" stroke="#333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                        id="mainIconPathAttribute"></path>
+                    <path d="M16 35H24" stroke="#333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                        id="mainIconPathAttribute"></path>
                 </svg>
-                <div style="color:#aaa;font-size:14px;">No transactions match your filters.</div>
+                <div style="color:#aaa;font-size:14px;">No transactions yet.</div>
             </div>
 
             <!-- Pagination outside table-wrap — never scrolls horizontally -->
@@ -281,18 +291,18 @@ function formatPeso(int $n): string
                 <div class="txn-pagination">
                     <span class="txn-page-info" id="txnPageInfo"></span>
                     <div class="txn-page-controls" id="txnPageControls" style="display:none;">
-                        <button type="button" id="txnPrevBtn" class="txn-chevron-btn"
-                            onclick="txnChangePage(-1)" disabled>
-                            <svg fill="none" stroke="currentColor" stroke-width="2.2"
-                                viewBox="0 0 24 24" width="14" height="14">
+                        <button type="button" id="txnPrevBtn" class="txn-chevron-btn" onclick="txnChangePage(-1)"
+                            disabled>
+                            <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
+                                height="14">
                                 <polyline points="15 18 9 12 15 6" />
                             </svg>
                         </button>
                         <span id="txnPageNumbers" class="txn-page-numbers"></span>
-                        <button type="button" id="txnNextBtn" class="txn-chevron-btn"
-                            onclick="txnChangePage(1)" disabled>
-                            <svg fill="none" stroke="currentColor" stroke-width="2.2"
-                                viewBox="0 0 24 24" width="14" height="14">
+                        <button type="button" id="txnNextBtn" class="txn-chevron-btn" onclick="txnChangePage(1)"
+                            disabled>
+                            <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
+                                height="14">
                                 <polyline points="9 18 15 12 9 6" />
                             </svg>
                         </button>

@@ -418,22 +418,16 @@
             const guestSurcharge = window._udGuestSurchargeTotal || 0;
             const grandTotal = total + guestSurcharge;
 
-            // Season badge from DB
-            const season = u.season || 'Low';
-            const SCOL = { Peak:'#E74C3C', High:'#deaf37', Low:'#2ECC71' };
-            const sc = SCOL[season] || '#2ECC71';
             const udRows = $('udSeasonRows');
             if (udRows) {
                 const mo = new Date(ciEl.value).toLocaleString('en-US', { month: 'short' });
                 let html = `<div class="ud-pb-row"><span>${mo} · ${nights} night${nights!==1?'s':''} × ${fmt(u.priceNum||0)}</span><span>${fmt(total)}</span></div>`;
                 if (guestSurcharge > 0) {
-                    const extra = (window._udGetGuestCount?.() || 1) - 1;
+                    const extra = Math.round(guestSurcharge / 500);
                     html += `<div class="ud-pb-row"><span>${extra} extra guest${extra!==1?'s':''} × ₱500</span><span>+${fmt(guestSurcharge)}</span></div>`;
                 }
                 udRows.innerHTML = html;
             }
-            const demandEl = $('udDemandBadge');
-            if (demandEl) demandEl.innerHTML = `<span style="background:${sc}20;color:${sc};padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700">${season} Season</span>`;
 
             set('udTotalDue', fmt(grandTotal));
             bd.style.display = 'block';

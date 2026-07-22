@@ -11,7 +11,7 @@ function applyTsFilters() {
     const q = (document.getElementById('tsSearch')?.value || '').toLowerCase().trim();
     const status = document.getElementById('tsStatusVal')?.value || '';
 
-    document.querySelectorAll('#tsTableBody tr').forEach(row => {
+    document.querySelectorAll('#tsTableBody tr[data-id]').forEach(row => {
         row.classList.remove('ts-pg-hidden');
         const show =
             (!q || (row.dataset.search || '').includes(q)) &&
@@ -20,15 +20,16 @@ function applyTsFilters() {
     });
 
     const empty = document.getElementById('tsEmpty');
-    const visible = Array.from(document.querySelectorAll('#tsTableBody tr')).filter(r => r.style.display !== 'none');
-    if (empty) empty.style.display = visible.length === 0 ? 'block' : 'none';
+    const allRows = document.querySelectorAll('#tsTableBody tr[data-id]');
+    const visible = Array.from(allRows).filter(r => r.style.display !== 'none');
+    if (empty) empty.style.display = (allRows.length > 0 && visible.length === 0) ? 'block' : 'none';
 
     tsCurrentPage = 1;
     paginateTs();
 }
 
 function paginateTs() {
-    const visible = Array.from(document.querySelectorAll('#tsTableBody tr'))
+    const visible = Array.from(document.querySelectorAll('#tsTableBody tr[data-id]'))
         .filter(r => r.style.display !== 'none' && !r.classList.contains('ts-pg-hidden'));
     const total = visible.length;
     const totalPages = Math.max(1, Math.ceil(total / tsRowsPerPage));

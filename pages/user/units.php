@@ -649,7 +649,6 @@ echo '</div>';
 <script src="../../assets/js/user-js/units.js?v=4"></script>
 <script src="../../assets/js/realtime.js"></script>
 <script src="../../assets/js/user-js/user-realtime-pages.js"></script>
-<script src="../../assets/js/user-js/floating-chat.js?v=5"></script>
 
 <?php require '../../includes/_bottom_nav.php'; ?>
 </body>

@@ -50,6 +50,10 @@ $statsRes = brQuery(
 );
 $stats = $statsRes->fetch_assoc();
 $total = max(1, (int) $stats['total']);
+// Raw count (before the max(1, ...) clamp above, which exists only to
+// avoid divide-by-zero in the rate calcs below) — the real signal for
+// whether any bookings exist in the selected range.
+$hasBookingData = (int) $stats['total'] > 0;
 $cancelRate = round($stats['cancelled'] / $total * 100, 1);
 $confirmRate = round(($stats['confirmed'] + $stats['completed'] + $stats['active_cnt']) / $total * 100, 1);
 $avgNights = round((float) $stats['avg_nights'], 1);

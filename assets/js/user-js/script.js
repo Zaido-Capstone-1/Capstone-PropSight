@@ -1149,10 +1149,15 @@ if (burger && mob) {
     });
 
     function toggleSaveRoom(unitId, btn) {
-        const isSaved = btn.classList.contains('saved');
+        const wasSaved = btn.classList.contains('saved');
+        const nextSaved = !wasSaved;
+
+        // Optimistic UI — fill/unfill the heart immediately, don't wait on the network.
+        btn.classList.toggle('saved', nextSaved);
+
         const fd = new FormData();
         fd.append('unit_id', unitId);
-        fd.append('action', isSaved ? 'unsave' : 'save');
+        fd.append('action', wasSaved ? 'unsave' : 'save');
         window.psAppendCsrf(fd);
         fetch('../../endpoints/user/save_toggle.php', {
                 method: 'POST',
@@ -1161,7 +1166,8 @@ if (burger && mob) {
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    btn.classList.toggle('saved');
+                    // Reconcile with the server's actual state in case it differs.
+                    btn.classList.toggle('saved', !!data.saved);
                     // Use authoritative count from API response
                     if (data.saved_count !== undefined) {
                         const count = parseInt(data.saved_count, 10);
@@ -1179,10 +1185,16 @@ if (burger && mob) {
                         });
                     }
                 } else {
+                    // Revert the optimistic change — the save didn't actually happen.
+                    btn.classList.toggle('saved', wasSaved);
                     showToast(data.message || 'Could not save room.');
                 }
             })
-            .catch(() => showToast('Network error. Please try again.'));
+            .catch(() => {
+                // Revert the optimistic change on network failure.
+                btn.classList.toggle('saved', wasSaved);
+                showToast('Network error. Please try again.');
+            });
     }
 
     const bmOverlay = document.getElementById('bmOverlay');

@@ -1,9 +1,26 @@
 (() => {
   const D = window.__PS_BOOKING_REPORTS__;
 
+  // Replaces a canvas's parent .chart-wrap with a centered "no data" message.
+  function showEmptyState(canvasId, message = 'No data available yet') {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const wrap = canvas.closest('.chart-wrap') || canvas.parentElement;
+    wrap.innerHTML = `
+      <div style="height:100%;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#94a3b8;">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 3v18h18" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M7 15l4-4 3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span style="font-size:13px;font-weight:500;">${message}</span>
+      </div>`;
+  }
+
   /* ── 1. Monthly Booking Volume ───────────────────────────── */
   const volCtx = document.getElementById('bookingVolChart');
-  if (volCtx) {
+  if (volCtx && !D.hasBookingData) {
+    showEmptyState('bookingVolChart', 'No bookings recorded yet');
+  } else if (volCtx) {
     new Chart(volCtx, {
       type: 'bar',
       data: {
@@ -55,7 +72,9 @@
 
   /* ── 2. Booking Status Donut ─────────────────────────────── */
   const donutCtx = document.getElementById('statusDonut');
-  if (donutCtx) {
+  if (donutCtx && !D.hasBookingData) {
+    showEmptyState('statusDonut', 'No bookings yet');
+  } else if (donutCtx) {
     new Chart(donutCtx, {
       type: 'doughnut',
       data: {

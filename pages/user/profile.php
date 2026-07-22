@@ -223,7 +223,7 @@ require_once '../../lib/user-queries/profile_queries.php';
                 </span>
             </div>
             <div class="mini-stat-row">
-                <span class="mini-stat-label">Phone Added</spFan>
+                <span class="mini-stat-label">Phone Added</span>
                     <span class="mini-stat-val <?php echo $phone ? 'text-success' : 'text-warn'; ?>">
                         <?php echo $phone ? '✓ Yes' : '—'; ?>
                     </span>

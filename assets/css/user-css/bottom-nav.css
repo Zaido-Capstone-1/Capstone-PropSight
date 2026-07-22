@@ -58,38 +58,6 @@
         stroke: #1a3a5c;
     }
 
-    .user-bottom-nav a.ubn-item.ubn-center {
-        color: #64748b;
-        justify-content: flex-end;
-        padding-bottom: 10px !important;
-    }
-
-    .ubn-fab {
-        width: 54px;
-        height: 54px;
-        border-radius: 50%;
-        background: #1a3a5c;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 14px rgba(26, 58, 92, .4);
-        transition: transform .18s, box-shadow .18s;
-        flex-shrink: 0;
-        margin-top: -32px;
-        position: relative;
-        z-index: 500;
-    }
-
-    .ubn-fab svg {
-        width: 22px;
-        height: 22px;
-        stroke: #fff;
-    }
-
-    .user-bottom-nav a.ubn-item.ubn-center:active .ubn-fab {
-        transform: scale(.93);
-    }
-
     .ubn-badge {
         position: absolute;
         top: 6px;
@@ -102,7 +70,7 @@
         font-weight: 700;
         border-radius: 99px;
         padding: 0 3px;
-        display: flex !important;
+        display: flex;
         align-items: center;
         justify-content: center;
         line-height: 1;

@@ -39,7 +39,7 @@ if (!function_exists('sync_notifications')) {
         // ── Messages: unread messages addressed to this admin ─────────────────
         $res = mysqli_query(
             $conn,
-            "SELECT m.message_id AS id, m.created_at,
+            "SELECT m.message_id AS id, m.created_at, m.from_user,
                     CONCAT(u.first_name,' ',u.last_name) AS actor
              FROM messages m
              JOIN users u ON u.user_id = m.from_user
@@ -53,7 +53,7 @@ if (!function_exists('sync_notifications')) {
                 'message',
                 'msg-' . (int) $row['id'],
                 'New message from ' . trim((string) ($row['actor'] ?? 'User')),
-                'messages.php',
+                'messages.php?user_id=' . (int) $row['from_user'],
                 (string) ($row['created_at'] ?? gmdate('Y-m-d H:i:s'))
             );
         }

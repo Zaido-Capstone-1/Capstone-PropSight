@@ -1,0 +1,260 @@
+/* ═══════════════════════════════════════════
+   PropSight Admin — Floating Messages Bubble
+   Reuses .msg-* classes from message.css; this
+   file only handles bubble + floating panel shell.
+   ═══════════════════════════════════════════ */
+
+.ps-msgw-bubble {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: linear-gradient(150deg, #4d7dff 0%, var(--blue-400, #3b82f6) 45%, var(--blue-700, #1d4ed8) 100%);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 10px 24px rgba(29, 78, 216, .34),
+        0 3px 8px rgba(15, 23, 42, .18),
+        inset 0 1px 0 rgba(255, 255, 255, .25);
+    z-index: 9998;
+    transition: transform .18s cubic-bezier(.34, 1.56, .64, 1), box-shadow .18s ease;
+}
+
+.ps-msgw-bubble::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid var(--blue-400, #3b82f6);
+    opacity: 0;
+    transform: scale(.85);
+    pointer-events: none;
+}
+
+.ps-msgw-bubble.ps-msgw-has-unread::after {
+    animation: ps-msgw-pulse 2.2s ease-out infinite;
+}
+
+@keyframes ps-msgw-pulse {
+    0% {
+        opacity: .55;
+        transform: scale(.85);
+    }
+
+    70% {
+        opacity: 0;
+        transform: scale(1.25);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.25);
+    }
+}
+
+.ps-msgw-bubble:hover {
+    transform: translateY(-3px) scale(0.98);
+    box-shadow:
+        0 14px 30px rgba(29, 78, 216, .4),
+        0 4px 10px rgba(15, 23, 42, .22),
+        inset 0 1px 0 rgba(255, 255, 255, .3);
+}
+
+.ps-msgw-bubble:active {
+    transform: translateY(-1px) scale(.98);
+}
+
+.ps-msgw-bubble svg {
+    width: 26px;
+    height: 26px;
+}
+
+.ps-msgw-bubble .ps-msgw-dot {
+    fill: #fff;
+}
+
+.ps-msgw-bubble .nav-badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    min-width: 21px;
+    height: 21px;
+    padding: 0 5px;
+    background: #ef4444;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border: 2.5px solid var(--white, #fff);
+    box-shadow: 0 2px 6px rgba(239, 68, 68, .4);
+}
+
+.ps-msgw-bubble.ps-msgw-open .ps-msgw-icon-chat {
+    display: none;
+}
+
+.ps-msgw-bubble .ps-msgw-icon-close {
+    display: none;
+}
+
+.ps-msgw-bubble.ps-msgw-open .ps-msgw-icon-close {
+    display: flex;
+}
+
+.ps-msgw-panel {
+    position: fixed;
+    right: 24px;
+    bottom: 92px;
+    width: 380px;
+    height: 560px;
+    max-height: calc(100vh - 120px);
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(15, 23, 42, .28);
+    border: 1px solid var(--border);
+    z-index: 9997;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ps-msgw-panel.ps-msgw-open {
+    display: flex;
+}
+
+.ps-msgw-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--white);
+}
+
+.ps-msgw-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.ps-msgw-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ps-msgw-icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: none;
+    background: #f1f5f9;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.ps-msgw-icon-btn:hover {
+    background: #e2e8f0;
+}
+
+.ps-msgw-icon-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Body hosts the existing .msg-layout markup, sized to fill the panel */
+.ps-msgw-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+}
+
+.ps-msgw-body .msg-layout {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Always use the stacked (mobile-style) list/pane slide, since the
+   floating panel is narrow at every viewport width. */
+.ps-msgw-body .msg-list {
+    width: 100%;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: var(--white);
+    transition: transform .3s cubic-bezier(.4, 0, .2, 1);
+}
+
+.ps-msgw-body .msg-pane {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: var(--white);
+    transform: translateX(100%);
+    transition: transform .3s cubic-bezier(.4, 0, .2, 1);
+}
+
+.ps-msgw-body .msg-layout.pane-open .msg-pane {
+    transform: translateX(0);
+}
+
+.ps-msgw-body .msg-layout.pane-open .msg-list {
+    transform: translateX(-100%);
+}
+
+.ps-msgw-body .msg-back-btn {
+    display: flex !important;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue-400, #3b82f6);
+    cursor: pointer;
+    padding: 0;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.ps-msgw-body .msg-back-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+@media (max-width: 480px) {
+    .ps-msgw-panel {
+        right: 12px;
+        left: 12px;
+        bottom: 84px;
+        width: auto;
+        height: calc(100vh - 140px);
+    }
+
+    .ps-msgw-bubble {
+        right: 16px;
+        bottom: 16px;
+    }
+}

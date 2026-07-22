@@ -114,10 +114,12 @@ require_once '../../lib/admin-queries/occupancy_reports_queries.php';  // ← al
             <div class="card" style="flex:3;">
                 <div class="card-header"><span class="card-title">Occupancy Trend by Property (Last 6 Months)</span>
                 </div>
+                <div id="occTrendNote" style="display:none;margin:0 20px 8px;font-size:.78rem;color:#94a3b8;">No occupancy recorded in this period yet — properties exist but haven't had a booking.</div>
                 <div class="chart-wrap" style="height:220px;"><canvas id="occTrendChart"></canvas></div>
             </div>
             <div class="card" style="flex:2;">
                 <div class="card-header"><span class="card-title"><?= $monthLabel ?></span></div>
+                <div id="occBarNote" style="display:none;margin:0 20px 8px;font-size:.78rem;color:#94a3b8;">No units occupied this month.</div>
                 <div class="chart-wrap" style="height:220px;"><canvas id="occBarChart"></canvas></div>
             </div>
         </div>
@@ -182,6 +184,7 @@ require_once '../../lib/admin-queries/occupancy_reports_queries.php';  // ← al
         avgData: <?= json_encode($avgData) ?>,
         perPropLabels: <?= json_encode(array_column($perProperty, 'property_name')) ?>,
         perPropRates: <?= json_encode(array_column($perProperty, 'rate')) ?>,
+        hasOccupancyData: <?= json_encode($hasOccupancyData) ?>,
         trendRows: <?= json_encode(array_map(function ($t) use ($totalUnits) {
             return [$t['label'], $t['occupied'], $totalUnits, $t['rate']];
         }, $trend)) ?>,

@@ -30,6 +30,7 @@ if ($method === 'GET') {
                 IF(m.from_user=$adminId, m.to_user, m.from_user)   AS other_id,
                 CONCAT(u.first_name,' ',u.last_name)                AS other_name,
                 u.email                                              AS other_email,
+                u.profile_photo                                     AS other_photo,
                 (SELECT body FROM messages
                  WHERE (from_user=$adminId AND to_user=IF(m.from_user=$adminId,m.to_user,m.from_user))
                     OR (from_user=IF(m.from_user=$adminId,m.to_user,m.from_user) AND to_user=$adminId)
@@ -165,6 +166,20 @@ if ($method === 'GET') {
             "UPDATE messages SET is_read=1
              WHERE from_user=$userId AND to_user=$adminId AND is_read=0"
         );
+
+        mysqli_query(
+            $conn,
+            "DELETE an FROM admin_notifications an
+             WHERE an.admin_id=$adminId AND an.type='message'
+               AND an.ref_id IN (
+                 SELECT ref_id FROM (
+                   SELECT CONCAT('msg-', message_id) AS ref_id
+                   FROM messages
+                   WHERE from_user=$userId AND to_user=$adminId
+                 ) x
+               )"
+        );
+
         echo json_encode(['success' => true]);
         exit;
     }
@@ -273,7 +288,7 @@ if ($method === 'POST') {
             mysqli_query(
                 $conn,
                 "INSERT INTO notifications (user_id, type, title, body, link)
-                 VALUES ($toUser, 'message', 'New message from admin', '$bodyEsc', 'pages/user/messages.php')"
+                 VALUES ($toUser, 'message', 'New message from admin', '$bodyEsc', 'pages/user/messages.php?admin_id=$adminId')"
             );
 
             echo json_encode(['success' => true, 'message' => 'Message sent.', 'message_id' => $newId, 'ts' => $now]);

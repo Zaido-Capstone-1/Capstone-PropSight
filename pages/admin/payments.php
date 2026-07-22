@@ -321,8 +321,15 @@ endif;
                                     <td><strong><?= $payment_num ?></strong></td>
                                     <td>
                                         <div style="display:flex;align-items:center;gap:8px;">
-                                            <?php if (!empty($p['profile_photo'])): ?>
-                                                <img src="../../<?= htmlspecialchars($p['profile_photo']) ?>"
+                                            <?php
+                                            // SSO logins store the provider's full avatar URL here
+                                            // instead of a local upload path — don't prepend "../../".
+                                            $_payPhotoUrl = !empty($p['profile_photo'])
+                                                ? (preg_match('#^https?://#i', $p['profile_photo']) ? $p['profile_photo'] : '../../' . ltrim($p['profile_photo'], '/'))
+                                                : '';
+                                            ?>
+                                            <?php if ($_payPhotoUrl): ?>
+                                                <img src="<?= htmlspecialchars($_payPhotoUrl) ?>"
                                                     alt="<?= htmlspecialchars($initial) ?>"
                                                     style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;display:block;"
                                                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
@@ -382,12 +389,13 @@ endif;
             </div>
 
             <div id="payEmptyState" style="display:none;text-align:center;padding:52px 16px;">
-                <svg width="40" height="40" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"
-                    style="margin:0 auto 12px;display:block;">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="IconChangeColor" height="40"
+                    width="40">
+                    <path
+                        d="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-9-1c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-6v11c0 1.1-.9 2-2 2H4v-2h17V7h2z"
+                        id="mainIconPathAttribute"></path>
                 </svg>
-                <div style="color:#aaa;font-size:14px;">No payments match your filters.</div>
+                <div style="color:#aaa;font-size:14px;">No payments yet.</div>
             </div>
 
             <!-- Pagination outside table-wrap so it never scrolls horizontally -->

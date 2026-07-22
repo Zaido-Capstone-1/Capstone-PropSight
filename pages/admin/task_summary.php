@@ -144,11 +144,7 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
             </tr>
           </thead>
           <tbody id="tsTableBody">
-            <?php if (empty($tasks)): ?>
-              <tr>
-                <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">No tasks found.</td>
-              </tr>
-            <?php else: ?>
+            <?php if (!empty($tasks)): ?>
               <?php foreach ($tasks as $task):
                 $badge = taskBadge((string) ($task['request_status'] ?? 'pending'));
                 $pri = priorityBadge((string) ($task['priority'] ?? 'normal'));
@@ -224,6 +220,18 @@ require_once '../../lib/admin-queries/task_summary_queries.php';
           </tfoot>
         </table>
       </div>
+
+      <?php if (empty($tasks)): ?>
+        <div id="tsNoData" style="text-align:center;padding:32px 16px;color:#94a3b8;">
+          <svg width="36" height="36" fill="none" stroke="#000000" stroke-width="1.5" viewBox="0 0 24 24"
+            style="margin:0 auto 10px;display:block;">
+            <rect x="6" y="4" width="12" height="17" rx="2" />
+            <path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+          No requests yet.
+        </div>
+      <?php endif; ?>
 
       <div id="tsEmpty" style="display:none;text-align:center;padding:48px 16px;">
         <svg width="36" height="36" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"
