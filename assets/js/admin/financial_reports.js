@@ -165,10 +165,13 @@ function updateCharts() {
   const ref = chartData.refunds  || [];
   const profit = rev.map((r, i) => r - (exp[i] || 0) - (ref[i] || 0));
 
-  if (!hasFinancialActivity) {
-    if (plChartInstance) { plChartInstance.destroy(); plChartInstance = null; }
-    showEmptyState('plChart', 'No financial activity recorded yet');
-  } else if (plChartInstance) {
+  // P&L and Expense Breakdown always have a full 12-month label set
+  // (see lib/admin-queries/financial_reports_queries.php — the monthly
+  // arrays are pre-filled with zeros, not built only from months with
+  // data), so we can always render the real chart and just add a small
+  // note when everything happens to be zero, instead of hiding it.
+  toggleNote('plChartNote', !hasFinancialActivity);
+  if (plChartInstance) {
     plChartInstance.data.labels = months.slice(0, rev.length);
     plChartInstance.data.datasets[0].data = rev;
     plChartInstance.data.datasets[1].data = exp;
@@ -179,6 +182,11 @@ function updateCharts() {
     initPLChart(rev, exp, ref, profit);
   }
 
+  // Revenue Mix is different: its categories are only built from
+  // properties that actually earned revenue, so an empty state here means
+  // there's genuinely nothing to plot (no slices at all) — not just zeros
+  // across known categories — so the full empty-state replacement is
+  // still the right call.
   if (!hasRevenueMix) {
     if (revMixChartInstance) { revMixChartInstance.destroy(); revMixChartInstance = null; }
     showEmptyState('revMixDonut', 'No revenue recorded yet');
@@ -192,10 +200,8 @@ function updateCharts() {
     initRevenueMixChart();
   }
 
-  if (!hasExpenseBreakdown) {
-    if (expBreakChartInstance) { expBreakChartInstance.destroy(); expBreakChartInstance = null; }
-    showEmptyState('expBreakChart', 'No expenses recorded yet');
-  } else if (expBreakChartInstance) {
+  toggleNote('expBreakNote', !hasExpenseBreakdown);
+  if (expBreakChartInstance) {
     const len = chartData.maintenance.length;
     expBreakChartInstance.data.labels = months.slice(0, len);
     expBreakChartInstance.data.datasets[0].data = chartData.maintenance;
@@ -206,6 +212,11 @@ function updateCharts() {
   } else {
     initExpenseBreakChart();
   }
+}
+
+function toggleNote(noteId, show) {
+  const note = document.getElementById(noteId);
+  if (note) note.style.display = show ? 'block' : 'none';
 }
 
 /* ── P&L table ── */

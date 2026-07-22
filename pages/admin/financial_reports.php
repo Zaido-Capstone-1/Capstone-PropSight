@@ -126,6 +126,7 @@ require_once '../../lib/admin-queries/financial_reports_queries.php';  // ← al
     <div class="two-col">
       <div class="card" style="flex:2;">
         <div class="card-header"><span class="card-title">Monthly Profit & Loss</span></div>
+        <div id="plChartNote" style="display:none;margin:0 20px 8px;font-size:.78rem;color:#94a3b8;">No financial activity recorded for this year yet.</div>
         <div class="chart-wrap" style="height:220px;">
           <canvas id="plChart"></canvas>
         </div>
@@ -157,6 +158,7 @@ require_once '../../lib/admin-queries/financial_reports_queries.php';  // ← al
 
     <div class="card">
       <div class="card-header"><span class="card-title">Expense Breakdown by Category</span></div>
+      <div id="expBreakNote" style="display:none;margin:0 20px 8px;font-size:.78rem;color:#94a3b8;">No expenses recorded for this year yet.</div>
       <div class="chart-wrap" style="height:180px;">
         <canvas id="expBreakChart"></canvas>
       </div>

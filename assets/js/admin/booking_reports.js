@@ -1,26 +1,19 @@
 (() => {
   const D = window.__PS_BOOKING_REPORTS__;
 
-  // Replaces a canvas's parent .chart-wrap with a centered "no data" message.
-  function showEmptyState(canvasId, message = 'No data available yet') {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-    const wrap = canvas.closest('.chart-wrap') || canvas.parentElement;
-    wrap.innerHTML = `
-      <div style="height:100%;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#94a3b8;">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M3 3v18h18" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M7 15l4-4 3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span style="font-size:13px;font-weight:500;">${message}</span>
-      </div>`;
+  function toggleNote(noteId, show) {
+    const note = document.getElementById(noteId);
+    if (note) note.style.display = show ? 'block' : 'none';
   }
 
   /* ── 1. Monthly Booking Volume ───────────────────────────── */
+  // mLabels always spans a fixed rolling 12-month window (see
+  // lib/admin-queries/booking_reports_queries.php), so we always render
+  // the real chart and just add a note when every month is zero, rather
+  // than hiding the whole thing.
   const volCtx = document.getElementById('bookingVolChart');
-  if (volCtx && !D.hasBookingData) {
-    showEmptyState('bookingVolChart', 'No bookings recorded yet');
-  } else if (volCtx) {
+  toggleNote('bookingVolNote', !D.hasBookingData);
+  if (volCtx) {
     new Chart(volCtx, {
       type: 'bar',
       data: {
@@ -71,10 +64,12 @@
   }
 
   /* ── 2. Booking Status Donut ─────────────────────────────── */
+  // donutLabels is a fixed 5-category set (Confirmed/Active/Completed/
+  // Cancelled/Pending), always present regardless of data, so the same
+  // soft-note treatment applies here too.
   const donutCtx = document.getElementById('statusDonut');
-  if (donutCtx && !D.hasBookingData) {
-    showEmptyState('statusDonut', 'No bookings yet');
-  } else if (donutCtx) {
+  toggleNote('statusDonutNote', !D.hasBookingData);
+  if (donutCtx) {
     new Chart(donutCtx, {
       type: 'doughnut',
       data: {

@@ -123,12 +123,14 @@ include '../../lib/admin-queries/booking_reports_queries.php';
     <div class="two-col">
       <div class="card" style="flex:2;">
         <div class="card-header"><span class="card-title">Monthly Booking Volume (12 months)</span></div>
+        <div id="bookingVolNote" style="display:none;margin:0 20px 8px;font-size:.78rem;color:#94a3b8;">No bookings recorded in this window yet.</div>
         <div class="chart-wrap" style="height:300px;">
           <canvas id="bookingVolChart"></canvas>
         </div>
       </div>
       <div class="card" style="flex:1;">
         <div class="card-header"><span class="card-title">Booking Status</span></div>
+        <div id="statusDonutNote" style="display:none;margin:0 20px 8px;font-size:.78rem;color:#94a3b8;text-align:center;">No bookings yet.</div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 0;">
           <div class="chart-wrap" style="height:160px;width:160px;">
             <canvas id="statusDonut"></canvas>
