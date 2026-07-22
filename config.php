@@ -2,10 +2,16 @@
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
-require_once __DIR__ . '/vendor/autoload.php';
+// Only load .env if it exists (for local development)
+if (file_exists(__DIR__ . '/.env')) {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+}
 
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
+// Helper to read from $_ENV or getenv()
+function envValue($key, $default = null) {
+    return $_ENV[$key] ?? getenv($key) ?: $default;
+}
 
 // define('DB_SERVER', $_ENV['DB_SERVER']);
 // define('DB_USERNAME', $_ENV['DB_USERNAME']);
