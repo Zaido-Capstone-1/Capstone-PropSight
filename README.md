@@ -11,7 +11,7 @@ PropSight is built primarily for property owners managing apartments, boarding h
 
 ---
 
-## Features  
+## Features
 
 ### Tenant / User Portal
 - **Unit browsing** — Browse available units with details, photos, amenities, and reviews
