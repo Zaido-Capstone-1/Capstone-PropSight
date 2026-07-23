@@ -16,7 +16,11 @@ RUN apt-get update && apt-get install -y \
 # ── Apache config ────────────────────────────────────────────────────────────
 # Enable mod_rewrite / mod_headers (used by .htaccess) and allow .htaccess
 # overrides for the whole docroot.
-RUN a2enmod rewrite headers
+# The apt-get install above can re-enable mpm_event alongside the mpm_prefork
+# that mod_php requires — Apache refuses to start with two MPMs loaded, so
+# explicitly force prefork-only here.
+RUN a2dismod mpm_event mpm_worker 2>/dev/null; \
+    a2enmod mpm_prefork rewrite headers
 RUN sed -ri -e 's!AllowOverride None!AllowOverride All!g' /etc/apache2/apache2.conf
 
 # Railway provides the port to listen on via $PORT at runtime, so Apache's
