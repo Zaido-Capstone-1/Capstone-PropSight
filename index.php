@@ -523,11 +523,11 @@ if (isset($conn) && $conn) {
 
             <div class="about-visual reveal">
                 <div class="about-img-main">
-                    <img src="assets/images/owner.jpg" alt="Owner of Boracay Accommodation">
+                    <img src="assets/images/hero-img.jpg" alt="Owner of Boracay Accommodation">
                 </div>
-                <div class="about-img-accent">
+                <!-- <div class="about-img-accent">
                     <img src="assets/images/hero-img.jpg" alt="Image of Boracay Accommodation">
-                </div>
+                </div> -->
                 <div class="about-badge">
                     <div class="badge-num"><?php echo $statYears; ?>+</div>
                     <div class="badge-lbl">Years of<br>Hospitality</div>
@@ -538,7 +538,7 @@ if (isset($conn) && $conn) {
                 <div class="eyebrow">Our Story</div>
                 <h2 class="section-heading">A <em>Home</em> Away<br>From Home</h2>
                 <p class="body-text">
-                    Since 2012, the Magdaong family has welcomed guests with one simple belief: every visitor deserves
+                    Since 2012, Miss Jonson has welcomed guests with one simple belief: every visitor deserves
                     the warmth and care of a Filipino household. What began as a small collection of well-designed
                     apartments has grown into a cherished retreat, loved by travelers from all over the world.
                 </p>
@@ -603,7 +603,7 @@ if (isset($conn) && $conn) {
 
         <div class="rooms-grid">
             <?php if (empty($featuredUnits)): ?>
-                <div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text-soft);">
+                <div style="grid-column:1/-1;width:100%;text-align:center;padding:40px 20px;color:var(--text-soft);">
                     No rooms available right now.
                 </div>
             <?php else: ?>
