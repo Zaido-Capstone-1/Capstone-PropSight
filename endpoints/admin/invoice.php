@@ -294,10 +294,10 @@ function handle_send(mysqli $conn): void
 
           $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
           $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-          $base = $scheme . '://' . $host;
+          $base = $scheme . '://' . $host . env('APP_BASE_PATH', '');
           // Use a generic invoice success/cancel page (falls back to invoices page)
-          $successUrl = $base . '/PropSight-Capstone/pages/user/invoice_payment_done.php?invoice_id=' . $id . '&method=card';
-          $cancelUrl = $base . '/PropSight-Capstone/pages/user/invoice_payment_done.php?invoice_id=' . $id . '&method=card&cancelled=1';
+          $successUrl = $base . '/pages/user/invoice_payment_done.php?invoice_id=' . $id . '&method=card';
+          $cancelUrl = $base . '/pages/user/invoice_payment_done.php?invoice_id=' . $id . '&method=card&cancelled=1';
 
           $csBody = [
             'data' => [
@@ -370,8 +370,8 @@ function handle_send(mysqli $conn): void
           // ── PayMongo Link (GCash / Maya / Online Banking) ──────────────
           $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
           $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-          $redirectUrl = $scheme . '://' . $host
-            . '/PropSight-Capstone/pages/user/invoice_payment_done.php'
+          $redirectUrl = $scheme . '://' . $host . env('APP_BASE_PATH', '')
+            . '/pages/user/invoice_payment_done.php'
             . '?invoice_id=' . $id . '&method=' . urlencode($method_key);
 
           $link = paymongo_create_link(
