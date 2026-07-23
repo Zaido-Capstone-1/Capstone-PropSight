@@ -538,7 +538,7 @@ if (isset($conn) && $conn) {
                 <div class="eyebrow">Our Story</div>
                 <h2 class="section-heading">A <em>Home</em> Away<br>From Home</h2>
                 <p class="body-text">
-                    Since 2012, Miss Jonson has welcomed guests with one simple belief: every visitor deserves
+                    Since 2012, Miss Johnson has welcomed guests with one simple belief: every visitor deserves
                     the warmth and care of a Filipino household. What began as a small collection of well-designed
                     apartments has grown into a cherished retreat, loved by travelers from all over the world.
                 </p>
