@@ -202,7 +202,7 @@ try {
             $ref = 'TXN-BK-' . $bookingId;
             $txnExists = mysqli_fetch_assoc(mysqli_query(
                 $conn,
-                "SELECT id FROM transactions WHERE reference_no='$ref' LIMIT 1"
+                "SELECT id FROM transactions WHERE booking_id=$bookingId AND type='Income' LIMIT 1"
             ));
             if (!$txnExists) {
                 $propRow = mysqli_fetch_assoc(mysqli_query(

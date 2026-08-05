@@ -33,7 +33,7 @@ if (!$bookingId || !in_array($newStatus, $allowed)) {
 }
 
 $bkRow = mysqli_fetch_assoc(mysqli_query($conn,
-    "SELECT unit_id, status, total_amount, payment_method FROM bookings WHERE booking_id=$bookingId LIMIT 1"));
+    "SELECT unit_id, status, total_amount, payment_method, user_id FROM bookings WHERE booking_id=$bookingId LIMIT 1"));
 if (!$bkRow) {
     echo json_encode(['success' => false, 'message' => 'Booking not found.']);
     exit;
@@ -78,7 +78,7 @@ try {
 
             $ref = 'TXN-BK-' . $bookingId;
             $exists = mysqli_fetch_assoc(mysqli_query($conn,
-                "SELECT id FROM transactions WHERE reference_no='$ref' LIMIT 1"));
+                "SELECT id FROM transactions WHERE booking_id=$bookingId AND type='Income' LIMIT 1"));
             if (!$exists) {
                 $propRow = mysqli_fetch_assoc(mysqli_query($conn,
                     "SELECT property_id FROM units WHERE unit_id={$bkRow['unit_id']} LIMIT 1"));
@@ -87,6 +87,23 @@ try {
                 mysqli_query($conn, "INSERT INTO transactions
                     (reference_no, description, category, type, amount, transaction_date, booking_id, property_id)
                     VALUES ('$ref', 'Booking #$bookingId payment', 'Room Revenue', 'Income', $amt, CURDATE(), $bookingId, $propIdSql)");
+            }
+        }
+
+        // Award loyalty points (1 point per PHP 10 spent), avoiding duplicates
+        $lpUserId = (int)($bkRow['user_id'] ?? 0);
+        if ($lpUserId > 0) {
+            $lpExists = mysqli_fetch_assoc(mysqli_query($conn,
+                "SELECT id FROM loyalty_points WHERE booking_id=$bookingId AND user_id=$lpUserId AND type='earn' LIMIT 1"));
+            if (!$lpExists) {
+                $lpPts = max(1, (int) floor($amt / 10));
+                $lpDesc = mysqli_real_escape_string($conn, "Booking #$bookingId stay completed");
+                mysqli_query($conn, "INSERT INTO loyalty_points (user_id, points, type, description, booking_id)
+                    VALUES ($lpUserId, $lpPts, 'earn', '$lpDesc', $bookingId)");
+
+                $lpNotifBody = mysqli_real_escape_string($conn, "You earned $lpPts loyalty points from your stay!");
+                mysqli_query($conn, "INSERT INTO notifications (user_id, type, title, body)
+                    VALUES ($lpUserId, 'loyalty', 'Points Earned!', '$lpNotifBody')");
             }
         }
     }

@@ -63,6 +63,10 @@ $prevExpenses = (float) (mysqli_fetch_assoc(mysqli_query(
     $conn,
     "SELECT COALESCE(SUM(amount),0) AS v FROM expenses WHERE YEAR(expense_date)=$prevYear"
 ))['v'] ?? 0);
+$prevRefunds = (float) (mysqli_fetch_assoc(mysqli_query(
+    $conn,
+    "SELECT COALESCE(SUM(refund_amount),0) AS v FROM refunds WHERE refund_status IN ('completed','processing') AND YEAR(refund_date)=$prevYear"
+))['v'] ?? 0);
 
 // ── Expense breakdown by subcategory (for stacked chart) ──
 $monthlyMaint = array_fill(0, 12, 0.0);
@@ -126,11 +130,15 @@ for ($i = 1; $i <= $lastMonth; $i++) {
 }
 
 // ── Growth rates ──────────────────────────────────────
-$prevNet      = $prevIncome - $prevExpenses;
+$prevNet      = $prevIncome - $prevExpenses - $prevRefunds;
 $revenueGrowth  = $prevIncome   > 0 ? round(($totalIncome   - $prevIncome)   / $prevIncome   * 100, 1) : 0;
 $expenseGrowth  = $prevExpenses > 0 ? round(($totalExpenses - $prevExpenses) / $prevExpenses * 100, 1) : 0;
 $profitGrowth   = $prevNet      > 0 ? round(($netProfit     - $prevNet)      / $prevNet      * 100, 1) : 0;
 $roi            = $totalIncome  > 0 ? round($netProfit / $totalIncome * 100, 1) : 0;
+$prevRoi        = $prevIncome   > 0 ? round($prevNet / $prevIncome * 100, 1) : 0;
+// ROI is already a percentage, so its "growth" is a percentage-point
+// difference, not a relative percent-of-a-percent change.
+$roiGrowth      = round($roi - $prevRoi, 1);
 
 $expCatRes = mysqli_query(
     $conn,
@@ -207,6 +215,7 @@ echo json_encode([
     'total_refunds'    => $totalRefunds,
     'net_profit'       => $netProfit,
     'roi'              => $roi,
+    'roi_growth'       => $roiGrowth,
     'revenue_growth'   => $revenueGrowth,
     'expense_growth'   => $expenseGrowth,
     'profit_growth'    => $profitGrowth,

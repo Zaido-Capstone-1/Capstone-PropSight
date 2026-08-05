@@ -369,7 +369,7 @@ if ($method === 'POST') {
             exit;
         }
 
-        $bkStmt = $conn->prepare("SELECT unit_id, status, total_amount, payment_method FROM bookings WHERE booking_id = ? LIMIT 1");
+        $bkStmt = $conn->prepare("SELECT unit_id, status, total_amount, payment_method, user_id FROM bookings WHERE booking_id = ? LIMIT 1");
         $bkStmt->bind_param('i', $bookingId);
         $bkStmt->execute();
         $bkRow = $bkStmt->get_result()->fetch_assoc();
@@ -429,8 +429,8 @@ if ($method === 'POST') {
                     $mpStmt->close();
 
                     $ref = 'TXN-BK-' . $bookingId;
-                    $exStmt = $conn->prepare("SELECT id FROM transactions WHERE reference_no = ? LIMIT 1");
-                    $exStmt->bind_param('s', $ref);
+                    $exStmt = $conn->prepare("SELECT id FROM transactions WHERE booking_id = ? AND type = 'Income' LIMIT 1");
+                    $exStmt->bind_param('i', $bookingId);
                     $exStmt->execute();
                     $existing = $exStmt->get_result()->fetch_assoc();
                     $exStmt->close();
@@ -448,6 +448,30 @@ if ($method === 'POST') {
                         $tiStmt->bind_param('ssssdii', $ref, $desc, $cat, $type, $amt, $bookingId, $propId);
                         $tiStmt->execute();
                         $tiStmt->close();
+                    }
+                }
+
+                // Award loyalty points (1 point per PHP 10 spent), avoiding duplicates
+                $lpUserId = (int) ($bkRow['user_id'] ?? 0);
+                if ($lpUserId > 0) {
+                    $lpChk = $conn->prepare("SELECT id FROM loyalty_points WHERE booking_id = ? AND user_id = ? AND type = 'earn' LIMIT 1");
+                    $lpChk->bind_param('ii', $bookingId, $lpUserId);
+                    $lpChk->execute();
+                    $lpExists = $lpChk->get_result()->fetch_assoc();
+                    $lpChk->close();
+                    if (!$lpExists) {
+                        $lpPts = max(1, (int) floor($amt / 10));
+                        $lpDesc = "Booking #$bookingId stay completed";
+                        $lpStmt = $conn->prepare("INSERT INTO loyalty_points (user_id, points, type, description, booking_id) VALUES (?, ?, 'earn', ?, ?)");
+                        $lpStmt->bind_param('iisi', $lpUserId, $lpPts, $lpDesc, $bookingId);
+                        $lpStmt->execute();
+                        $lpStmt->close();
+
+                        $lpNotifBody = "You earned $lpPts loyalty points from your stay!";
+                        $lpNotifStmt = $conn->prepare("INSERT INTO notifications (user_id, type, title, body) VALUES (?, 'loyalty', 'Points Earned!', ?)");
+                        $lpNotifStmt->bind_param('is', $lpUserId, $lpNotifBody);
+                        $lpNotifStmt->execute();
+                        $lpNotifStmt->close();
                     }
                 }
             }

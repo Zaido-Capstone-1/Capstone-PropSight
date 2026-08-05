@@ -86,7 +86,7 @@ if (!$stmt) {
     echo json_encode(['status' => 'error', 'message' => 'Prepare failed: ' . $conn->error]);
     exit;
 }
-$stmt->bind_param('isssidssi', $property_id, $unit_number, $unit_name, $unit_type, $floor, $rent_amount, $season, $max_guests, $description);
+$stmt->bind_param('isssidsis', $property_id, $unit_number, $unit_name, $unit_type, $floor, $rent_amount, $season, $max_guests, $description);
 
 if (!$stmt->execute()) {
     $err = $stmt->error;
