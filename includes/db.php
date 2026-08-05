@@ -21,12 +21,11 @@ if (!function_exists('fmt_dt')) {
             'blocked_at',
             'last_login',
             'booked_at',
-            'payment_date',
-            'refund_date',
-            // checkin_date and checkout_date are plain DATE columns — no timezone suffix needed
-            'transaction_date',
-            'expense_date',
-            'request_date',
+            // NOTE: checkin_date, checkout_date, transaction_date, expense_date,
+            // payment_date, refund_date, and request_date are all plain DATE
+            // columns (YYYY-MM-DD, no time component) — appending a UTC
+            // "+00:00" suffix to them produces an invalid, unparseable string,
+            // so they must NOT be listed here.
             'last_time',
             'ts',
         ]);

@@ -337,13 +337,13 @@ if ($_sb_initials === '')
   </div>
   <div class="sidebar-bottom">
     <div class="sidebar-user">
-      <div class="sidebar-avatar<?= $_sb_photo_url ? '' : ' sidebar-avatar-initials' ?>">
+      <div class="sidebar-avatar<?= $_sb_photo_url ? '' : ' sidebar-avatar-initials' ?>" id="sidebarAvatar">
         <?php if ($_sb_photo_url): ?>
           <img src="<?= htmlspecialchars($_sb_photo_url) ?>" alt="Profile"
-            style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
-        <?php else: ?>
-          <?= htmlspecialchars($_sb_initials) ?>
+            style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+            onerror="this.style.display='none';this.parentElement.classList.add('sidebar-avatar-initials');this.nextElementSibling.style.display='inline';">
         <?php endif; ?>
+        <span<?= $_sb_photo_url ? ' style="display:none;"' : '' ?>><?= htmlspecialchars($_sb_initials) ?></span>
       </div>
       <div>
         <div class="sidebar-user-name"><?php echo htmlspecialchars($_SESSION['name']); ?></div>

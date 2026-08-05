@@ -284,10 +284,10 @@ function rp_activity_icon_svg(string $desc, bool $isExpense, string $type = ''):
       <div class="user-avatar<?= $_rp_photo_url ? '' : ' user-avatar-initials' ?>">
         <?php if ($_rp_photo_url): ?>
           <img src="<?= htmlspecialchars($_rp_photo_url) ?>" alt="Profile"
-            style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
-        <?php else: ?>
-          <?= htmlspecialchars($_rp_initials) ?>
+            style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+            onerror="this.style.display='none';this.parentElement.classList.add('user-avatar-initials');this.nextElementSibling.style.display='inline';">
         <?php endif; ?>
+        <span<?= $_rp_photo_url ? ' style="display:none;"' : '' ?>><?= htmlspecialchars($_rp_initials) ?></span>
       </div>
     </div>
   </div>
