@@ -398,7 +398,7 @@ function _detailHtml(b, payments) {
             </div>
             <div class="res-detail-guest">
                 ${b.user_photo
-            ? `<img src="../../${b.user_photo}" class="guest-avatar-img res-detail-avatar-lg" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            ? `<img src="${/^https?:\/\//i.test(b.user_photo) ? b.user_photo : '../../' + b.user_photo}" class="guest-avatar-img res-detail-avatar-lg" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                        <div class="guest-avatar res-detail-avatar-lg" style="display:none;">${guestInitials}</div>`
             : `<div class="guest-avatar res-detail-avatar-lg">${guestInitials}</div>`
         }
@@ -772,7 +772,7 @@ function rowHtml(b, isNew) {
     const nameParts = (b.user_name || '?').trim().split(/\s+/).slice(0, 2);
     const init = nameParts.map(w => w[0].toUpperCase()).join('');
     const avatarHtml = b.user_photo
-        ? `<img src="../../${b.user_photo}" class="guest-avatar-img"
+        ? `<img src="${/^https?:\/\//i.test(b.user_photo) ? b.user_photo : '../../' + b.user_photo}" class="guest-avatar-img"
             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
        <div class="guest-avatar" style="display:none;">${init}</div>`
         : `<div class="guest-avatar">${init}</div>`;

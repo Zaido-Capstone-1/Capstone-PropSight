@@ -142,12 +142,8 @@ document.querySelectorAll('.delete-property-btn').forEach(btn => {
                             const tbody = document.querySelector('tbody');
                             const remaining = tbody.querySelectorAll('tr').length;
                             if (remaining === 0) {
-                                const emptyRow = document.createElement('tr');
-                                emptyRow.innerHTML = `
-                                    <td colspan="7" style="text-align:center;padding:32px;color:var(--text-soft);">
-                                        No properties found.
-                                    </td>`;
-                                tbody.appendChild(emptyRow);
+                                const emptyState = document.getElementById('propertiesEmptyState');
+                                if (emptyState) emptyState.style.display = '';
                             }
 
                             await refreshStats();

@@ -378,28 +378,36 @@ body {
    PAGE BODY  (sidebar + grid, full-width)
 ══════════════════════════════════════════════ */
 .units-body {
-    display: grid;
-    grid-template-columns: 272px 1fr;
-    gap: 0;
-    align-items: start;
+    position: relative;
     min-height: calc(100vh - 68px - 52px);
 }
 
 /* ══════════════════════════════════════════════
    LEFT SIDEBAR
+   Positioned via JS (absolute → fixed toggle in units.js)
+   instead of `position: sticky`, since sticky's "unstick"
+   point depends on this container being taller than the
+   sidebar — with only a few units the results column can be
+   shorter than the sidebar, releasing it too early.
 ══════════════════════════════════════════════ */
 .units-sidebar {
     background: var(--white);
     border-right: 1px solid var(--border-lt);
-    position: sticky;
-    top: calc(68px + 52px);
+    position: absolute;
+    top: 0;
+    left: 0;
     /* header + toolbar */
-    height: calc(100vh - 68px - 52px);
+    height: calc(130vh - 68px - 52px);
+    width: 272px;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
-    flex-shrink: 0;
+}
+
+.units-sidebar.js-pinned {
+    position: fixed;
+    top: calc(68px + 52px);
 }
 
 .units-sidebar::-webkit-scrollbar {
@@ -857,6 +865,7 @@ body {
 ══════════════════════════════════════════════ */
 .units-main {
     padding: 28px 32px 80px;
+    margin-left: 272px;
     min-width: 0;
     /* prevent grid blowout */
 }
@@ -1150,16 +1159,13 @@ body {
    RESPONSIVE
 ══════════════════════════════════════════════ */
 @media (max-width: 1024px) {
-    .units-body {
-        grid-template-columns: 240px 1fr;
-    }
-
     .units-sidebar {
-        /* inherits width from grid */
+        width: 240px;
     }
 
     .units-main {
         padding: 24px 24px 80px;
+        margin-left: 240px;
     }
 
     .units-toolbar {
@@ -1169,12 +1175,9 @@ body {
 }
 
 @media (max-width: 860px) {
-    .units-body {
-        grid-template-columns: 1fr;
-    }
-
     .units-main {
         padding: 20px 20px 72px;
+        margin-left: 0;
     }
 
     .units-toolbar {

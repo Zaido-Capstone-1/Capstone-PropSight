@@ -60,6 +60,12 @@
         border-color: #4f8ef7;
     }
 
+    @media (max-width: 640px) {
+        .search-wrap {
+            width: 100% !important;
+        }
+    }
+
     .guest-avatar {
         width: 34px;
         height: 34px;

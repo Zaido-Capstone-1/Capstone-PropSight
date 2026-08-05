@@ -184,7 +184,19 @@ function calculateStatsFromDB(mysqli $conn, int $year): array
     $prevExp = (float) ($stmt->get_result()->fetch_assoc()['v'] ?? 0);
     $stmt->close();
 
-    $prevNet = $prevInc - $prevExp;
+    $stmt = $conn->prepare(
+        "SELECT COALESCE(SUM(refund_amount),0) AS v FROM refunds WHERE refund_status IN ('completed','processing') AND YEAR(refund_date)=?"
+    );
+    $stmt->bind_param('i', $prevYear);
+    $stmt->execute();
+    $prevRefunds = (float) ($stmt->get_result()->fetch_assoc()['v'] ?? 0);
+    $stmt->close();
+
+    // Match how the current year's net profit/ROI are computed above
+    // (income minus expenses minus refunds), so the two are comparable.
+    $prevNet = $prevInc - $prevExp - $prevRefunds;
+    $prevRoi = $prevInc > 0 ? round($prevNet / $prevInc * 100, 1) : 0;
+
     return [
         'total_revenue' => $totalIncome,
         'total_expenses' => $totalExpenses,
@@ -194,6 +206,7 @@ function calculateStatsFromDB(mysqli $conn, int $year): array
         'revenue_growth' => $prevInc > 0 ? round(($totalIncome - $prevInc) / $prevInc * 100, 1) : 0,
         'expense_growth' => $prevExp > 0 ? round(($totalExpenses - $prevExp) / $prevExp * 100, 1) : 0,
         'profit_growth' => $prevNet > 0 ? round(($netProfit - $prevNet) / $prevNet * 100, 1) : 0,
+        'roi_growth' => round($roi - $prevRoi, 1),
     ];
 }
 

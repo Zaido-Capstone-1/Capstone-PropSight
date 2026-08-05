@@ -1409,6 +1409,11 @@
     })();
 
 })();
+
+function udPhotoUrl(photo) {
+    if (!photo) return '';
+    return /^https?:\/\//i.test(photo) ? photo : '../../' + String(photo).replace(/^\/+/, '');
+}
 // ── Save / Unsave toggle ──────────────────────────────────────────────────────
 function toggleSaveRoom(unitId, btn) {
     const fd = new FormData();
@@ -1491,7 +1496,7 @@ function udLoadReviews(unitId, page, limit, showHide) {
                     ? (parts[0][0] + parts[1][0]).toUpperCase()
                     : rv.reviewer[0].toUpperCase();
                 const photo    = rv.reviewer_photo
-                    ? `<img src="../../${rv.reviewer_photo}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;" onerror="this.style.display='none'">`
+                    ? `<img src="${udPhotoUrl(rv.reviewer_photo)}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;" onerror="this.style.display='none'">`
                     : '';
                 const stars = n => [1,2,3,4,5].map(s =>
                     `<span class="${s<=Math.round(n)?'sf':'se'}">★</span>`).join('');
@@ -1619,7 +1624,7 @@ function udLoadReviewsFiltered(unitId, page, limit, star) {
             list.innerHTML = data.reviews.map(rv => {
                 const parts    = rv.reviewer.trim().split(' ');
                 const initials = parts.length >= 2 ? (parts[0][0]+parts[1][0]).toUpperCase() : rv.reviewer[0].toUpperCase();
-                const photo    = rv.reviewer_photo ? `<img src="../../${rv.reviewer_photo}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;" onerror="this.style.display='none'">` : '';
+                const photo    = rv.reviewer_photo ? `<img src="${udPhotoUrl(rv.reviewer_photo)}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;" onerror="this.style.display='none'">` : '';
                 const stars = n => [1,2,3,4,5].map(s=>`<span class="${s<=Math.round(n)?'sf':'se'}">★</span>`).join('');
                 const catHtml = '';
                 const dateStr = new Date(rv.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});

@@ -122,6 +122,7 @@ function loadFinancialData(year) {
         total_refunds:   data.total_refunds   || 0,
         net_profit:      data.net_profit      || 0,
         roi:             data.roi             || 0,
+        roi_growth:      data.roi_growth      || 0,
         revenue_growth:  data.revenue_growth  || 0,
         expense_growth:  data.expense_growth  || 0,
         profit_growth:   data.profit_growth   || 0,
@@ -156,6 +157,15 @@ function updateStatistics(stats) {
   if (expGrEl) expGrEl.textContent = ((stats.expense_growth || 0) >= 0 ? '↑ ' : '↓ ') + Math.abs(stats.expense_growth || 0) + '%';
   const prGrEl = document.getElementById('profitGrowth');
   if (prGrEl) prGrEl.textContent = ((stats.profit_growth || 0) >= 0 ? '↑ ' : '↓ ') + Math.abs(stats.profit_growth || 0) + '%';
+  // ROI is already a percentage, so its trend is a percentage-point (pp)
+  // difference vs last year, not a relative percent-of-a-percent change.
+  const roiGrEl = document.getElementById('roiGrowth');
+  if (roiGrEl) {
+    const up = (stats.roi_growth || 0) >= 0;
+    roiGrEl.textContent = (up ? '↑ ' : '↓ ') + Math.abs(stats.roi_growth || 0) + ' pp';
+    roiGrEl.classList.toggle('up', up);
+    roiGrEl.classList.toggle('down', !up);
+  }
 }
 
 /* ── Chart update dispatch ── */
@@ -504,8 +514,6 @@ function initExpenseBreakChart() {
   });
 }
 
-/* ── Export ── */
-/* ── Auto-refresh ── */
 function startAutoRefresh() {
   autoRefreshInterval = setInterval(() => loadFinancialData(selectedYear), 30000);
 }

@@ -1,10 +1,12 @@
 const propertiesList = window.__UNITS_DATA__.propertiesList;
 
 function badgeOf(s) {
-  return { occupied: 'Occupied', vacant: 'Vacant', maintenance: 'Maintenance' }[s] || s;
+  return { occupied: 'OCCUPIED', vacant: 'AVAILABLE', booked: 'BOOKED', maintenance: 'MAINTENANCE' }[s] || String(s).toUpperCase();
 }
 function statusPillHtml(s) {
-  return `<span class="status-pill ${s}">${badgeOf(s)}</span>`;
+  const bg = { occupied: 'rgba(185,28,28,0.85)', vacant: 'rgba(22,163,74,0.9)', booked: 'rgba(37,99,235,0.9)', maintenance: 'rgba(180,83,9,0.88)' }[s] || 'rgba(100,116,139,0.85)';
+  const color = { occupied: '#fecaca', vacant: '#fff', booked: '#fff', maintenance: '#fef3c7' }[s] || '#fff';
+  return `<span class="avail-badge" style="font-family:'DM Sans',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.09em;padding:3px 9px;border-radius:99px;background:${bg};color:${color};position:absolute;top:10px;right:10px;z-index:8;">${badgeOf(s)}</span>`;
 }
 function animateStat(el, val) {
   if (!el) return;
@@ -1286,7 +1288,7 @@ function attachDeleteHandler(btn) {
         console.error(err);
         PS.toast('Server error. Please try again.', 'error');
       }
-    }, { title: 'Remove Unit', confirmLabel: 'Remove', confirmClass: 'btn btn-danger', loadingLabel: 'Removing...' });
+    }, { title: 'Remove Unit', confirmLabel: 'Remove', confirmClass: 'btn btn-danger', loadingLabel: 'Removing…'});
   });
 }
 document.querySelectorAll('.delete-unit-btn').forEach(attachDeleteHandler);

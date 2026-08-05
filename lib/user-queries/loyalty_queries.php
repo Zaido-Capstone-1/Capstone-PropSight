@@ -109,14 +109,15 @@ while ($row = $histRes->fetch_assoc()) {
 }
 $histStmt->close();
 
-if (empty($history)) {
-    $history[] = [
-        'date' => date('M j, Y'),
-        'desc' => 'Welcome! Start booking to earn points.',
-        'pts' => '+0',
-        'type' => 'bonus',
-    ];
-}
+// if (empty($history)) {
+//     $history[] = [
+//         'date' => date('M j, Y'),
+//         'desc' => 'Welcome! Start booking to earn points.',
+//         'pts' => '+0',
+//         'type' => 'bonus',
+//     ];
+// }
+
 /* ── 5. Vouchers ── */
 $vouchers = [];
 // Free any lingering result sets before running next query

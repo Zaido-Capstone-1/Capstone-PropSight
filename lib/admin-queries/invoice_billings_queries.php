@@ -16,6 +16,7 @@ $allResult = $conn->query(
     "SELECT i.id, i.invoice_no,
             t.full_name                              AS tenant_name,
             t.email                                  AS tenant_email,
+            u2.profile_photo                         AS tenant_photo,
             i.unit,
             DATE_FORMAT(i.issued_date,'%b %d, %Y')  AS issued_label,
             DATE_FORMAT(i.issued_date,'%Y-%m')       AS month_val,
@@ -23,6 +24,7 @@ $allResult = $conn->query(
             i.items, i.total, i.status
      FROM invoices i
      LEFT JOIN tenants t ON t.tenant_id = i.tenant_id
+     LEFT JOIN users u2 ON u2.email = t.email
      ORDER BY i.issued_date DESC"
 );
 $invoices = $allResult->fetch_all(MYSQLI_ASSOC);

@@ -862,7 +862,7 @@ body {
   color: var(--ud-text-soft);
 }
 
-.ud-rating-bars {
+.ud-star-dist {
   flex: 1;
   min-width: 160px;
   display: flex;
@@ -870,17 +870,36 @@ body {
   gap: 5px;
 }
 
-.ud-rbar-row {
+.ud-star-row {
   display: flex;
   align-items: center;
   gap: 8px;
   font-family: "DM Sans", sans-serif;
+  width: 100%;
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 3px 5px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
 }
 
-.ud-rbar-label {
+.ud-star-row:hover {
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.ud-star-row:focus-visible {
+  outline: 2px solid #c9a84c;
+  outline-offset: 1px;
+}
+
+.ud-star-lbl {
   font-size: 0.68rem;
   color: var(--ud-text-mid);
-  min-width: 72px;
+  min-width: 30px;
+  flex-shrink: 0;
 }
 
 .ud-rbar-track {
@@ -898,12 +917,21 @@ body {
   transition: width 0.5s ease;
 }
 
-.ud-rbar-pct {
+.ud-star-cnt {
   font-size: 0.65rem;
   font-weight: 600;
   color: var(--ud-text-soft);
   min-width: 22px;
   text-align: right;
+  flex-shrink: 0;
+}
+
+.ud-star-all {
+  color: var(--ud-text);
+}
+
+.ud-star-all:hover {
+  background: rgba(201, 168, 76, 0.12);
 }
 
 /* Reviews */

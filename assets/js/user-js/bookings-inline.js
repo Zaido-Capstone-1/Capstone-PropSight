@@ -147,7 +147,7 @@ var _bookingJSReady = true;
                     } else if (b.status === 'completed') {
                         const reviewBtn = reviewed
                             ? `<button class="bc-btn-ghost" style="cursor:default;opacity:0.7;" disabled>${_svgStar} Reviewed · ${rating}/5</button>`
-                            : `<button class="bc-btn-ghost" onclick="openReviewModal('${roomName}', ${id}, ${idx})">${_svgStar} Leave a Review</button>`;
+                            : `<button class="bc-btn-ghost" onclick="openReviewModal('${roomName}', ${id}, ${idx})">Leave a Review</button>`;
                         acts.innerHTML =
                             `<button class="bc-btn-receipt" id="receipt-btn-${id}" onclick="downloadReceipt(${id}, this)" title="Download Receipt as PDF">${_svgDoc} Receipt</button>` +
                             reviewBtn +

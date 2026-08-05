@@ -18,6 +18,14 @@
 
     /* ─── DOM shortcuts ──────────────────────────────────────────────────── */
     const $ = (id) => document.getElementById(id);
+
+    // SSO logins (Google/Facebook) store the provider's full avatar URL
+    // instead of a local upload path — don't prepend "../../" to an
+    // absolute URL, or the <img> src breaks.
+    function photoUrl(photo) {
+        if (!photo) return '';
+        return /^https?:\/\//i.test(photo) ? photo : '../../' + String(photo).replace(/^\/+/, '');
+    }
     const $$ = (sel) => [...document.querySelectorAll(sel)];
 
     /* ─── State ──────────────────────────────────────────────────────────── */
@@ -385,13 +393,20 @@
         const badgeHeader = $('vi_badge_header');
         if (badgeHeader) { badgeHeader.textContent = inv.status; badgeHeader.className = 'inv-badge inv-badge--header ' + statusClass(inv.status); }
 
-        // Avatar initials
+        // Avatar: real photo if we have one, initials as fallback
         const avatar = $('vi_avatar_initials');
         if (avatar) {
             const words = (inv.tenant || '?').trim().split(/\s+/);
-            avatar.textContent = words.length >= 2
+            const initials = words.length >= 2
                 ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
                 : (inv.tenant || '?')[0].toUpperCase();
+
+            if (inv.photo) {
+                avatar.innerHTML = `<img src="${photoUrl(inv.photo)}" alt="${initials}"
+                    onerror="this.remove();">${initials}`;
+            } else {
+                avatar.textContent = initials;
+            }
         }
 
         setText('vi_tenant', inv.tenant || '—');

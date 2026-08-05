@@ -29,13 +29,27 @@
 
  html {
      scroll-behavior: smooth;
+     overflow-x: hidden;
+     /* overflow-x lives here, not on body — setting it on body forces
+        the browser to also compute overflow-y:auto on body (per the
+        CSS overflow spec), which turns body into its own scroll
+        container and breaks position:sticky for descendants like the
+        units filter sidebar.
+        The same pairing rule applies to html itself though: setting
+        overflow-x alone still forces overflow-y to resolve to auto,
+        turning html into its own scroll container instead of the
+        normal viewport — which broke position:sticky the same way,
+        just one level higher. Pin overflow-y to visible explicitly so
+        html never becomes a scroll container and sticky positioning
+        (e.g. the units filter sidebar) is computed against the real
+        viewport again. */
+     overflow-y: visible;
  }
 
  body {
      font-family: 'DM Sans', 'Jost', sans-serif;
      background: var(--blue-50);
      color: var(--text-dark);
-     overflow-x: hidden;
  }
 
  img {

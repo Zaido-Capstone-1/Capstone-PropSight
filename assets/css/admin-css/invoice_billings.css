@@ -1197,6 +1197,17 @@
     align-items: center;
     justify-content: center;
     letter-spacing: .5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.inv-view-avatar img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .inv-view-tenant-name {
