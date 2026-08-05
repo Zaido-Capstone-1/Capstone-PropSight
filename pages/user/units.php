@@ -153,9 +153,9 @@ $initials = $_initials;
 $full_name = trim($_firstName . ' ' . $_lastName);
 $email = htmlspecialchars($_SESSION['email'] ?? '');
 $page_extra_head = '
-    <link rel="stylesheet" href="../../assets/css/user-css/styles.css?v=3">
+    <link rel="stylesheet" href="../../assets/css/user-css/styles.css?v=4">
     <link rel="stylesheet" href="../../assets/css/user-css/dashboard.css">
-    <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=9">
+    <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=10">
     <script>
         window.UNITS_CONFIG = {
             priceMin: ' . $priceMin . ',

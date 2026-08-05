@@ -177,10 +177,16 @@ require_once '../../lib/admin-queries/reservations_queries.php';
                                             <?php
                                             $parts = array_filter(explode(' ', trim($b['user_name'])));
                                             $initials = implode('', array_map(fn($w) => strtoupper($w[0]), array_slice($parts, 0, 2)));
-                                            $photo = $b['user_photo'] ?? '';
+                                            $photoRaw = $b['user_photo'] ?? '';
+                                            // SSO logins (Google/Facebook) store the provider's full
+                                            // avatar URL here instead of a local upload path — don't
+                                            // prepend "../../" to those, or the <img> src breaks.
+                                            $photo = !empty($photoRaw)
+                                                ? (preg_match('#^https?://#i', $photoRaw) ? $photoRaw : '../../' . ltrim($photoRaw, '/'))
+                                                : '';
                                             ?>
                                             <?php if ($photo): ?>
-                                                <img src="../../<?= htmlspecialchars($photo) ?>" class="guest-avatar-img"
+                                                <img src="<?= htmlspecialchars($photo) ?>" class="guest-avatar-img"
                                                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                                 <div class="guest-avatar" style="display:none;"><?= $initials ?></div>
                                             <?php else: ?>

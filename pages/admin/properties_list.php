@@ -125,8 +125,9 @@ include '../../lib/admin-queries/properties_list_queries.php';
         </div>
       </div>
 
-      <div class="table-wrap">
-        <table>
+      <?php $isEmpty = mysqli_num_rows($result) === 0; ?>
+      <div class="table-wrap"<?= $isEmpty ? ' style="display:none;"' : '' ?>>
+        <table id="propertiesTable">
           <thead>
             <tr>
               <th>Property</th>
@@ -140,15 +141,7 @@ include '../../lib/admin-queries/properties_list_queries.php';
           </thead>
           <tbody>
 
-            <?php if (mysqli_num_rows($result) === 0): ?>
-              <tr>
-                <td colspan="7" style="text-align:center;padding:32px;color:var(--text-soft);">
-                  No properties
-                  found<?= $filter_type ? ' for type <strong>' . htmlspecialchars($filter_type) . '</strong>' : '' ?>.
-                </td>
-              </tr>
-
-            <?php else: ?>
+            <?php if (!$isEmpty): ?>
               <?php while ($row = mysqli_fetch_assoc($result)): ?>
                 <?php
                 $pid = (int) $row['property_id'];
@@ -198,10 +191,19 @@ include '../../lib/admin-queries/properties_list_queries.php';
               <?php endwhile; ?>
               <?php $unitStmt->close(); ?>
             <?php endif; ?>
-
           </tbody>
         </table>
       </div>
+
+      <div id="propertiesEmptyState" style="<?= $isEmpty ? '' : 'display:none;' ?>text-align:center;padding:52px 16px;">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;display:block;">
+          <path d="M3 7L5 3H19L21 7M3 7V19C3 19.5304 3.21071 20.0391 3.58579 20.4142C3.96086 20.7893 4.46957 21 5 21H19C19.5304 21 20.0391 20.7893 20.4142 20.4142C20.7893 20.0391 21 19.5304 21 19V7M3 7H21" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 11H15" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div style="color:var(--text-soft);font-size:14px;">No properties
+          found<?= $filter_type ? ' for type <strong>' . htmlspecialchars($filter_type) . '</strong>' : '' ?>.</div>
+      </div>
+
     </div>
 
   </div>

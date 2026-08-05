@@ -113,7 +113,9 @@ require_once '../../lib/admin-queries/financial_reports_queries.php';  // ← al
         <div class="stat-card-left">
           <div class="stat-label">ROI</div>
           <div class="stat-value" id="roi"><?php echo $stats['roi']; ?>%</div>
-          <span class="stat-trend up">↑ 3.2%</span>
+          <span class="stat-trend <?php echo $stats['roi_growth'] >= 0 ? 'up' : 'down'; ?>" id="roiGrowth">
+            <?php echo $stats['roi_growth'] >= 0 ? '↑' : '↓'; ?> <?php echo abs($stats['roi_growth']); ?> pp
+          </span>
         </div>
         <div class="stat-icon-wrap gold">
           <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

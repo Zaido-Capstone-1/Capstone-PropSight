@@ -245,6 +245,7 @@ include '../../lib/admin-queries/invoice_billings_queries.php';
                   'invoice_no' => $inv['invoice_no'],
                   'tenant' => $inv['tenant_name'],
                   'email' => $inv['tenant_email'],
+                  'photo' => $inv['tenant_photo'] ?? '',
                   'unit' => $unit,
                   'items' => $inv['items'],
                   'total' => $inv['total'],

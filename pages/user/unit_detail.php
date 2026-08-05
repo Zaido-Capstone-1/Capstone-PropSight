@@ -475,7 +475,9 @@ require '../../includes/_nav.php';
                                             $rvParts = explode(' ', trim($rv['reviewer']));
                                             if (count($rvParts) >= 2)
                                                 $rvInitials = strtoupper(mb_substr($rvParts[0], 0, 1) . mb_substr($rvParts[1], 0, 1));
-                                            $rvPhoto = !empty($rv['reviewer_photo']) ? '../../' . htmlspecialchars($rv['reviewer_photo']) : '';
+                                            $rvPhoto = !empty($rv['reviewer_photo'])
+                                                ? htmlspecialchars(preg_match('#^https?://#i', $rv['reviewer_photo']) ? $rv['reviewer_photo'] : '../../' . ltrim($rv['reviewer_photo'], '/'))
+                                                : '';
                                             ?>
                                             <div class="ud-rv-avatar"
                                                 style="position:relative;width:42px;height:42px;border-radius:50%;flex-shrink:0;overflow:hidden;background:#1a2744;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#c9a84c;">

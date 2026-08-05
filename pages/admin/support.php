@@ -187,13 +187,13 @@ include '../../lib/admin-queries/support_queries.php';
                                 </td>
                                 <td>
                                     <div class="user-cell">
-                                        <?php if ($photo): ?>
+                                        <!-- <?php if ($photo): ?>
                                             <img src="../../<?= htmlspecialchars($photo) ?>" class="user-avatar-img"
                                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
                                             <div class="user-avatar" style="display:none;"><?= $initials ?></div>
                                         <?php else: ?>
                                             <div class="user-avatar"><?= $initials ?></div>
-                                        <?php endif; ?>
+                                        <?php endif; ?> -->
                                         <div>
                                             <div class="user-name"><?= htmlspecialchars($tk['user_name'] ?? '—') ?></div>
                                             <div class="user-email"><?= htmlspecialchars($tk['user_email'] ?? '') ?></div>

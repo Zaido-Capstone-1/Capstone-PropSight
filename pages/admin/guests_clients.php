@@ -151,11 +151,11 @@ require_once '../../lib/admin-queries/guest_clients_queries.php';
 
     <!-- ── Guest Directory ── -->
     <div class="card">
-      <div class="card-header" style="flex-wrap:wrap;gap:10px;">
+      <div class="card-header" style="flex-wrap:wrap;gap:12px;">
         <span class="card-title">Guest Directory</span>
-        <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
 
-          <div class="search-wrap">
+          <div class="search-wrap" style="width:240px;">
             <svg viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
