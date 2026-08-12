@@ -1,22 +1,4 @@
 <?php
-/**
- * lib/admin/units_rooms_data.php
- * Data layer for pages/admin/units_rooms.php
- * Requires: $conn (mysqli)
- *
- * Exposes:
- *   $stats          - unit count snapshot
- *   $total, $occupied, $vacant, $maintenance
- *   $properties     - array for filter dropdown
- *   $units_result   - mysqli_result for the main unit loop
- *   $imgStmt        - prepared statement to fetch unit images per unit
- *                     Usage in loop:
- *                       $imgStmt->bind_param('i', $uid);
- *                       $imgStmt->execute();
- *                       $imgs = $imgStmt->get_result()->fetch_all(MYSQLI_ASSOC);
- *                     Close after loop: $imgStmt->close();
- */
-
 // Stat snapshot (no user input)
 $stats = $conn->query(
     "SELECT COUNT(*) AS total,
@@ -52,8 +34,16 @@ $units_result = $conn->query(
      LEFT JOIN properties p ON u.property_id = p.property_id
      LEFT JOIN bookings b_active
          ON u.unit_id = b_active.unit_id AND b_active.status = 'active'
+         AND b_active.booking_id = (
+             SELECT MAX(b2.booking_id) FROM bookings b2
+             WHERE b2.unit_id = u.unit_id AND b2.status = 'active'
+         )
      LEFT JOIN bookings b_booked
          ON u.unit_id = b_booked.unit_id AND b_booked.status = 'confirmed'
+         AND b_booked.booking_id = (
+             SELECT MAX(b3.booking_id) FROM bookings b3
+             WHERE b3.unit_id = u.unit_id AND b3.status = 'confirmed'
+         )
      LEFT JOIN users usr
          ON usr.user_id = COALESCE(b_active.user_id, b_booked.user_id)
      ORDER BY u.unit_id DESC"
