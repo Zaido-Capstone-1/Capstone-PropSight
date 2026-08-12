@@ -1,0 +1,9 @@
+# Deny direct access to PHP and executable files in uploads
+<FilesMatch "\.(php|php3|php4|php5|php7|phtml|phar|shtml|cgi|pl|py|rb|sh|exe|bat)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Disable script execution
+Options -ExecCGI
+AddHandler cgi-script .php .php3 .php4 .php5 .php7 .phtml .phar .pl .py .rb .sh

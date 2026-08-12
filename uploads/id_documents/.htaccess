@@ -1,0 +1,16 @@
+# Complete access denial - ID documents must ONLY be accessed via admin panel
+Order deny,allow
+Deny from all
+
+# Block all file types
+<FilesMatch ".*">
+    Order deny,allow
+    Deny from all
+</FilesMatch>
+
+# Disable directory listing
+Options -Indexes
+
+# Disable script execution
+Options -ExecCGI
+AddHandler cgi-script .php .php3 .php4 .php5 .php7 .phtml .phar .pl .py .rb .sh
