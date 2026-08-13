@@ -116,7 +116,16 @@ $bookingOptStmt = $conn->prepare("
     LEFT JOIN tenants t  ON t.tenant_id = b.tenant_id
     LEFT JOIN users   u  ON u.user_id   = b.user_id
     LEFT JOIN units   un ON un.unit_id  = b.unit_id
-    WHERE b.status NOT IN ('cancelled', 'completed')
+    WHERE b.status NOT IN ('cancelled', 'completed', 'booked')
+      AND b.booking_id = (
+          SELECT b2.booking_id
+          FROM bookings b2
+          WHERE b2.status NOT IN ('cancelled', 'completed')
+            AND COALESCE(b2.tenant_id, -1) = COALESCE(b.tenant_id, -1)
+            AND COALESCE(b2.user_id, -1)   = COALESCE(b.user_id, -1)
+          ORDER BY FIELD(b2.status, 'active', 'confirmed', 'pending'), b2.checkin_date DESC, b2.booking_id DESC
+          LIMIT 1
+      )
     ORDER BY full_name
 ");
 $bookingOptStmt->execute();
