@@ -98,7 +98,7 @@ endif;
             <div class="stat-card sc-green">
                 <div class="stat-card-left">
                     <div class="stat-label">Collected This Month</div>
-                    <div class="stat-value"><?= fmt_peso((float) $stats['collected']) ?></div>
+                    <div class="stat-value" id="statCollected"><?= fmt_peso((float) $stats['collected']) ?></div>
                 </div>
                 <div class="stat-icon-wrap green">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -110,8 +110,8 @@ endif;
             <div class="stat-card sc-gold">
                 <div class="stat-card-left">
                     <div class="stat-label">Pending</div>
-                    <div class="stat-value"><?= fmt_peso((float) $stats['pending_amt']) ?>
-                        <span class="stat-trend neutral"><?= (int) $stats['pending_cnt'] ?> tenants</span>
+                    <div class="stat-value" id="statPending"><?= fmt_peso((float) $stats['pending_amt']) ?>
+                        <span class="stat-trend neutral" id="statPendingCnt"><?= (int) $stats['pending_cnt'] ?> tenants</span>
                     </div>
                 </div>
                 <div class="stat-icon-wrap gold">
@@ -124,8 +124,8 @@ endif;
             <div class="stat-card sc-red">
                 <div class="stat-card-left">
                     <div class="stat-label">Overdue</div>
-                    <div class="stat-value"><?= fmt_peso((float) $stats['overdue_amt']) ?>
-                        <span class="stat-trend down"><?= (int) $stats['overdue_cnt'] ?> tenants</span>
+                    <div class="stat-value" id="statOverdue"><?= fmt_peso((float) $stats['overdue_amt']) ?>
+                        <span class="stat-trend down" id="statOverdueCnt"><?= (int) $stats['overdue_cnt'] ?> tenants</span>
                     </div>
                 </div>
                 <div class="stat-icon-wrap red">
@@ -139,7 +139,7 @@ endif;
             <div class="stat-card sc-blue">
                 <div class="stat-card-left">
                     <div class="stat-label">Collection Rate</div>
-                    <div class="stat-value"><?= $collection_rate ?>%</div>
+                    <div class="stat-value" id="statCollectionRate"><?= $collection_rate ?>%</div>
                 </div>
                 <div class="stat-icon-wrap blue">
                     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -441,7 +441,12 @@ endif;
             <div class="modal-body">
                 <div class="form-row">
                     <div class="form-group" style="flex:2;">
-                        <label>Tenant / Booking <span class="req">*</span></label>
+                        <label>Tenant / Booking <span class="req">*</span>
+                            <button type="button" id="manualTenantToggle" onclick="toggleManualTenant()"
+                                style="float:right;background:none;border:none;padding:0;color:var(--primary,#2563eb);font-size:12px;font-weight:500;cursor:pointer;">
+                                Enter name manually
+                            </button>
+                        </label>
                         <!-- Shown only in Record Payment (add) mode -->
                         <select name="booking_id" id="formBookingId" required
                             style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--white);">
@@ -452,6 +457,21 @@ endif;
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <!-- Shown only in Record Payment (add) mode, manual-entry toggled -->
+                        <div id="manualTenantWrap" style="display:none;gap:8px;">
+                            <input type="text" name="manual_tenant_name" id="formManualTenant"
+                                placeholder="Enter tenant/guest name" style="flex:1;padding:9px 12px;
+                                border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;box-sizing:border-box;">
+                            <select name="manual_unit_id" id="formManualUnit"
+                                style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--white);">
+                                <option value="">No unit / N/A</option>
+                                <?php foreach ($unit_options as $u): ?>
+                                    <option value="<?= (int) $u['unit_id'] ?>">
+                                        <?= htmlspecialchars($u['unit_number']) ?><?= $u['unit_name'] ? ' — ' . htmlspecialchars($u['unit_name']) : '' ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                         <!-- Shown only in Edit mode -->
                         <div id="editTenantDisplay"
                             style="display:none;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--white);display:none;align-items:center;gap:8px;">

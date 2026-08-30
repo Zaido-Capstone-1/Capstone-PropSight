@@ -72,6 +72,16 @@ $stmt->execute();
 $bookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
+// Unit options for the "Add Reservation" modal (grouped by property client-side)
+$unitOptRes = $conn->query(
+    "SELECT u.unit_id, u.unit_number, u.unit_name, u.rent_amount, u.status, u.max_guests,
+            p.property_name
+     FROM units u
+     LEFT JOIN properties p ON p.property_id = u.property_id
+     ORDER BY p.property_name, u.unit_number"
+);
+$unitOptions = $unitOptRes ? $unitOptRes->fetch_all(MYSQLI_ASSOC) : [];
+
 function badgeClass($s)
 {
     return match ($s) {

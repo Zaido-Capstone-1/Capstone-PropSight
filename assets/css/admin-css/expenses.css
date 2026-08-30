@@ -379,66 +379,67 @@
 .exp-page-controls {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
 }
 
 .exp-chevron-btn {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    border: 1.5px solid var(--border, #e5e7eb);
-    border-radius: 6px;
-    background: var(--white, #fff);
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 7px;
+    background: #fff;
     color: var(--text-soft, #8a94a6);
     cursor: pointer;
-    transition: all .15s;
+    transition: background .15s, border-color .15s, color .15s;
     padding: 0;
 }
 
 .exp-chevron-btn:hover:not(:disabled) {
-    border-color: var(--text, #1e2533);
-    color: var(--text, #1e2533);
+    background: #f1f5f9;
+    border-color: #cbd5e1;
 }
 
 .exp-chevron-btn:disabled {
-    opacity: 0.32;
+    opacity: 0.35;
     cursor: not-allowed;
 }
 
 .exp-page-numbers {
     display: flex;
     align-items: center;
-    gap: 3px;
+    gap: 4px;
 }
 
 .exp-pg-num {
-    min-width: 28px;
-    height: 28px;
-    padding: 0 6px;
-    border: 1.5px solid var(--border, #e5e7eb);
-    border-radius: 6px;
-    background: var(--white, #fff);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text, #1e2533);
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 7px;
+    background: #fff;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all .15s;
+    transition: background .15s, border-color .15s, color .15s;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
 
 .exp-pg-num:hover:not(.active) {
-    border-color: var(--text, #1e2533);
+    background: #f1f5f9;
+    border-color: #cbd5e1;
 }
 
 .exp-pg-num.active {
-    background: var(--text, #1e2533);
-    border-color: var(--text, #1e2533);
-    color: #fff;
-    font-weight: 600;
+    background: #0f2744;
+    color: #e8c86a;
+    border-color: #0f2744;
+    cursor: pointer;
 }
 
 .exp-pg-ellipsis {

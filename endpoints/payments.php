@@ -46,21 +46,25 @@ if ($method === 'GET') {
     }
     if ($search !== '') {
         $sq = mysqli_real_escape_string($conn, $search);
-        $where[] = "(t.full_name LIKE '%$sq%' OR u.unit_number LIKE '%$sq%' OR CAST(p.payment_id AS CHAR) LIKE '%$sq%')";
+        $where[] = "(t.full_name LIKE '%$sq%' OR p.manual_tenant_name LIKE '%$sq%' OR u.unit_number LIKE '%$sq%' OR mu.unit_number LIKE '%$sq%' OR CAST(p.payment_id AS CHAR) LIKE '%$sq%')";
     }
     $whereSQL = implode(' AND ', $where);
 
     $sql = "
         SELECT
-            p.payment_id, p.booking_id, p.payment_date, p.amount_paid,
+            p.payment_id, p.booking_id, p.manual_tenant_name, p.manual_unit_id, p.payment_date, p.amount_paid,
             p.payment_method, p.payment_status, p.notes, p.created_at,
-            t.full_name  AS tenant_name, t.tenant_id,
-            u.unit_number, u.unit_id,
+            COALESCE(NULLIF(t.full_name,''), NULLIF(p.manual_tenant_name,'')) AS tenant_name,
+            COALESCE(NULLIF(t.full_name,''), NULLIF(p.manual_tenant_name,''), '—') AS full_name,
+            t.tenant_id,
+            COALESCE(u.unit_number, mu.unit_number) AS unit_number,
+            COALESCE(u.unit_id, mu.unit_id) AS unit_id,
             pr.property_name,
             b.checkin_date, b.checkout_date
         FROM payments p
         LEFT JOIN bookings   b  ON b.booking_id  = p.booking_id
         LEFT JOIN units      u  ON u.unit_id      = b.unit_id
+        LEFT JOIN units      mu ON mu.unit_id     = p.manual_unit_id
         LEFT JOIN properties pr ON pr.property_id = u.property_id
         LEFT JOIN tenants    t  ON t.tenant_id    = b.tenant_id
         WHERE $whereSQL
@@ -105,31 +109,63 @@ if ($method === 'POST') {
     // ── ADD ──────────────────────────────────────
     if ($action === 'add') {
         $booking_id = (int) ($_POST['booking_id'] ?? 0);
+        $manual_name = trim($_POST['manual_tenant_name'] ?? '');
+        $manual_unit_id = (int) ($_POST['manual_unit_id'] ?? 0);
         $date = trim($_POST['payment_date'] ?? '');
         $amount = (float) ($_POST['amount_paid'] ?? 0);
-        $method_pay = mysqli_real_escape_string($conn, trim($_POST['payment_method'] ?? ''));
-        $pstatus = mysqli_real_escape_string($conn, trim($_POST['payment_status'] ?? 'paid'));
-        $notes = mysqli_real_escape_string($conn, trim($_POST['notes'] ?? ''));
-        $dateEsc = mysqli_real_escape_string($conn, $date);
+        $method_pay = trim($_POST['payment_method'] ?? '');
+        $pstatus = trim($_POST['payment_status'] ?? 'paid');
+        $notes = trim($_POST['notes'] ?? '');
 
-        if (!$booking_id || !$date || $amount <= 0) {
-            echo json_encode(['success' => false, 'message' => 'Booking, date, and amount are required.']);
+        $usingManual = $booking_id <= 0 && $manual_name !== '';
+
+        if ((!$booking_id && !$usingManual) || !$date || $amount <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Tenant/booking, date, and amount are required.']);
             exit;
         }
 
-        $sql = "INSERT INTO payments (booking_id,payment_date,amount_paid,payment_method,payment_status,notes)
-                VALUES ($booking_id,'$dateEsc',$amount,'$method_pay','$pstatus','$notes')";
+        $bookingParam = $usingManual ? null : $booking_id;
+        $manualParam = $usingManual ? $manual_name : null;
+        $manualUnitParam = ($usingManual && $manual_unit_id > 0) ? $manual_unit_id : null;
 
-        if (mysqli_query($conn, $sql)) {
-            $newId = mysqli_insert_id($conn);
+        $stmt = $conn->prepare("INSERT INTO payments (booking_id,manual_tenant_name,manual_unit_id,payment_date,amount_paid,payment_method,payment_status,notes)
+                VALUES (?,?,?,?,?,?,?,?)");
+        $stmt->bind_param('isisdsss', $bookingParam, $manualParam, $manualUnitParam, $date, $amount, $method_pay, $pstatus, $notes);
+
+        if ($stmt->execute()) {
+            $newId = $stmt->insert_id;
+            $stmt->close();
             $ref = 'PMT-' . $newId;
-            $propIdRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT p.property_id FROM bookings b JOIN units u ON u.unit_id = b.unit_id JOIN properties p ON p.property_id = u.property_id WHERE b.booking_id = $booking_id LIMIT 1"));
-            $txPropId = $propIdRow ? (int) $propIdRow['property_id'] : 'NULL';
-            mysqli_query($conn, "INSERT INTO transactions (reference_no,description,category,type,amount,transaction_date,booking_id,property_id)
-                VALUES ('$ref','Payment #$newId for Booking #$booking_id','Room Revenue','Income',$amount,'$dateEsc',$booking_id,$txPropId)");
+            $txPropId = null;
+            if (!$usingManual) {
+                $propStmt = $conn->prepare("SELECT p.property_id FROM bookings b JOIN units u ON u.unit_id = b.unit_id JOIN properties p ON p.property_id = u.property_id WHERE b.booking_id = ? LIMIT 1");
+                $propStmt->bind_param('i', $booking_id);
+                $propStmt->execute();
+                $propIdRow = $propStmt->get_result()->fetch_assoc();
+                $propStmt->close();
+                $txPropId = $propIdRow ? (int) $propIdRow['property_id'] : null;
+            } elseif ($manualUnitParam) {
+                $propStmt = $conn->prepare("SELECT property_id FROM units WHERE unit_id = ? LIMIT 1");
+                $propStmt->bind_param('i', $manualUnitParam);
+                $propStmt->execute();
+                $propIdRow = $propStmt->get_result()->fetch_assoc();
+                $propStmt->close();
+                $txPropId = $propIdRow ? (int) $propIdRow['property_id'] : null;
+            }
+            $desc = $usingManual
+                ? "Payment #$newId for $manual_name (walk-in)"
+                : "Payment #$newId for Booking #$booking_id";
+
+            $txStmt = $conn->prepare("INSERT INTO transactions (reference_no,description,category,type,amount,transaction_date,booking_id,property_id)
+                VALUES (?,?,?,?,?,?,?,?)");
+            $category = 'Room Revenue';
+            $type = 'Income';
+            $txStmt->bind_param('ssssdsii', $ref, $desc, $category, $type, $amount, $date, $bookingParam, $txPropId);
+            $txStmt->execute();
+            $txStmt->close();
             echo json_encode(['success' => true, 'message' => 'Payment recorded.', 'payment_id' => $newId]);
         } else {
-            echo json_encode(['success' => false, 'message' => mysqli_error($conn)]);
+            echo json_encode(['success' => false, 'message' => $stmt->error]);
         }
         exit;
     }
@@ -138,23 +174,31 @@ if ($method === 'POST') {
     if ($action === 'edit') {
         $pid = (int) ($_POST['payment_id'] ?? 0);
         $booking_id = (int) ($_POST['booking_id'] ?? 0);
-        $date = mysqli_real_escape_string($conn, trim($_POST['payment_date'] ?? ''));
+        $manual_name = trim($_POST['manual_tenant_name'] ?? '');
+        $manual_unit_id = (int) ($_POST['manual_unit_id'] ?? 0);
+        $date = trim($_POST['payment_date'] ?? '');
         $amount = (float) ($_POST['amount_paid'] ?? 0);
-        $method_pay = mysqli_real_escape_string($conn, trim($_POST['payment_method'] ?? ''));
-        $pstatus = mysqli_real_escape_string($conn, trim($_POST['payment_status'] ?? 'paid'));
-        $notes = mysqli_real_escape_string($conn, trim($_POST['notes'] ?? ''));
+        $method_pay = trim($_POST['payment_method'] ?? '');
+        $pstatus = trim($_POST['payment_status'] ?? 'paid');
+        $notes = trim($_POST['notes'] ?? '');
 
-        if (!$pid || !$booking_id || !$date || $amount <= 0) {
+        $usingManual = $booking_id <= 0 && $manual_name !== '';
+
+        if (!$pid || (!$booking_id && !$usingManual) || !$date || $amount <= 0) {
             echo json_encode(['success' => false, 'message' => 'All fields required.']);
             exit;
         }
 
-        $sql = "UPDATE payments SET booking_id=$booking_id, payment_date='$date',
-                amount_paid=$amount, payment_method='$method_pay',
-                payment_status='$pstatus', notes='$notes'
-                WHERE payment_id=$pid";
+        $bookingParam = $usingManual ? null : $booking_id;
+        $manualParam = $usingManual ? $manual_name : null;
+        $manualUnitParam = ($usingManual && $manual_unit_id > 0) ? $manual_unit_id : null;
 
-        if (mysqli_query($conn, $sql)) {
+        $stmt = $conn->prepare("UPDATE payments SET booking_id=?, manual_tenant_name=?, manual_unit_id=?,
+                payment_date=?, amount_paid=?, payment_method=?, payment_status=?, notes=?
+                WHERE payment_id=?");
+        $stmt->bind_param('isisdsssi', $bookingParam, $manualParam, $manualUnitParam, $date, $amount, $method_pay, $pstatus, $notes, $pid);
+
+        if ($stmt->execute()) {
             echo json_encode(['success' => true, 'message' => 'Payment updated.']);
         } else {
             echo json_encode(['success' => false, 'message' => mysqli_error($conn)]);

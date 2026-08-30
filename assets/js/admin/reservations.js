@@ -995,6 +995,318 @@ if (clearBtn) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+ *  ADD RESERVATION MODAL
+ * ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+    const unitOptions = window.__PS_RESERVATIONS__.unitOptions || [];
+
+    const modal = document.getElementById('addReservationModal');
+    const openBtn = document.getElementById('openAddReservationBtn');
+    const closeBtn = document.getElementById('addResClose');
+    const cancelBtn = document.getElementById('addResCancel');
+    const form = document.getElementById('addReservationForm');
+    const submitBtn = document.getElementById('addResSubmit');
+    const errorBox = document.getElementById('addResError');
+
+    const guestToggle = document.getElementById('guestModeToggle');
+    const newGuestFields = document.getElementById('newGuestFields');
+    const existingGuestFields = document.getElementById('existingGuestFields');
+    const guestSearchInput = document.getElementById('addResGuestSearch');
+    const guestSearchResults = document.getElementById('guestSearchResults');
+    const guestSelectedChip = document.getElementById('guestSelectedChip');
+
+    const unitSelect = document.getElementById('addResUnit');
+    const checkinInput = document.getElementById('addResCheckin');
+    const checkoutInput = document.getElementById('addResCheckout');
+    const totalInput = document.getElementById('addResTotal');
+    const nightsHint = document.getElementById('addResNightsHint');
+
+    if (!modal || !openBtn) return; // page not loaded / elements missing — bail safely
+
+    let guestMode = 'new';
+    let selectedGuest = null; // { user_id, name, email }
+    let guestSearchTimer = null;
+    let totalManuallyEdited = false;
+
+    /* ── Populate unit dropdown, grouped by property ── */
+    function populateUnits() {
+        const byProperty = {};
+        unitOptions.forEach(u => {
+            const key = u.property_name || 'Other';
+            (byProperty[key] = byProperty[key] || []).push(u);
+        });
+        let html = '<option value="">Select a unit…</option>';
+        Object.keys(byProperty).forEach(propName => {
+            html += `<optgroup label="${escHtml(propName)}">`;
+            byProperty[propName].forEach(u => {
+                const label = u.unit_name ? u.unit_name : ('Unit ' + u.unit_number);
+                const disabled = u.status === 'maintenance' ? ' disabled' : '';
+                const suffix = u.status === 'maintenance' ? ' (Maintenance)' : '';
+                html += `<option value="${u.unit_id}" data-rent="${u.rent_amount}" data-maxguests="${u.max_guests}"${disabled}>${escHtml(label)}${suffix} — ₱${Number(u.rent_amount).toLocaleString()}/night</option>`;
+            });
+            html += '</optgroup>';
+        });
+        unitSelect.innerHTML = html;
+    }
+    populateUnits();
+
+    /* ── Reset the whole form to defaults ── */
+    function resetForm() {
+        form.reset();
+        guestMode = 'new';
+        selectedGuest = null;
+        totalManuallyEdited = false;
+        guestToggle.querySelectorAll('.res-guest-toggle-opt').forEach(o => o.classList.toggle('active', o.dataset.mode === 'new'));
+        newGuestFields.style.display = '';
+        existingGuestFields.style.display = 'none';
+        guestSearchInput.value = '';
+        guestSearchResults.classList.remove('open');
+        guestSearchResults.innerHTML = '';
+        guestSelectedChip.style.display = 'none';
+        guestSelectedChip.innerHTML = '';
+        nightsHint.textContent = '';
+        errorBox.style.display = 'none';
+        errorBox.textContent = '';
+        // Default check-in to today
+        const today = new Date().toISOString().slice(0, 10);
+        checkinInput.value = today;
+        checkinInput.min = today;
+    }
+
+    function openModal() {
+        resetForm();
+        modal.classList.add('active');
+    }
+    function closeModalFn() {
+        modal.classList.remove('active');
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModalFn);
+    cancelBtn.addEventListener('click', closeModalFn);
+    modal.addEventListener('click', e => { if (e.target === modal) closeModalFn(); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) closeModalFn();
+    });
+
+    /* ── Guest mode toggle ── */
+    guestToggle.querySelectorAll('.res-guest-toggle-opt').forEach(opt => {
+        opt.addEventListener('click', () => {
+            guestMode = opt.dataset.mode;
+            guestToggle.querySelectorAll('.res-guest-toggle-opt').forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            newGuestFields.style.display = guestMode === 'new' ? '' : 'none';
+            existingGuestFields.style.display = guestMode === 'existing' ? '' : 'none';
+        });
+    });
+
+    /* ── Existing guest search ── */
+    guestSearchInput.addEventListener('input', () => {
+        const q = guestSearchInput.value.trim();
+        selectedGuest = null;
+        guestSelectedChip.style.display = 'none';
+        clearTimeout(guestSearchTimer);
+        if (q.length < 2) {
+            guestSearchResults.classList.remove('open');
+            guestSearchResults.innerHTML = '';
+            return;
+        }
+        guestSearchTimer = setTimeout(() => {
+            fetch('../../endpoints/reservations.php?' + new URLSearchParams({ search_guests: q }), { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(data => {
+                    const guests = (data.success && data.guests) ? data.guests : [];
+                    if (!guests.length) {
+                        guestSearchResults.innerHTML = '<div class="res-guest-result-empty">No matching guests found.</div>';
+                    } else {
+                        guestSearchResults.innerHTML = guests.map(g => {
+                            const name = escHtml(`${g.first_name} ${g.last_name}`.trim());
+                            const meta = escHtml(g.email || g.phone || '');
+                            return `<div class="res-guest-result-item" data-id="${g.user_id}" data-name="${name}" data-email="${escHtml(g.email || '')}">
+                                <div>
+                                    <div class="res-guest-result-name">${name}</div>
+                                    <div class="res-guest-result-meta">${meta}</div>
+                                </div>
+                            </div>`;
+                        }).join('');
+                    }
+                    guestSearchResults.classList.add('open');
+                })
+                .catch(() => {
+                    guestSearchResults.innerHTML = '<div class="res-guest-result-empty">Search failed. Try again.</div>';
+                    guestSearchResults.classList.add('open');
+                });
+        }, 300);
+    });
+
+    guestSearchResults.addEventListener('click', e => {
+        const item = e.target.closest('.res-guest-result-item');
+        if (!item) return;
+        selectedGuest = { user_id: item.dataset.id, name: item.dataset.name, email: item.dataset.email };
+        guestSearchInput.value = '';
+        guestSearchResults.classList.remove('open');
+        guestSearchResults.innerHTML = '';
+        guestSelectedChip.style.display = 'flex';
+        guestSelectedChip.innerHTML = `
+            <div class="res-guest-selected-info">
+                <div class="name">${selectedGuest.name}</div>
+                <div class="meta">${selectedGuest.email}</div>
+            </div>
+            <button type="button" class="res-guest-selected-clear" id="clearSelectedGuest">Change</button>`;
+        document.getElementById('clearSelectedGuest').addEventListener('click', () => {
+            selectedGuest = null;
+            guestSelectedChip.style.display = 'none';
+            guestSelectedChip.innerHTML = '';
+        });
+    });
+
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.res-guest-search-wrap')) {
+            guestSearchResults.classList.remove('open');
+        }
+    });
+
+    /* ── Nights / total auto-calc ── */
+    function recalcTotal() {
+        const inVal = checkinInput.value;
+        const outVal = checkoutInput.value;
+        const opt = unitSelect.options[unitSelect.selectedIndex];
+        const rent = opt ? parseFloat(opt.dataset.rent || '0') : 0;
+
+        if (!inVal || !outVal) { nightsHint.textContent = ''; return; }
+        const dIn = new Date(inVal + 'T00:00:00');
+        const dOut = new Date(outVal + 'T00:00:00');
+        const nights = Math.round((dOut - dIn) / 86400000);
+
+        if (nights <= 0) {
+            nightsHint.textContent = 'Check-out must be after check-in.';
+            return;
+        }
+        nightsHint.textContent = `${nights} night${nights !== 1 ? 's' : ''}${rent ? ' · ₱' + rent.toLocaleString() + '/night' : ''}`;
+
+        if (!totalManuallyEdited && rent > 0) {
+            totalInput.value = (nights * rent).toFixed(2);
+        }
+    }
+    checkinInput.addEventListener('change', () => {
+        if (checkoutInput.value && checkoutInput.value <= checkinInput.value) {
+            const next = new Date(checkinInput.value + 'T00:00:00');
+            next.setDate(next.getDate() + 1);
+            checkoutInput.value = next.toISOString().slice(0, 10);
+        }
+        checkoutInput.min = checkinInput.value;
+        recalcTotal();
+    });
+    checkoutInput.addEventListener('change', recalcTotal);
+    unitSelect.addEventListener('change', recalcTotal);
+    totalInput.addEventListener('input', () => { totalManuallyEdited = true; });
+
+    /* ── Submit ── */
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        errorBox.style.display = 'none';
+
+        if (guestMode === 'existing' && !selectedGuest) {
+            errorBox.textContent = 'Please search for and select a guest.';
+            errorBox.style.display = 'block';
+            return;
+        }
+        if (!unitSelect.value) {
+            errorBox.textContent = 'Please select a unit.';
+            errorBox.style.display = 'block';
+            return;
+        }
+
+        const body = new URLSearchParams({
+            action: 'create',
+            guest_mode: guestMode,
+            unit_id: unitSelect.value,
+            checkin: checkinInput.value,
+            checkout: checkoutInput.value,
+            guests: document.getElementById('addResGuests').value || '1',
+            total_amount: totalInput.value || '0',
+            status: document.getElementById('addResStatus').value,
+            payment_method: document.getElementById('addResPaymentMethod').value,
+            booking_source: document.getElementById('addResSource').value,
+            special_requests: document.getElementById('addResNotes').value,
+            csrf_token: document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        });
+
+        if (guestMode === 'existing') {
+            body.set('user_id', selectedGuest.user_id);
+        } else {
+            body.set('first_name', document.getElementById('addResFirstName').value);
+            body.set('last_name', document.getElementById('addResLastName').value);
+            body.set('email', document.getElementById('addResEmail').value);
+            body.set('phone', document.getElementById('addResPhone').value);
+        }
+
+        const origLabel = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating…';
+
+        fetch('../../endpoints/reservations.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body,
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    if (typeof showToast === 'function') showToast(data.message || 'Reservation created!', 'success');
+                    closeModalFn();
+                    // Pull the fresh list (new row, updated stats) rather than hand-rolling the row shape
+                    fetch('../../endpoints/reservations.php?' + new URLSearchParams({ status: 'all', search: '', limit: '200', _: Date.now() }), { credentials: 'same-origin' })
+                        .then(r => r.json())
+                        .then(d => {
+                            if (!d.success) return;
+                            const incoming = (d.bookings || []).map(normaliseBooking).filter(Boolean);
+                            incoming.forEach(b => { if (!knownIds.has(String(b.booking_id))) knownIds.add(String(b.booking_id)); });
+                            sourceRows = incoming;
+                            applyFilter();
+                            if (d.stats) _applyStats(d.stats);
+                        })
+                        .catch(() => { });
+                } else {
+                    errorBox.textContent = data.message || 'Could not create the reservation.';
+                    errorBox.style.display = 'block';
+                }
+            })
+            .catch(() => {
+                errorBox.textContent = 'Server unreachable. Please try again.';
+                errorBox.style.display = 'block';
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = origLabel;
+            });
+    });
+})();
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  BODY SCROLL LOCK — keeps the page behind from scrolling while any
+ *  overlay (confirm / detail / add-reservation) is open, and stops
+ *  wheel/touch scroll from chaining from the modal onto the page.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+    const overlaySelectors = ['#confirmModal', '#detailModal', '#addReservationModal'];
+    const overlays = overlaySelectors.map(sel => document.querySelector(sel)).filter(Boolean);
+    if (!overlays.length) return;
+
+    function syncBodyLock() {
+        const anyActive = overlays.some(el => el.classList.contains('active'));
+        document.body.classList.toggle('ps-modal-open', anyActive);
+        const scrollContainer = document.querySelector('.page-inner');
+        if (scrollContainer) scrollContainer.classList.toggle('ps-modal-open', anyActive);
+    }
+
+    overlays.forEach(el => {
+        new MutationObserver(syncBodyLock).observe(el, { attributes: true, attributeFilter: ['class'] });
+    });
+    syncBodyLock();
+})();
+
+/* ═══════════════════════════════════════════════════════════════════════════
  *  BOOTSTRAP
  * ═══════════════════════════════════════════════════════════════════════════ */
 allRows = (window.__PS_RESERVATIONS__.allRows || []).map(normaliseBooking).filter(Boolean);

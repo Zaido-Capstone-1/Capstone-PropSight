@@ -20,6 +20,15 @@ require_once '../../lib/admin-queries/reservations_queries.php';
             <h1 class="dash-title">Reservations</h1>
             <p class="dash-subtitle">Track all current and upcoming booking requests.</p>
         </div>
+        <div class="dash-header-actions">
+            <button type="button" class="btn btn-primary" id="openAddReservationBtn">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add Reservation
+            </button>
+        </div>
     </div>
     <div class="cards-area">
 
@@ -307,12 +316,152 @@ require_once '../../lib/admin-queries/reservations_queries.php';
                 </div>
             </div>
         </div>
+
+        <div id="addReservationModal" class="confirm-modal-overlay res-detail-overlay">
+            <div class="confirm-modal res-detail-modal res-add-modal">
+                <div class="confirm-modal-header res-detail-header">
+                    <h3 class="confirm-modal-title">Add Reservation</h3>
+                    <button type="button" class="res-detail-close" id="addResClose" aria-label="Close">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+                <form id="addReservationForm">
+                    <div class="confirm-modal-body res-detail-body">
+                        <div class="res-add-body-pad">
+
+                            <div class="res-field-label">Guest</div>
+                            <div class="res-guest-toggle" id="guestModeToggle">
+                                <button type="button" class="res-guest-toggle-opt active" data-mode="new">New Guest</button>
+                                <button type="button" class="res-guest-toggle-opt" data-mode="existing">Existing Guest</button>
+                            </div>
+
+                            <div id="newGuestFields">
+                                <div class="res-form-row">
+                                    <div class="res-form-group">
+                                        <label for="addResFirstName">First name <span class="req">*</span></label>
+                                        <input type="text" id="addResFirstName" name="first_name" autocomplete="off">
+                                    </div>
+                                    <div class="res-form-group">
+                                        <label for="addResLastName">Last name <span class="req">*</span></label>
+                                        <input type="text" id="addResLastName" name="last_name" autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="res-form-row">
+                                    <div class="res-form-group">
+                                        <label for="addResEmail">Email <span class="req">*</span></label>
+                                        <input type="email" id="addResEmail" name="email" autocomplete="off">
+                                    </div>
+                                    <div class="res-form-group">
+                                        <label for="addResPhone">Phone</label>
+                                        <input type="text" id="addResPhone" name="phone" autocomplete="off">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="existingGuestFields" style="display:none;">
+                                <div class="res-form-group res-guest-search-wrap">
+                                    <label for="addResGuestSearch">Search guest <span class="req">*</span></label>
+                                    <input type="text" id="addResGuestSearch" placeholder="Search by name, email, or phone…" autocomplete="off">
+                                    <div class="res-guest-search-results" id="guestSearchResults"></div>
+                                    <div class="res-guest-selected" id="guestSelectedChip" style="display:none;"></div>
+                                </div>
+                            </div>
+
+                            <div class="res-field-label" style="margin-top:18px;">Stay Details</div>
+                            <div class="res-form-group">
+                                <label for="addResUnit">Unit <span class="req">*</span></label>
+                                <select id="addResUnit" name="unit_id" required>
+                                    <option value="">Select a unit…</option>
+                                </select>
+                            </div>
+                            <div class="res-form-row">
+                                <div class="res-form-group">
+                                    <label for="addResCheckin">Check-in <span class="req">*</span></label>
+                                    <input type="date" id="addResCheckin" name="checkin" required>
+                                </div>
+                                <div class="res-form-group">
+                                    <label for="addResCheckout">Check-out <span class="req">*</span></label>
+                                    <input type="date" id="addResCheckout" name="checkout" required>
+                                </div>
+                            </div>
+                            <div class="res-form-row">
+                                <div class="res-form-group">
+                                    <label for="addResGuests">Guests</label>
+                                    <input type="number" id="addResGuests" name="guests" min="1" max="10" value="1">
+                                </div>
+                                <div class="res-form-group">
+                                    <label for="addResTotal">Total amount (₱)</label>
+                                    <input type="number" id="addResTotal" name="total_amount" min="0" step="0.01" placeholder="Auto-calculated">
+                                </div>
+                            </div>
+                            <div class="res-add-nights-hint" id="addResNightsHint"></div>
+
+                            <div class="res-field-label" style="margin-top:18px;">Booking Info</div>
+                            <div class="res-form-row">
+                                <div class="res-form-group">
+                                    <label for="addResStatus">Initial status</label>
+                                    <select id="addResStatus" name="status">
+                                        <option value="confirmed" selected>Confirmed</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="active">Active (checked in)</option>
+                                    </select>
+                                </div>
+                                <div class="res-form-group">
+                                    <label for="addResPaymentMethod">Payment method</label>
+                                    <select id="addResPaymentMethod" name="payment_method">
+                                        <option value="cash" selected>Cash</option>
+                                        <option value="gcash">GCash</option>
+                                        <option value="maya">Maya</option>
+                                        <option value="card">Card</option>
+                                        <option value="bank transfer">Bank Transfer</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="res-form-row">
+                                <div class="res-form-group">
+                                    <label for="addResSource">Booking source</label>
+                                    <select id="addResSource" name="booking_source">
+                                        <option value="Walk-in" selected>Walk-in</option>
+                                        <option value="Phone">Phone Call</option>
+                                        <option value="Admin">Admin / Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="res-form-group">
+                                <label for="addResNotes">Special requests</label>
+                                <textarea id="addResNotes" name="special_requests" rows="2" placeholder="Optional notes…"></textarea>
+                            </div>
+
+                            <div class="res-add-error" id="addResError" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="confirm-modal-footer">
+                        <button type="button" class="confirm-modal-btn confirm-btn-cancel" id="addResCancel">Cancel</button>
+                        <button type="submit" class="confirm-modal-btn confirm-btn-confirm" id="addResSubmit">Create Reservation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 <script>
     window.__PS_RESERVATIONS__ = {
         currentStatus: '<?= $statusFilter ?>',
         currentSearch: '<?= addslashes($search) ?>',
+        unitOptions: <?= json_encode(array_map(function ($u) {
+            return [
+                'unit_id' => (int) $u['unit_id'],
+                'unit_number' => (string) ($u['unit_number'] ?? ''),
+                'unit_name' => (string) ($u['unit_name'] ?? ''),
+                'property_name' => (string) ($u['property_name'] ?? ''),
+                'rent_amount' => (float) ($u['rent_amount'] ?? 0),
+                'status' => (string) ($u['status'] ?? 'vacant'),
+                'max_guests' => (int) ($u['max_guests'] ?? 2),
+            ];
+        }, $unitOptions), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
         allRows: <?= json_encode(array_map(function ($b) {
             $unitLabel = !empty($b['unit_name'])
                 ? $b['unit_name']

@@ -193,6 +193,42 @@
     }
 }
 
+/* Row delete animation */
+.table-wrap tbody tr {
+    transition: opacity .28s ease, transform .28s ease, background-color .2s ease;
+}
+
+.table-wrap tbody tr.pay-row-deleting {
+    opacity: 0;
+    transform: translateX(12px) scale(.98);
+    background-color: rgba(231, 76, 60, .06);
+    pointer-events: none;
+}
+
+.table-wrap tbody tr.pay-row-collapsing td {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border: 0 !important;
+    line-height: 0 !important;
+    height: 0 !important;
+    transition: padding .22s ease, line-height .22s ease;
+}
+
+/* New/updated row highlight */
+.table-wrap tbody tr.pay-row-new {
+    animation: payRowHighlight 1.2s ease;
+}
+
+@keyframes payRowHighlight {
+    0% {
+        background-color: rgba(46, 204, 113, .16);
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
+
 @keyframes slideUp {
     from {
         transform: translateY(16px);

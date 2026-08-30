@@ -180,6 +180,32 @@ if ($_SESSION['role'] !== 'admin') {
 $method = $_SERVER['REQUEST_METHOD'];
 
 // ────────────────────────────────────────────────
+//  GET — search existing guests (for the "Add Reservation" modal)
+// ────────────────────────────────────────────────
+if ($method === 'GET' && isset($_GET['search_guests'])) {
+    $q = trim((string) $_GET['search_guests']);
+    if (mb_strlen($q) < 2) {
+        echo json_encode(['success' => true, 'guests' => []]);
+        exit;
+    }
+    $like = '%' . $q . '%';
+    $stmt = $conn->prepare(
+        "SELECT user_id, first_name, last_name, email, phone, profile_photo
+         FROM users
+         WHERE role = 'user'
+           AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR phone LIKE ? OR CONCAT(first_name,' ',last_name) LIKE ?)
+         ORDER BY first_name, last_name
+         LIMIT 8"
+    );
+    $stmt->bind_param('sssss', $like, $like, $like, $like, $like);
+    $stmt->execute();
+    $guests = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    echo json_encode(['success' => true, 'guests' => $guests]);
+    exit;
+}
+
+// ────────────────────────────────────────────────
 //  GET — single booking detail (for the detail modal)
 // ────────────────────────────────────────────────
 if ($method === 'GET' && isset($_GET['detail'])) {
@@ -357,6 +383,279 @@ if ($method === 'GET') {
 if ($method === 'POST') {
     require_csrf_token();
     $action = $_POST['action'] ?? '';
+
+    // ── CREATE (manual / walk-in reservation) ───
+    if ($action === 'create') {
+        $guestMode = trim($_POST['guest_mode'] ?? 'new'); // 'existing' | 'new'
+        $unitId = (int) ($_POST['unit_id'] ?? 0);
+        $checkin = trim($_POST['checkin'] ?? '');
+        $checkout = trim($_POST['checkout'] ?? '');
+        $guests = max(1, (int) ($_POST['guests'] ?? 1));
+        $paymentMethod = trim($_POST['payment_method'] ?? 'cash');
+        $status = trim($_POST['status'] ?? 'confirmed');
+        $bookingSource = trim($_POST['booking_source'] ?? 'Walk-in');
+        $specialRequests = trim($_POST['special_requests'] ?? '');
+        $clientTotal = (float) ($_POST['total_amount'] ?? 0);
+
+        $allowedStatuses = ['pending', 'confirmed', 'active'];
+        if (!in_array($status, $allowedStatuses, true)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid initial status.']);
+            exit;
+        }
+        if ($bookingSource === '')
+            $bookingSource = 'Walk-in';
+        if (!$unitId || !$checkin || !$checkout) {
+            echo json_encode(['success' => false, 'message' => 'Missing required booking details.']);
+            exit;
+        }
+
+        $dtIn = DateTime::createFromFormat('Y-m-d', $checkin);
+        $dtOut = DateTime::createFromFormat('Y-m-d', $checkout);
+        if (!$dtIn || !$dtOut) {
+            echo json_encode(['success' => false, 'message' => 'Invalid date format.']);
+            exit;
+        }
+        if ($dtOut <= $dtIn) {
+            echo json_encode(['success' => false, 'message' => 'Check-out must be after check-in.']);
+            exit;
+        }
+        $nights = $dtIn->diff($dtOut)->days;
+        if ($guests > 10) {
+            echo json_encode(['success' => false, 'message' => 'Maximum 10 guests allowed.']);
+            exit;
+        }
+
+        // ── Resolve guest → user_id ──────────────
+        $userId = 0;
+        $fullName = '';
+        $guestEmail = '';
+
+        if ($guestMode === 'existing') {
+            $userId = (int) ($_POST['user_id'] ?? 0);
+            if (!$userId) {
+                echo json_encode(['success' => false, 'message' => 'Please select a guest.']);
+                exit;
+            }
+            $uStmt = $conn->prepare("SELECT user_id, email, first_name, last_name FROM users WHERE user_id = ? AND role='user' LIMIT 1");
+            $uStmt->bind_param('i', $userId);
+            $uStmt->execute();
+            $uRow = $uStmt->get_result()->fetch_assoc();
+            $uStmt->close();
+            if (!$uRow) {
+                echo json_encode(['success' => false, 'message' => 'Guest not found.']);
+                exit;
+            }
+            $fullName = trim($uRow['first_name'] . ' ' . $uRow['last_name']);
+            $guestEmail = $uRow['email'];
+        } else {
+            $firstName = trim($_POST['first_name'] ?? '');
+            $lastName = trim($_POST['last_name'] ?? '');
+            $guestEmail = trim($_POST['email'] ?? '');
+            $guestPhone = trim($_POST['phone'] ?? '');
+
+            if ($firstName === '' || $lastName === '' || $guestEmail === '') {
+                echo json_encode(['success' => false, 'message' => 'Guest first name, last name and email are required.']);
+                exit;
+            }
+            if (!filter_var($guestEmail, FILTER_VALIDATE_EMAIL)) {
+                echo json_encode(['success' => false, 'message' => 'Please enter a valid guest email.']);
+                exit;
+            }
+
+            // Reuse an existing account with this email, if one exists
+            $chkEmail = $conn->prepare("SELECT user_id, first_name, last_name FROM users WHERE email = ? LIMIT 1");
+            $chkEmail->bind_param('s', $guestEmail);
+            $chkEmail->execute();
+            $existingUser = $chkEmail->get_result()->fetch_assoc();
+            $chkEmail->close();
+
+            if ($existingUser) {
+                $userId = (int) $existingUser['user_id'];
+                $fullName = trim($existingUser['first_name'] . ' ' . $existingUser['last_name']);
+            } else {
+                $randomPassword = bin2hex(random_bytes(16));
+                $hash = password_hash($randomPassword, PASSWORD_DEFAULT);
+                $phoneParam = $guestPhone !== '' ? $guestPhone : null;
+
+                $insUserStmt = $conn->prepare(
+                    "INSERT INTO users (first_name, last_name, email, phone, password, role, verification_status, id_verified)
+                     VALUES (?, ?, ?, ?, ?, 'user', 'Verified', 'approved')"
+                );
+                $insUserStmt->bind_param('sssss', $firstName, $lastName, $guestEmail, $phoneParam, $hash);
+                if (!$insUserStmt->execute()) {
+                    $dupe = $conn->errno === 1062;
+                    $insUserStmt->close();
+                    echo json_encode(['success' => false, 'message' => $dupe ? 'That email or phone number is already registered to another guest.' : 'Could not create the guest record.']);
+                    exit;
+                }
+                $userId = (int) $insUserStmt->insert_id;
+                $insUserStmt->close();
+                $fullName = trim($firstName . ' ' . $lastName);
+            }
+        }
+
+        // ── Validate the unit ────────────────────
+        $unitStmt = $conn->prepare(
+            "SELECT u.unit_id, u.rent_amount, u.status, u.unit_name, u.unit_number, p.property_name
+             FROM units u LEFT JOIN properties p ON p.property_id = u.property_id
+             WHERE u.unit_id = ? LIMIT 1"
+        );
+        $unitStmt->bind_param('i', $unitId);
+        $unitStmt->execute();
+        $unit = $unitStmt->get_result()->fetch_assoc();
+        $unitStmt->close();
+
+        if (!$unit) {
+            echo json_encode(['success' => false, 'message' => 'Unit not found.']);
+            exit;
+        }
+        if ($unit['status'] === 'maintenance') {
+            echo json_encode(['success' => false, 'message' => 'This unit is currently under maintenance.']);
+            exit;
+        }
+
+        $conflictStmt = $conn->prepare(
+            "SELECT booking_id FROM bookings
+             WHERE unit_id = ? AND status NOT IN ('cancelled','completed')
+               AND checkin_date < ? AND checkout_date > ? LIMIT 1"
+        );
+        $conflictStmt->bind_param('iss', $unitId, $checkout, $checkin);
+        $conflictStmt->execute();
+        $hasConflict = $conflictStmt->get_result()->fetch_assoc();
+        $conflictStmt->close();
+        if ($hasConflict) {
+            echo json_encode(['success' => false, 'message' => 'These dates are already booked for this unit. Please choose different dates.']);
+            exit;
+        }
+
+        $baseTotal = $nights * (float) $unit['rent_amount'];
+        $totalAmount = $clientTotal > 0 ? $clientTotal : $baseTotal;
+
+        // ── Tenant record (mirrors the guest-facing booking flow) ──
+        $tenantStmt = $conn->prepare('SELECT tenant_id FROM tenants WHERE email = ? LIMIT 1');
+        $tenantStmt->bind_param('s', $guestEmail);
+        $tenantStmt->execute();
+        $tenant = $tenantStmt->get_result()->fetch_assoc();
+        $tenantStmt->close();
+
+        if (!$tenant) {
+            $newTenantStmt = $conn->prepare('INSERT INTO tenants (full_name, email, move_in_date) VALUES (?, ?, ?)');
+            $newTenantStmt->bind_param('sss', $fullName, $guestEmail, $checkin);
+            $newTenantStmt->execute();
+            $tenantId = (int) $newTenantStmt->insert_id;
+            $newTenantStmt->close();
+        } else {
+            $tenantId = (int) $tenant['tenant_id'];
+        }
+
+        mysqli_begin_transaction($conn);
+        $bookingId = null;
+        try {
+            for ($attempt = 1; $attempt <= 8; $attempt++) {
+                $candidateId = random_int(100000, 999999);
+                try {
+                    $confirmedAtSql = $status === 'confirmed' ? 'NOW()' : 'NULL';
+                    $insStmt = $conn->prepare(
+                        "INSERT INTO bookings
+                         (booking_id, unit_id, tenant_id, user_id, checkin_date, checkout_date, guests,
+                          total_amount, payment_method, status, special_requests, booking_source, confirmed_at)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, $confirmedAtSql)"
+                    );
+                    $insStmt->bind_param(
+                        'iiiissidsss',
+                        $candidateId,
+                        $unitId,
+                        $tenantId,
+                        $userId,
+                        $checkin,
+                        $checkout,
+                        $guests,
+                        $totalAmount,
+                        $paymentMethod,
+                        $status,
+                        $specialRequests,
+                        $bookingSource
+                    );
+                    $insStmt->execute();
+                    $insStmt->close();
+                    $bookingId = $candidateId;
+                    break;
+                } catch (\mysqli_sql_exception $dupErr) {
+                    if ($dupErr->getCode() === 1062 && $attempt < 8)
+                        continue;
+                    throw $dupErr;
+                }
+            }
+            if ($bookingId === null) {
+                throw new \RuntimeException('Could not generate a unique booking ID. Please try again.');
+            }
+
+            $tenantUpdateStmt = $conn->prepare('UPDATE units SET tenant_name = ?, tenant_id = ? WHERE unit_id = ?');
+            $tenantUpdateStmt->bind_param('sii', $fullName, $tenantId, $unitId);
+            $tenantUpdateStmt->execute();
+            $tenantUpdateStmt->close();
+
+            if (!syncUnitAvailabilityFromBookings($conn, $unitId)) {
+                throw new \RuntimeException('Failed to sync unit availability.');
+            }
+
+            // Auto-create a payment record, mirroring what happens when a booking is confirmed
+            if (in_array($status, ['confirmed', 'active'], true) && $totalAmount > 0) {
+                $payStatus = (strtolower($paymentMethod) === 'cash') ? 'pending' : 'paid';
+                $piStmt = $conn->prepare("INSERT INTO payments (booking_id, payment_date, amount_paid, payment_method, payment_status, notes) VALUES (?, CURDATE(), ?, ?, ?, 'Auto-created for manual reservation')");
+                $piStmt->bind_param('idss', $bookingId, $totalAmount, $paymentMethod, $payStatus);
+                $piStmt->execute();
+                $piStmt->close();
+            }
+
+            mysqli_commit($conn);
+        } catch (\Throwable $e) {
+            mysqli_rollback($conn);
+            error_log('[reservations.php] create failed: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Could not create the reservation. Please try again.']);
+            exit;
+        }
+
+        // Best-effort guest notification (never blocks the response)
+        try {
+            $unitDisplay = !empty($unit['unit_name'])
+                ? $unit['unit_name']
+                : (($unit['property_name'] ?? '') . ' — Unit ' . ($unit['unit_number'] ?? $unitId));
+            $bkRef = 'BK-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
+
+            if ($status !== 'pending') {
+                $notifTitle = ($status === 'active' ? 'Check-in confirmed' : 'Booking confirmed') . ": $bkRef";
+                $notifBody = "$unitDisplay · " . $dtIn->format('M j') . '–' . $dtOut->format('M j, Y') . " ($nights nights)";
+                $ntStmt = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, 'pages/user/bookings.php')");
+                $ntStmt->bind_param('iss', $userId, $notifTitle, $notifBody);
+                $ntStmt->execute();
+                $ntStmt->close();
+
+                if (!empty($guestEmail)) {
+                    require_once __DIR__ . '/../integrations/email_service.php';
+                    $html = buildBookingStatusEmailHtml($status === 'active' ? 'active' : 'confirmed', [
+                        'bkRef' => $bkRef,
+                        'uLabel' => $unitDisplay,
+                        'userName' => htmlspecialchars($fullName),
+                        'checkin' => $dtIn->format('F j, Y'),
+                        'checkout' => $dtOut->format('F j, Y'),
+                        'amount' => '₱' . number_format($totalAmount, 2),
+                    ]);
+                    $subject = ($status === 'active' ? 'Check-In Confirmed' : 'Booking Confirmed') . " — $bkRef";
+                    $emailService->sendEmail($guestEmail, $subject, $html);
+                }
+            }
+        } catch (\Throwable $notifErr) {
+            error_log('[reservations.php] create notification failed (non-fatal): ' . $notifErr->getMessage());
+        }
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Reservation created successfully.',
+            'booking_id' => $bookingId,
+        ]);
+        exit;
+    }
 
     // ── UPDATE STATUS ──────────────────────────
     if ($action === 'update_status') {

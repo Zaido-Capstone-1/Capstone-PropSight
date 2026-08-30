@@ -133,7 +133,7 @@
                 </svg></button>`;
         }
         for (let i = 1; i <= totalPages; i++) {
-            btns += `<button class="txn-page-btn ${i === _page ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+            btns += `<button class="txn-pg-num ${i === _page ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
         }
         if (_page < totalPages) {
             btns += `<button class="txn-chevron-btn" onclick="goPage(${_page + 1})">

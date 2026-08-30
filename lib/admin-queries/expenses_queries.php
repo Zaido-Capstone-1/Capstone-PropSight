@@ -29,7 +29,55 @@ $trendRows = $conn->query(
      ORDER BY month_val ASC"
 )->fetch_all(MYSQLI_ASSOC);
 
-// ── Expenses for selected month — $yr and $mo come from URL ──────────────────
+// ── Stats for stat cards (current filtered month) ────────────────────────────
+$statsStmt = $conn->prepare(
+    "SELECT
+         COALESCE(SUM(amount), 0) AS total,
+         COALESCE(SUM(CASE WHEN expense_category = 'Maintenance' THEN amount END), 0) AS maintenance,
+         COALESCE(SUM(CASE WHEN expense_category = 'Utilities'   THEN amount END), 0) AS utilities,
+         COALESCE(SUM(CASE WHEN expense_category = 'Salaries'    THEN amount END), 0) AS salaries,
+         COALESCE(SUM(CASE WHEN expense_category = 'Admin'       THEN amount END), 0) AS admin_amt,
+         COALESCE(SUM(CASE WHEN expense_category = 'Insurance'   THEN amount END), 0) AS insurance,
+         COUNT(*) AS cnt
+     FROM expenses
+     WHERE YEAR(expense_date) = ? AND MONTH(expense_date) = ?"
+);
+$statsStmt->bind_param('ii', $yr, $mo);
+$statsStmt->execute();
+$statsRow = $statsStmt->get_result()->fetch_assoc() ?: [];
+$statsStmt->close();
+
+$stats = [
+    'total' => (float) ($statsRow['total'] ?? 0),
+    'maintenance' => (float) ($statsRow['maintenance'] ?? 0),
+    'utilities' => (float) ($statsRow['utilities'] ?? 0),
+    'salaries' => (float) ($statsRow['salaries'] ?? 0),
+    'admin' => (float) ($statsRow['admin_amt'] ?? 0),
+    'insurance' => (float) ($statsRow['insurance'] ?? 0),
+    'count' => (int) ($statsRow['cnt'] ?? 0),
+];
+
+// ── Category totals for this month (donut chart + legend) ────────────────────
+$catTotalStmt = $conn->prepare(
+    "SELECT expense_category, COALESCE(SUM(amount),0) AS total
+     FROM expenses
+     WHERE YEAR(expense_date) = ? AND MONTH(expense_date) = ?
+     GROUP BY expense_category
+     ORDER BY total DESC"
+);
+$catTotalStmt->bind_param('ii', $yr, $mo);
+$catTotalStmt->execute();
+$categories = array_map(fn($r) => [
+    'category' => $r['expense_category'],
+    'total' => (float) $r['total'],
+], $catTotalStmt->get_result()->fetch_all(MYSQLI_ASSOC));
+$catTotalStmt->close();
+
+// ── Trend reshaped to {label, amount} to match what the chart JS expects ─────
+$trends = array_map(fn($r) => [
+    'label' => explode(' ', $r['label'])[0],
+    'amount' => (float) $r['total'],
+], $trendRows);
 // Additional optional filters: $category_filter, $search (both from $_GET)
 $where = ['YEAR(e.expense_date) = ?', 'MONTH(e.expense_date) = ?'];
 $types = 'ii';

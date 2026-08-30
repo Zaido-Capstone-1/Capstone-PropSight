@@ -1102,8 +1102,262 @@
     overflow-y: auto;
     flex: 1;
     padding: 0;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
     /* padding now lives on .res-detail-body-pad so the hero strip can bleed edge-to-edge */
 }
+
+.res-detail-body::-webkit-scrollbar {
+    display: none;
+}
+
+/* The page's actual scroll container is .page-inner (not <body> — the admin
+   layout keeps body/html static and scrolls this instead), so that's what
+   needs locking while a modal is open. */
+.page-inner.ps-modal-open {
+    overflow: hidden !important;
+}
+
+body.ps-modal-open {
+    overflow: hidden;
+}
+
+/* ── Add Reservation modal ────────────────────────────────────────────── */
+.res-add-modal {
+    max-width: 620px;
+}
+
+/* .res-detail-modal is display:flex/flex-direction:column so its body can be
+   the scrollable flex child — but here that body sits inside a <form>, and a
+   plain <form> isn't a flex participant by default, so nothing constrains
+   its height and the overflow just gets clipped (rather than scrolling) by
+   .confirm-modal's overflow:hidden. Make the form itself part of the flex
+   column so the body underneath it can actually flex/scroll. */
+.res-add-modal form#addReservationForm {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.res-add-modal form#addReservationForm .res-detail-body {
+    min-height: 0;
+}
+
+.res-add-body-pad {
+    padding: 20px 24px 4px;
+}
+
+.res-field-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    margin-bottom: 10px;
+}
+
+.res-guest-toggle {
+    display: flex;
+    gap: 6px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 16px;
+}
+
+.res-guest-toggle-opt {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.res-guest-toggle-opt.active {
+    background: #ffffff;
+    color: #1e293b;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.res-form-row {
+    display: flex;
+    gap: 12px;
+}
+
+.res-form-row .res-form-group {
+    flex: 1;
+    min-width: 0;
+}
+
+.res-form-group {
+    margin-bottom: 14px;
+}
+
+.res-form-group label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 6px;
+}
+
+.res-form-group label .req {
+    color: #dc2626;
+}
+
+.res-form-group input[type="text"],
+.res-form-group input[type="email"],
+.res-form-group input[type="number"],
+.res-form-group input[type="date"],
+.res-form-group select,
+.res-form-group textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: #1e293b;
+    background: #ffffff;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+}
+
+.res-form-group input:focus,
+.res-form-group select:focus,
+.res-form-group textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+}
+
+.res-form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.res-add-nights-hint {
+    font-size: 12.5px;
+    color: #64748b;
+    margin: -6px 0 14px;
+    min-height: 16px;
+}
+
+.res-add-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    font-size: 13px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin: 4px 0 16px;
+}
+
+/* Guest search (existing guest) */
+.res-guest-search-wrap {
+    position: relative;
+}
+
+.res-guest-search-results {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 20;
+    display: none;
+}
+
+.res-guest-search-results.open {
+    display: block;
+}
+
+.res-guest-result-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    cursor: pointer;
+    transition: background 0.12s ease;
+}
+
+.res-guest-result-item:hover,
+.res-guest-result-item.active {
+    background: #f1f5f9;
+}
+
+.res-guest-result-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.res-guest-result-meta {
+    font-size: 11.5px;
+    color: #94a3b8;
+}
+
+.res-guest-result-empty {
+    padding: 12px;
+    font-size: 12.5px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.res-guest-selected {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 12px;
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1.5px solid #bfdbfe;
+    border-radius: 8px;
+}
+
+.res-guest-selected-info .name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e3a5f;
+}
+
+.res-guest-selected-info .meta {
+    font-size: 11.5px;
+    color: #64748b;
+}
+
+.res-guest-selected-clear {
+    border: none;
+    background: none;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.res-guest-selected-clear:hover {
+    color: #dc2626;
+}
+
+@media (max-width: 640px) {
+    .res-form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+
 
 /* ── Hero strip: status-tinted header with ref + guest ── */
 .res-detail-hero {

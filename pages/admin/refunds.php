@@ -21,7 +21,6 @@ function fmt_peso(float $v): string
 }
 ?>
 
-<link rel="stylesheet" href="../../assets/css/admin-css/payments.css">
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 <link rel="stylesheet" href="../../assets/css/admin-css/refunds.css">
 

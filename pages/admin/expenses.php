@@ -34,6 +34,15 @@ $search = trim($_GET['q'] ?? '');
 require_once '../../lib/admin-queries/expenses_queries.php';
 ?>
 
+<script>
+  window.PS_EXPENSES_INITIAL = <?= json_encode([
+    'expenses' => $expenses,
+    'stats' => $stats,
+    'trends' => $trends,
+    'categories' => $categories,
+  ]) ?>;
+</script>
+
 <link rel="stylesheet" href="../../assets/css/admin-css/expenses.css">
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
@@ -259,14 +268,70 @@ require_once '../../lib/admin-queries/expenses_queries.php';
               <th>ACTIONS</th>
             </tr>
           </thead>
-          <tbody id="expensesBody"></tbody>
+          <tbody id="expensesBody">
+            <?php
+            $exp_cat_colours = [
+              'Maintenance' => '#E74C3C',
+              'Utilities' => '#2563c4',
+              'Salaries' => '#2ECC71',
+              'Admin' => '#deaf37',
+              'Insurance' => '#8B5CF6',
+              'Other' => '#94a3b8',
+            ];
+            $exp_page_size = 10;
+            $exp_first_page = array_slice($expenses, 0, $exp_page_size);
+            foreach ($exp_first_page as $e):
+              $col = $exp_cat_colours[$e['expense_category']] ?? '#94a3b8';
+              ?>
+              <tr data-id="<?= (int) $e['expense_id'] ?>" data-category="<?= htmlspecialchars($e['expense_category']) ?>">
+                <td style="font-weight:600;"><?= htmlspecialchars($e['description']) ?></td>
+                <td style="color:var(--text-soft);font-size:13px;"><?= htmlspecialchars($e['property_name'] ?? '—') ?>
+                </td>
+                <td style="color:var(--text-soft);font-size:13px;"><?= htmlspecialchars($e['unit_label'] ?? '—') ?></td>
+                <td style="color:var(--text-soft);font-size:12px;"><?= htmlspecialchars($e['expense_date_label']) ?></td>
+                <td>
+                  <span class="badge" style="background:<?= $col ?>22;color:<?= $col ?>;">
+                    <?= htmlspecialchars($e['expense_category']) ?>
+                  </span>
+                </td>
+                <td style="font-weight:700;color:var(--danger);">₱ <?= number_format((float) $e['amount'], 0) ?></td>
+                <td>
+                  <div class="tbl-actions">
+                    <button class="btn-icon btn-edit" data-action="edit" data-id="<?= (int) $e['expense_id'] ?>"
+                      title="Edit">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                    <button class="btn-icon btn-delete" data-action="delete" data-id="<?= (int) $e['expense_id'] ?>"
+                      title="Delete">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6M14 11v6" />
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
 
-          <tfoot id="expTableFoot" style="display:none;">
+          <tfoot id="expTableFoot" style="<?= empty($expenses) ? 'display:none;' : '' ?>">
             <tr>
               <td colspan="7">
                 <div class="exp-pagination">
-                  <span class="exp-page-info" id="expPageInfo"></span>
-                  <div class="exp-page-controls" id="expPageControls" style="display:none;">
+                  <span class="exp-page-info" id="expPageInfo"><?php
+                  if (!empty($expenses)) {
+                    $exp_total = count($expenses);
+                    $exp_to = min($exp_page_size, $exp_total);
+                    echo "Showing <strong>1–{$exp_to}</strong> of <strong>{$exp_total}</strong> expense(s)";
+                  }
+                  ?></span>
+                  <div class="exp-page-controls" id="expPageControls"
+                    style="<?= count($expenses) > $exp_page_size ? 'display:flex;' : 'display:none;' ?>">
                     <button type="button" id="expPrevBtn" class="exp-chevron-btn" onclick="expChangePage(-1)" disabled>
                       <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
                         height="14">
@@ -274,7 +339,8 @@ require_once '../../lib/admin-queries/expenses_queries.php';
                       </svg>
                     </button>
                     <span id="expPageNumbers" class="exp-page-numbers"></span>
-                    <button type="button" id="expNextBtn" class="exp-chevron-btn" onclick="expChangePage(1)" disabled>
+                    <button type="button" id="expNextBtn" class="exp-chevron-btn" onclick="expChangePage(1)"
+                      <?= count($expenses) <= $exp_page_size ? 'disabled' : '' ?>>
                       <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" width="14"
                         height="14">
                         <polyline points="9 18 15 12 9 6" />
@@ -289,7 +355,7 @@ require_once '../../lib/admin-queries/expenses_queries.php';
         </table>
       </div>
 
-      <div id="emptyState" class="table-empty" style="display:none;">
+      <div id="emptyState" class="table-empty" style="<?= empty($expenses) ? '' : 'display:none;' ?>">
         <svg class="table-empty-icon" width="48" height="48" viewBox="0 0 24 24" fill="none"
           xmlns="http://www.w3.org/2000/svg">
           <path

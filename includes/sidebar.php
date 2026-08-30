@@ -216,9 +216,14 @@ if ($_sb_initials === '')
     <div
       class="nav-item has-sub<?= group_active(['payments', 'transactions', 'invoices_billing', 'expenses', 'refunds']) ?>">
       <div class="nav-icon">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <!-- <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <line x1="12" y1="1" x2="12" y2="23" />
           <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg> -->
+
+        <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none">
+          <path fill="none" stroke="currentColor" stroke-width="2"
+            d="M20 11H4m16-4H4m3 14V4a1 1 0 0 1 1-1h4a1 1 0 0 1 0 12H7" />
         </svg>
       </div>
       <span class="nav-label">Financial</span>

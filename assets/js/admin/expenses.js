@@ -655,8 +655,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Table row actions (delegated)
     DOM.expensesBody?.addEventListener('click', handleTableClick);
 
-    // Initial data load
-    loadExpenses();
+    // Initial data load — use server-rendered data if available (no network round-trip),
+    // otherwise fall back to fetching (e.g. if PHP couldn't provide it for some reason)
+    if (window.PS_EXPENSES_INITIAL) {
+        const initial = window.PS_EXPENSES_INITIAL;
+        expCurrentPage = 1;
+        paginateExpenses(initial.expenses || []);
+        renderStats(initial.stats || {});
+        renderCharts(initial.trends || [], initial.categories || []);
+        renderLegend(initial.categories || []);
+    } else {
+        loadExpenses();
+    }
 });
 
 // ─────────────────────────────────────────────────────────

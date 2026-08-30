@@ -1,7 +1,7 @@
 const _psChannel = new BroadcastChannel('propsight_data');
 
 /* ── Chart ── */
-new Chart(document.getElementById('collectionChart'), {
+const _psCollectionChart = new Chart(document.getElementById('collectionChart'), {
     type: 'bar',
     data: {
         labels: window.__PS_PAYMENTS__.trendLabels,
@@ -178,51 +178,85 @@ function openModal(mode, data = null) {
 
     const dropdown = document.getElementById('formBookingId');
     const editDisplay = document.getElementById('editTenantDisplay');
+    const manualWrap = document.getElementById('manualTenantWrap');
+    const manualInput = document.getElementById('formManualTenant');
+    const manualUnit = document.getElementById('formManualUnit');
+    const manualToggleBtn = document.getElementById('manualTenantToggle');
+
+    // Always reset manual-entry state when the modal opens
+    manualWrap.style.display = 'none';
+    manualInput.removeAttribute('required');
+    manualInput.value = '';
+    manualUnit.value = '';
+    if (manualToggleBtn) manualToggleBtn.textContent = 'Enter name manually';
 
     if (mode === 'edit' && data) {
-        dropdown.style.display = 'none';
-        dropdown.removeAttribute('required');
-        editDisplay.style.display = 'flex';
-
-        let hiddenBooking = document.getElementById('hiddenBookingId');
-        if (!hiddenBooking) {
-            hiddenBooking = Object.assign(document.createElement('input'), { type: 'hidden', name: 'booking_id', id: 'hiddenBookingId' });
-            document.getElementById('paymentForm').appendChild(hiddenBooking);
-        }
-        hiddenBooking.value = data.booking_id;
-
-        const name = data.full_name || '—';
-        document.getElementById('editTenantName').textContent = name + (data.unit_number ? ' — ' + data.unit_number : '');
-        document.getElementById('editTenantInitial').textContent = name.charAt(0).toUpperCase();
-
-        const photoEl = document.getElementById('editTenantPhoto');
-        if (data.profile_photo) {
-            photoEl.src = '../../' + data.profile_photo;
-            photoEl.style.display = 'block';
-            document.getElementById('editTenantInitial').style.display = 'none';
-            photoEl.onerror = function () {
-                photoEl.style.display = 'none';
-                document.getElementById('editTenantInitial').style.display = 'flex';
-            };
-        } else {
-            photoEl.style.display = 'none';
-            document.getElementById('editTenantInitial').style.display = 'flex';
-        }
+        const isManual = !data.booking_id && (data.manual_tenant_name || data.manual_unit_id);
 
         document.getElementById('formPaymentId').value = data.payment_id;
-        dropdown.value = data.booking_id;
         document.getElementById('formPaymentDate').value = data.payment_date;
         document.getElementById('formAmountPaid').value = data.amount_paid;
         document.getElementById('formPaymentMethod').value = data.payment_method ?? '';
         document.getElementById('formPaymentStatus').value = data.payment_status;
         document.getElementById('formNotes').value = data.notes ?? '';
+
+        let hiddenBooking = document.getElementById('hiddenBookingId');
+
+        if (isManual) {
+            // Manual (walk-in) payment — editable name/unit fields, no booking link
+            dropdown.style.display = 'none';
+            dropdown.removeAttribute('required');
+            dropdown.value = '';
+            if (manualToggleBtn) manualToggleBtn.style.display = 'none';
+            editDisplay.style.display = 'none';
+
+            if (hiddenBooking) hiddenBooking.remove();
+            manualWrap.style.display = 'flex';
+            manualInput.setAttribute('required', 'required');
+            manualInput.value = data.manual_tenant_name || data.full_name || '';
+            manualUnit.value = data.manual_unit_id || '';
+        } else {
+            dropdown.style.display = 'none';
+            dropdown.removeAttribute('required');
+            if (manualToggleBtn) manualToggleBtn.style.display = 'none';
+            editDisplay.style.display = 'flex';
+
+            if (!hiddenBooking) {
+                hiddenBooking = Object.assign(document.createElement('input'), { type: 'hidden', name: 'booking_id', id: 'hiddenBookingId' });
+                document.getElementById('paymentForm').appendChild(hiddenBooking);
+            }
+            hiddenBooking.value = data.booking_id;
+
+            const name = data.full_name || '—';
+            document.getElementById('editTenantName').textContent = name + (data.unit_number ? ' — ' + data.unit_number : '');
+            document.getElementById('editTenantInitial').textContent = name.charAt(0).toUpperCase();
+
+            const photoEl = document.getElementById('editTenantPhoto');
+            if (data.profile_photo) {
+                photoEl.src = '../../' + data.profile_photo;
+                photoEl.style.display = 'block';
+                document.getElementById('editTenantInitial').style.display = 'none';
+                photoEl.onerror = function () {
+                    photoEl.style.display = 'none';
+                    document.getElementById('editTenantInitial').style.display = 'flex';
+                };
+            } else {
+                photoEl.style.display = 'none';
+                document.getElementById('editTenantInitial').style.display = 'flex';
+            }
+
+            dropdown.value = data.booking_id;
+        }
     } else {
         dropdown.style.display = '';
         dropdown.setAttribute('required', 'required');
+        if (manualToggleBtn) manualToggleBtn.style.display = '';
         editDisplay.style.display = 'none';
         document.getElementById('paymentForm').reset();
         document.getElementById('formPaymentDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('formPaymentStatus').value = 'paid';
+        const hiddenBooking = document.getElementById('hiddenBookingId');
+        if (hiddenBooking) hiddenBooking.remove();
     }
 
     document.getElementById('paymentModal').style.display = 'flex';
@@ -234,11 +268,41 @@ function closeModal() {
     document.body.style.overflow = '';
 }
 
+/* ── Manual tenant name entry (Record Payment mode only) ── */
+window.toggleManualTenant = function () {
+    const dropdown = document.getElementById('formBookingId');
+    const manualWrap = document.getElementById('manualTenantWrap');
+    const manualInput = document.getElementById('formManualTenant');
+    const manualUnit = document.getElementById('formManualUnit');
+    const toggleBtn = document.getElementById('manualTenantToggle');
+    const showingManual = manualWrap.style.display !== 'none';
+
+    if (showingManual) {
+        manualWrap.style.display = 'none';
+        manualInput.removeAttribute('required');
+        manualInput.value = '';
+        manualUnit.value = '';
+        dropdown.style.display = '';
+        dropdown.setAttribute('required', 'required');
+        toggleBtn.textContent = 'Enter name manually';
+    } else {
+        dropdown.style.display = 'none';
+        dropdown.removeAttribute('required');
+        dropdown.value = '';
+        manualWrap.style.display = 'flex';
+        manualInput.setAttribute('required', 'required');
+        manualInput.focus();
+        toggleBtn.textContent = 'Select from bookings instead';
+    }
+};
+
 document.getElementById('paymentForm').addEventListener('submit', function (e) {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     btn.innerText = 'Saving...';
+
+    const editingId = document.getElementById('formPaymentId').value;
 
     fetch(this.getAttribute('action'), { method: 'POST', body: new FormData(this) })
         .then(r => r.json())
@@ -249,7 +313,8 @@ document.getElementById('paymentForm').addEventListener('submit', function (e) {
                 _psChannel.postMessage({ type: 'payment_saved' });
                 showToast(data.message || 'Saved successfully', 'success');
                 closeModal();
-                setTimeout(refreshPaymentsTable, 600);
+                const highlightId = data.payment_id || editingId;
+                setTimeout(() => refreshPaymentsData(highlightId), 400);
             } else {
                 showToast(data.message || 'Operation failed', 'error');
             }
@@ -277,6 +342,10 @@ function deletePayment() {
     const id = document.getElementById('deletePaymentId').value;
     if (!id) return;
 
+    const row = document.querySelector(`.table-wrap tbody tr[data-payment-id="${id}"]`);
+    const deleteBtn = document.querySelector('#deleteModal .btn-danger');
+    if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = 'Deleting...'; }
+
     fetch('../../endpoints/payments.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -284,35 +353,90 @@ function deletePayment() {
     })
         .then(r => r.json())
         .then(data => {
+            if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
             if (data.success) {
                 _psChannel.postMessage({ type: 'payment_deleted' });
                 showToast(data.message || 'Deleted successfully', 'success');
                 closeDeleteModal();
-                setTimeout(refreshPaymentsTable, 600);
+
+                if (row) {
+                    row.classList.add('pay-row-deleting');
+                    setTimeout(() => {
+                        row.classList.add('pay-row-collapsing');
+                        setTimeout(() => {
+                            row.remove();
+                            refreshPaymentsData();
+                        }, 220);
+                    }, 280);
+                } else {
+                    refreshPaymentsData();
+                }
             } else {
                 showToast(data.message || 'Delete failed', 'error');
             }
         })
-        .catch(() => showToast('Server error', 'error'));
+        .catch(() => {
+            if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = 'Delete'; }
+            showToast('Server error', 'error');
+        });
 }
 
-/* ── Refresh: fetch all rows unfiltered, re-render, then re-apply filters ── */
+/* ── Refresh: fetch all rows unfiltered, re-render table + stats + chart ── */
 function fmtPeso(v) {
     return '₱' + Number(v).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function refreshPaymentsTable() {
+function updatePaymentStats(stats) {
+    if (!stats) return;
+    const collected = parseFloat(stats.collected) || 0;
+    const pending = parseFloat(stats.pending_amt) || 0;
+    const overdue = parseFloat(stats.overdue_amt) || 0;
+    const totalCnt = parseInt(stats.total_cnt) || 0;
+    const paidCnt = parseInt(stats.paid_cnt) || 0;
+    const rate = totalCnt > 0 ? Math.round((paidCnt / totalCnt) * 100) : 0;
+
+    const elCollected = document.getElementById('statCollected');
+    const elPending = document.getElementById('statPending');
+    const elPendingCnt = document.getElementById('statPendingCnt');
+    const elOverdue = document.getElementById('statOverdue');
+    const elOverdueCnt = document.getElementById('statOverdueCnt');
+    const elRate = document.getElementById('statCollectionRate');
+
+    if (elCollected) elCollected.textContent = '₱ ' + Math.round(collected).toLocaleString();
+    if (elPendingCnt) elPendingCnt.textContent = (parseInt(stats.pending_cnt) || 0) + ' tenants';
+    if (elPending) elPending.childNodes[0].textContent = '₱ ' + Math.round(pending).toLocaleString() + ' ';
+    if (elOverdueCnt) elOverdueCnt.textContent = (parseInt(stats.overdue_cnt) || 0) + ' tenants';
+    if (elOverdue) elOverdue.childNodes[0].textContent = '₱ ' + Math.round(overdue).toLocaleString() + ' ';
+    if (elRate) elRate.textContent = rate + '%';
+}
+
+function updateCollectionChart(trend) {
+    if (!trend || !_psCollectionChart) return;
+    _psCollectionChart.data.labels = trend.map(t => t.mo);
+    _psCollectionChart.data.datasets[0].data = trend.map(t => parseFloat(t.collected) || 0);
+    _psCollectionChart.data.datasets[1].data = trend.map(t => parseFloat(t.outstanding) || 0);
+    _psCollectionChart.update();
+}
+
+function refreshPaymentsData(highlightId) {
     fetch('../../endpoints/payments.php?status=all&month=all&_=' + Date.now(), { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
             if (!data || !data.success) { location.reload(); return; }
-            renderPaymentsTable(data.records || []);
+            renderPaymentsTable(data.records || [], highlightId);
+            updatePaymentStats(data.stats);
+            updateCollectionChart(data.trend);
             applyPayFilters();
         })
         .catch(() => location.reload());
 }
 
-function renderPaymentsTable(payments) {
+// Kept for backward compatibility with existing call sites
+function refreshPaymentsTable(highlightId) {
+    refreshPaymentsData(highlightId);
+}
+
+function renderPaymentsTable(payments, highlightId) {
     const tbody = document.querySelector('.table-wrap tbody');
     if (!tbody) return;
 
@@ -363,6 +487,11 @@ function renderPaymentsTable(payments) {
           </div></td>
         </tr>`;
     }).join('');
+
+    if (highlightId) {
+        const newRow = tbody.querySelector(`tr[data-payment-id="${highlightId}"]`);
+        if (newRow) newRow.classList.add('pay-row-new');
+    }
 
     applyPayFilters();
 }
