@@ -111,8 +111,8 @@ $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
 $projectBase = dirname(dirname($scriptDir));
 $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'] . $projectBase;
-$successUrl = $baseUrl . '/pages/user/card_payment_done.php?status=success';
-$cancelUrl = $baseUrl . '/pages/user/card_payment_done.php?status=cancelled';
+$successUrl = $baseUrl . '/pages/user/card_payment_done?status=success';
+$cancelUrl = $baseUrl . '/pages/user/card_payment_done?status=cancelled';
 
 // ── Build billing — pre-fill address from property ───────────────────────────
 $holderName = trim(($booking['first_name'] ?? '') . ' ' . ($booking['last_name'] ?? ''));

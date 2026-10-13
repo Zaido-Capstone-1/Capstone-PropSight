@@ -112,7 +112,7 @@ function saveProfile(e) {
     fd.append('email', document.getElementById('adm_email')?.value || '');
     fd.append('phone', document.getElementById('adm_phone')?.value || '');
     fd.append('address', document.getElementById('adm_addr')?.value || '');
-    fetch('../../endpoints/settings.php', { method: 'POST', body: fd })
+    fetch('../../endpoints/settings', { method: 'POST', body: fd })
         .then(r => r.json()).then(d => {
             showToast(d.message, d.success ? 'success' : 'error');
         }).catch(() => showToast('An error occurred.', 'error'));
@@ -124,7 +124,7 @@ function changePassword(e) {
     fd.append('current_password', document.getElementById('cur_pw')?.value || '');
     fd.append('new_password', document.getElementById('new_pw')?.value || '');
     fd.append('confirm_password', document.getElementById('conf_pw')?.value || '');
-    fetch('../../endpoints/settings.php', { method: 'POST', body: fd })
+    fetch('../../endpoints/settings', { method: 'POST', body: fd })
         .then(r => r.json()).then(d => {
             showToast(d.message, d.success ? 'success' : 'error');
             if (d.success) { document.getElementById('cur_pw').value = ''; document.getElementById('new_pw').value = ''; document.getElementById('conf_pw').value = ''; }
@@ -141,7 +141,7 @@ async function toggleAdmin2FA(toggleEl) {
         fd.append('action', 'toggle_2fa');
         fd.append('enabled', enabled);
         fd.append('csrf_token', window.PS_CSRF_TOKEN || '');
-        const res = await fetch('../../endpoints/settings.php', { method: 'POST', body: fd });
+        const res = await fetch('../../endpoints/settings', { method: 'POST', body: fd });
         const data = await res.json();
         if (data.success) {
             const on = !!data.enabled;
@@ -169,7 +169,7 @@ function saveContactInfo(e) {
     fd.append('contact_phone', document.getElementById('contact_phone').value.trim());
     fd.append('contact_phone2', document.getElementById('contact_phone2')?.value.trim() || '');
     fd.append('contact_email', document.getElementById('contact_email').value.trim());
-    fetch('../../endpoints/settings.php', { method: 'POST', body: fd })
+    fetch('../../endpoints/settings', { method: 'POST', body: fd })
         .then(r => r.json())
         .then(d => showToast(d.message || 'Contact info saved.', d.success ? 'success' : 'error'));
 }

@@ -115,7 +115,7 @@ if ($method === 'POST') {
         $roleLabel = $roleLabels[$role] ?? ucfirst($role);
         $loginUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')
             . '://' . $_SERVER['HTTP_HOST']
-            . rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/') . '/index.php#login';
+            . rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/') . '/index#login';
 
         $htmlBody = <<<HTML
         <div style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">

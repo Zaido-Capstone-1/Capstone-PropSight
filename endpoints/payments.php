@@ -11,6 +11,8 @@ if ($_SESSION['role'] !== 'admin') {
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+try {
+
 if ($method === 'GET') {
     $status = $_GET['status'] ?? 'all';
     $month = $_GET['month'] ?? date('Y-m');
@@ -48,7 +50,7 @@ if ($method === 'GET') {
         $sq = mysqli_real_escape_string($conn, $search);
         $where[] = "(t.full_name LIKE '%$sq%' OR p.manual_tenant_name LIKE '%$sq%' OR u.unit_number LIKE '%$sq%' OR mu.unit_number LIKE '%$sq%' OR CAST(p.payment_id AS CHAR) LIKE '%$sq%')";
     }
-    $whereSQL = implode(' AND ', $where);
+    $whereSQL = $where ? implode(' AND ', $where) : '1';
 
     $sql = "
         SELECT
@@ -72,6 +74,10 @@ if ($method === 'GET') {
     ";
 
     $res = mysqli_query($conn, $sql);
+    if ($res === false) {
+        echo json_encode(['success' => false, 'message' => 'Query error: ' . mysqli_error($conn)]);
+        exit;
+    }
     $records = [];
     while ($row = mysqli_fetch_assoc($res)) {
         fmt_dt_row($row);
@@ -234,4 +240,11 @@ if ($method === 'POST') {
     }
 
     echo json_encode(['success' => false, 'message' => 'Unknown action.']);
+}
+
+} catch (Throwable $e) {
+    http_response_code(500);
+    error_log('payments.php error: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+    exit;
 }

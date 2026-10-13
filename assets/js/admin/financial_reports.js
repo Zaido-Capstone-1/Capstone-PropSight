@@ -245,14 +245,21 @@ function updateTable(pnlSummary) {
     const netCell  = hasRefunds ? row[4] : row[3];
     const margin   = hasRefunds ? row[5] : row[4];
     const vsPrior  = hasRefunds ? row[6] : row[5];
+    const isEmpty  = row[1] === '₱ 0' && row[2] === '₱ 0';
+    const marginNum = parseFloat(margin);
+    const marginColor = marginNum >= 80 ? '#2ECC71' : (marginNum >= 50 ? '#2563c4' : (marginNum > 0 ? '#deaf37' : '#94a3b8'));
     const trendColor = (vsPrior || '').includes('▲') ? 'var(--success)' : ((vsPrior || '').includes('▼') ? 'var(--danger)' : 'var(--text-soft)');
+    tr.style.opacity = isEmpty ? '0.4' : '';
+    const marginCell = isEmpty
+      ? `<span style="color:#94a3b8;">—</span>`
+      : `<span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:${marginColor}18;color:${marginColor};">${margin}</span>`;
     tr.innerHTML = `
       <td style="font-weight:600;">${row[0]}</td>
       <td style="color:var(--success);font-weight:600;">${row[1]}</td>
       <td style="color:var(--danger);">${row[2]}</td>
       <td style="color:var(--danger);">${refCell}</td>
       <td style="font-weight:700;">${netCell}</td>
-      <td>${margin}</td>
+      <td>${marginCell}</td>
       <td style="color:${trendColor};font-weight:600;">${vsPrior}</td>`;
     tbody.appendChild(tr);
   });

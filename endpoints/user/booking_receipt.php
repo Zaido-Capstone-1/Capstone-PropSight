@@ -18,7 +18,7 @@ if (!isset($_SESSION['user_id'])) {
     header('Content-Type: application/json');
     echo json_encode(['status' => 'error', 'message' => 'Session expired. Please log in again.']);
   } else {
-    header('Location: ../../index.php');
+    header('Location: ../../index');
   }
   exit;
 }

@@ -105,7 +105,7 @@ if ($_sb_initials === '')
 
     <div class="nav-section-label">Overview</div>
 
-    <a href="index.php" class="nav-item<?= nav_active('dashboard') ?>">
+    <a href="index" class="nav-item<?= nav_active('dashboard') ?>">
       <div class="nav-icon">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <rect x="3" y="3" width="7" height="7" rx="1.5" />
@@ -117,7 +117,7 @@ if ($_sb_initials === '')
       <span class="nav-label">Dashboard</span>
     </a>
 
-    <a href="analytics.php" class="nav-item<?= nav_active('analytics') ?>">
+    <a href="analytics" class="nav-item<?= nav_active('analytics') ?>">
       <div class="nav-icon">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -145,16 +145,16 @@ if ($_sb_initials === '')
       </span>
     </div>
     <div class="nav-sub<?= group_sub_open(['properties_list', 'add_property', 'units_rooms', 'amenities']) ?>">
-      <a href="properties_list.php" class="sub-item<?= sub_active('properties_list') ?>">
+      <a href="properties_list" class="sub-item<?= sub_active('properties_list') ?>">
         <div class="sub-dot"></div>Properties List
       </a>
-      <a href="add_property.php" class="sub-item<?= sub_active('add_property') ?>">
+      <a href="add_property" class="sub-item<?= sub_active('add_property') ?>">
         <div class="sub-dot"></div>Add Property
       </a>
-      <a href="units_rooms.php" class="sub-item<?= sub_active('units_rooms') ?>">
+      <a href="units_rooms" class="sub-item<?= sub_active('units_rooms') ?>">
         <div class="sub-dot"></div>Units / Rooms
       </a>
-      <a href="amenities.php" class="sub-item<?= sub_active('amenities') ?>">
+      <a href="amenities" class="sub-item<?= sub_active('amenities') ?>">
         <div class="sub-dot"></div>Amenities
       </a>
     </div>
@@ -177,13 +177,13 @@ if ($_sb_initials === '')
       </span>
     </div>
     <div class="nav-sub<?= group_sub_open(['reservations', 'calendar', 'checkin_checkout']) ?>">
-      <a href="reservations.php" class="sub-item<?= sub_active('reservations') ?>">
+      <a href="reservations" class="sub-item<?= sub_active('reservations') ?>">
         <div class="sub-dot"></div>Reservations
       </a>
-      <a href="calendar.php" class="sub-item<?= sub_active('calendar') ?>">
+      <a href="calendar" class="sub-item<?= sub_active('calendar') ?>">
         <div class="sub-dot"></div>Calendar / Availability
       </a>
-      <a href="checkin_checkout.php" class="sub-item<?= sub_active('checkin_checkout') ?>">
+      <a href="checkin_checkout" class="sub-item<?= sub_active('checkin_checkout') ?>">
         <div class="sub-dot"></div>Check-in / Check-out
       </a>
     </div>
@@ -205,10 +205,10 @@ if ($_sb_initials === '')
       </span>
     </div>
     <div class="nav-sub<?= group_sub_open(['guests_clients', 'staff_roles']) ?>">
-      <a href="guests_clients.php" class="sub-item<?= sub_active('guests_clients') ?>">
+      <a href="guests_clients" class="sub-item<?= sub_active('guests_clients') ?>">
         <div class="sub-dot"></div>Guests / Clients
       </a>
-      <a href="staff_roles.php" class="sub-item<?= sub_active('staff_roles') ?>">
+      <a href="staff_roles" class="sub-item<?= sub_active('staff_roles') ?>">
         <div class="sub-dot"></div>Staff / Admin Roles
       </a>
     </div>
@@ -216,14 +216,9 @@ if ($_sb_initials === '')
     <div
       class="nav-item has-sub<?= group_active(['payments', 'transactions', 'invoices_billing', 'expenses', 'refunds']) ?>">
       <div class="nav-icon">
-        <!-- <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <line x1="12" y1="1" x2="12" y2="23" />
           <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-        </svg> -->
-
-        <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none">
-          <path fill="none" stroke="currentColor" stroke-width="2"
-            d="M20 11H4m16-4H4m3 14V4a1 1 0 0 1 1-1h4a1 1 0 0 1 0 12H7" />
         </svg>
       </div>
       <span class="nav-label">Financial</span>
@@ -234,19 +229,19 @@ if ($_sb_initials === '')
       </span>
     </div>
     <div class="nav-sub<?= group_sub_open(['payments', 'transactions', 'invoices_billing', 'expenses', 'refunds']) ?>">
-      <a href="payments.php" class="sub-item<?= sub_active('payments') ?>">
+      <a href="payments" class="sub-item<?= sub_active('payments') ?>">
         <div class="sub-dot"></div>Payments
       </a>
-      <a href="transactions.php" class="sub-item<?= sub_active('transactions') ?>">
+      <a href="transactions" class="sub-item<?= sub_active('transactions') ?>">
         <div class="sub-dot"></div>Transactions
       </a>
-      <a href="invoices_billing.php" class="sub-item<?= sub_active('invoices_billing') ?>">
+      <a href="invoices_billing" class="sub-item<?= sub_active('invoices_billing') ?>">
         <div class="sub-dot"></div>Invoices / Billing
       </a>
-      <a href="expenses.php" class="sub-item<?= sub_active('expenses') ?>">
+      <a href="expenses" class="sub-item<?= sub_active('expenses') ?>">
         <div class="sub-dot"></div>Expenses
       </a>
-      <a href="refunds.php" class="sub-item<?= sub_active('refunds') ?>">
+      <a href="refunds" class="sub-item<?= sub_active('refunds') ?>">
         <div class="sub-dot"></div>Refunds
       </a>
     </div>
@@ -268,13 +263,13 @@ if ($_sb_initials === '')
       </span>
     </div>
     <div class="nav-sub<?= group_sub_open(['financial_reports', 'occupancy_reports', 'booking_reports']) ?>">
-      <a href="financial_reports.php" class="sub-item<?= sub_active('financial_reports') ?>">
+      <a href="financial_reports" class="sub-item<?= sub_active('financial_reports') ?>">
         <div class="sub-dot"></div>Financial Reports
       </a>
-      <a href="occupancy_reports.php" class="sub-item<?= sub_active('occupancy_reports') ?>">
+      <a href="occupancy_reports" class="sub-item<?= sub_active('occupancy_reports') ?>">
         <div class="sub-dot"></div>Occupancy Reports
       </a>
-      <a href="booking_reports.php" class="sub-item<?= sub_active('booking_reports') ?>">
+      <a href="booking_reports" class="sub-item<?= sub_active('booking_reports') ?>">
         <div class="sub-dot"></div>Booking Reports
       </a>
     </div>
@@ -295,15 +290,15 @@ if ($_sb_initials === '')
       </span>
     </div>
     <div class="nav-sub<?= group_sub_open(['support', 'task_summary']) ?>">
-      <a href="support.php" class="sub-item<?= sub_active('support') ?>">
+      <a href="support" class="sub-item<?= sub_active('support') ?>">
         <div class="sub-dot"></div>Support Tickets
       </a>
-      <a href="task_summary.php" class="sub-item<?= sub_active('task_summary') ?>">
+      <a href="task_summary" class="sub-item<?= sub_active('task_summary') ?>">
         <div class="sub-dot"></div>Maintenance Requests
       </a>
     </div>
 
-    <a href="loyalty_rewards.php" class="nav-item<?= nav_active('loyalty_rewards') ?>">
+    <a href="loyalty_rewards" class="nav-item<?= nav_active('loyalty_rewards') ?>">
       <div class="nav-icon">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="8" r="5" />
@@ -317,7 +312,7 @@ if ($_sb_initials === '')
 
     <div class="nav-section-label">System</div>
 
-    <a href="settings.php" class="nav-item<?= nav_active('settings') ?>">
+    <a href="settings" class="nav-item<?= nav_active('settings') ?>">
       <div class="nav-icon">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="3" />

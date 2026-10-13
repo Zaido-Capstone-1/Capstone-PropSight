@@ -132,13 +132,13 @@ $sidebarPhoto = $dashboardPhoto;
 $active_nav = 'dashboard';
 
 $nav_items = [
-    'profile' => ['label' => 'View Profile', 'sub' => 'Personal details & preferences', 'href' => 'profile.php', 'badge' => null, 'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
-    'bookings' => ['label' => 'My Bookings', 'sub' => 'View and manage reservations', 'href' => 'bookings.php', 'badge' => $_activeBookingCount, 'icon' => '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'],
-    'payment' => ['label' => 'Payment History', 'sub' => 'View transactions & refunds', 'href' => 'payment.php', 'badge' => null, 'icon' => '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'],
-    'saved' => ['label' => 'Saved Rooms', 'sub' => 'Rooms on your wishlist', 'href' => 'saved.php', 'badge' => $_savedCount, 'icon' => '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>'],
-    'loyalty' => ['label' => 'Loyalty Points', 'sub' => $_loyaltySub, 'href' => 'loyalty.php', 'badge' => null, 'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'],
-    'settings' => ['label' => 'Settings', 'sub' => 'Notifications, privacy, security', 'href' => 'settings.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
-    'support' => ['label' => 'Support & Help', 'sub' => 'FAQs and contact staff', 'href' => 'support.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
+    'profile' => ['label' => 'View Profile', 'sub' => 'Personal details & preferences', 'href' => 'profile', 'badge' => null, 'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
+    'bookings' => ['label' => 'My Bookings', 'sub' => 'View and manage reservations', 'href' => 'bookings', 'badge' => $_activeBookingCount, 'icon' => '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'],
+    'payment' => ['label' => 'Payment History', 'sub' => 'View transactions & refunds', 'href' => 'payment', 'badge' => null, 'icon' => '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'],
+    'saved' => ['label' => 'Saved Rooms', 'sub' => 'Rooms on your wishlist', 'href' => 'saved', 'badge' => $_savedCount, 'icon' => '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>'],
+    'loyalty' => ['label' => 'Loyalty Points', 'sub' => $_loyaltySub, 'href' => 'loyalty', 'badge' => null, 'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'],
+    'settings' => ['label' => 'Settings', 'sub' => 'Notifications, privacy, security', 'href' => 'settings', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
+    'support' => ['label' => 'Support & Help', 'sub' => 'FAQs and contact staff', 'href' => 'support', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
 ];
 ?>
 <?php
@@ -162,9 +162,9 @@ require '../../includes/_nav.php';
             <i class="ti ti-arrow-left"></i>
             <span>Back</span>
         </button>
-        <a href="user-dashboard.php">Dashboard</a>
+        <a href="user-dashboard">Dashboard</a>
         <i class="ti ti-chevron-right ud-bc-sep"></i>
-        <a href="user-dashboard.php#browse">Browse Rooms</a>
+        <a href="user-dashboard#browse">Browse Rooms</a>
         <i class="ti ti-chevron-right ud-bc-sep"></i>
         <span><?php echo ud_esc($unitTitle); ?></span>
     </div>
@@ -194,7 +194,7 @@ require '../../includes/_nav.php';
                 <div style="font-size:.75rem;color:var(--ud-text-soft);margin-top:6px">
                     Virtual tour not yet available for this unit.<br>Contact the host to schedule a viewing.
                 </div>
-                <a href="messages.php" class="ud-tour-cta" style="margin-top:16px">
+                <a href="messages" class="ud-tour-cta" style="margin-top:16px">
                     <i class="ti ti-message-circle"></i> Message the host
                 </a>
             </div>
@@ -747,7 +747,7 @@ require '../../includes/_nav.php';
                         <span class="ud-similar-eyebrow">Explore more</span>
                         <h2 class="ud-similar-title">More units you might like</h2>
                     </div>
-                    <a href="user-dashboard.php#browse" class="ud-similar-all">
+                    <a href="user-dashboard#browse" class="ud-similar-all">
                         Browse all <i class="ti ti-arrow-right"></i>
                     </a>
                 </div>
@@ -758,7 +758,7 @@ require '../../includes/_nav.php';
                             : ($su['property_name'] . ' — Unit ' . preg_replace('/^unit\s*/i', '', $su['unit_number'] ?? ''));
                         $suPrice = '₱' . number_format((float) $su['rent_amount'], 0);
                         ?>
-                        <a href="unit_detail.php?id=<?php echo (int) $su['unit_id']; ?>" class="ud-similar-card"
+                        <a href="unit_detail?id=<?php echo (int) $su['unit_id']; ?>" class="ud-similar-card"
                             data-unit-id="<?php echo (int) $su['unit_id']; ?>">
                             <div class="ud-similar-img-wrap">
                                 <?php if ($suImg): ?>
@@ -1144,7 +1144,7 @@ require '../../includes/_nav.php';
                             <polyline points="20 6 9 17 4 12" />
                         </svg>Confirm Payment</button>
                     <button class="bm-btn bm-btn-next" id="bmDoneBtn" style="display:none"
-                        onclick="closeBookingModal();window.location.href='bookings.php'">Done<svg viewBox="0 0 24 24"
+                        onclick="closeBookingModal();window.location.href='bookings'">Done<svg viewBox="0 0 24 24"
                             stroke="currentColor" fill="none" stroke-width="2">
                             <polyline points="9 18 15 12 9 6" />
                         </svg></button>

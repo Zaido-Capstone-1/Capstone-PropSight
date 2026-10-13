@@ -72,14 +72,14 @@ if (resetForm) {
 
         try {
             const fd = new FormData(resetForm);
-            const res = await fetch('process/reset_password.php', { method: 'POST', body: fd });
+            const res = await fetch('process/reset_password', { method: 'POST', body: fd });
             const data = await res.json();
 
             if (data.success) {
                 resetForm.style.display = 'none';
                 alertSuccess.innerHTML =
                     '<strong>Password reset!</strong> ' + data.message +
-                    ' <a href="index.php" style="color:#15803d;font-weight:600;">Go to Login</a>';
+                    ' <a href="index" style="color:#15803d;font-weight:600;">Go to Login</a>';
                 alertSuccess.style.display = 'block';
             } else {
                 alertError.textContent = data.message || 'Something went wrong. Please try again.';

@@ -288,7 +288,7 @@ if ($method === 'POST') {
             mysqli_query(
                 $conn,
                 "INSERT INTO notifications (user_id, type, title, body, link)
-                 VALUES ($toUser, 'message', 'New message from admin', '$bodyEsc', 'pages/user/messages.php?admin_id=$adminId')"
+                 VALUES ($toUser, 'message', 'New message from admin', '$bodyEsc', 'pages/user/messages?admin_id=$adminId')"
             );
 
             echo json_encode(['success' => true, 'message' => 'Message sent.', 'message_id' => $newId, 'ts' => $now]);

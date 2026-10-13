@@ -43,7 +43,7 @@ const _psCollectionChart = new Chart(document.getElementById('collectionChart'),
 let payCurrentPage = 1;
 const payRowsPerPage = 10;
 
-function applyPayFilters() {
+function applyPayFilters(preservePage) {
     const q = (document.querySelector('input[name="q"]')?.value || '').toLowerCase().trim();
     const status = document.getElementById('payStatusInput')?.value || '';
     const month = document.getElementById('monthPickerValue')?.value || '';
@@ -61,7 +61,7 @@ function applyPayFilters() {
     const empty = document.getElementById('payEmptyState');
     if (empty) empty.style.display = count === 0 ? 'block' : 'none';
 
-    payCurrentPage = 1;
+    if (!preservePage) payCurrentPage = 1;
     paginatePay();
 }
 
@@ -346,7 +346,7 @@ function deletePayment() {
     const deleteBtn = document.querySelector('#deleteModal .btn-danger');
     if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = 'Deleting...'; }
 
-    fetch('../../endpoints/payments.php', {
+    fetch('../../endpoints/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `form_action=delete&payment_id=${id}&csrf_token=${encodeURIComponent(window.PS_CSRF_TOKEN)}`
@@ -419,16 +419,23 @@ function updateCollectionChart(trend) {
 }
 
 function refreshPaymentsData(highlightId) {
-    fetch('../../endpoints/payments.php?status=all&month=all&_=' + Date.now(), { credentials: 'same-origin' })
+    fetch('../../endpoints/payments?status=all&month=all&_=' + Date.now(), { credentials: 'same-origin' })
         .then(r => r.json())
         .then(data => {
-            if (!data || !data.success) { location.reload(); return; }
-            renderPaymentsTable(data.records || [], highlightId);
-            updatePaymentStats(data.stats);
-            updateCollectionChart(data.trend);
-            applyPayFilters();
+            if (!data || !data.success) {
+                console.error('refreshPaymentsData failed:', data);
+                showToast((data && data.message) || 'Could not refresh the list — try again.', 'error');
+                return;
+            }
+            try { renderPaymentsTable(data.records || [], highlightId, true); } catch (err) { console.error(err); }
+            try { updatePaymentStats(data.stats); } catch (err) { console.error(err); }
+            try { updateCollectionChart(data.trend); } catch (err) { console.error(err); }
+            try { applyPayFilters(true); } catch (err) { console.error(err); }
         })
-        .catch(() => location.reload());
+        .catch(err => {
+            console.error(err);
+            showToast('Could not refresh the list — try again.', 'error');
+        });
 }
 
 // Kept for backward compatibility with existing call sites
@@ -436,13 +443,13 @@ function refreshPaymentsTable(highlightId) {
     refreshPaymentsData(highlightId);
 }
 
-function renderPaymentsTable(payments, highlightId) {
+function renderPaymentsTable(payments, highlightId, preservePage) {
     const tbody = document.querySelector('.table-wrap tbody');
     if (!tbody) return;
 
     if (!payments.length) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-soft);">No payment records found.</td></tr>';
-        applyPayFilters();
+        applyPayFilters(preservePage);
         return;
     }
 
@@ -493,7 +500,7 @@ function renderPaymentsTable(payments, highlightId) {
         if (newRow) newRow.classList.add('pay-row-new');
     }
 
-    applyPayFilters();
+    applyPayFilters(preservePage);
 }
 
 /* ── Misc ── */

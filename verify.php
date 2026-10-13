@@ -10,7 +10,7 @@ if (empty($_SESSION['login']) || empty($_SESSION['user_id'])) {
 }
 if (empty($_SESSION['pending_verification'])) {
     $role = $_SESSION['role'] ?? 'user';
-    header('Location: ' . ($role === 'admin' ? 'pages/admin/index.php' : 'pages/user/user-dashboard.php'));
+    header('Location: ' . ($role === 'admin' ? 'pages/admin/index' : 'pages/user/user-dashboard'));
     exit;
 }
 
@@ -47,7 +47,7 @@ $codeAlreadySent = $lastSent > 0;
 
 <body>
 
-    <a href="index.php" class="top-logo">
+    <a href="index" class="top-logo">
         <img src="assets/images/logo.png" alt="Logo">
         <div>
             <div class="top-logo-text">Boracay Accommodation</div>

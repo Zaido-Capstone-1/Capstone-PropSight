@@ -431,7 +431,7 @@ endif;
             <h3 id="modalTitle">Record Payment</h3>
             <button class="modal-close" onclick="closeModal()">×</button>
         </div>
-        <form id="paymentForm" method="POST" action="../../endpoints/payments.php">
+        <form id="paymentForm" method="POST" action="../../endpoints/payments">
             <input type="hidden" name="csrf_token"
                 value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES); ?>">
             <input type="hidden" name="form_action" id="formAction" value="add">

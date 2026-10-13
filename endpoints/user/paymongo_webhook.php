@@ -333,7 +333,7 @@ if ($isLinkPaid || $isCheckoutPaid) {
             $coDate = date('M j, Y', strtotime($bkInfoNotif['checkout_date']));
             $ntTitle2 = "Payment confirmed: $bkRef2";
             $ntBody2 = "$gName booked $uLabel2 · $ciDate–$coDate (PayMongo payment received via $paymentMethod).";
-            $ntLink2 = 'pages/admin/reservations.php';
+            $ntLink2 = 'pages/admin/reservations';
             $adminsStmt = $conn->prepare("SELECT user_id FROM users WHERE role='admin' LIMIT 20");
             $adminsStmt->execute();
             $admins2 = $adminsStmt->get_result();
@@ -516,7 +516,7 @@ if ($type === 'refund.updated') {
             // In-app notification to user
             $ntTitle = "Refund Completed — $bkRef";
             $ntBody = "Your refund of $amtFmt for booking $bkRef has been completed successfully.";
-            $ntLink = 'pages/user/payment.php';
+            $ntLink = 'pages/user/payment';
             $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
             $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
             $n->execute();

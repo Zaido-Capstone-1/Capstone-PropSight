@@ -189,9 +189,13 @@ require_once '../../lib/admin-queries/units_rooms_queries.php';
           $status = strtolower($unit['real_status'] ?? $unit['status'] ?? 'vacant');
 
           $imgs = [];
-          $ir = $conn->query("SELECT image_path FROM unit_images WHERE unit_id=$uid ORDER BY sort_order ASC LIMIT 6");
-          while ($ir && $row = $ir->fetch_assoc())
+          $ir_stmt = $conn->prepare("SELECT image_path FROM unit_images WHERE unit_id=? ORDER BY sort_order ASC");
+          $ir_stmt->bind_param('i', $uid);
+          $ir_stmt->execute();
+          $ir = $ir_stmt->get_result();
+          while ($row = $ir->fetch_assoc())
             $imgs[] = $row['image_path'];
+          $ir_stmt->close();
           $thumb = $imgs[0] ?? null;
 
           $real_status = $unit['real_status'] ?? $unit['status'] ?? 'vacant';

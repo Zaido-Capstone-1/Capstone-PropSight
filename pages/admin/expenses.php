@@ -285,9 +285,9 @@ require_once '../../lib/admin-queries/expenses_queries.php';
               ?>
               <tr data-id="<?= (int) $e['expense_id'] ?>" data-category="<?= htmlspecialchars($e['expense_category']) ?>">
                 <td style="font-weight:600;"><?= htmlspecialchars($e['description']) ?></td>
-                <td style="color:var(--text-soft);font-size:13px;"><?= htmlspecialchars($e['property_name'] ?? '—') ?>
+                <td style="color:var(--text-soft);font-size:13px;"><?= htmlspecialchars($e['property_name'] ?: '—') ?>
                 </td>
-                <td style="color:var(--text-soft);font-size:13px;"><?= htmlspecialchars($e['unit_label'] ?? '—') ?></td>
+                <td style="color:var(--text-soft);font-size:13px;"><?= htmlspecialchars($e['unit_label'] ?: '—') ?></td>
                 <td style="color:var(--text-soft);font-size:12px;"><?= htmlspecialchars($e['expense_date_label']) ?></td>
                 <td>
                   <span class="badge" style="background:<?= $col ?>22;color:<?= $col ?>;">

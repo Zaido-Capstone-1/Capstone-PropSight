@@ -111,7 +111,7 @@ $_SESSION['id_verified'] = 'pending';
 // Notify the user that submission was received
 $notifTitle = 'ID Submitted for Review';
 $notifBody = 'Your government ID has been submitted. We\'ll notify you once it\'s reviewed (usually within 24 hours).';
-$notifLink = 'pages/user/profile.php';
+$notifLink = 'pages/user/profile';
 $notifStmt = $conn->prepare(
     "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'support', ?, ?, ?)"
 );

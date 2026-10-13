@@ -329,7 +329,7 @@
                             bookBtn.style.cursor = '';
                             bookBtn.onclick = function(ev) {
                                 if (ev) ev.stopPropagation();
-                                if (unitId) window.location.href = 'unit_detail.php?id=' + unitId;
+                                if (unitId) window.location.href = 'unit_detail?id=' + unitId;
                             };
                         }
                     }
@@ -400,7 +400,7 @@
                     bookBtn.style.cursor = '';
                     bookBtn.onclick = function(ev) {
                         if (ev) ev.stopPropagation();
-                        if (unitId) window.location.href = 'unit_detail.php?id=' + unitId;
+                        if (unitId) window.location.href = 'unit_detail?id=' + unitId;
                     };
                 }
             }
@@ -708,7 +708,7 @@
                         bookBtn.style.cursor = '';
                         bookBtn.onclick = function(ev) {
                             if (ev) ev.stopPropagation();
-                            if (unitId) window.location.href = 'unit_detail.php?id=' + unitId;
+                            if (unitId) window.location.href = 'unit_detail?id=' + unitId;
                         };
                     }
                 }
@@ -851,7 +851,7 @@
                         bookBtn.style.cursor = '';
                         bookBtn.onclick = function (ev) {
                             if (ev) ev.stopPropagation();
-                            if (unitId) window.location.href = 'unit_detail.php?id=' + unitId + '&book=1';
+                            if (unitId) window.location.href = 'unit_detail?id=' + unitId + '&book=1';
                         };
                     } else if (isMyBooking) {
                         bookBtn.disabled = true;
@@ -866,7 +866,7 @@
                         bookBtn.style.cursor = '';
                         bookBtn.onclick = function (ev) {
                             if (ev) ev.stopPropagation();
-                            if (unitId) window.location.href = 'unit_detail.php?id=' + unitId;
+                            if (unitId) window.location.href = 'unit_detail?id=' + unitId;
                         };
                     }
                 }

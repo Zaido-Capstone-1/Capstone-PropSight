@@ -115,7 +115,7 @@ try {
         // Notify admins
         $ntTitle = "Booking cancelled: $bkRef";
         $ntBody = "$guestName cancelled their booking for $unitLabel.";
-        $ntLink = 'pages/admin/reservations.php';
+        $ntLink = 'pages/admin/reservations';
         require_once __DIR__ . '/../../includes/admin_notif_helpers.php';
         $admins = mysqli_query($conn, "SELECT user_id FROM users WHERE role='admin' LIMIT 20");
         while ($adm = mysqli_fetch_assoc($admins)) {
@@ -133,7 +133,7 @@ try {
                 'cancellation',
                 'cancel-' . $bookingId,
                 $ntTitle . ': ' . mb_substr($ntBody, 0, 80),
-                'reservations.php',
+                'reservations',
                 gmdate('Y-m-d H:i:s')
             );
         }
@@ -141,7 +141,7 @@ try {
         // Confirm to the user
         $utTitle = "Booking cancelled: $bkRef";
         $utBody = "Your booking for $unitLabel has been cancelled.";
-        $userNotifLink = 'pages/user/bookings.php';
+        $userNotifLink = 'pages/user/bookings';
         $userNotifStmt = $conn->prepare(
             "INSERT INTO notifications (user_id,type,title,body,link)
              VALUES (?, 'booking', ?, ?, ?)"

@@ -7,23 +7,43 @@
 <IfModule mod_headers.c>
     # Prevent clickjacking
     Header always set X-Frame-Options "SAMEORIGIN"
-
     # Prevent MIME sniffing
     Header always set X-Content-Type-Options "nosniff"
-
     # XSS protection for older browsers
     Header always set X-XSS-Protection "1; mode=block"
-
     # Referrer policy
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
-
     # Content Security Policy
     Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net https://unpkg.com; img-src 'self' data: blob: https: http:; connect-src 'self' https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://*.tile.carto.com https://cdn.jsdelivr.net https://unpkg.com https://overpass-api.de https://api.open-meteo.com wss:; frame-ancestors 'self';"
     
     # HSTS — enable only when site is fully on HTTPS
     # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 </IfModule>
-
 # Custom error pages
 ErrorDocument 404 /404.php
 ErrorDocument 403 /404.php
+# Clean URLs
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # /coming-soon  ->  /pages/user/coming_soon.php  (query string, e.g. ?feature=X, passes through)
+    RewriteRule ^coming-soon/?$ pages/user/coming_soon.php [L,QSA]
+    # Site-wide: hide the .php extension everywhere.
+    # If the exact requested path isn't a real file/folder, but adding ".php" IS a real
+    # file, serve that .php file — without changing what's shown in the address bar.
+    # e.g. /pages/user/bookings  ->  serves pages/user/bookings.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}\.php -f
+    RewriteRule ^(.*)$ $1.php [L]
+    # If someone types the .php extension directly via a normal browser visit (GET),
+    # redirect (visibly, so the address bar updates) to the clean version.
+    # Restricted to GET/HEAD only — a 301 on POST gets resent as GET by browsers,
+    # which was silently turning form/AJAX POST submissions into broken GET requests.
+    # Excluded: /endpoints/ — these are AJAX/API routes called with .php by JS
+    # (realtime.php, financial_report.php, etc.), not browser page views, so
+    # redirecting them only doubled every request with a wasted 301 round-trip.
+    RewriteCond %{REQUEST_URI} !^/endpoints/
+    RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+    RewriteCond %{THE_REQUEST} \s/+(.+)\.php[\s?] [NC]
+    RewriteRule ^ /%1 [R=301,L]
+</IfModule>

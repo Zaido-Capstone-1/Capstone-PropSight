@@ -65,7 +65,7 @@ require_once '../../lib/user-queries/saved_queries.php';
                 </div>
                 <div style="color:var(--text-soft);margin-bottom:24px;">Browse units and tap the heart to save your
                     favorites.</div>
-                <a href="user-dashboard.php" style="display:inline-block;text-decoration:none;" class="btn-primary">Browse
+                <a href="user-dashboard" style="display:inline-block;text-decoration:none;" class="btn-primary">Browse
                     Rooms</a>
             </div>
         <?php else: ?>
@@ -160,7 +160,7 @@ require_once '../../lib/user-queries/saved_queries.php';
                                     </div>
                                 </div>
                                 <button class="btn-book-sc" <?php echo !$avail ? 'disabled' : ''; ?>         <?php if ($avail): ?>
-                                        onclick="window.location.href='unit_detail.php?id=<?php echo (int) $r['unit_id']; ?>&book=1'"
+                                        onclick="window.location.href='unit_detail?id=<?php echo (int) $r['unit_id']; ?>&book=1'"
                                     <?php endif; ?>>
                                     <?php echo $avail ? 'Book Now' : 'Unavailable'; ?>
                                 </button>
@@ -182,7 +182,7 @@ require_once '../../lib/user-queries/saved_queries.php';
             <div class="tip-card-body">You have <strong><?php echo count($saved_rooms); ?> saved
                     room<?php echo count($saved_rooms) !== 1 ? 's' : ''; ?></strong>. Book now before they're taken!
             </div>
-            <a href="user-dashboard.php" class="tip-card-cta">
+            <a href="user-dashboard" class="tip-card-cta">
                 Browse More 
                 <svg viewBox="0 0 24 24" fill="none"
                     style="width:13px;height:13px;stroke:currentColor;stroke-width:2.5;">

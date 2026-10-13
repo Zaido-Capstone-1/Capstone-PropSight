@@ -37,7 +37,7 @@
                 <?php echo $isVerifiedSidebar ? 'Verified' : 'Not Verified'; ?>
             </span>
             <?php if (!$isVerifiedSidebar): ?>
-                <a href="profile.php" class="sb-verify-link">Verify now</a>
+                <a href="profile" class="sb-verify-link">Verify now</a>
             <?php endif; ?>
         </div>
     </div>

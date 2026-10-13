@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../includes/db.php';
 require_once __DIR__ . '/../../integrations/oauth_helpers.php';
 
 if (empty(FACEBOOK_APP_ID)) {
-    header('Location: ../../index.php?oauth_error=' . urlencode('Facebook login is not configured yet.'));
+    header('Location: ../../index?oauth_error=' . urlencode('Facebook login is not configured yet.'));
     exit;
 }
 

@@ -530,6 +530,30 @@
     }
 }
 
+/* Row delete animation */
+.expenses-table tbody tr,
+#expensesBody tr {
+    transition: opacity .28s ease, transform .28s ease, background-color .2s ease;
+}
+
+.expenses-table tbody tr.exp-row-deleting,
+#expensesBody tr.exp-row-deleting {
+    opacity: 0;
+    transform: translateX(12px) scale(.98);
+    background-color: rgba(231, 76, 60, .06);
+    pointer-events: none;
+}
+
+.expenses-table tbody tr.exp-row-collapsing td,
+#expensesBody tr.exp-row-collapsing td {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border: 0 !important;
+    line-height: 0 !important;
+    height: 0 !important;
+    transition: padding .22s ease, line-height .22s ease;
+}
+
 .exp-cat-opt {
     display: flex;
     align-items: center;

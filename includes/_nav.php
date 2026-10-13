@@ -82,7 +82,7 @@
     <script src="../../assets/js/user-js/floating-chat.js?v=5"></script>
 
     <header id="hdr">
-        <a href="user-dashboard.php" class="logo">
+        <a href="user-dashboard" class="logo">
             <img src="../../assets/images/logo.png" alt="Boracay Accommodation" class="logo-icon">
             <div class="logo-wordmark">
                 <strong>Boracay Accommodation</strong>
@@ -103,7 +103,7 @@
         </nav>
         <div class="header-right">
             <?php if (empty($hideBrowseBtn)): ?>
-            <a href="units.php" class="btn-browse" style="text-decoration:none;">Browse Rooms</a>
+            <a href="units" class="btn-browse" style="text-decoration:none;">Browse Rooms</a>
             <?php endif; ?>
             <button id="chatBellBtn" type="button" aria-label="Messages" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;
                        color:var(--text-soft);display:flex;align-items:center;justify-content:center;

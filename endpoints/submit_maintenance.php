@@ -76,7 +76,7 @@ if ($insert) {
             'maintenance',
             'task-' . $requestId,
             'Task: ' . mb_substr($fullDescription, 0, 80),
-            'task_summary.php?status=open',
+            'task_summary?status=open',
             gmdate('Y-m-d H:i:s')
         );
     }

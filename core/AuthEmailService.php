@@ -60,6 +60,8 @@ class AuthEmailService
   {
     $year = date('Y');
     $otpSafe = htmlspecialchars($otp, ENT_QUOTES, 'UTF-8');
+    $logoUrl = htmlspecialchars(SITE_URL . '/assets/images/logo.png', ENT_QUOTES, 'UTF-8');
+    $brand = htmlspecialchars(MAIL_FROM_NAME, ENT_QUOTES, 'UTF-8');
 
     return <<<HTML
     <div style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
@@ -118,6 +120,7 @@ class AuthEmailService
     $otpSafe = htmlspecialchars($otp, ENT_QUOTES, 'UTF-8');
     $nameSafe = htmlspecialchars($firstName, ENT_QUOTES, 'UTF-8');
     $brand = htmlspecialchars(MAIL_FROM_NAME, ENT_QUOTES, 'UTF-8');
+    $logoUrl = htmlspecialchars(SITE_URL . '/assets/images/logo.png', ENT_QUOTES, 'UTF-8');
 
     return <<<HTML
     <div style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
@@ -172,6 +175,7 @@ class AuthEmailService
     $year = date('Y');
     $siteName = htmlspecialchars(MAIL_FROM_NAME, ENT_QUOTES, 'UTF-8');
     $linkSafe = htmlspecialchars($resetLink, ENT_QUOTES, 'UTF-8');
+    $logoUrl = htmlspecialchars(SITE_URL . '/assets/images/logo.png', ENT_QUOTES, 'UTF-8');
 
     return <<<HTML
     <div style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
@@ -181,6 +185,7 @@ class AuthEmailService
                 style="background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;">
             <tr>
               <td style="background:linear-gradient(135deg,#1e3a5f 0%,#2d5a8e 100%);padding:32px 40px;text-align:center;">
+                <img src="{$logoUrl}" alt="{$siteName}" style="height:36px;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;">
                 <div style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">{$siteName}</div>
                 <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-top:4px;">Password Reset Request</div>
               </td>

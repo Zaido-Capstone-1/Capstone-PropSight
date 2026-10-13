@@ -23,19 +23,21 @@ function env(string $key, $default = null)
     return ($val !== false && $val !== '') ? $val : $default;
 }
 
+define('SITE_URL', env('SITE_URL', 'https://boracay-accommodation.site'));
+
 define('DB_SERVER', env('DB_SERVER'));
 define('DB_USERNAME', env('DB_USERNAME'));
 define('DB_PASSWORD', env('DB_PASSWORD'));
 define('DB_NAME', env('DB_NAME'));
 define('DB_PORT', (int) env('DB_PORT', 3306));
 
-define('MAIL_HOST', env('MAIL_HOST'));
-define('MAIL_PORT', env('MAIL_PORT'));
-define('MAIL_USERNAME', env('MAIL_USERNAME'));
-define('MAIL_PASSWORD', env('MAIL_PASSWORD'));
-define('MAIL_FROM_NAME', env('MAIL_FROM_NAME'));
-define('MAIL_FROM_EMAIL', env('MAIL_FROM_EMAIL') ?: env('MAIL_USERNAME'));
-define('MAIL_ENCRYPTION', env('MAIL_ENCRYPTION'));
+define('MAIL_HOST', 'smtp.hostinger.com');
+define('MAIL_PORT', 465);
+define('MAIL_USERNAME', 'admin@boracay-accommodation.site');
+define('MAIL_PASSWORD', 'PropSight@09232004');
+define('MAIL_FROM_EMAIL', 'admin@boracay-accommodation.site');
+define('MAIL_FROM_NAME', 'Boracay Accommodation');
+define('MAIL_ENCRYPTION', 'ssl');
 
 // SSO
 define('GOOGLE_CLIENT_ID', env('GOOGLE_CLIENT_ID', ''));

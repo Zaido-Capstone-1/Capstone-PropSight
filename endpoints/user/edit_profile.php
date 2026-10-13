@@ -9,7 +9,7 @@ function redirect_with_toast($message, $type = 'error') {
     } else {
         $_SESSION['toast_error'] = $message;
     }
-    header("Location: ../../pages/user/profile.php");
+    header("Location: ../../pages/user/profile");
     exit;
 }
 

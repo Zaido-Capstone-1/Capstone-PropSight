@@ -215,20 +215,20 @@ $active_nav = 'dashboard';
 $sidebarPhoto = $dashboardPhoto;
 $account_nav_keys = ['dashboard', 'profile', 'saved', 'loyalty', 'settings', 'payment'];
 $nav_items = [
-    'profile' => ['label' => 'View Profile', 'sub' => 'Personal details & preferences', 'href' => 'profile.php', 'badge' => null, 'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
+    'profile' => ['label' => 'View Profile', 'sub' => 'Personal details & preferences', 'href' => 'profile', 'badge' => null, 'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
     'bookings' => [
-        'label' => 'My Bookings', 'sub' => 'View and manage reservations', 'href' => 'bookings.php',
+        'label' => 'My Bookings', 'sub' => 'View and manage reservations', 'href' => 'bookings',
         'badge' => (function () use ($conn, $_uid) {
             if (!$conn) return null;
             $r = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS c FROM bookings WHERE user_id=$_uid AND status IN('pending','confirmed','active')"));
             return $r['c'] > 0 ? (string) $r['c'] : null; })(),
         'icon' => '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'
     ],
-    'payment' => ['label' => 'Payment History', 'sub' => 'View transactions & refunds', 'href' => 'payment.php', 'badge' => null, 'icon' => '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'],
-    'saved' => ['label' => 'Saved Rooms', 'sub' => 'Rooms on your wishlist', 'href' => 'saved.php', 'badge' => count($savedUnitIds) > 0 ? (string) count($savedUnitIds) : null, 'icon' => '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>'],
-    'loyalty' => ['label' => 'Loyalty Points', 'sub' => $loyaltyPoints . ' pts · ' . $loyaltyTier . ' tier', 'href' => 'loyalty.php', 'badge' => null, 'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'],
-    'settings' => ['label' => 'Settings', 'sub' => 'Notifications, privacy, security', 'href' => 'settings.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
-    'support' => ['label' => 'Support & Help', 'sub' => 'FAQs and contact staff', 'href' => 'support.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
+    'payment' => ['label' => 'Payment History', 'sub' => 'View transactions & refunds', 'href' => 'payment', 'badge' => null, 'icon' => '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'],
+    'saved' => ['label' => 'Saved Rooms', 'sub' => 'Rooms on your wishlist', 'href' => 'saved', 'badge' => count($savedUnitIds) > 0 ? (string) count($savedUnitIds) : null, 'icon' => '<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>'],
+    'loyalty' => ['label' => 'Loyalty Points', 'sub' => $loyaltyPoints . ' pts · ' . $loyaltyTier . ' tier', 'href' => 'loyalty', 'badge' => null, 'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'],
+    'settings' => ['label' => 'Settings', 'sub' => 'Notifications, privacy, security', 'href' => 'settings', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
+    'support' => ['label' => 'Support & Help', 'sub' => 'FAQs and contact staff', 'href' => 'support', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
 ];
 $page_extra_head = '
     <link rel="stylesheet" href="../../assets/css/user-css/styles.css?v=3">
@@ -383,7 +383,7 @@ require '../../includes/_nav.php';
                     <div class="qa-sub"><?php echo $activeBooking ? '1 active stay' : 'No active stay'; ?></div>
                 </div>
             </div>
-            <div class="qa-card reveal rd2" onclick="window.location.href='loyalty.php'">
+            <div class="qa-card reveal rd2" onclick="window.location.href='loyalty'">
                 <div class="qa-icon teal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <circle cx="12" cy="8" r="6" />
                         <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" />
@@ -394,7 +394,7 @@ require '../../includes/_nav.php';
                         points</div>
                 </div>
             </div>
-            <div class="qa-card reveal rd3" onclick="window.location.href='saved.php'">
+            <div class="qa-card reveal rd3" onclick="window.location.href='saved'">
                 <div class="qa-icon rose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <path
                             d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
@@ -498,7 +498,7 @@ require '../../includes/_nav.php';
                             data-status="<?php echo htmlspecialchars($unit['status']); ?>"
                             data-room-payload="<?php echo htmlspecialchars($roomJs, ENT_QUOTES); ?>"
                             data-rent="<?php echo (float) $unit['rent_amount']; ?>"
-                            onclick="window.location.href='unit_detail.php?id=<?php echo (int) $unit['unit_id']; ?>'">
+                            onclick="window.location.href='unit_detail?id=<?php echo (int) $unit['unit_id']; ?>'">
 
                             <div class="room-card-img">
                                 <img src="<?php echo $imgSrc; ?>" alt="<?php echo $unitName; ?>" class="room-img-placeholder"
@@ -596,14 +596,14 @@ require '../../includes/_nav.php';
                                     <div class="room-card-actions" style="display:flex;gap:8px;align-items:center;" data-action-buttons onclick="event.stopPropagation()">
                                         <?php if ($isVacant): ?>
                                             <button class="btn-rent" data-book-btn
-                                                onclick="window.location.href='unit_detail.php?id=<?php echo (int) $unit['unit_id']; ?>&book=1'">
+                                                onclick="window.location.href='unit_detail?id=<?php echo (int) $unit['unit_id']; ?>&book=1'">
                                                 Book Now
                                             </button>
                                         <?php elseif (in_array((int) $unit['unit_id'], $bookedUnitIds)): ?>
                                             <button class="btn-rent" data-book-btn disabled style="opacity:.6;cursor:default;">Already Booked</button>
                                         <?php else: ?>
                                             <button class="btn-rent" data-book-btn
-                                                onclick="window.location.href='unit_detail.php?id=<?php echo (int) $unit['unit_id']; ?>'">
+                                                onclick="window.location.href='unit_detail?id=<?php echo (int) $unit['unit_id']; ?>'">
                                                 Reserve Date
                                             </button>
                                         <?php endif; ?>
@@ -780,7 +780,7 @@ require '../../includes/_nav.php';
                     <?php endif; ?>
                 </div>
                 <div class="loyalty-actions">
-                    <a href="loyalty.php" class="loyalty-btn loyalty-btn-primary"
+                    <a href="loyalty" class="loyalty-btn loyalty-btn-primary"
                         onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2.5">
@@ -849,11 +849,11 @@ require '../../includes/_nav.php';
                                         style="font-size:.65rem;margin-left:4px;opacity:.6;"><?php echo number_format((int) $rw['points_cost']); ?>
                                         pts</span>
                                 </span>
-                                <a href="loyalty.php#rewards" class="loyalty-redeem-badge">Redeem</a>
+                                <a href="loyalty#rewards" class="loyalty-redeem-badge">Redeem</a>
                             </div>
                         <?php endforeach; ?>
                         <?php if ($hasMoreAffordableRewards): ?>
-                            <a href="loyalty.php#rewards" class="loyalty-perk-row" style="justify-content:center;text-decoration:none;color:rgba(255,255,255,.65);font-size:.78rem;font-weight:600;padding-top:10px;">
+                            <a href="loyalty#rewards" class="loyalty-perk-row" style="justify-content:center;text-decoration:none;color:rgba(255,255,255,.65);font-size:.78rem;font-weight:600;padding-top:10px;">
                                 View All Rewards
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:4px;">
                                     <polyline points="9 18 15 12 9 6" />

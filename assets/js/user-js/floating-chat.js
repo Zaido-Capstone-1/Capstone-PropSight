@@ -12,7 +12,7 @@
      POST action=send
    ════════════════════════════════════════════════════════════ */
 (function () {
-    const API = '../../endpoints/user/messages.php';
+    const API = '../../endpoints/user/messages';
     const MY_ID = parseInt(window.PS_USER_ID || (window.__PS_USER_MSG__ && window.__PS_USER_MSG__.userId) || 0, 10);
 
     // Open popups, keyed by admin_id → { el, adminId, adminName, adminPhoto, lastTs, pollTimer, minimized }
@@ -745,7 +745,7 @@
          system replaces full-page navigation entirely ────────── */
     function interceptMessageLinks() {
         document.addEventListener('click', e => {
-            const link = e.target.closest('a[href="messages.php"]');
+            const link = e.target.closest('a[href="messages"]');
             if (!link) return;
             e.preventDefault();
             // If the mobile profile sidebar is open, close it first so the

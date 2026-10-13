@@ -272,7 +272,7 @@ try {
         $notifBody = "$fullName booked $unitDisplay · " .
             $dtIn->format('M j') . '–' . $dtOut->format('M j, Y') .
             " ($nights nights)";
-        $notifLink = 'pages/admin/reservations.php';
+        $notifLink = 'pages/admin/reservations';
 
         require_once __DIR__ . '/../../includes/admin_notif_helpers.php';
         $admins = $conn->query("SELECT user_id FROM users WHERE role='admin' LIMIT 20");
@@ -291,7 +291,7 @@ try {
                 'new_booking',
                 'booking-' . $bookingId,
                 $notifTitle . ': ' . mb_substr($notifBody, 0, 80),
-                'reservations.php?status=pending',
+                'reservations?status=pending',
                 gmdate('Y-m-d H:i:s')
             );
         }
@@ -300,7 +300,7 @@ try {
         $userNotifBody = "Your booking for $unitDisplay (" .
             $dtIn->format('M j') . '–' . $dtOut->format('M j, Y') .
             ") is pending admin confirmation.";
-        $userNotifLink = 'pages/user/bookings.php';
+        $userNotifLink = 'pages/user/bookings';
         $userNotifStmt = $conn->prepare(
             "INSERT INTO notifications (user_id, type, title, body, link)
              VALUES (?, 'booking', ?, ?, ?)"

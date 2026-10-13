@@ -396,11 +396,10 @@
 }
 
 .txn-pg-num.active {
-    background: var(--navy, #0f2044);
-    border-color: var(--navy, #0f2044);
-    color: #fff;
-    font-weight: 700;
-    cursor: default;
+    background: #0f2744;
+    color: #e8c86a;
+    border-color: #0f2744;
+    cursor: pointer;
 }
 
 .txn-pg-ellipsis {

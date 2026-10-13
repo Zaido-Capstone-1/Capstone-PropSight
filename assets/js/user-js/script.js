@@ -733,7 +733,7 @@ if (burger && mob) {
                     bookBtn.onclick = function (ev) {
                         if (ev) ev.stopPropagation();
                         var uid = roomCard.dataset.unitId;
-                        if (uid) window.location.href = 'unit_detail.php?id=' + uid + '&book=1';
+                        if (uid) window.location.href = 'unit_detail?id=' + uid + '&book=1';
                     };
                 }
             }
@@ -1025,10 +1025,10 @@ if (burger && mob) {
             const params = new URLSearchParams({ booking_id: id, open_ticket: '1' });
             if (unit) params.set('unit', unit);
             if (property) params.set('property', property);
-            window.location.href = `support.php?${params.toString()}`;
+            window.location.href = `support?${params.toString()}`;
             return;
         }
-        window.location.href = 'support.php?open_ticket=1';
+        window.location.href = 'support?open_ticket=1';
     }
 
     // ── CAROUSEL ───────────────────────────────────────────────

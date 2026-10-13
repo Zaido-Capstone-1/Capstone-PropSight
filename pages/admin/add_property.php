@@ -214,6 +214,6 @@ function errClass($key)
     }
   });
 </script>
-<script src="../../assets/js/admin/add_property.js"></script>
+<script src="../../assets/js/admin/add_property.js?v=3"></script>
 
 <?php include '../../includes/layout_close.php'; ?>

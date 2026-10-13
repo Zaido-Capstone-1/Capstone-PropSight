@@ -50,4 +50,4 @@
  * └──────────────────────────────────────────────────────────┘
  */
 header('Content-Type: application/json');
-echo json_encode(['status' => 'ok', 'message' => 'PropSight API v1.0', 'docs' => 'See /endpoints/index.php']);
+echo json_encode(['status' => 'ok', 'message' => 'PropSight API v1.0', 'docs' => 'See /endpoints/index']);

@@ -70,7 +70,7 @@ if ($action === 'approve') {
     $responseMessage = "ID rejected for {$userName}.";
 }
 
-$link = 'pages/user/profile.php';
+$link = 'pages/user/profile';
 $notifStmt = $conn->prepare(
     "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'support', ?, ?, ?)"
 );

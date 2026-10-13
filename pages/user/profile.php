@@ -265,7 +265,7 @@ require_once '../../lib/user-queries/profile_queries.php';
                     You've reached the highest tier. Enjoy all Diamond privileges!
                 <?php endif; ?>
             </div>
-            <a href="loyalty.php" class="tip-card-cta">
+            <a href="loyalty" class="tip-card-cta">
                 View Loyalty
                 <svg viewBox="0 0 24 24" fill="none"
                     style="width:13px;height:13px;stroke:currentColor;stroke-width:2.5;">

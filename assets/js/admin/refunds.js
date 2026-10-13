@@ -45,12 +45,17 @@
         } else {
             if (emptyState) emptyState.style.display = 'none';
             tbody.innerHTML = rows.map(r => {
+                const parts = (r.guest_name || '').trim().split(/\s+/);
+                const initials = (parts[0] ? parts[0][0].toUpperCase() : '') +
+                    (parts.length > 1 ? parts[parts.length - 1][0].toUpperCase() : '');
+                const avatarStyle = 'width:36px;height:36px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#0f2744,#1a3a6b);color:#e8c86a;font-weight:700;font-size:0.82rem;display:flex;align-items:center;justify-content:center;';
+
                 const photoHtml = r.profile_photo
-                    ? `<img src="../../${r.profile_photo}" alt="${esc(r.initial)}"
-                           style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;"
+                    ? `<img src="../../${r.profile_photo}" alt="${esc(initials)}"
+                           style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;"
                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                       <div class="avatar" style="display:none;">${esc(r.initial)}</div>`
-                    : `<div class="avatar">${esc(r.initial)}</div>`;
+                       <div style="${avatarStyle}display:none;">${esc(initials)}</div>`
+                    : `<div style="${avatarStyle}">${esc(initials)}</div>`;
 
                 // Type badge: Invoice vs Booking
                 const typeBadge = r.is_invoice

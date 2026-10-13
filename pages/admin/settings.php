@@ -114,7 +114,12 @@ foreach ($policyDefs as $pk => $pd) {
                 <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
                     <?php
                     $adminPhotoRaw = trim((string) ($adminRow['profile_photo'] ?? ''));
-                    $adminPhotoUrl = $adminPhotoRaw !== '' ? '../../' . ltrim($adminPhotoRaw, '/') : '';
+                    // SSO logins (Google/Facebook) store the provider's full avatar URL
+                    // instead of a local upload path — don't prepend "../../" to an
+                    // absolute URL, or the <img> src breaks.
+                    $adminPhotoUrl = $adminPhotoRaw === '' ? '' : (preg_match('#^https?://#i', $adminPhotoRaw)
+                        ? $adminPhotoRaw
+                        : '../../' . ltrim($adminPhotoRaw, '/'));
                     ?>
                     <div id="settingsAvatarWrap"
                         style="width:64px;height:64px;border-radius:50%;<?= $adminPhotoUrl ? '' : 'background:linear-gradient(135deg,var(--blue-300),var(--blue-700));' ?>display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:white;flex-shrink:0;overflow:hidden;position:relative;cursor:pointer;"
@@ -469,7 +474,7 @@ foreach ($policyDefs as $pk => $pd) {
         fd.append('title', title);
         fd.append('sections', JSON.stringify(sections));
 
-        fetch('../../endpoints/settings.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/settings', { method: 'POST', body: fd })
             .then(r => r.json())
             .then(d => {
                 showToast(d.message || 'Saved.', d.success ? 'success' : 'error');

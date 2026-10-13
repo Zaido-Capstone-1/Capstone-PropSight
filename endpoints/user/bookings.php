@@ -123,7 +123,7 @@ $status_map = [
                     <div style="font-size:3rem;margin-bottom:16px;">🗓️</div>
                     <div style="font-size:18px;font-weight:700;color:var(--text-dark);margin-bottom:8px;">No bookings yet</div>
                     <div style="color:var(--text-soft);margin-bottom:24px;">You haven't made any reservations yet.</div>
-                    <a href="../../index.php" class="btn-primary"
+                    <a href="../../index" class="btn-primary"
                         style="display:inline-block;text-decoration:none;padding:12px 28px;">Browse Units</a>
                 </div>
             <?php else: ?>
@@ -246,7 +246,7 @@ $status_map = [
             <div class="tip-card-label">✈️ Need help?</div>
             <div class="tip-card-title">Modify or cancel anytime</div>
             <div class="tip-card-body">Free cancellation up to 48 hours before check-in. Modifications up to 72 hours before.</div>
-            <a href="support.php" class="tip-card-cta">Contact Support →</a>
+            <a href="support" class="tip-card-cta">Contact Support →</a>
         </div>
 
         <div class="widget-card reveal rd2">

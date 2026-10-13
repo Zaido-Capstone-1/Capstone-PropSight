@@ -16,11 +16,11 @@ $sidebarPhoto = $sidebarPhotoRaw !== ''
     ? (preg_match('#^https?://#i', $sidebarPhotoRaw) ? $sidebarPhotoRaw : '../../' . ltrim($sidebarPhotoRaw, '/'))
     : '';
 $nav_items = [
-    'profile' => ['label' => 'View Profile', 'sub' => 'Personal details & preferences', 'href' => 'profile.php', 'badge' => null, 'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
+    'profile' => ['label' => 'View Profile', 'sub' => 'Personal details & preferences', 'href' => 'profile', 'badge' => null, 'icon' => '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
     'bookings' => [
         'label' => 'My Bookings',
         'sub' => 'View and manage reservations',
-        'href' => 'bookings.php',
+        'href' => 'bookings',
         'badge' => (function () {
             global $conn;
             $uid = (int) $_SESSION['user_id'];
@@ -34,14 +34,14 @@ $nav_items = [
     'payment' => [
         'label' => 'Payment History',
         'sub' => 'View transactions & refunds',
-        'href' => 'payment.php',
+        'href' => 'payment',
         'badge' => null,
         'icon' => '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'
     ],
     'saved' => [
         'label' => 'Saved Rooms',
         'sub' => 'Rooms on your wishlist',
-        'href' => 'saved.php',
+        'href' => 'saved',
         'badge' => (function () {
             global $conn;
             $uid = (int) $_SESSION['user_id'];
@@ -70,12 +70,12 @@ $nav_items = [
                 $tier = 'Gold';
             return number_format($pts) . ' pts · ' . $tier . ' tier';
         })(),
-        'href' => 'loyalty.php',
+        'href' => 'loyalty',
         'badge' => null,
         'icon' => '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'
     ],
-    'settings' => ['label' => 'Settings', 'sub' => 'Notifications, privacy, security', 'href' => 'settings.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
-    'support' => ['label' => 'Support & Help', 'sub' => 'FAQs and contact staff', 'href' => 'support.php', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
+    'settings' => ['label' => 'Settings', 'sub' => 'Notifications, privacy, security', 'href' => 'settings', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
+    'support' => ['label' => 'Support & Help', 'sub' => 'FAQs and contact staff', 'href' => 'support', 'badge' => null, 'icon' => '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
 ];
 ?>
 <?php require __DIR__ . '/_nav.php'; ?>
@@ -147,7 +147,7 @@ $nav_items = [
         echo '<div class="page-hero-rule"></div>';
         echo '<div class="page-hero-inner reveal">';
         echo '<div>';
-        echo '<div class="breadcrumb"><a href="user-dashboard.php">My Account</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg><span>' . htmlspecialchars($page_title) . '</span></div>';
+        echo '<div class="breadcrumb"><a href="user-dashboard">My Account</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg><span>' . htmlspecialchars($page_title) . '</span></div>';
         echo '<h1 class="page-hero-title">' . ($page_hero_html ?? htmlspecialchars($page_title)) . '</h1>';
         echo '<p class="page-hero-sub">' . ($page_hero_sub ?? '') . '</p>';
         echo '</div>';
@@ -161,7 +161,7 @@ $nav_items = [
                     Your account is not fully verified yet. Booking and support actions are disabled until you verify your
                     Gmail.
                 </div>
-                <a href="profile.php" class="btn-secondary">Verify now</a>
+                <a href="profile" class="btn-secondary">Verify now</a>
             </div>
         <?php endif; ?>
         <div class="page-content">

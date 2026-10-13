@@ -7,7 +7,7 @@
 //  CONFIG
 // ─────────────────────────────────────────────────────────
 const EXPENSES = {
-    apiUrl: '../../endpoints/expenses.php',
+    apiUrl: '../../endpoints/expenses',
 
     catColours: {
         Maintenance: '#E74C3C',
@@ -245,8 +245,8 @@ function renderTable(expenses) {
 
         tr.innerHTML = `
             <td style="font-weight:600;">${esc(e.description)}</td>
-            <td style="color:var(--text-soft);font-size:13px;">${esc(e.property_name)}</td>
-            <td style="color:var(--text-soft);font-size:13px;">${esc(e.unit_name)}</td>
+            <td style="color:var(--text-soft);font-size:13px;">${esc(e.property_name || '—')}</td>
+            <td style="color:var(--text-soft);font-size:13px;">${esc(e.unit_name || '—')}</td>
             <td style="color:var(--text-soft);font-size:12px;">${fmtDate(e.expense_date)}</td>
             <td>
                 <span class="badge" style="background:${col}22;color:${col};">
@@ -419,8 +419,9 @@ function showExpTableSkeleton() {
     DOM.expensesBody.innerHTML = rows;
 }
 
-async function loadExpenses() {
-    showExpTableSkeleton();
+async function loadExpenses(opts = {}) {
+    const { silent = false, preservePage = false } = opts;
+    if (!silent) showExpTableSkeleton();
 
     const params = new URLSearchParams({
         month: EXPENSES.currentMonth,
@@ -441,7 +442,7 @@ async function loadExpenses() {
             return;
         }
 
-        expCurrentPage = 1;
+        if (!preservePage) expCurrentPage = 1;
         paginateExpenses(data.expenses || []);
         renderStats(data.stats || {});
         renderCharts(data.trends || [], data.categories || []);
@@ -565,7 +566,7 @@ async function saveExpense() {
             _psChannel.postMessage({ type: 'transaction_saved' });
             sessionStorage.setItem('txn_needs_refresh', '1');
             ExpenseModal.close();
-            await loadExpenses();
+            await loadExpenses({ silent: true, preservePage: true });
             refreshCatDropdown(category);
         } else {
             showToast(json.message || 'Something went wrong.', 'error');
@@ -675,7 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
 const _psChannel = new BroadcastChannel('propsight_data');
 _psChannel.onmessage = (e) => {
     if (['payment_saved', 'payment_deleted', 'transaction_saved', 'transaction_deleted'].includes(e.data?.type)) {
-        loadExpenses();
+        loadExpenses({ silent: true, preservePage: true });
     }
 };
 
@@ -827,11 +828,13 @@ function closeDeleteModal() {
 async function _doDeleteExpense() {
     const expense_id = _pendingDeleteId;
     if (!expense_id) return;
-    closeDeleteModal();
 
     // Capture the category BEFORE removing the row
     const row = document.querySelector(`tr[data-id="${expense_id}"]`);
     const deletedCat = row?.dataset.category || '';
+
+    const confirmBtn = document.getElementById('btnConfirmDelete');
+    if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Deleting...'; }
 
     try {
         const fd = new FormData();
@@ -839,26 +842,32 @@ async function _doDeleteExpense() {
         fd.append('action', 'delete');
         fd.append('expense_id', expense_id);
 
-        const res = await fetch(EXPENSES.apiUrl, { method: 'POST', body: fd });
+        const [res] = await Promise.all([
+            fetch(EXPENSES.apiUrl, { method: 'POST', body: fd }),
+            new Promise(r => setTimeout(r, 150)) // small floor so "Deleting..." is perceptible without feeling slow
+        ]);
         const json = await res.json();
 
         if (json.success) {
+            closeDeleteModal();
             showToast('Expense deleted.');
             _psChannel.postMessage({ type: 'transaction_deleted' });
             sessionStorage.setItem('txn_needs_refresh', '1');
 
             if (row) {
-                row.style.transition = 'opacity .3s';
-                row.style.opacity = '0';
-                setTimeout(async () => {
-                    row.remove();
-                    // loadExpenses returns the fresh list — pass it to the
-                    // dropdown cleaner so it checks up-to-date data
-                    const freshList = await loadExpenses();
-                    removeCatFromDropdownIfEmpty(deletedCat, freshList);
-                }, 350);
+                row.classList.add('exp-row-deleting');
+                setTimeout(() => {
+                    row.classList.add('exp-row-collapsing');
+                    setTimeout(async () => {
+                        row.remove();
+                        // loadExpenses returns the fresh list — pass it to the
+                        // dropdown cleaner so it checks up-to-date data
+                        const freshList = await loadExpenses({ silent: true, preservePage: true });
+                        removeCatFromDropdownIfEmpty(deletedCat, freshList);
+                    }, 220);
+                }, 280);
             } else {
-                const freshList = await loadExpenses();
+                const freshList = await loadExpenses({ silent: true, preservePage: true });
                 removeCatFromDropdownIfEmpty(deletedCat, freshList);
             }
         } else {
@@ -866,6 +875,8 @@ async function _doDeleteExpense() {
         }
     } catch (err) {
         showToast('Error: ' + err.message, 'error');
+    } finally {
+        if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Yes, Delete'; }
     }
 }
 

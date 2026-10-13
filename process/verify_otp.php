@@ -58,4 +58,4 @@ $session->set('verification_status', 'Verified');
 $session->set('pending_verification', false);
 $session->refreshCsrf();
 
-echo json_encode(['success' => true, 'redirect' => 'pages/user/user-dashboard.php']);
+echo json_encode(['success' => true, 'redirect' => 'pages/user/user-dashboard']);

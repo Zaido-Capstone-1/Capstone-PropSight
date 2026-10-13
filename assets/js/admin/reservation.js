@@ -5,7 +5,7 @@ function updateStatus(bookingId, newStatus, btn) {
 
     showToast('Updating booking status…', 'info');
 
-    fetch('../../endpoints/reservations.php', {
+    fetch('../../endpoints/reservations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ action: 'update_status', booking_id: bookingId, status: newStatus })
@@ -21,4 +21,3 @@ function updateStatus(bookingId, newStatus, btn) {
     })
     .catch(() => showToast('Server unreachable. Please try again.', 'error'));
 }
-

@@ -148,7 +148,7 @@ if ($action === 'approve') {
         // Notify user of completion
         $ntTitle = "Refund Completed — $refRef";
         $ntBody  = "Your refund of $amtFmt for $refLabel has been completed successfully.";
-        $ntLink  = 'pages/user/payment.php';
+        $ntLink  = 'pages/user/payment';
         $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
         $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
         $n->execute();
@@ -176,7 +176,7 @@ if ($action === 'approve') {
     // In-app notification to user
     $ntTitle = "Refund Approved — $refRef";
     $ntBody  = "Your refund of $amtFmt for $refLabel has been approved and is now being processed. You will be notified once it is completed.";
-    $ntLink  = 'pages/user/payment.php';
+    $ntLink  = 'pages/user/payment';
     $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
     $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
     $n->execute();
@@ -223,7 +223,7 @@ if ($action === 'reject') {
     // In-app notification to user
     $ntTitle = "Refund Rejected — $refRef";
     $ntBody  = "Your refund request of $amtFmt for $refLabel was not approved. Reason: $reason";
-    $ntLink  = 'pages/user/payment.php';
+    $ntLink  = 'pages/user/payment';
     $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
     $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
     $n->execute();
@@ -274,7 +274,7 @@ if ($action === 'complete') {
     // In-app notification
     $ntTitle = "Refund Completed \u2014 $refRef";
     $ntBody  = "Your refund of $amtFmt for $refLabel has been completed successfully.";
-    $ntLink  = 'pages/user/payment.php';
+    $ntLink  = 'pages/user/payment';
     $n = $conn->prepare("INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'booking', ?, ?, ?)");
     $n->bind_param('isss', $userId, $ntTitle, $ntBody, $ntLink);
     $n->execute();

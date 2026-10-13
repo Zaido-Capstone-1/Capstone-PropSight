@@ -35,7 +35,7 @@ class RegistrationService
         'fastmail.com', 'fastmail.fm',
         'tutanota.com', 'tutamail.com', 'tuta.io',
         'gmx.com', 'gmx.net', 'gmx.de',
-        'hey.com', 'pm.me',
+        'hey.com', 'pm.me', 'boracay-accommodation.site',
     ];
 
     private \mysqli $db;

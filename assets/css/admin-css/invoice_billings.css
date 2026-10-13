@@ -372,6 +372,7 @@
 .inv-modal {
     background: #fff;
     border-radius: 14px;
+    overflow: hidden;
     width: 100%;
     max-width: 560px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
@@ -1116,7 +1117,7 @@
 
 /* Branded gradient header */
 .inv-modal-head--branded {
-    background: linear-gradient(135deg, #0f2460, #1e40af, #3b82f6) !important;
+    background: linear-gradient(135deg, #0f2744, #1a3a6b) !important;
     padding: 24px 28px 20px !important;
     position: relative;
     border-bottom: none !important;
@@ -1149,9 +1150,27 @@
     font-weight: 700 !important;
     padding: 3px 12px !important;
     border-radius: 20px !important;
-    background: rgba(255, 255, 255, .18) !important;
-    color: #fff !important;
     border: none !important;
+}
+
+.inv-badge--header.success {
+    background: rgba(34, 197, 94, .22) !important;
+    color: #86efac !important;
+}
+
+.inv-badge--header.warning {
+    background: rgba(245, 158, 11, .22) !important;
+    color: #fcd34d !important;
+}
+
+.inv-badge--header.danger {
+    background: rgba(239, 68, 68, .22) !important;
+    color: #fca5a5 !important;
+}
+
+.inv-badge--header.info {
+    background: rgba(34, 211, 238, .22) !important;
+    color: #67e8f9 !important;
 }
 
 .inv-modal-close--light {
@@ -1189,8 +1208,8 @@
     height: 44px;
     min-width: 44px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #1e40af, #3b82f6);
-    color: #fff;
+    background: linear-gradient(135deg, #0f2744, #1a3a6b);
+    color: #e8c86a;
     font-size: 16px;
     font-weight: 800;
     display: flex;
@@ -1347,12 +1366,12 @@
 
 /* Send button pulse on ready */
 .inv-btn--send {
-    background: linear-gradient(135deg, #1e40af, #3b82f6) !important;
+    background: linear-gradient(135deg, #0f2744, #1a3a6b) !important;
     border-color: transparent !important;
-    box-shadow: 0 4px 14px rgba(59, 130, 246, .35) !important;
+    box-shadow: 0 4px 14px rgba(15, 39, 68, .35) !important;
 }
 
 .inv-btn--send:hover {
-    box-shadow: 0 4px 20px rgba(59, 130, 246, .5) !important;
+    box-shadow: 0 4px 20px rgba(15, 39, 68, .5) !important;
     transform: translateY(-1px);
 }

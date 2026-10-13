@@ -140,7 +140,7 @@ http_response_code(404);
         <p>The page you're looking for doesn't exist or has been moved.<br>
             Let's get you back somewhere useful.</p>
         <div class="actions">
-            <a href="/index.php" class="btn btn-primary">Go to login</a>
+            <a href="/index" class="btn btn-primary">Go to login</a>
             <a href="javascript:history.back()" class="btn btn-secondary">Go back</a>
         </div>
     </div>

@@ -83,9 +83,9 @@ function fmt_peso(float $v): string
             <div class="card-header">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                     <span class="card-title">Refund Requests</span>
-                    <?php if ((int) $stats['pending_count'] > 0): ?>
+                    <!-- <?php if ((int) $stats['pending_count'] > 0): ?>
                         <span class="record-count" id="pendingBadge"><?= (int) $stats['pending_count'] ?> pending</span>
-                    <?php endif; ?>
+                    <?php endif; ?> -->
                 </div>
 
                 <!-- Dynamic filter controls (no form / no page reload) -->

@@ -26,8 +26,8 @@ $rent_amount = (float) ($_POST['rent_amount'] ?? 0);
 $season = trim($_POST['season'] ?? 'Low');
 $max_guests = max(1, (int) ($_POST['max_guests'] ?? 1));
 $description = trim($_POST['description'] ?? '');
-if (mb_strlen($description) > 500)
-    $description = mb_substr($description, 0, 500);
+if (mb_strlen($description) > 20000)
+    $description = mb_substr($description, 0, 20000);
 
 $raw_amenities = $_POST['amenity_ids'] ?? [];
 $amenity_ids = array_values(array_filter(array_map('intval', (array) $raw_amenities)));
@@ -156,7 +156,7 @@ if (!empty($_FILES['unit_images']['name'][0])) {
 
     $allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     $max_size = 5 * 1024 * 1024;
-    $file_count = count($_FILES['unit_images']['name']);
+    $file_count = min(count($_FILES['unit_images']['name']), 50);
 
     $img_stmt = $conn->prepare("
         INSERT INTO unit_images (unit_id, image_path, sort_order)

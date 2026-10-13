@@ -3,7 +3,7 @@ include '../../includes/session.php';
 require_not_blacklisted(false);
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
-    header('Location: ../../index.php');
+    header('Location: ../../index');
     exit;
 }
 
@@ -173,7 +173,7 @@ require_once '../../lib/user-queries/messages_queries.php';
 <script>
     window.__PS_USER_MSG__ = {
         userId: <?= $userId ?>,
-        apiUrl: '../../endpoints/user/messages.php'
+        apiUrl: '../../endpoints/user/messages'
     };
 </script>
 <script>window.PS_RT_PAGE = 'messages';</script>

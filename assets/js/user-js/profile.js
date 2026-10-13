@@ -188,7 +188,7 @@ function confirmDelete() {
                 return;
             }
             showToast(data.message || 'Account deleted.');
-            window.location.href = '../../index.php';
+            window.location.href = '../../index';
         })
         .catch(() => {
             btn.disabled = false;

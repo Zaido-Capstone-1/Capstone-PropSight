@@ -297,7 +297,7 @@ if ($method === 'POST') {
             $senderName = trim(($uRow['first_name'] ?? '') . ' ' . ($uRow['last_name'] ?? ''));
             $bodyPreview = mb_strimwidth($body, 0, 100, '...');
             $notifTitle = 'New message from ' . $senderName;
-            $notifLink = 'pages/admin/messages.php';
+            $notifLink = 'pages/admin/messages';
             $notifStmt = $conn->prepare(
                 "INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, 'message', ?, ?, ?)"
             );
@@ -311,7 +311,7 @@ if ($method === 'POST') {
                 'message',
                 'msg-' . $newId,
                 $notifTitle . ': ' . mb_substr($bodyPreview, 0, 80),
-                'messages.php?user_id=' . $userId,
+                'messages?user_id=' . $userId,
                 gmdate('Y-m-d H:i:s')
             );
 

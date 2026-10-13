@@ -53,7 +53,7 @@ if (!function_exists('sync_notifications')) {
                 'message',
                 'msg-' . (int) $row['id'],
                 'New message from ' . trim((string) ($row['actor'] ?? 'User')),
-                'messages.php?user_id=' . (int) $row['from_user'],
+                'messages?user_id=' . (int) $row['from_user'],
                 (string) ($row['created_at'] ?? gmdate('Y-m-d H:i:s'))
             );
         }
@@ -72,7 +72,7 @@ if (!function_exists('sync_notifications')) {
                 'new_booking',
                 'booking-' . (int) $row['booking_id'],
                 'New booking #' . str_pad((string) $row['booking_id'], 4, '0', STR_PAD_LEFT),
-                'reservations.php?status=pending',
+                'reservations?status=pending',
                 (string) ($row['created_at'] ?? gmdate('Y-m-d H:i:s'))
             );
         }
@@ -92,7 +92,7 @@ if (!function_exists('sync_notifications')) {
                 'maintenance',
                 'task-' . (int) $row['request_id'],
                 'Task: ' . trim((string) ($row['issue_description'] ?: 'Maintenance request')),
-                'task_summary.php?status=open',
+                'task_summary?status=open',
                 (string) ($row['created_at'] ?? gmdate('Y-m-d H:i:s'))
             );
         }

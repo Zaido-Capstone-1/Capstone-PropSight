@@ -234,7 +234,7 @@ $deadlineFmt = date('M j, Y', strtotime("+30 days", $paidAt));
 // ── Notify admins (in-app) ────────────────────────────────────────────────────
 $ntTitle = "Refund Request — Invoice {$invoiceNo}";
 $ntBody = "{$userName} requested a refund of {$amtFmt} for invoice {$invoiceNo}.";
-$ntLink = 'pages/admin/refunds.php';
+$ntLink = 'pages/admin/refunds';
 
 $admins = $conn->query("SELECT user_id FROM users WHERE role='admin' AND is_active=1 LIMIT 20");
 while ($adm = $admins->fetch_assoc()) {

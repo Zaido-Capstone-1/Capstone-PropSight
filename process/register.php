@@ -68,8 +68,8 @@ try {
     $otp = $c->otp()->issueVerifyOtp(expirySeconds: 600);
     $c->authEmail()->sendVerifyOtp($data['email'], $data['first_name'], $otp);
     $session->refreshCsrf();
-    echo json_encode(['status' => 'verify_required', 'message' => 'Account created! Please verify your email.', 'redirect' => 'verify.php']);
+    echo json_encode(['status' => 'verify_required', 'message' => 'Account created! Please verify your email.', 'redirect' => 'verify']);
 } catch (\RuntimeException $e) {
     // Non-fatal: account was created, email just failed — user can request resend
-    echo json_encode(['status' => 'verify_required', 'message' => 'Account created! Please verify your email.', 'redirect' => 'verify.php']);
+    echo json_encode(['status' => 'verify_required', 'message' => 'Account created! Please verify your email.', 'redirect' => 'verify']);
 }

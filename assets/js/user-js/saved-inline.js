@@ -420,7 +420,7 @@ function removeSaved(savedId, unitId, btn) {
         fd.append('action', 'remove');
         fd.append('unit_id', unitId);
         if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
-        fetch('../../endpoints/user/saved.php', {
+        fetch('../../endpoints/user/saved', {
                 method: 'POST',
                 body: fd
             })

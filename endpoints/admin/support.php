@@ -113,7 +113,7 @@ if ($method === 'POST') {
         $notifBody = mb_strimwidth($body, 0, 100, '…');
         $notifStmt = $conn->prepare(
             "INSERT INTO notifications (user_id, type, title, body, link)
-             VALUES (?, 'support', 'Admin replied to your ticket', ?, 'pages/user/support.php')"
+             VALUES (?, 'support', 'Admin replied to your ticket', ?, 'pages/user/support')"
         );
         $notifStmt->bind_param('is', $userId, $notifBody);
         $notifStmt->execute();

@@ -67,7 +67,7 @@ function uploadAdminPhoto(input) {
         fd.append('email', document.getElementById('adm_email')?.value || '');
         fd.append('phone', document.getElementById('adm_phone')?.value || '');
         fd.append('address', document.getElementById('adm_addr')?.value || '');
-        fetch('../../endpoints/settings.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/settings', { method: 'POST', body: fd })
             .then(r => r.json()).then(d => {
                 showToast(d.message, d.success ? 'success' : 'error');
             }).catch(() => showToast('An error occurred.', 'error'));
@@ -78,7 +78,7 @@ function uploadAdminPhoto(input) {
         fd.append('current_password', document.getElementById('cur_pw')?.value || '');
         fd.append('new_password', document.getElementById('new_pw')?.value || '');
         fd.append('confirm_password', document.getElementById('conf_pw')?.value || '');
-        fetch('../../endpoints/settings.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/settings', { method: 'POST', body: fd })
             .then(r => r.json()).then(d => {
                 showToast(d.message, d.success ? 'success' : 'error');
                 if (d.success) { document.getElementById('cur_pw').value = ''; document.getElementById('new_pw').value = ''; document.getElementById('conf_pw').value = ''; }
@@ -87,7 +87,7 @@ function uploadAdminPhoto(input) {
     function saveSystemPrefs() {
         const fd = new FormData(); fd.append('action', 'update_system');
         document.querySelectorAll('[data-setting]').forEach(el => fd.append(el.dataset.setting, el.value));
-        fetch('../../endpoints/settings.php', { method: 'POST', body: fd })
+        fetch('../../endpoints/settings', { method: 'POST', body: fd })
             .then(r => r.json()).then(d => {
                 showToast(d.message, d.success ? 'success' : 'error');
             }).catch(() => showToast('An error occurred.', 'error'));

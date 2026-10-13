@@ -589,8 +589,8 @@ async function verifyOtp(attempts = 0, expiresInSeconds = 300) {
                 // showToast(data.message, 'success');
                 setTimeout(() => {
                     window.location.href = data.role === 'admin' ?
-                        'pages/admin/index.php' :
-                        'pages/user/user-dashboard.php';
+                        'pages/admin/index' :
+                        'pages/user/user-dashboard';
                 }, 1200);
             } else {
                 hideAuthLoading();
@@ -677,8 +677,8 @@ loginForm.addEventListener('submit', async function (e) {
             verifyOtp(0, Number(data.otp_expires_in_seconds) || 300);
         } else if (data.status === 'success') {
             window.location.href = data.role === 'admin' ?
-                'pages/admin/index.php' :
-                'pages/user/user-dashboard.php';
+                'pages/admin/index' :
+                'pages/user/user-dashboard';
         } else {
             showLoginAlert(data.message, 'error');
         }
@@ -893,7 +893,7 @@ registerForm.addEventListener('submit', async function (e) {
         if (data.status === 'verify_required') {
             showToast(data.message, 'success');
             setTimeout(() => {
-                window.location.href = data.redirect ?? 'verify.php';
+                window.location.href = data.redirect ?? 'verify';
             }, 800);
         } else if (data.status === 'success') {
             showToast(data.message, 'success');

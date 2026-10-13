@@ -100,7 +100,7 @@ $recStmt = $conn->prepare("
     LEFT JOIN tenants inv_t ON inv_t.tenant_id = inv.tenant_id
     LEFT JOIN users   inv_u ON inv_u.email = inv_t.email
     WHERE $where_sql
-    ORDER BY p.created_at DESC
+    ORDER BY p.payment_date DESC, p.payment_id DESC
 ");
 
 if ($types && $params) {

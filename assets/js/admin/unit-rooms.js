@@ -531,7 +531,7 @@ async function openViewModal(unit) {
           <div style="grid-column:1/-1;">
             <label style="${LBL}">Description</label>
             <textarea id="ve-description" rows="3" style="${INP}resize:vertical;" placeholder="Describe the unit — features, highlights, furnishing details…">${unit.description || ''}</textarea>
-            <div style="text-align:right;font-size:11px;color:var(--text-soft);margin-top:3px;"><span id="ve-desc-count">${(unit.description||'').length}</span> / 500</div>
+            <div style="text-align:right;font-size:11px;color:var(--text-soft);margin-top:3px;"><span id="ve-desc-count">${(unit.description||'').length}</span> / 20000</div>
           </div>
 
           <!-- Amenities -->
@@ -620,8 +620,8 @@ async function openViewModal(unit) {
     const descCount = document.getElementById('ve-desc-count');
     descTA.addEventListener('input', function () {
       const len = this.value.length;
-      if (len > 500) this.value = this.value.slice(0, 500);
-      descCount.textContent = Math.min(len, 500);
+      if (len > 20000) this.value = this.value.slice(0, 20000);
+      descCount.textContent = Math.min(len, 20000);
       descCount.style.color = len >= 450 ? '#ef4444' : 'var(--text-soft)';
     });
 
@@ -674,7 +674,7 @@ async function openViewModal(unit) {
       const countEl = document.getElementById('ve-photo-count');
       if (countEl) {
         countEl.textContent = `${total} photo${total !== 1 ? 's' : ''}`;
-        countEl.style.color = total >= 10 ? '#ef4444' : 'var(--text-soft)';
+        countEl.style.color = total >= 50 ? '#ef4444' : 'var(--text-soft)';
       }
     }
 
@@ -725,7 +725,7 @@ async function openViewModal(unit) {
         : 0;
       const preview = document.getElementById('ve-new-preview');
       incoming.forEach(file => {
-        if (remaining + newFiles.length >= 10) return;
+        if (remaining + newFiles.length >= 50) return;
         newFiles.push(file);
         const url = URL.createObjectURL(file);
         const wrap = document.createElement('div');
@@ -1004,7 +1004,7 @@ document.getElementById('open-add-unit-modal').addEventListener('click', () => {
       <div class="form-group full">
         <label>Description</label>
         <textarea id="m-description" rows="3" placeholder="Describe the unit…" style="width:100%;resize:vertical;font-size:13px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;color:var(--text);background:var(--input-bg,#fff);line-height:1.5;"></textarea>
-        <div style="text-align:right;font-size:11px;color:var(--text-soft);margin-top:4px;"><span id="m-desc-count">0</span> / 500</div>
+        <div style="text-align:right;font-size:11px;color:var(--text-soft);margin-top:4px;"><span id="m-desc-count">0</span> / 20000</div>
       </div>
 
       <div class="form-group full" id="m-amenities-section" style="display:none;">
@@ -1051,8 +1051,8 @@ document.getElementById('open-add-unit-modal').addEventListener('click', () => {
       const descCount = bd.querySelector('#m-desc-count');
       descArea.addEventListener('input', function () {
         const len = this.value.length;
-        if (len > 500) this.value = this.value.slice(0, 500);
-        descCount.textContent = Math.min(len, 500);
+        if (len > 20000) this.value = this.value.slice(0, 20000);
+        descCount.textContent = Math.min(len, 20000);
         descCount.style.color = len >= 450 ? '#ef4444' : 'var(--text-soft)';
       });
 
@@ -1095,8 +1095,8 @@ document.getElementById('open-add-unit-modal').addEventListener('click', () => {
       function updateFileCount() {
         if (files.length > 0) {
           fileCountEl.style.display = 'block';
-          fileCountEl.textContent = `${files.length} / 10 photo${files.length !== 1 ? 's' : ''} selected`;
-          fileCountEl.style.color = files.length >= 10 ? '#ef4444' : 'var(--text-soft)';
+          fileCountEl.textContent = `${files.length} / 50 photo${files.length !== 1 ? 's' : ''} selected`;
+          fileCountEl.style.color = files.length >= 50 ? '#ef4444' : 'var(--text-soft)';
         } else {
           fileCountEl.style.display = 'none';
         }
@@ -1105,7 +1105,7 @@ document.getElementById('open-add-unit-modal').addEventListener('click', () => {
       function addFiles(newFiles) {
         const preview = bd.querySelector('#m-preview');
         newFiles.forEach(file => {
-          if (files.length >= 10) return;
+          if (files.length >= 50) return;
           files.push(file);
           const url = URL.createObjectURL(file);
           const wrap = document.createElement('div');

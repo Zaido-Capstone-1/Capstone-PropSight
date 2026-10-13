@@ -5,13 +5,13 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
-    header("Location: ../../index.php");
+    header("Location: ../../index");
     exit;
 }
 
 // If user just registered and hasn't verified email yet, send them back to index
 if (!empty($_SESSION['pending_verification'])) {
-    header("Location: ../../verify.php");
+    header("Location: ../../verify");
     exit;
 }
 
@@ -61,7 +61,7 @@ if (!function_exists('require_not_blacklisted')) {
         }
 
         $_SESSION['toast_error'] = 'Your account has been suspended. Please contact support.';
-        header('Location: ../../pages/user/support.php?suspended=1');
+        header('Location: ../../pages/user/support?suspended=1');
         exit;
     }
 }
@@ -87,7 +87,7 @@ if (!function_exists('require_verified_user_action')) {
         }
 
         $_SESSION['toast_error'] = 'Please verify your Gmail first before performing this action.';
-        header('Location: ../../pages/user/profile.php');
+        header('Location: ../../pages/user/profile');
         exit;
     }
 }
@@ -115,7 +115,7 @@ if (!function_exists('require_csrf_token')) {
         }
 
         $_SESSION['toast_error'] = 'Invalid CSRF token.';
-        header('Location: ../../index.php');
+        header('Location: ../../index');
         exit;
     }
 }

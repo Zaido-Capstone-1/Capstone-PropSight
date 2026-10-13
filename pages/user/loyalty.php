@@ -388,7 +388,7 @@ function resolve_reward_icon(string $name, string $desc, array $map): string
             <div class="tip-card-title">Double points this month!</div>
             <div class="tip-card-body">Book any room between now and end of month to earn 2× loyalty points on your
                 stay.</div>
-            <a href="../../index.php" class="tip-card-cta">
+            <a href="../../index" class="tip-card-cta">
                 Browse Rooms
                 <svg viewBox="0 0 24 24" fill="none"
                     style="width:13px;height:13px;stroke:currentColor;stroke-width:2.5;">

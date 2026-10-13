@@ -51,5 +51,5 @@ $units_result = $conn->query(
 
 // Prepared statement for unit images — bind $uid and execute inside the loop
 $imgStmt = $conn->prepare(
-    "SELECT image_path FROM unit_images WHERE unit_id=? ORDER BY sort_order ASC LIMIT 6"
+    "SELECT image_path FROM unit_images WHERE unit_id=? ORDER BY sort_order ASC"
 );

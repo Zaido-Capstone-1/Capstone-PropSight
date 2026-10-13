@@ -439,7 +439,7 @@ function renderLoyalty(payload) {
 
 /* ── Fetch fresh data ── */
 function refreshLoyaltyData() {
-    fetch('../../endpoints/user/loyalty.php')
+    fetch('../../endpoints/user/loyalty')
         .then(r => r.json())
         .then(data => {
             if (data.success) renderLoyalty(data);

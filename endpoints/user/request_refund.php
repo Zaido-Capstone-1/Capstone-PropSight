@@ -133,7 +133,7 @@ $userEmail = $uInfo['email'] ?? '';
 // ── 5. Notify admins (in-app + email) ────────────────────────────────────────
 $ntTitle = "Refund Request — $bkRef";
 $ntBody = "A guest has requested a refund of $amtFmt for booking $bkRef.";
-$ntLink = 'pages/admin/refunds.php';
+$ntLink = 'pages/admin/refunds';
 
 require_once __DIR__ . '/../../includes/admin_notif_helpers.php';
 $admins = $conn->query("SELECT user_id, first_name, email FROM users WHERE role='admin' AND is_active=1 LIMIT 20");
@@ -149,7 +149,7 @@ while ($adm = $admins->fetch_assoc()) {
         'refund',
         'refund-' . $bookingId,
         $ntTitle . ': ' . mb_substr($ntBody, 0, 80),
-        'refunds.php',
+        'refunds',
         gmdate('Y-m-d H:i:s')
     );
 }

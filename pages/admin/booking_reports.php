@@ -301,14 +301,14 @@ include '../../lib/admin-queries/booking_reports_queries.php';
       </div>
     </div>
 
-    <?php if ($total <= 1 && empty($byProperty)): ?>
-      <div class="card" style="text-align:center;padding:40px;">
-        <div style="font-size:2rem;margin-bottom:12px;">📋</div>
-        <div style="font-size:16px;font-weight:600;color:var(--text-dark);">No booking data yet</div>
-        <div style="color:var(--text-soft);margin-top:8px;">Booking data will appear here once reservations are made.
-        </div>
-      </div>
-    <?php endif; ?>
+    <!--<?php if ($total <= 1 && empty($byProperty)): ?>-->
+    <!--  <div class="card" style="text-align:center;padding:40px;">-->
+    <!--    <div style="font-size:2rem;margin-bottom:12px;">📋</div>-->
+    <!--    <div style="font-size:16px;font-weight:600;color:var(--text-dark);">No booking data yet</div>-->
+    <!--    <div style="color:var(--text-soft);margin-top:8px;">Booking data will appear here once reservations are made.-->
+    <!--    </div>-->
+    <!--  </div>-->
+    <!--<?php endif; ?>-->
 
   </div>
 </div>

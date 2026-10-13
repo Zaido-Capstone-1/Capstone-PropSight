@@ -90,7 +90,7 @@ try {
     oauth_log_in_user($user);
 
     $role = $_SESSION['role'] ?? 'user';
-    header('Location: ../../' . ($role === 'admin' ? 'pages/admin/index.php' : 'pages/user/user-dashboard.php'));
+    header('Location: ../../' . ($role === 'admin' ? 'pages/admin/index' : 'pages/user/user-dashboard'));
     exit;
 } catch (Throwable $e) {
     error_log('Google OAuth error: ' . $e->getMessage());

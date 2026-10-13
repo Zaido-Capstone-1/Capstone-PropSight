@@ -134,7 +134,7 @@ function submitTicket() {
     fd.append('priority', 'medium');
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
 
-    fetch('../../endpoints/user/support.php', { method: 'POST', body: fd })
+    fetch('../../endpoints/user/support', { method: 'POST', body: fd })
         .then(r => r.json())
         .then(async (data) => {
             await waitForMinLoading();
@@ -235,7 +235,7 @@ function openTicketModal() {
 function loadAndOpenTicket(ticketId) {
     if (!ticketId) return;
 
-    fetch(`../../endpoints/user/support.php?action=messages&ticket_id=${encodeURIComponent(String(ticketId))}`)
+    fetch(`../../endpoints/user/support?action=messages&ticket_id=${encodeURIComponent(String(ticketId))}`)
         .then(r => r.json())
         .then(data => {
             if (!data.success) {
@@ -570,7 +570,7 @@ function submitModalTicket() {
     fd.append('priority', 'medium');
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
 
-    const apiUrl = window.__PS_USER_SUPPORT_API__ ?? '../../endpoints/user/support.php';
+    const apiUrl = window.__PS_USER_SUPPORT_API__ ?? '../../endpoints/user/support';
 
     fetch(apiUrl, { method: 'POST', body: fd })
         .then(r => r.json())
@@ -630,7 +630,7 @@ function submitModalMaintenance() {
     fd.append('client_date', new Date().toLocaleDateString('en-CA')); // YYYY-MM-DD in local tz
     if (typeof window.psAppendCsrf === 'function') window.psAppendCsrf(fd);
 
-    const apiUrl = window.__PS_USER_SUPPORT_API__ ?? '../../endpoints/user/support.php';
+    const apiUrl = window.__PS_USER_SUPPORT_API__ ?? '../../endpoints/user/support';
 
     fetch(apiUrl, { method: 'POST', body: fd })
         .then(r => r.json())

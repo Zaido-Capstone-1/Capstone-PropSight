@@ -473,7 +473,7 @@ while ($rr = $rs->fetch_assoc())
             <p class="dash-subtitle">Track all loyalty reward redemptions made by guests.</p>
         </div>
         <div class="dash-header-actions">
-            <a href="loyalty_rewards.php" class="btn btn-outline"
+            <a href="loyalty_rewards" class="btn btn-outline"
                 style="display:inline-flex;align-items:center;gap:7px;text-decoration:none;font-size:13px;">
                 <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="14" height="14">
                     <circle cx="12" cy="8" r="5" />
@@ -596,7 +596,7 @@ while ($rr = $rs->fetch_assoc())
                             </div>
 
                             <?php if ($search || $status_f || $reward_f || $date_from || $date_to): ?>
-                                <a href="redemption_history.php" class="rdh-btn-reset">✕ Clear filters</a>
+                                <a href="redemption_history" class="rdh-btn-reset">✕ Clear filters</a>
                             <?php endif; ?>
                         </div>
 

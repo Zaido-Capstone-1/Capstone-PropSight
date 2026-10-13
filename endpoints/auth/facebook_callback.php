@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../integrations/oauth_helpers.php';
 
 function facebook_fail(string $message): never
 {
-    header('Location: ../../index.php?oauth_error=' . urlencode($message));
+    header('Location: ../../index?oauth_error=' . urlencode($message));
     exit;
 }
 
@@ -84,7 +84,7 @@ try {
     oauth_log_in_user($user);
 
     $role = $_SESSION['role'] ?? 'user';
-    header('Location: ../../' . ($role === 'admin' ? 'pages/admin/index.php' : 'pages/user/user-dashboard.php'));
+    header('Location: ../../' . ($role === 'admin' ? 'pages/admin/index' : 'pages/user/user-dashboard'));
     exit;
 } catch (Throwable $e) {
     error_log('Facebook OAuth error: ' . $e->getMessage());

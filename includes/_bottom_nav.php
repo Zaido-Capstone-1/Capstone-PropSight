@@ -25,7 +25,7 @@ if ($_bn_bookings_badge === null && isset($_SESSION['user_id'])) {
 }
 ?>
 <div class="user-bottom-nav" id="userBottomNav" role="navigation" aria-label="Main navigation">
-    <a href="user-dashboard.php" class="ubn-item<?php echo $_bn_active === 'dashboard' ? ' ubn-active' : ''; ?>">
+    <a href="user-dashboard" class="ubn-item<?php echo $_bn_active === 'dashboard' ? ' ubn-active' : ''; ?>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
             stroke-linejoin="round" width="20" height="20" style="width:20px;height:20px;flex-shrink:0;">
             <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z" />
@@ -33,7 +33,7 @@ if ($_bn_bookings_badge === null && isset($_SESSION['user_id'])) {
         </svg>
         <span>Home</span>
     </a>
-    <a href="bookings.php" class="ubn-item<?php echo $_bn_active === 'bookings' ? ' ubn-active' : ''; ?>">
+    <a href="bookings" class="ubn-item<?php echo $_bn_active === 'bookings' ? ' ubn-active' : ''; ?>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
             stroke-linejoin="round" width="20" height="20" style="width:20px;height:20px;flex-shrink:0;">
             <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -45,7 +45,7 @@ if ($_bn_bookings_badge === null && isset($_SESSION['user_id'])) {
         <span class="ubn-badge" data-rt="bookings-count"
             style="<?php echo $_bn_bookings_badge ? '' : 'display:none;'; ?>"><?php echo htmlspecialchars($_bn_bookings_badge ?? ''); ?></span>
     </a>
-    <a href="units.php" class="ubn-item<?php echo $_bn_active === 'browse' ? ' ubn-active' : ''; ?>">
+    <a href="units" class="ubn-item<?php echo $_bn_active === 'browse' ? ' ubn-active' : ''; ?>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
             stroke-linejoin="round" width="20" height="20" style="width:20px;height:20px;flex-shrink:0;">
             <circle cx="11" cy="11" r="7" />
@@ -53,7 +53,7 @@ if ($_bn_bookings_badge === null && isset($_SESSION['user_id'])) {
         </svg>
         <span>Browse</span>
     </a>
-    <a href="payment.php" class="ubn-item<?php echo $_bn_active === 'payment' ? ' ubn-active' : ''; ?>">
+    <a href="payment" class="ubn-item<?php echo $_bn_active === 'payment' ? ' ubn-active' : ''; ?>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
             stroke-linejoin="round" width="20" height="20" style="width:20px;height:20px;flex-shrink:0;">
             <rect x="2" y="5" width="20" height="14" rx="2" />
@@ -63,7 +63,7 @@ if ($_bn_bookings_badge === null && isset($_SESSION['user_id'])) {
         </svg>
         <span>Payments</span>
     </a>
-    <a href="profile.php" class="ubn-item<?php echo $_bn_active === 'profile' ? ' ubn-active' : ''; ?>">
+    <a href="profile" class="ubn-item<?php echo $_bn_active === 'profile' ? ' ubn-active' : ''; ?>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
             stroke-linejoin="round" width="20" height="20" style="width:20px;height:20px;flex-shrink:0;">
             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />

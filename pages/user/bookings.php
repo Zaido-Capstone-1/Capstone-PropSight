@@ -85,7 +85,7 @@ $status_map = [
         <div>
             <div style="font-size:13px;font-weight:700;color:#dc2626;">Your account is suspended.</div>
             <div style="font-size:12px;color:#ef4444;margin-top:2px;">You can view your existing bookings but cannot make
-                new ones. <a href="support.php?suspended=1" style="color:#dc2626;font-weight:700;">Contact support</a> to
+                new ones. <a href="support?suspended=1" style="color:#dc2626;font-weight:700;">Contact support</a> to
                 appeal.</div>
         </div>
     </div>
@@ -118,7 +118,7 @@ $status_map = [
                     <div style="font-size:18px;font-weight:700;color:var(--text-dark);margin-bottom:8px;">No bookings yet
                     </div>
                     <div style="color:var(--text-soft);margin-bottom:24px;">You haven't made any reservations yet.</div>
-                    <a href="user-dashboard.php#account" class="btn-primary"
+                    <a href="user-dashboard#account" class="btn-primary"
                         style="display:inline-block;text-decoration:none;padding:12px 28px;">Browse Units</a>
                 </div>
             <?php else: ?>
@@ -348,7 +348,7 @@ $status_map = [
             <div class="tip-card-title">Modify or cancel anytime</div>
             <div class="tip-card-body">Free cancellation up to 48 hours before check-in. Modifications up to 72 hours
                 before.</div>
-            <a href="support.php" class="tip-card-cta">
+            <a href="support" class="tip-card-cta">
                 Contact Support
                 <svg viewBox="0 0 24 24" fill="none"
                     style="width:13px;height:13px;stroke:currentColor;stroke-width:2.5;">

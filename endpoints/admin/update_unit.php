@@ -40,7 +40,7 @@ $status = trim($_POST['status'] ?? 'vacant');
 $season = trim($_POST['season'] ?? 'Low');
 $max_guests = max(1, (int) ($_POST['max_guests'] ?? 1));
 $tenant_name = trim($_POST['tenant_name'] ?? '');
-$description = mb_substr(trim($_POST['description'] ?? ''), 0, 500);
+$description = mb_substr(trim($_POST['description'] ?? ''), 0, 20000);
 
 $allowed_statuses = ['occupied', 'vacant', 'maintenance'];
 if (!in_array($status, $allowed_statuses))
@@ -142,7 +142,7 @@ try {
 
         $allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         $max_size = 5 * 1024 * 1024;
-        $file_count = count($_FILES['unit_images']['name']);
+        $file_count = min(count($_FILES['unit_images']['name']), 50);
 
         // Get current max sort_order
         $sortRes = $conn->query("SELECT COALESCE(MAX(sort_order), -1) AS max_sort FROM unit_images WHERE unit_id=$unit_id");
@@ -199,9 +199,13 @@ try {
 
     // Fetch images
     $imgs = [];
-    $ir = $conn->query("SELECT image_path FROM unit_images WHERE unit_id=$unit_id ORDER BY sort_order ASC LIMIT 6");
-    while ($ir && $row = $ir->fetch_assoc())
+    $ir_stmt = $conn->prepare("SELECT image_path FROM unit_images WHERE unit_id=? ORDER BY sort_order ASC");
+    $ir_stmt->bind_param('i', $unit_id);
+    $ir_stmt->execute();
+    $ir = $ir_stmt->get_result();
+    while ($row = $ir->fetch_assoc())
         $imgs[] = $row['image_path'];
+    $ir_stmt->close();
 
     echo json_encode([
         'status' => 'success',

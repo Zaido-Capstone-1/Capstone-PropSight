@@ -44,7 +44,7 @@ $session->populateUser($user);
 $session->refreshCsrf();
 
 $redirect = ($user['role'] === 'admin')
-    ? '../pages/admin/index.php'
-    : '../pages/user/user-dashboard.php';
+    ? '../pages/admin/index'
+    : '../pages/user/user-dashboard';
 
 echo json_encode(['status' => 'success', 'message' => 'Login successful!', 'role' => $user['role'] ?? 'user']);

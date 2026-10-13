@@ -126,13 +126,13 @@ $_email      = htmlspecialchars($_SESSION['email'] ?? '');
 $_initials   = strtoupper(mb_substr($_firstName, 0, 1) . mb_substr($_lastName, 0, 1));
 
 $nav_items = [
-    'profile'  => ['label'=>'View Profile',    'sub'=>'Personal details & preferences','href'=>'profile.php',  'badge'=>null,'icon'=>'<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
-    'bookings' => ['label'=>'My Bookings',     'sub'=>'View and manage reservations',  'href'=>'bookings.php', 'badge'=>(function() use ($conn,$_uid){ $r=mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) AS c FROM bookings WHERE user_id=$_uid AND status IN('pending','confirmed','active')")); return $r['c']>0?(string)$r['c']:null; })(),'icon'=>'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'],
-    'payment'  => ['label'=>'Payment History', 'sub'=>'View transactions & refunds',   'href'=>'payment.php',  'badge'=>null,'icon'=>'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'],
-    'saved'    => ['label'=>'Saved Rooms',     'sub'=>'Rooms on your wishlist',        'href'=>'saved.php',    'badge'=>count($savedUnitIds)>0?(string)count($savedUnitIds):null,'icon'=>'<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>'],
-    'loyalty'  => ['label'=>'Loyalty Points',  'sub'=>$_lPts.' pts · '.$_lTier.' tier','href'=>'loyalty.php', 'badge'=>null,'icon'=>'<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'],
-    'settings' => ['label'=>'Settings',        'sub'=>'Notifications, privacy, security','href'=>'settings.php','badge'=>null,'icon'=>'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
-    'support'  => ['label'=>'Support & Help',  'sub'=>'FAQs and contact staff',        'href'=>'support.php',  'badge'=>null,'icon'=>'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
+    'profile'  => ['label'=>'View Profile',    'sub'=>'Personal details & preferences','href'=>'profile',  'badge'=>null,'icon'=>'<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
+    'bookings' => ['label'=>'My Bookings',     'sub'=>'View and manage reservations',  'href'=>'bookings', 'badge'=>(function() use ($conn,$_uid){ $r=mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) AS c FROM bookings WHERE user_id=$_uid AND status IN('pending','confirmed','active')")); return $r['c']>0?(string)$r['c']:null; })(),'icon'=>'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'],
+    'payment'  => ['label'=>'Payment History', 'sub'=>'View transactions & refunds',   'href'=>'payment',  'badge'=>null,'icon'=>'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>'],
+    'saved'    => ['label'=>'Saved Rooms',     'sub'=>'Rooms on your wishlist',        'href'=>'saved',    'badge'=>count($savedUnitIds)>0?(string)count($savedUnitIds):null,'icon'=>'<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>'],
+    'loyalty'  => ['label'=>'Loyalty Points',  'sub'=>$_lPts.' pts · '.$_lTier.' tier','href'=>'loyalty', 'badge'=>null,'icon'=>'<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>'],
+    'settings' => ['label'=>'Settings',        'sub'=>'Notifications, privacy, security','href'=>'settings','badge'=>null,'icon'=>'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>'],
+    'support'  => ['label'=>'Support & Help',  'sub'=>'FAQs and contact staff',        'href'=>'support',  'badge'=>null,'icon'=>'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'],
 ];
 $active_nav = 'browse';
 
@@ -174,7 +174,7 @@ echo '<div class="page-hero"' . $_heroStyle . '>';
 echo '<div class="page-hero-rule"></div>';
 echo '<div class="page-hero-inner reveal">';
 echo '<div>';
-echo '<div class="breadcrumb"><a href="user-dashboard.php">My Account</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg><span>Browse Units</span></div>';
+echo '<div class="breadcrumb"><a href="user-dashboard">My Account</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg><span>Browse Units</span></div>';
 echo '<h1 class="page-hero-title">Browse Our <em>Units</em></h1>';
 echo '<p class="page-hero-sub">Filter, sort, and find the perfect unit for your Boracay stay.</p>';
 echo '</div>';
@@ -428,8 +428,8 @@ echo '</div>';
 
                         $availClass = $isVacant ? 'avail-yes'
                             : ($unit['status'] === 'maintenance' ? 'avail-maintenance' : 'avail-no');
-                        $detailUrl = 'unit_detail.php?id=' . (int) $unit['unit_id'];
-                        $bookUrl = 'unit_detail.php?id=' . (int) $unit['unit_id'] . '&book=1';
+                        $detailUrl = 'unit_detail?id=' . (int) $unit['unit_id'];
+                        $bookUrl = 'unit_detail?id=' . (int) $unit['unit_id'] . '&book=1';
                         $typeSlug = preg_replace('/[^a-z0-9]+/', '-', strtolower($unit['unit_type'] ?? ''));
                         $amAttr = htmlspecialchars(implode('||', $amNames), ENT_QUOTES);
                         ?>

@@ -103,8 +103,8 @@ $expStmt = $conn->prepare(
          e.expense_id, e.description, e.expense_category, e.amount,
          DATE_FORMAT(e.expense_date, '%b %d, %Y') AS expense_date_label,
          e.expense_date,
-         p.property_name,
-         COALESCE(u.unit_name, u.unit_number, '') AS unit_label
+         COALESCE(NULLIF(p.property_name, ''), '—') AS property_name,
+         COALESCE(NULLIF(u.unit_name, ''), NULLIF(u.unit_number, ''), '—') AS unit_label
      FROM expenses e
      LEFT JOIN properties p ON p.property_id = e.property_id
      LEFT JOIN units      u ON u.unit_id     = e.unit_id

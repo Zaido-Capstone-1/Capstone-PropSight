@@ -9,5 +9,5 @@ require_once __DIR__ . '/../core/SessionManager.php';
 
 (new SessionManager())->destroy();
 
-header('Location: ../index.php');
+header('Location: ../index');
 exit;

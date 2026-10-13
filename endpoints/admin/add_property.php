@@ -9,7 +9,7 @@ if (($_SESSION['role'] ?? '') !== 'admin') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ../../pages/admin/add_property.php');
+    header('Location: ../../pages/admin/add_property');
     exit;
 }
 require_csrf_token();
@@ -46,7 +46,7 @@ if ($type === '')
 if (!empty($errors)) {
     $_SESSION['form_errors'] = $errors;
     $_SESSION['form_old'] = $_POST;
-    header('Location: ../../pages/admin/add_property.php');
+    header('Location: ../../pages/admin/add_property');
     exit;
 }
 
@@ -93,7 +93,7 @@ if ($hasCoords) {
     if (!$stmt) {
         $_SESSION['form_errors'] = ['db' => 'Database error: ' . mysqli_error($conn)];
         $_SESSION['form_old'] = $_POST;
-        header('Location: ../../pages/admin/add_property.php');
+        header('Location: ../../pages/admin/add_property');
         exit;
     }
     mysqli_stmt_bind_param($stmt, 'sssssssdd', $name, $type, $full_address, $city, $state, $zip, $status, $latVal, $lngVal);
@@ -108,7 +108,7 @@ if ($hasCoords) {
     if (!$stmt) {
         $_SESSION['form_errors'] = ['db' => 'Database error: ' . mysqli_error($conn)];
         $_SESSION['form_old'] = $_POST;
-        header('Location: ../../pages/admin/add_property.php');
+        header('Location: ../../pages/admin/add_property');
         exit;
     }
     mysqli_stmt_bind_param($stmt, 'sssssss', $name, $type, $full_address, $city, $state, $zip, $status);
@@ -117,13 +117,13 @@ if ($hasCoords) {
 if (mysqli_stmt_execute($stmt)) {
     mysqli_stmt_close($stmt);
     $_SESSION['form_success'] = true;
-    header('Location: ../../pages/admin/add_property.php');
+    header('Location: ../../pages/admin/add_property');
     exit;
 } else {
     $err_msg = mysqli_stmt_error($stmt);
     mysqli_stmt_close($stmt);
     $_SESSION['form_errors'] = ['db' => 'Failed to save property: ' . $err_msg];
     $_SESSION['form_old'] = $_POST;
-    header('Location: ../../pages/admin/add_property.php');
+    header('Location: ../../pages/admin/add_property');
     exit;
 }

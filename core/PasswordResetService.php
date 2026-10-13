@@ -127,7 +127,7 @@ class PasswordResetService
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
         $scriptDir = dirname(dirname($_SERVER['SCRIPT_NAME'] ?? '/'));
         return rtrim($protocol . '://' . $host . $scriptDir, '/')
-            . '/reset_password.php?token=' . urlencode($token);
+            . '/reset_password?token=' . urlencode($token);
     }
 
     // Token validation

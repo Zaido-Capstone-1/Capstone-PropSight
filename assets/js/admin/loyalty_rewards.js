@@ -1,4 +1,4 @@
-const API = '../../endpoints/admin/loyalty_rewards.php';
+const API = '../../endpoints/admin/loyalty_rewards';
 let _deleteId = null;
 
 function esc(s) {

@@ -124,7 +124,7 @@ if ($method === 'POST') {
         while ($admin = mysqli_fetch_assoc($adminsRes)) {
             $aid = (int) $admin['user_id'];
             $title = 'New Support Ticket';
-            $link = 'pages/admin/messages.php';
+            $link = 'pages/admin/messages';
             $notifStmt = $conn->prepare(
                 "INSERT INTO notifications (user_id, type, title, body, link)
                  VALUES (?, 'support', ?, ?, ?)"
@@ -139,7 +139,7 @@ if ($method === 'POST') {
                 'support_ticket',
                 'ticket-' . $ticketId,
                 'New support ticket: ' . mb_substr($subject, 0, 80),
-                'messages.php',
+                'messages',
                 gmdate('Y-m-d H:i:s')
             );
         }
@@ -267,7 +267,7 @@ if ($method === 'POST') {
         while ($admin = mysqli_fetch_assoc($adminsRes)) {
             $aid = (int) $admin['user_id'];
             $title = 'New Maintenance Request';
-            $link = 'pages/admin/task_summary.php';
+            $link = 'pages/admin/task_summary';
             $notifStmt = $conn->prepare(
                 "INSERT INTO notifications (user_id, type, title, body, link)
                  VALUES (?, 'support', ?, ?, ?)"
@@ -277,7 +277,7 @@ if ($method === 'POST') {
             $notifStmt->close();
             // Instant admin_notifications badge
             $notifText = 'Task: ' . mb_substr($fullDesc, 0, 80);
-            upsert_notif($conn, $aid, 'maintenance', 'task-' . $requestId, $notifText, 'task_summary.php?status=open', gmdate('Y-m-d H:i:s'));
+            upsert_notif($conn, $aid, 'maintenance', 'task-' . $requestId, $notifText, 'task_summary?status=open', gmdate('Y-m-d H:i:s'));
         }
 
         echo json_encode(['success' => true, 'message' => 'Maintenance request submitted.', 'request_id' => $requestId]);

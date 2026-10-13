@@ -71,7 +71,7 @@ if (($active_page ?? '') === 'messages') {
 
 <script>
     const ADMIN_ID = <?= (int) ($_SESSION['user_id'] ?? 0) ?>;
-    const ADMIN_API = '../../endpoints/messages.php';
+    const ADMIN_API = '../../endpoints/messages';
     // Fallback for pages (e.g. index.php) that don't include layout_open.php,
     // which is otherwise the only place window.PS_CSRF_TOKEN gets set.
     window.PS_CSRF_TOKEN = window.PS_CSRF_TOKEN || <?= json_encode($_SESSION['csrf_token'] ?? '') ?>;
