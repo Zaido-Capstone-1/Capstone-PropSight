@@ -39,6 +39,15 @@ switch ($result) {
 // OTP valid
 $user = $session->getPendingUser();
 $session->clearLoginOtp();
+
+// Record this login — stored as UTC like every other timestamp column
+// (see includes/db.php's DT_KEYS/fmt_dt), so the Settings page can show it
+// converted to each viewer's own local time instead of the server's.
+$touchLogin = $conn->prepare('UPDATE users SET last_login = UTC_TIMESTAMP() WHERE user_id = ?');
+$touchLogin->bind_param('i', $user['user_id']);
+$touchLogin->execute();
+$touchLogin->close();
+
 $session->regenerate();
 $session->populateUser($user);
 $session->refreshCsrf();

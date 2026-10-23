@@ -81,6 +81,31 @@ if (isset($user['is_active']) && !$user['is_active']) {
 // Reset failed attempts on success
 $auth->resetAttempts($user['user_id']);
 
+// Email verification check — guest accounts must verify their email
+// before they're allowed into the dashboard. Staff roles are exempt.
+if (
+    ($user['role'] ?? 'user') === 'user' &&
+    ($user['verification_status'] ?? 'Not Verified') !== 'Verified'
+) {
+    $session->regenerate();
+    $session->populatePendingVerification($user);
+
+    try {
+        $otp = $c->otp()->issueVerifyOtp(expirySeconds: 600);
+        $c->authEmail()->sendVerifyOtp($user['email'], $user['first_name'], $otp);
+    } catch (\RuntimeException $e) {
+        // Non-fatal: account exists and the verify page offers a resend option
+    }
+
+    $session->refreshCsrf();
+    echo json_encode([
+        'status' => 'verify_required',
+        'message' => 'Please verify your email before logging in.',
+        'redirect' => 'verify',
+    ]);
+    exit;
+}
+
 // 2FA / OTP flow
 if ($auth->isTwoFactorEnabled($user['user_id'])) {
     try {
@@ -93,6 +118,14 @@ if ($auth->isTwoFactorEnabled($user['user_id'])) {
     }
     exit;
 }
+
+// Record this login — stored as UTC like every other timestamp column
+// (see includes/db.php's DT_KEYS/fmt_dt), so the Settings page can show it
+// converted to each viewer's own local time instead of the server's.
+$touchLogin = $conn->prepare('UPDATE users SET last_login = UTC_TIMESTAMP() WHERE user_id = ?');
+$touchLogin->bind_param('i', $user['user_id']);
+$touchLogin->execute();
+$touchLogin->close();
 
 // Direct login
 $session->regenerate();

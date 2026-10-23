@@ -253,6 +253,7 @@
         _renderActiveTags();
         _updateClearBtn();
         _updateMobileBadge();
+        scheduleSidebarSync(); // row count may have changed, re-match sidebar height
     }
     window.applyFilters = applyFilters;
 
@@ -461,6 +462,40 @@
     }
 
     /* ════════════════════════════════════════════════════════════════════════
+       SIDEBAR HEIGHT SYNC
+       Below 861px the sidebar is a fixed, full-screen off-canvas drawer
+       (height: 100dvh, set in units.css) — leave that alone. Above that,
+       .units-sidebar is position:absolute inside .units-body, and its
+       background needs to reach exactly as far down as the results grid
+       in .units-main actually renders (see the comment in units.css for
+       why this can't just be a CSS percentage height). Re-measure on
+       load, on resize, and whenever applyFilters() changes how many
+       cards (and therefore how many grid rows) are visible.
+    ════════════════════════════════════════════════════════════════════════ */
+    function syncSidebarHeight() {
+        const sidebar = document.querySelector('.units-sidebar');
+        const main    = document.querySelector('.units-main');
+        if (!sidebar || !main) return;
+
+        if (window.innerWidth <= 860) {
+            sidebar.style.height = ''; // let the mobile drawer CSS (100dvh) apply
+            return;
+        }
+
+        sidebar.style.height = '';               // reset so measurements below are fresh, not stale
+        const natural = sidebar.scrollHeight;     // sidebar's own content height (filter sections)
+        const target  = Math.max(natural, main.scrollHeight);
+        sidebar.style.height = target + 'px';
+    }
+    window.syncSidebarHeight = syncSidebarHeight;
+
+    let _sidebarSyncRaf = null;
+    function scheduleSidebarSync() {
+        if (_sidebarSyncRaf) cancelAnimationFrame(_sidebarSyncRaf);
+        _sidebarSyncRaf = requestAnimationFrame(syncSidebarHeight);
+    }
+
+    /* ════════════════════════════════════════════════════════════════════════
        INIT
     ════════════════════════════════════════════════════════════════════════ */
     document.addEventListener('DOMContentLoaded', () => {
@@ -470,6 +505,18 @@
         /* Mobile hamburger */
         document.getElementById('hamburger')?.addEventListener('click', function () {
             this.classList.toggle('open');
+        });
+
+        /* Sidebar height — measure once the grid has laid out, again once
+           images inside the cards finish loading (they can grow row
+           heights after the first paint), and on resize. */
+        scheduleSidebarSync();
+        window.addEventListener('load', scheduleSidebarSync);
+
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(scheduleSidebarSync, 120);
         });
     });
 

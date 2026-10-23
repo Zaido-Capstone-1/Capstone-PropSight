@@ -295,7 +295,9 @@ require_once '../../lib/user-queries/settings_queries.php';
             </div>
             <div class="mini-stat-row">
                 <span class="mini-stat-label">Last Login</span>
-                <span class="mini-stat-val"><?php echo date('M j, g:i A'); ?></span>
+                <span class="mini-stat-val" id="securityLastLogin" data-utc="<?php echo htmlspecialchars($lastLoginUtc ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                    <?php echo $lastLoginUtc ? '—' : 'This session'; ?>
+                </span>
             </div>
         </div>
 

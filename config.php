@@ -33,9 +33,9 @@ define('DB_PORT', (int) env('DB_PORT', 3306));
 
 define('MAIL_HOST', 'smtp.hostinger.com');
 define('MAIL_PORT', 465);
-define('MAIL_USERNAME', 'admin@boracay-accommodation.site');
-define('MAIL_PASSWORD', 'PropSight@09232004');
-define('MAIL_FROM_EMAIL', 'admin@boracay-accommodation.site');
+define('MAIL_USERNAME', 'noreply@boracay-accommodation.site');
+define('MAIL_PASSWORD', 'Propsight-Admin@123');
+define('MAIL_FROM_EMAIL', 'noreply@boracay-accommodation.site');
 define('MAIL_FROM_NAME', 'Boracay Accommodation');
 define('MAIL_ENCRYPTION', 'ssl');
 

@@ -675,6 +675,9 @@ loginForm.addEventListener('submit', async function (e) {
             clearLoginAlert();
             otpDeadlineMs = 0;
             verifyOtp(0, Number(data.otp_expires_in_seconds) || 300);
+        } else if (data.status === 'verify_required') {
+            clearLoginAlert();
+            window.location.href = data.redirect ?? 'verify';
         } else if (data.status === 'success') {
             window.location.href = data.role === 'admin' ?
                 'pages/admin/index' :

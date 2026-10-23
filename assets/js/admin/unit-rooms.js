@@ -1,5 +1,14 @@
 const propertiesList = window.__UNITS_DATA__.propertiesList;
 
+// Display helper: show unit numbers as "Unit 20" without requiring the
+// word "Unit" to be typed into the form. Strips any "unit" the admin may
+// already have typed (so it never shows "Unit Unit 20") and prefixes it.
+function formatUnitLabel(unitNumber) {
+  const raw = String(unitNumber ?? '').trim();
+  if (!raw) return '—';
+  return 'Unit ' + raw.replace(/^unit\s*/i, '');
+}
+
 function badgeOf(s) {
   return { occupied: 'OCCUPIED', vacant: 'AVAILABLE', booked: 'BOOKED', maintenance: 'MAINTENANCE' }[s] || String(s).toUpperCase();
 }
@@ -342,7 +351,7 @@ async function openViewModal(unit) {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;">
           <div style="min-width:0;">
             <div style="font-size:19px;font-weight:800;color:var(--text);line-height:1.2;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              ${[unit.property_name, unit.unit_number].filter(Boolean).join(' ')}${unit.unit_name ? ' — ' + unit.unit_name : ''}
+              ${[unit.property_name, formatUnitLabel(unit.unit_number)].filter(Boolean).join(' ')}${unit.unit_name ? ' — ' + unit.unit_name : ''}
             </div>
             <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;">
               ${unit.floor ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-soft);">
@@ -861,7 +870,7 @@ async function openViewModal(unit) {
               availBadge.textContent = am.lbl;
             }
             const titleEl = card.querySelector('.unit-title');
-            if (titleEl) titleEl.textContent = mergedUnit.unit_number || '—';
+            if (titleEl) titleEl.textContent = formatUnitLabel(mergedUnit.unit_number);
             const priceEl = card.querySelector('.price-value');
             if (priceEl) priceEl.textContent = '₱' + Number(mergedUnit.rent_amount).toLocaleString('en-US', { minimumFractionDigits: 0 });
 
@@ -956,7 +965,7 @@ document.getElementById('open-add-unit-modal').addEventListener('click', () => {
 
       <div class="form-group">
         <label>Unit Number <span style="color:var(--danger)">*</span></label>
-        <input type="text" id="m-unit-number" placeholder="e.g. A-101">
+        <input type="text" id="m-unit-number" placeholder="e.g. 101">
       </div>
       <div class="form-group">
         <label>Unit Name</label>
@@ -1205,7 +1214,7 @@ function buildCardHTML(unit) {
     <div class="photo-wrap">${photoHtml}</div>
     <div class="body">
       <div>
-        <div class="unit-title">${unit.unit_number || '—'}</div>
+        <div class="unit-title">${formatUnitLabel(unit.unit_number)}</div>
         <div class="unit-sub">${subParts.join(' · ')}</div>
       </div>
       <div class="meta-row">

@@ -1,4 +1,4 @@
- /* ── Calendar page styles ──────────────────────────── */
+/* ── Calendar page styles ──────────────────────────── */
  .cal-page-wrap {
    display: flex;
    gap: 20px;
@@ -141,6 +141,8 @@
  .cal-nav-btn {
    width: 32px;
    height: 32px;
+   padding: 0;
+   font-family: inherit;
    border-radius: 9px;
    border: 1.5px solid var(--border);
    background: var(--white);
@@ -151,6 +153,12 @@
    color: var(--text-soft);
    font-size: 15px;
    transition: all var(--transition);
+ }
+
+ .cal-nav-btn.disabled,
+ .cal-today-btn.disabled {
+   opacity: 0.5;
+   pointer-events: none;
  }
 
  .cal-nav-btn:hover {

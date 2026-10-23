@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../includes/session_params.php';
 session_start();
 require_once __DIR__ . '/../../includes/db.php';
 require_once __DIR__ . '/../../integrations/oauth_helpers.php';
+$c = require __DIR__ . '/../../process/bootstrap.php';
 
 function google_fail(string $message)
 {
@@ -85,6 +86,30 @@ try {
         if (!$lockExpired) {
             google_fail('This account is temporarily locked. Please try again later.');
         }
+    }
+
+    // Email verification check — same rule as the regular password login:
+    // guest accounts must verify their email before reaching the dashboard.
+    // (Brand-new Google sign-ups are created already 'Verified', so this
+    // only catches an existing, never-verified account linking Google.)
+    if (
+        ($user['role'] ?? 'user') === 'user' &&
+        ($user['verification_status'] ?? 'Not Verified') !== 'Verified'
+    ) {
+        $session = $c->session();
+        $session->regenerate();
+        $session->populatePendingVerification($user);
+
+        try {
+            $otp = $c->otp()->issueVerifyOtp(expirySeconds: 600);
+            $c->authEmail()->sendVerifyOtp($user['email'], $user['first_name'], $otp);
+        } catch (\RuntimeException $e) {
+            // Non-fatal: account exists and the verify page offers a resend option
+        }
+
+        $session->refreshCsrf();
+        header('Location: ../../verify');
+        exit;
     }
 
     oauth_log_in_user($user);

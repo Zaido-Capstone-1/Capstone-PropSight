@@ -1,19 +1,142 @@
-const dayData = window.__PS_CALENDAR__.dayData;
-const bookingsByDay = window.__PS_CALENDAR__.bookingsByDay;
-const blockedDates = window.__PS_CALENDAR__.blockedDates;
-const monthShort = window.__PS_CALENDAR__.monthShort;
-const monthNum = window.__PS_CALENDAR__.monthNum;
-const yearNum = window.__PS_CALENDAR__.yearNum;
+let dayData = window.__PS_CALENDAR__.dayData;
+let bookingsByDay = window.__PS_CALENDAR__.bookingsByDay;
+let blockedDates = window.__PS_CALENDAR__.blockedDates;
+let monthShort = window.__PS_CALENDAR__.monthShort;
+let monthNum = window.__PS_CALENDAR__.monthNum;
+let yearNum = window.__PS_CALENDAR__.yearNum;
 const dows = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const startDow = window.__PS_CALENDAR__.startDow;
+let startDow = window.__PS_CALENDAR__.startDow;
+let daysInMonth = window.__PS_CALENDAR__.daysInMonth;
+let todayDay = window.__PS_CALENDAR__.todayDay;
 const statusMap = { booked: 'Fully Booked', partial: 'Partially Booked', free: 'Available', blocked: 'Blocked' };
 let selectedDay = window.__PS_CALENDAR__.selectedDay;
+let isLoadingMonth = false;
+
+// Normalize the initial history entry so browser back/forward after a
+// month switch can restore the month the page was first opened on.
+history.replaceState({ year: yearNum, month: monthNum }, '', `?year=${yearNum}&month=${monthNum}`);
+
+/* =========================
+   Dynamic month switching
+========================= */
+
+function navMonth(delta) {
+    let m = monthNum + delta;
+    let y = yearNum;
+    if (m < 1) { m = 12; y--; }
+    if (m > 12) { m = 1; y++; }
+    loadMonth(y, m);
+}
+
+function goToday() {
+    loadMonth(); // no params = server resolves the current month
+}
+
+function loadMonth(y, m) {
+    if (isLoadingMonth) return;
+    isLoadingMonth = true;
+    document.querySelectorAll('.cal-nav-btn, .cal-today-btn').forEach(b => b.classList.add('disabled'));
+
+    const qs = (y && m) ? `?year=${y}&month=${m}` : '';
+    fetch(`../../endpoints/admin/calendar_month.php${qs}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                showToast(data.message || 'Could not load that month.', 'error');
+                return;
+            }
+            applyMonthData(data);
+            const url = `?year=${data.year}&month=${data.month_num}`;
+            history.pushState({ year: data.year, month: data.month_num }, '', url);
+        })
+        .catch(() => showToast('Server unreachable.', 'error'))
+        .finally(() => {
+            isLoadingMonth = false;
+            document.querySelectorAll('.cal-nav-btn, .cal-today-btn').forEach(b => b.classList.remove('disabled'));
+        });
+}
+
+function applyMonthData(data) {
+    dayData = data.day_data;
+    bookingsByDay = data.bookings_by_day;
+    blockedDates = data.blocked_dates;
+    monthShort = data.month_short;
+    monthNum = data.month_num;
+    yearNum = data.year;
+    startDow = data.start_dow;
+    daysInMonth = data.days_in_month;
+    todayDay = data.today_day;
+    selectedDay = todayDay > 0 ? todayDay : 1;
+
+    document.getElementById('calMonthTitle').textContent = data.month_name;
+    document.getElementById('calYearBadge').textContent = data.year;
+    document.getElementById('statBooked').textContent = data.total_booked;
+    document.getElementById('statPartial').textContent = data.total_partial;
+    document.getElementById('statFree').textContent = data.total_free;
+    document.getElementById('statRate').textContent = data.occ_rate;
+
+    buildDayGrid();
+
+    // Re-apply whichever property filter was active before the switch
+    const activePill = document.querySelector('.prop-filter-pill.active');
+    if (activePill) {
+        const propId = activePill.dataset.propId === 'all' ? 'all' : Number(activePill.dataset.propId);
+        setFilter(activePill, propId);
+    }
+
+    renderDayDetail(selectedDay);
+}
+
+function buildDayGrid() {
+    let html = '';
+    for (let i = 0; i < startDow; i++) {
+        html += '<div class="cal-day-cell empty"></div>';
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+        const info = dayData[d] || { status: 'free', count: 0, total: 0 };
+        const s = info.status;
+        const isToday = d === todayDay;
+        const isSelected = d === selectedDay;
+        const classes = `cal-day-cell ${s}` + (isToday ? ' today' : '') + (isSelected ? ' selected' : '');
+        const props = (info.props || []).join(',');
+
+        let pill;
+        if (s === 'booked' || s === 'partial') pill = `${info.count}/${info.total}`;
+        else if (s === 'free') pill = 'Open';
+        else pill = '—';
+
+        let dots = '';
+        if (s === 'booked' || s === 'partial') {
+            dots = `<div class="cal-day-dots">${'<span></span>'.repeat(Math.min(info.count, 3))}</div>`;
+        }
+
+        html += `<div class="${classes}" onclick="selectDay(${d}, this)" data-day="${d}" data-props="${props}">
+                <div class="cal-day-num">${d}</div>
+                <div class="cal-day-pill">${pill}</div>
+                ${dots}
+            </div>`;
+    }
+    document.getElementById('calGrid').innerHTML = html;
+}
+
+// Support browser back/forward after a month switch
+window.addEventListener('popstate', e => {
+    if (e.state && e.state.year && e.state.month) {
+        loadMonth(e.state.year, e.state.month);
+    } else {
+        loadMonth();
+    }
+});
 
 function selectDay(day, el) {
     document.querySelectorAll('.cal-day-cell.selected').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
+    if (el) el.classList.add('selected');
     selectedDay = day;
+    renderDayDetail(day);
+    if (window.innerWidth <= 960) openDrawer();
+}
 
+function renderDayDetail(day) {
     const info = dayData[day] || { status: 'free', count: 0, total: 0 };
     const dow = dows[(startDow + day - 1) % 7];
     const bookings = bookingsByDay[day] || [];
@@ -62,8 +185,6 @@ function selectDay(day, el) {
                 </div>
             </div>`).join('');
     }
-
-    if (window.innerWidth <= 960) openDrawer();
 }
 
 function openBlockModal(date = null) {
@@ -238,5 +359,5 @@ document.getElementById('blockModalOverlay').addEventListener('click', e => {
 });
 
 function refreshCalendarView() {
-    window.location.reload();
+    loadMonth(yearNum, monthNum);
 }

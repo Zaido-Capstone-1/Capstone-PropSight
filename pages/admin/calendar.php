@@ -22,7 +22,7 @@ include '../../includes/layout_open.php';
 require_once '../../lib/admin-queries/calendar_queries.php'; 
 ?>
 
-<link rel="stylesheet" href="../../assets/css/admin-css/calendar.css">
+<link rel="stylesheet" href="../../assets/css/admin-css/calendar.css?v=<?= @filemtime(__DIR__ . '/../../assets/css/admin-css/calendar.css') ?: time() ?>">
 <link rel="stylesheet" href="../../assets/css/admin-css/header.css">
 
 <div class="page-inner" id="calPageInner" style="overflow-y:auto;padding-bottom:90px;">
@@ -94,7 +94,7 @@ require_once '../../lib/admin-queries/calendar_queries.php';
                         </svg>
                     </div>
                     <div>
-                        <div class="cal-stat-val"><?= $total_booked ?></div>
+                        <div class="cal-stat-val" id="statBooked"><?= $total_booked ?></div>
                         <div class="cal-stat-lbl">Fully Booked Days</div>
                     </div>
                 </div>
@@ -106,7 +106,7 @@ require_once '../../lib/admin-queries/calendar_queries.php';
                         </svg>
                     </div>
                     <div>
-                        <div class="cal-stat-val"><?= $total_partial ?></div>
+                        <div class="cal-stat-val" id="statPartial"><?= $total_partial ?></div>
                         <div class="cal-stat-lbl">Partially Booked</div>
                     </div>
                 </div>
@@ -118,7 +118,7 @@ require_once '../../lib/admin-queries/calendar_queries.php';
                         </svg>
                     </div>
                     <div>
-                        <div class="cal-stat-val"><?= $total_free ?></div>
+                        <div class="cal-stat-val" id="statFree"><?= $total_free ?></div>
                         <div class="cal-stat-lbl">Available Days</div>
                     </div>
                 </div>
@@ -129,7 +129,7 @@ require_once '../../lib/admin-queries/calendar_queries.php';
                         </svg>
                     </div>
                     <div>
-                        <div class="cal-stat-val"><?= $occ_rate ?>%</div>
+                        <div class="cal-stat-val"><span id="statRate"><?= $occ_rate ?></span>%</div>
                         <div class="cal-stat-lbl">Occupancy Rate</div>
                     </div>
                 </div>
@@ -138,26 +138,26 @@ require_once '../../lib/admin-queries/calendar_queries.php';
             <div class="cal-card">
                 <div class="cal-card-header">
                     <div class="cal-card-header-left">
-                        <div class="cal-month-title"><?= $month_name ?></div>
-                        <span class="cal-year-badge"><?= $year ?></span>
+                        <div class="cal-month-title" id="calMonthTitle"><?= $month_name ?></div>
+                        <span class="cal-year-badge" id="calYearBadge"><?= $year ?></span>
                     </div>
                     <div class="cal-nav-group">
-                        <a href="?year=<?= $prev_year ?>&month=<?= $prev_month ?>" class="cal-nav-btn"
-                            style="text-decoration: none;" title="Previous month">‹</a>
-                        <a href="?year=<?= $now->format('Y') ?>&month=<?= $now->format('m') ?>" class="cal-today-btn"
-                            style="text-decoration: none;">Today</a>
-                        <a href="?year=<?= $next_year ?>&month=<?= $next_month ?>" class="cal-nav-btn"
-                            style="text-decoration: none;" title="Next month">›</a>
+                        <button type="button" class="cal-nav-btn" title="Previous month"
+                            onclick="navMonth(-1)">‹</button>
+                        <button type="button" class="cal-today-btn" onclick="goToday()">Today</button>
+                        <button type="button" class="cal-nav-btn" title="Next month"
+                            onclick="navMonth(1)">›</button>
                     </div>
                 </div>
 
                 <div class="cal-filter-bar">
-                    <button class="prop-filter-pill active" onclick="setFilter(this,'all')">All Properties</button>
+                    <button class="prop-filter-pill active" data-prop-id="all" onclick="setFilter(this,'all')">All Properties</button>
                     <?php
                     $props_res = mysqli_query($conn, "SELECT property_id, property_name FROM properties ORDER BY property_name");
                     while ($pr = mysqli_fetch_assoc($props_res)):
                         ?>
-                        <button class="prop-filter-pill" onclick="setFilter(this, <?= $pr['property_id'] ?>)">
+                        <button class="prop-filter-pill" data-prop-id="<?= $pr['property_id'] ?>"
+                            onclick="setFilter(this, <?= $pr['property_id'] ?>)">
                             <?= htmlspecialchars($pr['property_name']) ?>
                         </button>
                     <?php endwhile; ?>
@@ -368,13 +368,13 @@ require_once '../../lib/admin-queries/calendar_queries.php';
         monthNum: <?= $month_num ?>,
         yearNum: <?= $year ?>,
         startDow: <?= $start_dow ?>,
+        daysInMonth: <?= $days_in_month ?>,
+        todayDay: <?= $today_day ?>,
         selectedDay: <?= $selected_day ?>,
         currentMonth: '<?= $year ?>-<?= str_pad($month_num, 2, '0', STR_PAD_LEFT) ?>',
-        prevUrl: '?year=<?= $prev_year ?>&month=<?= $prev_month ?>',
-        nextUrl: '?year=<?= $next_year ?>&month=<?= $next_month ?>',
         csrfToken: '<?= htmlspecialchars($_SESSION['csrf_token']) ?>'
     };
 </script>
-<script src="../../assets/js/admin/calendar.js"></script>
+<script src="../../assets/js/admin/calendar.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/admin/calendar.js') ?: time() ?>"></script>
 
 <?php include '../../includes/layout_close.php'; ?>

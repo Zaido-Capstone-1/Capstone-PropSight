@@ -384,11 +384,26 @@ body {
 
 /* ══════════════════════════════════════════════
    LEFT SIDEBAR
-   Positioned via JS (absolute → fixed toggle in units.js)
-   instead of `position: sticky`, since sticky's "unstick"
-   point depends on this container being taller than the
-   sidebar — with only a few units the results column can be
+   `position: absolute` instead of `sticky`, since sticky's
+   "unstick" point depends on this container being taller than
+   the sidebar — with only a few units the results column can be
    shorter than the sidebar, releasing it too early.
+
+   Height is NOT set as a CSS percentage here on purpose: a
+   percentage height on an absolutely positioned element only
+   resolves reliably when its positioned ancestor (.units-body)
+   has an explicit height, and .units-body only has a min-height
+   (it's sized by its content, same as this sidebar). That
+   combination is unreliable across browsers and was tried here
+   before — it collapsed the sidebar to its own short content
+   height instead of matching the results grid.
+
+   Instead, syncSidebarHeight() in units.js measures
+   .units-main's real rendered height on load, on resize, and
+   whenever the filtered result count changes, then sets this
+   element's height directly via inline style. That's the
+   authoritative height; the value below is only a brief fallback
+   for the instant before JS runs.
 ══════════════════════════════════════════════ */
 .units-sidebar {
     background: var(--white);
@@ -396,8 +411,7 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    /* header + toolbar */
-    height: calc(130vh - 68px - 52px);
+    height: calc(100vh - 120px);
     width: 272px;
     overflow-y: auto;
     overflow-x: hidden;

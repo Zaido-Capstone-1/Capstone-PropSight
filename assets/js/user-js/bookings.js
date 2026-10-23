@@ -96,7 +96,13 @@ function downloadInvoiceFromModal() {
 function openCancelModal(idx, ref) {
     cancelBookingId = (window.__bookings || [])[idx]?.booking_id || null;
     cancelBookingRef = ref;
-    if (!confirm(`Cancel booking ${ref}? This action cannot be undone.`)) return;
+    const refEl = document.getElementById('cancelConfirmRef');
+    if (refEl) refEl.textContent = 'Booking ' + (ref || '');
+    openModal('cancelConfirmModal');
+}
+
+function confirmCancelBooking() {
+    closeModal('cancelConfirmModal');
     doCancel();
 }
 
@@ -274,7 +280,7 @@ function filterBookings(status, btn) {
 // BACKDROP & ESC
 // =========================
 document.addEventListener('DOMContentLoaded', () => {
-    ['detailsModal', 'reviewModal'].forEach(id => {
+    ['detailsModal', 'reviewModal', 'cancelConfirmModal'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener('click', e => {
@@ -284,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
-            ['detailsModal', 'reviewModal'].forEach(closeModal);
+            ['detailsModal', 'reviewModal', 'cancelConfirmModal'].forEach(closeModal);
             if (typeof closeSidebar === 'function') closeSidebar();
         }
     });

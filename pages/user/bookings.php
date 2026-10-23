@@ -479,6 +479,21 @@ $status_map = [
     </div>
 </div>
 
+<div class="modal-overlay" id="cancelConfirmModal">
+    <div class="modal-box" style="max-width:420px;">
+        <button class="modal-close-btn" onclick="closeModal('cancelConfirmModal')">✕</button>
+        <div class="modal-title">Cancel Booking</div>
+        <div class="modal-sub" id="cancelConfirmRef" style="margin-bottom:18px;"></div>
+        <p style="font-size:0.85rem;color:var(--text-soft);line-height:1.5;margin-bottom:22px;">
+            Are you sure you want to cancel this booking? This action cannot be undone.
+        </p>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button class="btn-secondary" onclick="closeModal('cancelConfirmModal')">Keep Booking</button>
+            <button class="btn-danger" id="confirmCancelBtn" onclick="confirmCancelBooking()">Yes, Cancel It</button>
+        </div>
+    </div>
+</div>
+
 <script src="../../assets/js/user-js/bookings.js"
     onerror="this.remove(); var s=document.createElement('script'); s.src='../../assets/js/user-js/booking.js'; document.body.appendChild(s);">
     </script>

@@ -22,6 +22,18 @@ require_once '../../includes/unit_status_sync.php';
 syncAllUnitStatuses($conn);
 include '../../includes/layout_open.php';
 require_once '../../lib/admin-queries/units_rooms_queries.php';
+
+/**
+ * Display helper: show unit numbers as "Unit 20" without requiring the
+ * word "Unit" to be typed into the form. Strips any "unit" the admin may
+ * already have typed (so it never shows "Unit Unit 20") and prefixes it.
+ */
+function format_unit_label($unit_number) {
+  $unit_number = trim((string) $unit_number);
+  if ($unit_number === '') return '—';
+  $unit_number = preg_replace('/^unit\s*/i', '', $unit_number);
+  return 'Unit ' . $unit_number;
+}
 ?>
 
 <link rel="stylesheet" href="../../assets/css/admin-css/unit_rooms.css">
@@ -295,7 +307,7 @@ require_once '../../lib/admin-queries/units_rooms_queries.php';
             <div class="body">
 
               <div>
-                <div class="unit-title"><?= htmlspecialchars($unit['unit_number'] ?? '—') ?></div>
+                <div class="unit-title"><?= htmlspecialchars(format_unit_label($unit['unit_number'] ?? '')) ?></div>
                 <div class="unit-sub">
                   <?php
                   $sub_parts = array_filter([

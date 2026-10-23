@@ -41,6 +41,21 @@ function updateSecurityWidget(opts = {}) {
     }
 }
 
+// ── LAST LOGIN — render in the viewer's own local time ──────────────────────
+// The server stores last_login in UTC (see includes/db.php DT_KEYS / fmt_dt)
+// and sends it here as a UTC-tagged string via data-utc. psFmtDateTime()
+// (assets/js/datetime.js, loaded globally for every page) is the same
+// helper used for every other combined date+time display in the app
+// (e.g. support chat timestamps) — it parses the UTC string and renders it
+// in whatever timezone this browser is actually in.
+document.addEventListener('DOMContentLoaded', () => {
+    const lastLoginEl = document.getElementById('securityLastLogin');
+    if (lastLoginEl) {
+        const utc = lastLoginEl.getAttribute('data-utc');
+        lastLoginEl.textContent = utc ? psFmtDateTime(utc) : 'This session';
+    }
+});
+
 async function savePushNotifications(btn) {
     const done = withLoading(btn, 'Saving…');
     try {

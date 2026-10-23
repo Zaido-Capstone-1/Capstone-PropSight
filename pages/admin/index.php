@@ -293,15 +293,17 @@ $active_page = 'dashboard';
               </div>
             </div>
 
+            <!--
             <div class="card" style="flex:1; display:flex; flex-direction:column;">
-              <div class="task-header">
-                <div class="card-head-main">
-                  <span class="card-title">Live Activity</span>
-                  <span class="card-head-meta">New bookings appear here in real time</span>
+                <div class="task-header">
+                    <div class="card-head-main">
+                        <span class="card-title">Live Activity</span>
+                        <span class="card-head-meta">New bookings appear here in real time</span>
+                    </div>
                 </div>
-              </div>
-              <div id="rt-activity-feed" class="rt-activity-feed" style="min-height:60px;"></div>
+                <div id="rt-activity-feed" class="rt-activity-feed" style="min-height:60px;"></div>
             </div>
+            -->
           </div>
 
         </div>

@@ -155,7 +155,7 @@ $email = htmlspecialchars($_SESSION['email'] ?? '');
 $page_extra_head = '
     <link rel="stylesheet" href="../../assets/css/user-css/styles.css?v=4">
     <link rel="stylesheet" href="../../assets/css/user-css/dashboard.css">
-    <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=10">
+    <link rel="stylesheet" href="../../assets/css/user-css/units.css?v=11">
     <script>
         window.UNITS_CONFIG = {
             priceMin: ' . $priceMin . ',
@@ -646,7 +646,7 @@ echo '</div>';
 </script>
 <script src="../../assets/js/toast.js"></script>
 <script src="../../assets/js/user-js/script.js?v=2"></script>
-<script src="../../assets/js/user-js/units.js?v=4"></script>
+<script src="../../assets/js/user-js/units.js?v=5"></script>
 <script src="../../assets/js/realtime.js"></script>
 <script src="../../assets/js/user-js/user-realtime-pages.js"></script>
 
